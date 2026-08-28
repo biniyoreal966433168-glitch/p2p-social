@@ -81,6 +81,7 @@ header{
     0 0 0 5px rgba(47,128,255,.10),
     0 0 30px rgba(0,194,255,.18);
   margin-bottom:14px;
+  background:#172033;
 }
 
 .username{
@@ -257,6 +258,8 @@ header{
   font-weight:bold;
 }
 
+/* POSTS */
+
 .posts{
   margin:20px 18px;
 }
@@ -286,14 +289,29 @@ header{
 }
 
 .post-user{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin-bottom:10px;
+}
+
+.post-avatar{
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  object-fit:cover;
+  background:#172033;
+}
+
+.post-user-name{
   font-weight:bold;
-  margin-bottom:9px;
+  font-size:14px;
 }
 
 .post-time{
   color:#697386;
   font-size:12px;
-  margin-left:6px;
+  margin-left:5px;
   font-weight:normal;
 }
 
@@ -301,6 +319,7 @@ header{
   color:#C0C6D1;
   line-height:1.55;
   white-space:pre-wrap;
+  word-break:break-word;
 }
 
 .post-actions{
@@ -321,48 +340,22 @@ header{
   background:#0F1218;
   border:1px solid #202632;
   border-radius:15px;
-  padding:30px 20px;
+  padding:25px 17px;
   text-align:center;
-  color:#778194;
+  color:#737F91;
 }
 
-.bottom-nav{
-  position:fixed;
-  left:0;
-  right:0;
-  bottom:0;
-  height:70px;
-  background:#0D1016;
-  border-top:1px solid #202632;
-  display:flex;
-  justify-content:space-around;
-  align-items:center;
-  z-index:30;
-}
-
-.bottom-nav a{
-  color:#697386;
-  text-decoration:none;
+.loading-posts{
+  color:#737F91;
   text-align:center;
-  font-size:11px;
+  padding:20px;
 }
 
-.bottom-nav a.active{
-  color:#fff;
-}
-
-.nav-icon{
-  display:block;
-  font-size:21px;
-  margin-bottom:4px;
-}
-
-.live-nav{
-  color:#FF3158 !important;
-}
-
-.p2p-nav{
-  color:#00C2FF !important;
+.error-posts{
+  color:#FF718B;
+  text-align:center;
+  padding:15px;
+  font-size:13px;
 }
 
 /* SETTINGS */
@@ -480,7 +473,7 @@ header{
   background:#321622;
 }
 
-/* SETTING PAGE */
+/* SETTING PAGES */
 
 .setting-page{
   display:none;
@@ -505,7 +498,6 @@ header{
   padding:0 18px;
   position:sticky;
   top:0;
-  z-index:5;
 }
 
 .setting-back{
@@ -556,19 +548,6 @@ header{
   outline:none;
 }
 
-.setting-textarea{
-  width:100%;
-  min-height:110px;
-  resize:vertical;
-  padding:13px;
-  margin-top:15px;
-  background:#080D14;
-  color:#fff;
-  border:1px solid #2B394A;
-  border-radius:10px;
-  outline:none;
-}
-
 .save-button{
   width:100%;
   padding:13px;
@@ -598,48 +577,45 @@ header{
   background:#10294A;
 }
 
-/* EDIT PROFILE */
+/* BOTTOM NAV */
 
-.edit-photo-area{
+.bottom-nav{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  height:70px;
+  background:#0D1016;
+  border-top:1px solid #202632;
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+  z-index:30;
+}
+
+.bottom-nav a{
+  color:#697386;
+  text-decoration:none;
   text-align:center;
-  margin-bottom:20px;
+  font-size:11px;
 }
 
-.edit-photo-preview{
-  width:110px;
-  height:110px;
-  border-radius:50%;
-  object-fit:cover;
-  border:3px solid #2F80FF;
-  margin-bottom:12px;
-}
-
-.photo-button{
-  display:inline-block;
-  padding:10px 16px;
-  border-radius:10px;
-  background:#182334;
-  border:1px solid #2B394A;
+.bottom-nav a.active{
   color:#fff;
-  cursor:pointer;
-  font-size:13px;
-  font-weight:bold;
 }
 
-.photo-input{
-  display:none;
+.nav-icon{
+  display:block;
+  font-size:21px;
+  margin-bottom:4px;
 }
 
-.small-note{
-  color:#667085 !important;
-  font-size:12px !important;
-  margin-top:9px;
+.live-nav{
+  color:#FF3158 !important;
 }
 
-.loading{
-  text-align:center;
-  padding:25px;
-  color:#7E899B;
+.p2p-nav{
+  color:#00C2FF !important;
 }
 
 @media(min-width:700px){
@@ -698,7 +674,7 @@ header{
     class="profile-photo"
     id="profilePhoto"
     alt="Profile photo"
-    onerror="this.src='images/profile.png'"
+    onerror="this.src='images/profile.png'; this.onerror=null;"
   >
 
   <div class="username">
@@ -786,7 +762,7 @@ header{
     Available Balance
   </div>
 
-  <div class="balance">
+  <div class="balance" id="balance">
     0.00 ETB
   </div>
 
@@ -855,12 +831,10 @@ header{
 
   </div>
 
-  <div id="myPosts">
-
-    <div class="loading">
-      Loading your posts...
-    </div>
-
+  <div
+    id="postsContainer"
+    class="loading-posts">
+    Loading your posts...
   </div>
 
 </section>
@@ -900,7 +874,9 @@ header{
       class="settings-item"
       onclick="openSettingPage('account')">
 
-      <div class="settings-icon">👤</div>
+      <div class="settings-icon">
+        👤
+      </div>
 
       <div class="settings-text">
 
@@ -914,30 +890,36 @@ header{
 
       </div>
 
-      <div class="settings-arrow">›</div>
+      <div class="settings-arrow">
+        ›
+      </div>
 
     </button>
 
 
     <button
       class="settings-item"
-      onclick="openSettingPage('editProfile')">
+      onclick="openSettingPage('username')">
 
-      <div class="settings-icon">✏️</div>
+      <div class="settings-icon">
+        ✏️
+      </div>
 
       <div class="settings-text">
 
         <div class="settings-title">
-          Edit Profile
+          Change Username
         </div>
 
         <div class="settings-description">
-          Change photo, username and bio
+          Update your username
         </div>
 
       </div>
 
-      <div class="settings-arrow">›</div>
+      <div class="settings-arrow">
+        ›
+      </div>
 
     </button>
 
@@ -946,7 +928,9 @@ header{
       class="settings-item"
       onclick="openSettingPage('password')">
 
-      <div class="settings-icon">🔐</div>
+      <div class="settings-icon">
+        🔐
+      </div>
 
       <div class="settings-text">
 
@@ -960,7 +944,9 @@ header{
 
       </div>
 
-      <div class="settings-arrow">›</div>
+      <div class="settings-arrow">
+        ›
+      </div>
 
     </button>
 
@@ -969,7 +955,9 @@ header{
       class="settings-item"
       onclick="openSettingPage('privacy')">
 
-      <div class="settings-icon">🔒</div>
+      <div class="settings-icon">
+        🔒
+      </div>
 
       <div class="settings-text">
 
@@ -983,7 +971,9 @@ header{
 
       </div>
 
-      <div class="settings-arrow">›</div>
+      <div class="settings-arrow">
+        ›
+      </div>
 
     </button>
 
@@ -992,7 +982,9 @@ header{
       class="settings-item"
       onclick="openSettingPage('notifications')">
 
-      <div class="settings-icon">🔔</div>
+      <div class="settings-icon">
+        🔔
+      </div>
 
       <div class="settings-text">
 
@@ -1006,7 +998,9 @@ header{
 
       </div>
 
-      <div class="settings-arrow">›</div>
+      <div class="settings-arrow">
+        ›
+      </div>
 
     </button>
 
@@ -1015,7 +1009,9 @@ header{
       class="settings-item"
       onclick="openSettingPage('language')">
 
-      <div class="settings-icon">🌐</div>
+      <div class="settings-icon">
+        🌐
+      </div>
 
       <div class="settings-text">
 
@@ -1029,7 +1025,9 @@ header{
 
       </div>
 
-      <div class="settings-arrow">›</div>
+      <div class="settings-arrow">
+        ›
+      </div>
 
     </button>
 
@@ -1038,7 +1036,9 @@ header{
       class="settings-item logout-item"
       onclick="logout()">
 
-      <div class="settings-icon">🚪</div>
+      <div class="settings-icon">
+        🚪
+      </div>
 
       <div class="settings-text">
 
@@ -1052,7 +1052,9 @@ header{
 
       </div>
 
-      <div class="settings-arrow">›</div>
+      <div class="settings-arrow">
+        ›
+      </div>
 
     </button>
 
@@ -1091,17 +1093,23 @@ header{
 
       <p>
         Username:
-        <strong id="accountUsername">--</strong>
+        <strong id="accountUsername">
+          --
+        </strong>
       </p>
 
       <p style="margin-top:10px">
         User ID:
-        <strong id="accountUserId">--</strong>
+        <strong id="accountUserId">
+          --
+        </strong>
       </p>
 
       <p style="margin-top:10px">
         Email:
-        <strong id="accountEmail">--</strong>
+        <strong id="accountEmail">
+          --
+        </strong>
       </p>
 
     </div>
@@ -1111,11 +1119,11 @@ header{
 </div>
 
 
-<!-- EDIT PROFILE PAGE -->
+<!-- USERNAME PAGE -->
 
 <div
   class="setting-page"
-  id="editProfilePage">
+  id="usernamePage">
 
   <div class="setting-page-header">
 
@@ -1126,7 +1134,7 @@ header{
     </button>
 
     <div class="setting-page-title">
-      Edit Profile
+      Change Username
     </div>
 
   </div>
@@ -1135,67 +1143,26 @@ header{
 
     <div class="setting-box">
 
-      <div class="edit-photo-area">
-
-        <img
-          id="editPhotoPreview"
-          class="edit-photo-preview"
-          src="images/profile.png"
-          alt="Profile photo"
-        >
-
-        <br>
-
-        <label
-          class="photo-button"
-          for="profileImageInput">
-          📷 Change Photo
-        </label>
-
-        <input
-          id="profileImageInput"
-          class="photo-input"
-          type="file"
-          accept="image/*"
-          onchange="previewProfileImage(event)"
-        >
-
-        <p class="small-note">
-          JPG, PNG or WebP image.
-        </p>
-
-      </div>
-
-
       <h3>
         Username
       </h3>
 
+      <p>
+        Choose the username people will see on your profile.
+      </p>
+
       <input
-        id="editUsername"
+        id="newUsername"
         class="setting-input"
         type="text"
         maxlength="30"
-        placeholder="Username"
+        placeholder="Enter new username"
       >
-
-
-      <h3 style="margin-top:20px">
-        Bio
-      </h3>
-
-      <textarea
-        id="editBio"
-        class="setting-textarea"
-        maxlength="300"
-        placeholder="Write something about yourself..."
-      ></textarea>
-
 
       <button
         class="save-button"
-        onclick="saveProfile()">
-        💾 Save Profile
+        onclick="saveUsername()">
+        Save Username
       </button>
 
     </div>
@@ -1438,15 +1405,23 @@ header{
 <nav class="bottom-nav">
 
   <a href="index.html">
-    <span class="nav-icon">⌂</span>
+
+    <span class="nav-icon">
+      ⌂
+    </span>
+
     Home
+
   </a>
 
   <a
     href="live.html"
     class="live-nav">
 
-    <span class="nav-icon">●</span>
+    <span class="nav-icon">
+      ●
+    </span>
+
     Live
 
   </a>
@@ -1455,14 +1430,20 @@ header{
     href="wallet.html"
     class="p2p-nav">
 
-    <span class="nav-icon">◇</span>
+    <span class="nav-icon">
+      ◇
+    </span>
+
     P2P
 
   </a>
 
   <a href="message.html">
 
-    <span class="nav-icon">□</span>
+    <span class="nav-icon">
+      □
+    </span>
+
     Messages
 
   </a>
@@ -1471,7 +1452,10 @@ header{
     href="profile.html"
     class="active">
 
-    <span class="nav-icon">○</span>
+    <span class="nav-icon">
+      ○
+    </span>
+
     Profile
 
   </a>
@@ -1498,12 +1482,9 @@ window.supabase.createClient(
 );
 
 let currentUser = null;
-let currentProfile = null;
 
 
-/* =========================
-   LOAD USER
-========================= */
+/* LOAD USER */
 
 async function loadUser(){
 
@@ -1524,19 +1505,6 @@ async function loadUser(){
   currentUser =
     result.data.user;
 
-
-  await loadProfile();
-
-  await loadMyPosts();
-
-}
-
-
-/* =========================
-   LOAD PROFILE
-========================= */
-
-async function loadProfile(){
 
   const profileResult =
     await supabaseClient
@@ -1562,12 +1530,13 @@ async function loadProfile(){
   }
 
 
-  currentProfile =
+  const profile =
     profileResult.data;
 
 
-  const profile =
-    currentProfile || {};
+  if(!profile){
+    return;
+  }
 
 
   const username =
@@ -1636,28 +1605,298 @@ async function loadProfile(){
   }
 
 
-  if(profile.balance !== undefined){
+  const balance =
+    Number(profile.balance) || 0;
 
-    document.querySelector(
-      ".balance"
-    ).textContent =
-      Number(profile.balance || 0)
-        .toLocaleString(
-          undefined,
-          {
-            minimumFractionDigits:2,
-            maximumFractionDigits:2
-          }
-        ) + " ETB";
 
-  }
+  document.getElementById(
+    "balance"
+  ).textContent =
+    balance.toLocaleString(
+      undefined,
+      {
+        minimumFractionDigits:2,
+        maximumFractionDigits:2
+      }
+    ) + " ETB";
+
+
+  await loadMyPosts();
 
 }
 
 
-/* =========================
-   SETTINGS
-========================= */
+/* LOAD MY POSTS */
+
+async function loadMyPosts(){
+
+  const container =
+    document.getElementById(
+      "postsContainer"
+    );
+
+  if(!currentUser){
+    return;
+  }
+
+
+  container.innerHTML =
+    '<div class="loading-posts">Loading your posts...</div>';
+
+
+  const result =
+    await supabaseClient
+      .from("posts")
+      .select(
+        "id,user_id,content,created_at"
+      )
+      .eq(
+        "user_id",
+        currentUser.id
+      )
+      .order(
+        "created_at",
+        {
+          ascending:false
+        }
+      );
+
+
+  if(result.error){
+
+    console.error(
+      "Posts error:",
+      result.error
+    );
+
+    container.innerHTML =
+      '<div class="error-posts">Could not load your posts.</div>';
+
+    return;
+  }
+
+
+  const posts =
+    result.data || [];
+
+
+  document.getElementById(
+    "postCount"
+  ).textContent =
+    posts.length;
+
+
+  if(posts.length === 0){
+
+    container.innerHTML =
+      '<div class="empty-posts">You have not posted anything yet.</div>';
+
+    return;
+  }
+
+
+  container.innerHTML = "";
+
+
+  posts.forEach(function(post){
+
+    const article =
+      document.createElement("article");
+
+    article.className =
+      "post";
+
+
+    const postUser =
+      document.createElement("div");
+
+    postUser.className =
+      "post-user";
+
+
+    const avatar =
+      document.createElement("img");
+
+    avatar.className =
+      "post-avatar";
+
+    avatar.src =
+      document.getElementById(
+        "profilePhoto"
+      ).src;
+
+    avatar.alt =
+      "Profile";
+
+
+    const userName =
+      document.createElement("div");
+
+    userName.className =
+      "post-user-name";
+
+    userName.textContent =
+      "@" +
+      (
+        document.getElementById(
+          "username"
+        ).textContent ||
+        "User"
+      );
+
+
+    const time =
+      document.createElement("span");
+
+    time.className =
+      "post-time";
+
+    time.textContent =
+      "• " +
+      formatPostTime(
+        post.created_at
+      );
+
+
+    userName.appendChild(time);
+
+    postUser.appendChild(avatar);
+    postUser.appendChild(userName);
+
+
+    const text =
+      document.createElement("p");
+
+    text.className =
+      "post-text";
+
+    text.textContent =
+      post.content || "";
+
+
+    const actions =
+      document.createElement("div");
+
+    actions.className =
+      "post-actions";
+
+
+    const likeButton =
+      document.createElement("button");
+
+    likeButton.textContent =
+      "♡ Like";
+
+    likeButton.onclick =
+      function(){
+
+        likePost(this);
+
+      };
+
+
+    const commentButton =
+      document.createElement("button");
+
+    commentButton.textContent =
+      "♡ Comment";
+
+    commentButton.onclick =
+      commentPost;
+
+
+    const shareButton =
+      document.createElement("button");
+
+    shareButton.textContent =
+      "↗ Share";
+
+    shareButton.onclick =
+      shareProfile;
+
+
+    actions.appendChild(likeButton);
+    actions.appendChild(commentButton);
+    actions.appendChild(shareButton);
+
+
+    article.appendChild(postUser);
+    article.appendChild(text);
+    article.appendChild(actions);
+
+
+    container.appendChild(article);
+
+  });
+
+}
+
+
+/* POST TIME */
+
+function formatPostTime(dateString){
+
+  if(!dateString){
+    return "now";
+  }
+
+
+  const date =
+    new Date(dateString);
+
+  const now =
+    new Date();
+
+  const seconds =
+    Math.floor(
+      (now - date) / 1000
+    );
+
+
+  if(seconds < 60){
+    return "now";
+  }
+
+
+  const minutes =
+    Math.floor(
+      seconds / 60
+    );
+
+
+  if(minutes < 60){
+    return minutes + "m";
+  }
+
+
+  const hours =
+    Math.floor(
+      minutes / 60
+    );
+
+
+  if(hours < 24){
+    return hours + "h";
+  }
+
+
+  const days =
+    Math.floor(
+      hours / 24
+    );
+
+
+  if(days < 7){
+    return days + "d";
+  }
+
+
+  return date.toLocaleDateString();
+
+}
+
+
+/* SETTINGS */
 
 function openSettings(){
 
@@ -1691,9 +1930,7 @@ function closeSettingsOutside(event){
 }
 
 
-/* =========================
-   SETTING PAGE
-========================= */
+/* SETTING PAGE */
 
 function openSettingPage(type){
 
@@ -1707,13 +1944,6 @@ function openSettingPage(type){
   if(page){
 
     page.classList.add("show");
-
-  }
-
-
-  if(type === "editProfile"){
-
-    prepareEditProfile();
 
   }
 
@@ -1733,124 +1963,31 @@ function closeSettingPage(){
 }
 
 
-/* =========================
-   EDIT PROFILE
-========================= */
+/* EDIT PROFILE */
 
 function editProfile(){
 
-  openSettingPage(
-    "editProfile"
-  );
+  openSettingPage("username");
 
 }
 
 
-function prepareEditProfile(){
+/* USERNAME */
 
-  const profile =
-    currentProfile || {};
-
-
-  const username =
-    profile.username ||
-    currentUser?.email?.split("@")[0] ||
-    "User";
-
-
-  document.getElementById(
-    "editUsername"
-  ).value =
-    username;
-
-
-  document.getElementById(
-    "editBio"
-  ).value =
-    profile.bio || "";
-
-
-  document.getElementById(
-    "editPhotoPreview"
-  ).src =
-    profile.avatar_url ||
-    "images/profile.png";
-
-}
-
-
-/* =========================
-   IMAGE PREVIEW
-========================= */
-
-function previewProfileImage(event){
-
-  const file =
-    event.target.files[0];
-
-  if(!file){
-    return;
-  }
-
-
-  if(!file.type.startsWith("image/")){
-
-    alert(
-      "Please select an image file."
-    );
-
-    event.target.value = "";
-
-    return;
-  }
-
-
-  const reader =
-    new FileReader();
-
-
-  reader.onload =
-    function(e){
-
-      document.getElementById(
-        "editPhotoPreview"
-      ).src =
-        e.target.result;
-
-    };
-
-
-  reader.readAsDataURL(file);
-
-}
-
-
-/* =========================
-   SAVE PROFILE
-========================= */
-
-async function saveProfile(){
+async function saveUsername(){
 
   if(!currentUser){
-
-    alert(
-      "Please login first."
-    );
-
     return;
   }
 
 
+  const input =
+    document.getElementById(
+      "newUsername"
+    );
+
   const username =
-    document.getElementById(
-      "editUsername"
-    ).value.trim();
-
-
-  const bio =
-    document.getElementById(
-      "editBio"
-    ).value.trim();
+    input.value.trim();
 
 
   if(username.length < 3){
@@ -1863,438 +2000,64 @@ async function saveProfile(){
   }
 
 
-  const saveButton =
-    document.querySelector(
-      "#editProfilePage .save-button"
-    );
-
-
-  saveButton.disabled = true;
-
-  saveButton.textContent =
-    "Saving...";
-
-
-  try{
-
-    let avatarUrl =
-      currentProfile?.avatar_url ||
-      null;
-
-
-    /* =========================
-       UPLOAD IMAGE
-    ========================= */
-
-    const fileInput =
-      document.getElementById(
-        "profileImageInput"
-      );
-
-
-    const file =
-      fileInput.files[0];
-
-
-    if(file){
-
-      const extension =
-        file.name
-          .split(".")
-          .pop()
-          .toLowerCase();
-
-
-      const filePath =
-        currentUser.id +
-        "/profile." +
-        extension;
-
-
-      const uploadResult =
-        await supabaseClient
-          .storage
-          .from("avatars")
-          .upload(
-            filePath,
-            file,
-            {
-              upsert:true,
-              contentType:file.type
-            }
-          );
-
-
-      if(uploadResult.error){
-
-        throw new Error(
-          "Image upload failed: " +
-          uploadResult.error.message
-        );
-
-      }
-
-
-      const publicResult =
-        supabaseClient
-          .storage
-          .from("avatars")
-          .getPublicUrl(
-            filePath
-          );
-
-
-      avatarUrl =
-        publicResult.data.publicUrl +
-        "?v=" +
-        Date.now();
-
-    }
-
-
-    /* =========================
-       UPDATE PROFILE
-    ========================= */
-
-    const updateResult =
-      await supabaseClient
-        .from("profiles")
-        .update({
-          username:username,
-          bio:bio,
-          avatar_url:avatarUrl
-        })
-        .eq(
-          "id",
-          currentUser.id
-        );
-
-
-    if(updateResult.error){
-
-      throw new Error(
-        updateResult.error.message
-      );
-
-    }
-
-
-    currentProfile = {
-      ...(currentProfile || {}),
-      username:username,
-      bio:bio,
-      avatar_url:avatarUrl
-    };
-
-
-    /* =========================
-       UPDATE SCREEN
-    ========================= */
-
-    document.getElementById(
-      "username"
-    ).textContent =
-      username;
-
-
-    document.getElementById(
-      "handle"
-    ).textContent =
-      "@" + username;
-
-
-    document.getElementById(
-      "accountUsername"
-    ).textContent =
-      username;
-
-
-    document.getElementById(
-      "bio"
-    ).innerHTML =
-      escapeHtml(
-        bio || "P2P trader • Creator • Community"
-      ).replace(
-        /\n/g,
-        "<br>"
-      );
-
-
-    if(avatarUrl){
-
-      document.getElementById(
-        "profilePhoto"
-      ).src =
-        avatarUrl;
-
-    }
-
-
-    alert(
-      "Profile updated successfully."
-    );
-
-
-    document.getElementById(
-      "profileImageInput"
-    ).value = "";
-
-
-    closeSettingPage();
-
-
-  }catch(error){
-
-    console.error(
-      "Profile save error:",
-      error
-    );
-
-
-    alert(
-      "Could not save profile:\n" +
-      error.message
-    );
-
-
-  }finally{
-
-    saveButton.disabled = false;
-
-    saveButton.textContent =
-      "💾 Save Profile";
-
-  }
-
-}
-
-
-/* =========================
-   MY POSTS
-========================= */
-
-async function loadMyPosts(){
-
-  const container =
-    document.getElementById(
-      "myPosts"
-    );
-
-
-  container.innerHTML =
-    '<div class="loading">Loading your posts...</div>';
-
-
   const result =
     await supabaseClient
-      .from("posts")
-      .select(
-        "id,user_id,content,created_at"
-      )
+      .from("profiles")
+      .update({
+        username:username
+      })
       .eq(
-        "user_id",
+        "id",
         currentUser.id
-      )
-      .order(
-        "created_at",
-        {
-          ascending:false
-        }
       );
 
 
   if(result.error){
 
-    console.error(
-      "Posts loading error:",
-      result.error
+    alert(
+      "Could not change username:\n" +
+      result.error.message
     );
-
-
-    container.innerHTML =
-      '<div class="empty-posts">Could not load your posts.</div>';
 
     return;
   }
-
-
-  const posts =
-    result.data || [];
 
 
   document.getElementById(
-    "postCount"
+    "username"
   ).textContent =
-    posts.length;
+    username;
 
 
-  if(posts.length === 0){
-
-    container.innerHTML =
-      `
-      <div class="empty-posts">
-        You haven't posted anything yet.
-        <br><br>
-        Your posts will appear here.
-      </div>
-      `;
-
-    return;
-  }
+  document.getElementById(
+    "handle"
+  ).textContent =
+    "@" + username;
 
 
-  container.innerHTML = "";
+  document.getElementById(
+    "accountUsername"
+  ).textContent =
+    username;
 
 
-  posts.forEach(function(post){
-
-    const article =
-      document.createElement(
-        "article"
-      );
+  input.value = "";
 
 
-    article.className =
-      "post";
+  alert(
+    "Username updated successfully."
+  );
 
 
-    const time =
-      formatPostTime(
-        post.created_at
-      );
+  closeSettingPage();
 
 
-    article.innerHTML =
-      `
-      <div class="post-user">
-        <span>
-          @${escapeHtml(
-            currentProfile?.username ||
-            currentUser.email?.split("@")[0] ||
-            "username"
-          )}
-        </span>
-
-        <span class="post-time">
-          • ${time}
-        </span>
-      </div>
-
-      <p class="post-text">
-        ${escapeHtml(
-          post.content || ""
-        )}
-      </p>
-
-      <div class="post-actions">
-
-        <button
-          onclick="likePost(this)">
-          ♡ Like
-        </button>
-
-        <button
-          onclick="commentPost()">
-          ♡ Comment
-        </button>
-
-        <button
-          onclick="sharePost('${post.id}')">
-          ↗ Share
-        </button>
-
-      </div>
-      `;
-
-
-    container.appendChild(
-      article
-    );
-
-  });
+  await loadMyPosts();
 
 }
 
 
-/* =========================
-   POST TIME
-========================= */
-
-function formatPostTime(dateString){
-
-  if(!dateString){
-    return "";
-  }
-
-
-  const date =
-    new Date(dateString);
-
-
-  const now =
-    new Date();
-
-
-  const seconds =
-    Math.floor(
-      (now - date) / 1000
-    );
-
-
-  if(seconds < 60){
-
-    return "now";
-
-  }
-
-
-  const minutes =
-    Math.floor(
-      seconds / 60
-    );
-
-
-  if(minutes < 60){
-
-    return minutes + "m";
-
-  }
-
-
-  const hours =
-    Math.floor(
-      minutes / 60
-    );
-
-
-  if(hours < 24){
-
-    return hours + "h";
-
-  }
-
-
-  const days =
-    Math.floor(
-      hours / 24
-    );
-
-
-  if(days < 7){
-
-    return days + "d";
-
-  }
-
-
-  return date.toLocaleDateString();
-
-}
-
-
-/* =========================
-   PASSWORD
-========================= */
+/* PASSWORD */
 
 async function savePassword(){
 
@@ -2346,9 +2109,7 @@ async function savePassword(){
 }
 
 
-/* =========================
-   PRIVACY
-========================= */
+/* PRIVACY */
 
 function setPrivacy(value){
 
@@ -2376,9 +2137,7 @@ function setPrivacy(value){
 }
 
 
-/* =========================
-   NOTIFICATIONS
-========================= */
+/* NOTIFICATIONS */
 
 function setNotifications(value){
 
@@ -2406,9 +2165,7 @@ function setNotifications(value){
 }
 
 
-/* =========================
-   LANGUAGE
-========================= */
+/* LANGUAGE */
 
 function setLanguage(value){
 
@@ -2436,9 +2193,7 @@ function setLanguage(value){
 }
 
 
-/* =========================
-   SHARE PROFILE
-========================= */
+/* SHARE */
 
 async function shareProfile(){
 
@@ -2483,63 +2238,7 @@ async function shareProfile(){
 }
 
 
-/* =========================
-   SHARE POST
-========================= */
-
-async function sharePost(postId){
-
-  const url =
-    window.location.origin +
-    window.location.pathname +
-    "?post=" +
-    encodeURIComponent(postId);
-
-
-  if(navigator.share){
-
-    try{
-
-      await navigator.share({
-        title:"P2P Social Post",
-        text:"Check out this post!",
-        url:url
-      });
-
-    }catch(error){
-
-      console.log(error);
-
-    }
-
-  }else{
-
-    try{
-
-      await navigator.clipboard.writeText(
-        url
-      );
-
-      alert(
-        "Post link copied."
-      );
-
-    }catch(error){
-
-      alert(
-        "Post link: " + url
-      );
-
-    }
-
-  }
-
-}
-
-
-/* =========================
-   LIKE
-========================= */
+/* LIKE */
 
 function likePost(button){
 
@@ -2560,9 +2259,7 @@ function likePost(button){
 }
 
 
-/* =========================
-   COMMENT
-========================= */
+/* COMMENT */
 
 function commentPost(){
 
@@ -2573,9 +2270,7 @@ function commentPost(){
 }
 
 
-/* =========================
-   LOGOUT
-========================= */
+/* LOGOUT */
 
 async function logout(){
 
@@ -2611,28 +2306,22 @@ async function logout(){
 }
 
 
-/* =========================
-   ESCAPE HTML
-========================= */
+/* ESCAPE HTML */
 
 function escapeHtml(text){
 
   const div =
-    document.createElement(
-      "div"
-    );
+    document.createElement("div");
 
   div.textContent =
-    text == null ? "" : String(text);
+    text;
 
   return div.innerHTML;
 
 }
 
 
-/* =========================
-   SAVED SETTINGS
-========================= */
+/* LOAD SAVED SETTINGS */
 
 function loadSettings(){
 
@@ -2641,17 +2330,13 @@ function loadSettings(){
       "profilePrivacy"
     ) || "Public";
 
-
-  setPrivacy(
-    privacy
-  );
+  setPrivacy(privacy);
 
 
   const notifications =
     localStorage.getItem(
       "notifications"
     );
-
 
   setNotifications(
     notifications !== "off"
@@ -2663,21 +2348,15 @@ function loadSettings(){
       "language"
     ) || "English";
 
-
-  setLanguage(
-    language
-  );
+  setLanguage(language);
 
 }
 
 
-/* =========================
-   START
-========================= */
-
-loadSettings();
+/* START */
 
 loadUser();
+loadSettings();
 
 </script>
 

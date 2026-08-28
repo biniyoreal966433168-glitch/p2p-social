@@ -369,9 +369,7 @@ header{
   color:#00C2FF !important;
 }
 
-/* =========================
-   SETTINGS MENU
-========================= */
+/* SETTINGS MENU */
 
 .settings-overlay{
   display:none;
@@ -511,6 +509,7 @@ header{
   padding:0 18px;
   position:sticky;
   top:0;
+  z-index:2;
 }
 
 .setting-back{
@@ -573,6 +572,11 @@ header{
   cursor:pointer;
 }
 
+.save-button:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+
 .option{
   width:100%;
   padding:15px;
@@ -588,6 +592,39 @@ header{
 .option.selected{
   border-color:#2F80FF;
   background:#10294A;
+}
+
+.option small{
+  display:block;
+  color:#8793A6;
+  margin-top:5px;
+}
+
+/* STATUS */
+
+.status-message{
+  display:none;
+  margin-top:12px;
+  padding:11px;
+  border-radius:9px;
+  font-size:13px;
+  text-align:center;
+}
+
+.status-message.show{
+  display:block;
+}
+
+.status-success{
+  background:#102F22;
+  color:#65E6A3;
+  border:1px solid #1D6847;
+}
+
+.status-error{
+  background:#351620;
+  color:#FF7891;
+  border:1px solid #713047;
 }
 
 @media(min-width:700px){
@@ -1201,13 +1238,20 @@ header{
         type="text"
         maxlength="30"
         placeholder="Enter new username"
+        autocomplete="off"
       >
 
       <button
         class="save-button"
+        id="saveUsernameButton"
         onclick="saveUsername()">
         Save Username
       </button>
+
+      <div
+        id="usernameStatus"
+        class="status-message">
+      </div>
 
     </div>
 
@@ -1252,7 +1296,9 @@ header{
         id="newPassword"
         class="setting-input"
         type="password"
+        minlength="6"
         placeholder="New password"
+        autocomplete="new-password"
       >
 
       <button
@@ -1260,6 +1306,11 @@ header{
         onclick="savePassword()">
         Change Password
       </button>
+
+      <div
+        id="passwordStatus"
+        class="status-message">
+      </div>
 
     </div>
 
@@ -1296,14 +1347,16 @@ header{
         Who can see your profile?
       </h3>
 
+      <p>
+        Your privacy setting is saved to your account.
+      </p>
+
       <button
         class="option selected"
         id="publicOption"
         onclick="setPrivacy('Public')">
 
         🌎 Public
-
-        <br>
 
         <small>
           Everyone can see your profile.
@@ -1319,13 +1372,16 @@ header{
 
         🔒 Private
 
-        <br>
-
         <small>
           Only approved people can see your profile.
         </small>
 
       </button>
+
+      <div
+        id="privacyStatus"
+        class="status-message">
+      </div>
 
     </div>
 
@@ -1384,6 +1440,11 @@ header{
 
       </button>
 
+      <div
+        id="notificationsStatus"
+        class="status-message">
+      </div>
+
     </div>
 
   </div>
@@ -1419,6 +1480,10 @@ header{
         Language
       </h3>
 
+      <p>
+        Choose the language for your account.
+      </p>
+
       <button
         class="option selected"
         id="englishOption"
@@ -1436,6 +1501,11 @@ header{
         🇪🇹 Amharic
 
       </button>
+
+      <div
+        id="languageStatus"
+        class="status-message">
+      </div>
 
     </div>
 
@@ -1511,7 +1581,33 @@ window.supabase.createClient(
 let currentUser = null;
 
 
-/* LOAD USER */
+/* =========================
+   STATUS MESSAGE
+========================= */
+
+function showStatus(elementId, message, success){
+
+  const element =
+    document.getElementById(elementId);
+
+  if(!element){
+    return;
+  }
+
+  element.textContent = message;
+
+  element.className =
+    "status-message show " +
+    (success
+      ? "status-success"
+      : "status-error");
+
+}
+
+
+/* =========================
+   LOAD USER
+========================= */
 
 async function loadUser(){
 
@@ -1537,7 +1633,7 @@ async function loadUser(){
     await supabaseClient
       .from("profiles")
       .select(
-        "username,user_id,bio,avatar_url"
+        "username,user_id,bio,avatar_url,privacy,notifications,language"
       )
       .eq(
         "id",
@@ -1553,6 +1649,11 @@ async function loadUser(){
       profileResult.error
     );
 
+    alert(
+      "Could not load your profile:\n" +
+      profileResult.error.message
+    );
+
     return;
   }
 
@@ -1562,6 +1663,11 @@ async function loadUser(){
 
 
   if(!profile){
+
+    console.warn(
+      "No profile row found for this user."
+    );
+
     return;
   }
 
@@ -1571,6 +1677,8 @@ async function loadUser(){
     currentUser.email?.split("@")[0] ||
     "User";
 
+
+  /* PROFILE */
 
   document.getElementById(
     "username"
@@ -1600,8 +1708,10 @@ async function loadUser(){
     "userId"
   ).textContent =
     "User ID: " +
-    (profile.user_id || "--");
+    (profile.user_id || currentUser.id);
 
+
+  /* ACCOUNT */
 
   document.getElementById(
     "accountUsername"
@@ -1612,7 +1722,7 @@ async function loadUser(){
   document.getElementById(
     "accountUserId"
   ).textContent =
-    profile.user_id || "--";
+    profile.user_id || currentUser.id;
 
 
   document.getElementById(
@@ -1620,6 +1730,8 @@ async function loadUser(){
   ).textContent =
     currentUser.email || "--";
 
+
+  /* BIO */
 
   if(profile.bio){
 
@@ -1634,6 +1746,8 @@ async function loadUser(){
   }
 
 
+  /* AVATAR */
+
   if(profile.avatar_url){
 
     document.getElementById(
@@ -1643,10 +1757,50 @@ async function loadUser(){
 
   }
 
+
+  /* USERNAME INPUT */
+
+  document.getElementById(
+    "newUsername"
+  ).value =
+    username;
+
+
+  /* DATABASE SETTINGS */
+
+  const privacy =
+    profile.privacy ||
+    "Public";
+
+  applyPrivacyUI(
+    privacy
+  );
+
+
+  const notifications =
+    profile.notifications === false
+      ? false
+      : true;
+
+  applyNotificationsUI(
+    notifications
+  );
+
+
+  const language =
+    profile.language ||
+    "English";
+
+  applyLanguageUI(
+    language
+  );
+
 }
 
 
-/* SETTINGS */
+/* =========================
+   SETTINGS MENU
+========================= */
 
 function openSettings(){
 
@@ -1680,7 +1834,9 @@ function closeSettingsOutside(event){
 }
 
 
-/* SETTING PAGE */
+/* =========================
+   SETTING PAGE
+========================= */
 
 function openSettingPage(type){
 
@@ -1713,20 +1869,31 @@ function closeSettingPage(){
 }
 
 
-/* EDIT PROFILE */
+/* =========================
+   EDIT PROFILE
+========================= */
 
 function editProfile(){
 
-  openSettingPage("username");
+  openSettingPage(
+    "username"
+  );
 
 }
 
 
-/* USERNAME */
+/* =========================
+   SAVE USERNAME
+========================= */
 
 async function saveUsername(){
 
   if(!currentUser){
+
+    alert(
+      "You are not logged in."
+    );
+
     return;
   }
 
@@ -1742,12 +1909,37 @@ async function saveUsername(){
 
   if(username.length < 3){
 
-    alert(
-      "Username must be at least 3 characters."
+    showStatus(
+      "usernameStatus",
+      "Username must be at least 3 characters.",
+      false
     );
 
     return;
   }
+
+
+  if(username.length > 30){
+
+    showStatus(
+      "usernameStatus",
+      "Username cannot be longer than 30 characters.",
+      false
+    );
+
+    return;
+  }
+
+
+  const button =
+    document.getElementById(
+      "saveUsernameButton"
+    );
+
+  button.disabled = true;
+
+  button.textContent =
+    "Saving...";
 
 
   const result =
@@ -1762,16 +1954,49 @@ async function saveUsername(){
       );
 
 
+  button.disabled = false;
+
+  button.textContent =
+    "Save Username";
+
+
   if(result.error){
 
-    alert(
-      "Could not change username:\n" +
-      result.error.message
+    console.error(
+      "Username update error:",
+      result.error
+    );
+
+    showStatus(
+      "usernameStatus",
+      "Could not change username: " +
+      result.error.message,
+      false
     );
 
     return;
   }
 
+
+  updateUsernameOnPage(
+    username
+  );
+
+
+  showStatus(
+    "usernameStatus",
+    "Username updated successfully.",
+    true
+  );
+
+}
+
+
+/* =========================
+   UPDATE USERNAME UI
+========================= */
+
+function updateUsernameOnPage(username){
 
   document.getElementById(
     "username"
@@ -1802,18 +2027,12 @@ async function saveUsername(){
   ).textContent =
     username;
 
-
-  alert(
-    "Username updated successfully."
-  );
-
-
-  closeSettingPage();
-
 }
 
 
-/* PASSWORD */
+/* =========================
+   PASSWORD
+========================= */
 
 async function savePassword(){
 
@@ -1825,8 +2044,10 @@ async function savePassword(){
 
   if(password.length < 6){
 
-    alert(
-      "Password must be at least 6 characters."
+    showStatus(
+      "passwordStatus",
+      "Password must be at least 6 characters.",
+      false
     );
 
     return;
@@ -1841,9 +2062,11 @@ async function savePassword(){
 
   if(result.error){
 
-    alert(
-      "Password update failed:\n" +
-      result.error.message
+    showStatus(
+      "passwordStatus",
+      "Password update failed: " +
+      result.error.message,
+      false
     );
 
     return;
@@ -1855,25 +2078,76 @@ async function savePassword(){
   ).value = "";
 
 
-  alert(
-    "Password changed successfully."
+  showStatus(
+    "passwordStatus",
+    "Password changed successfully.",
+    true
   );
-
-
-  closeSettingPage();
 
 }
 
 
-/* PRIVACY */
+/* =========================
+   PRIVACY
+========================= */
 
-function setPrivacy(value){
+async function setPrivacy(value){
 
-  localStorage.setItem(
-    "profilePrivacy",
+  if(!currentUser){
+
+    return;
+  }
+
+
+  applyPrivacyUI(
     value
   );
 
+
+  const result =
+    await supabaseClient
+      .from("profiles")
+      .update({
+        privacy: value
+      })
+      .eq(
+        "id",
+        currentUser.id
+      );
+
+
+  if(result.error){
+
+    console.error(
+      "Privacy update error:",
+      result.error
+    );
+
+    showStatus(
+      "privacyStatus",
+      "Could not save privacy: " +
+      result.error.message,
+      false
+    );
+
+    return;
+  }
+
+
+  showStatus(
+    "privacyStatus",
+    "Privacy setting saved.",
+    true
+  );
+
+}
+
+
+/* =========================
+   PRIVACY UI
+========================= */
+
+function applyPrivacyUI(value){
 
   document.getElementById(
     "publicOption"
@@ -1893,21 +2167,73 @@ function setPrivacy(value){
 }
 
 
-/* NOTIFICATIONS */
+/* =========================
+   NOTIFICATIONS
+========================= */
 
-function setNotifications(value){
+async function setNotifications(value){
 
-  localStorage.setItem(
-    "notifications",
-    value ? "on" : "off"
+  if(!currentUser){
+
+    return;
+  }
+
+
+  applyNotificationsUI(
+    value
   );
 
+
+  const result =
+    await supabaseClient
+      .from("profiles")
+      .update({
+        notifications: value
+      })
+      .eq(
+        "id",
+        currentUser.id
+      );
+
+
+  if(result.error){
+
+    console.error(
+      "Notifications update error:",
+      result.error
+    );
+
+    showStatus(
+      "notificationsStatus",
+      "Could not save notifications: " +
+      result.error.message,
+      false
+    );
+
+    return;
+  }
+
+
+  showStatus(
+    "notificationsStatus",
+    "Notification setting saved.",
+    true
+  );
+
+}
+
+
+/* =========================
+   NOTIFICATIONS UI
+========================= */
+
+function applyNotificationsUI(value){
 
   document.getElementById(
     "notificationsOn"
   ).classList.toggle(
     "selected",
-    value
+    value === true
   );
 
 
@@ -1915,21 +2241,73 @@ function setNotifications(value){
     "notificationsOff"
   ).classList.toggle(
     "selected",
-    !value
+    value === false
   );
 
 }
 
 
-/* LANGUAGE */
+/* =========================
+   LANGUAGE
+========================= */
 
-function setLanguage(value){
+async function setLanguage(value){
 
-  localStorage.setItem(
-    "language",
+  if(!currentUser){
+
+    return;
+  }
+
+
+  applyLanguageUI(
     value
   );
 
+
+  const result =
+    await supabaseClient
+      .from("profiles")
+      .update({
+        language: value
+      })
+      .eq(
+        "id",
+        currentUser.id
+      );
+
+
+  if(result.error){
+
+    console.error(
+      "Language update error:",
+      result.error
+    );
+
+    showStatus(
+      "languageStatus",
+      "Could not save language: " +
+      result.error.message,
+      false
+    );
+
+    return;
+  }
+
+
+  showStatus(
+    "languageStatus",
+    "Language setting saved.",
+    true
+  );
+
+}
+
+
+/* =========================
+   LANGUAGE UI
+========================= */
+
+function applyLanguageUI(value){
 
   document.getElementById(
     "englishOption"
@@ -1949,7 +2327,9 @@ function setLanguage(value){
 }
 
 
-/* SHARE */
+/* =========================
+   SHARE
+========================= */
 
 async function shareProfile(){
 
@@ -1994,7 +2374,9 @@ async function shareProfile(){
 }
 
 
-/* LIKE */
+/* =========================
+   LIKE
+========================= */
 
 function likePost(button){
 
@@ -2015,7 +2397,9 @@ function likePost(button){
 }
 
 
-/* COMMENT */
+/* =========================
+   COMMENT
+========================= */
 
 function commentPost(){
 
@@ -2026,7 +2410,9 @@ function commentPost(){
 }
 
 
-/* LOGOUT */
+/* =========================
+   LOGOUT
+========================= */
 
 async function logout(){
 
@@ -2037,7 +2423,9 @@ async function logout(){
 
 
   if(!confirmed){
+
     return;
+
   }
 
 
@@ -2062,7 +2450,9 @@ async function logout(){
 }
 
 
-/* ESCAPE HTML */
+/* =========================
+   ESCAPE HTML
+========================= */
 
 function escapeHtml(text){
 
@@ -2077,42 +2467,11 @@ function escapeHtml(text){
 }
 
 
-/* LOAD SAVED SETTINGS */
-
-function loadSettings(){
-
-  const privacy =
-    localStorage.getItem(
-      "profilePrivacy"
-    ) || "Public";
-
-  setPrivacy(privacy);
-
-
-  const notifications =
-    localStorage.getItem(
-      "notifications"
-    );
-
-  setNotifications(
-    notifications !== "off"
-  );
-
-
-  const language =
-    localStorage.getItem(
-      "language"
-    ) || "English";
-
-  setLanguage(language);
-
-}
-
-
-/* START */
+/* =========================
+   START
+========================= */
 
 loadUser();
-loadSettings();
 
 </script>
 

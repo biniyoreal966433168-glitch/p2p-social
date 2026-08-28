@@ -1,572 +1,309 @@
-<!DOCTYPE html><html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>Register - P2P Social</title>  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL =
+  "https://mbsvuwrgigqfporxwpfr.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
+
+const registerForm = document.getElementById("registerForm");
+const usernameInput = document.getElementById("username");
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const confirmPasswordInput =
+  document.getElementById("confirmPassword");
+
+const registerButton =
+  document.getElementById("registerButton");
+
+const message =
+  document.getElementById("message");
+
+
+function showMessage(text, color) {
+  message.textContent = text;
+  message.style.color = color;
+}
+
+
+registerForm.addEventListener("submit", async (event) => {
+
+  event.preventDefault();
+
+  const username =
+    usernameInput.value.trim();
+
+  const email =
+    emailInput.value.trim().toLowerCase();
+
+  const password =
+    passwordInput.value;
+
+  const confirmPassword =
+    confirmPasswordInput.value;
+
+
+  // ================================
+  // VALIDATION
+  // ================================
+
+  if (username.length < 3) {
+    showMessage(
+      "Username must be at least 3 characters.",
+      "red"
+    );
+    return;
+  }
+
+  if (username.length > 30) {
+    showMessage(
+      "Username must be 30 characters or less.",
+      "red"
+    );
+    return;
+  }
+
+  const usernamePattern =
+    /^[a-zA-Z0-9_]+$/;
+
+  if (!usernamePattern.test(username)) {
+    showMessage(
+      "Username can only contain letters, numbers and underscore.",
+      "red"
+    );
+    return;
+  }
+
+
+  // Normal browser email validation
+  const emailPattern =
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!emailPattern.test(email)) {
+    showMessage(
+      "Please enter a valid email address.",
+      "red"
+    );
+    return;
+  }
+
+
+  if (password.length < 8) {
+    showMessage(
+      "Password must be at least 8 characters.",
+      "red"
+    );
+    return;
+  }
+
+
+  if (password !== confirmPassword) {
+    showMessage(
+      "Passwords do not match.",
+      "red"
+    );
+    return;
+  }
+
+
+  registerButton.disabled = true;
+  registerButton.textContent =
+    "Creating account...";
+
+  showMessage(
+    "Please wait...",
+    "#2563eb"
+  );
+
+
+  try {
+
+    // ================================
+    // CREATE SUPABASE AUTH USER
+    // ================================
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient.auth.signUp({
+
+        email: email,
+
+        password: password,
+
+        options: {
+          data: {
+            username: username
+          }
+        }
+
+      });
+
+
+    if (error) {
+      throw error;
     }
 
-    body {
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: linear-gradient(135deg, #111827, #2563eb);
-      padding: 20px;
+
+    if (!data.user) {
+      throw new Error(
+        "Account could not be created."
+      );
     }
 
-    .register-container {
-      width: 100%;
-      max-width: 420px;
-      background: white;
-      padding: 35px 25px;
-      border-radius: 20px;
-      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
-    }
 
-    .logo {
-      width: 85px;
-      height: 85px;
-      object-fit: contain;
-      display: block;
-      margin: 0 auto 15px;
-    }
+    // =================================
+    // IF EMAIL VERIFICATION IS REQUIRED
+    // =================================
 
-    h1 {
-      text-align: center;
-      color: #111827;
-      margin-bottom: 8px;
-    }
+    if (!data.session) {
 
-    .subtitle {
-      text-align: center;
-      color: #6b7280;
-      margin-bottom: 25px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 7px;
-      font-weight: bold;
-      color: #374151;
-    }
-
-    input {
-      width: 100%;
-      padding: 13px;
-      margin-bottom: 16px;
-      border: 1px solid #d1d5db;
-      border-radius: 10px;
-      font-size: 16px;
-      outline: none;
-    }
-
-    input:focus {
-      border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-
-    .register-btn {
-      width: 100%;
-      padding: 14px;
-      border: none;
-      border-radius: 10px;
-      background: #2563eb;
-      color: white;
-      font-size: 17px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    .register-btn:hover {
-      background: #1d4ed8;
-    }
-
-    .register-btn:disabled {
-      background: #93c5fd;
-      cursor: not-allowed;
-    }
-
-    .message {
-      text-align: center;
-      margin: 12px 0;
-      font-size: 14px;
-      line-height: 1.5;
-      min-height: 21px;
-    }
-
-    .login {
-      text-align: center;
-      margin-top: 20px;
-      color: #6b7280;
-    }
-
-    .login a {
-      color: #2563eb;
-      text-decoration: none;
-      font-weight: bold;
-    }
-
-    .login a:hover {
-      text-decoration: underline;
-    }
-
-    .back {
-      display: block;
-      text-align: center;
-      margin-top: 18px;
-      color: #6b7280;
-      text-decoration: none;
-      font-size: 14px;
-    }
-
-    .back:hover {
-      text-decoration: underline;
-    }
-  </style></head><body>  <div class="register-container"><img
-  src="images/logo.png"
-  class="logo"
-  alt="P2P Social Logo"
-  onerror="this.style.display='none'"
->
-
-<h1>Create Account</h1>
-
-<p class="subtitle">
-  Join P2P Social
-</p>
-
-<form id="registerForm">
-
-  <label for="username">
-    Username
-  </label>
-
-  <input
-    type="text"
-    id="username"
-    placeholder="Choose a username"
-    minlength="3"
-    maxlength="30"
-    autocomplete="username"
-    required
-  >
-
-  <label for="email">
-    Email
-  </label>
-
-  <input
-    type="email"
-    id="email"
-    placeholder="Enter your email"
-    autocomplete="email"
-    required
-  >
-
-  <label for="password">
-    Password
-  </label>
-
-  <input
-    type="password"
-    id="password"
-    placeholder="Create a password"
-    minlength="8"
-    autocomplete="new-password"
-    required
-  >
-
-  <label for="confirmPassword">
-    Confirm Password
-  </label>
-
-  <input
-    type="password"
-    id="confirmPassword"
-    placeholder="Confirm your password"
-    minlength="8"
-    autocomplete="new-password"
-    required
-  >
-
-  <div
-    id="message"
-    class="message"
-    aria-live="polite"
-  ></div>
-
-  <button
-    type="submit"
-    class="register-btn"
-    id="registerButton"
-  >
-    Create Account
-  </button>
-
-</form>
-
-<div class="login">
-  Already have an account?
-  <a href="login.html">
-    Login
-  </a>
-</div>
-
-<a
-  href="index.html"
-  class="back"
->
-  ← Back to Home
-</a>
-
-  </div>  <!-- ==========================================
-       SUPABASE
-       ========================================== -->  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <script>
-
-    // ==========================================
-    // YOUR SUPABASE PROJECT
-    // ==========================================
-
-    const SUPABASE_URL =
-      "https://mbsvuwrgigqfporxwpfr.supabase.co";
-
-    const SUPABASE_PUBLISHABLE_KEY =
-      "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
-
-
-    // ==========================================
-    // CREATE SUPABASE CLIENT
-    // ==========================================
-
-    const supabaseClient =
-      window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_PUBLISHABLE_KEY
+      showMessage(
+        "Account created! Check your email and verify your account.",
+        "green"
       );
 
+      registerButton.textContent =
+        "Account Created";
 
-    // ==========================================
-    // GET HTML ELEMENTS
-    // ==========================================
+      setTimeout(() => {
+        window.location.href =
+          "login.html";
+      }, 3000);
 
-    const registerForm =
-      document.getElementById("registerForm");
-
-    const usernameInput =
-      document.getElementById("username");
-
-    const emailInput =
-      document.getElementById("email");
-
-    const passwordInput =
-      document.getElementById("password");
-
-    const confirmPasswordInput =
-      document.getElementById("confirmPassword");
-
-    const registerButton =
-      document.getElementById("registerButton");
-
-    const message =
-      document.getElementById("message");
-
-
-    // ==========================================
-    // SHOW MESSAGE
-    // ==========================================
-
-    function showMessage(text, color) {
-
-      message.textContent = text;
-      message.style.color = color;
-
+      return;
     }
 
 
-    // ==========================================
-    // REGISTER
-    // ==========================================
+    // =================================
+    // CREATE PROFILE
+    // BALANCE STARTS AT 0
+    // =================================
 
-    registerForm.addEventListener(
-      "submit",
-      async function(event) {
+    const {
+      error: profileError
+    } =
+      await supabaseClient
+        .from("profiles")
+        .insert({
 
-        event.preventDefault();
+          id: data.user.id,
 
+          username: username,
 
-        // Get values
+          balance: 0
 
-        const username =
-          usernameInput.value.trim();
+        });
 
-        const email =
-          emailInput.value.trim().toLowerCase();
 
-        const password =
-          passwordInput.value;
+    if (profileError) {
 
-        const confirmPassword =
-          confirmPasswordInput.value;
+      console.error(
+        "Profile creation error:",
+        profileError
+      );
 
+      // Auth account exists, so don't
+      // pretend registration failed.
+      showMessage(
+        "Account created, but profile setup needs attention.",
+        "orange"
+      );
 
-        // ========================================
-        // VALIDATION
-        // ========================================
+      return;
+    }
 
-        if (username.length < 3) {
 
-          showMessage(
-            "Username must be at least 3 characters.",
-            "red"
-          );
+    // =================================
+    // SUCCESS
+    // =================================
 
-          return;
-        }
-
-
-        // Username characters
-
-        const usernamePattern =
-          /^[a-zA-Z0-9_]+$/;
-
-        if (!usernamePattern.test(username)) {
-
-          showMessage(
-            "Username can only contain letters, numbers and underscore.",
-            "red"
-          );
-
-          return;
-        }
-
-
-        if (password.length < 8) {
-
-          showMessage(
-            "Password must be at least 8 characters.",
-            "red"
-          );
-
-          return;
-        }
-
-
-        if (password !== confirmPassword) {
-
-          showMessage(
-            "Passwords do not match.",
-            "red"
-          );
-
-          return;
-        }
-
-
-        // ========================================
-        // DISABLE BUTTON
-        // ========================================
-
-        registerButton.disabled = true;
-
-        registerButton.textContent =
-          "Creating account...";
-
-        showMessage(
-          "Please wait...",
-          "#2563eb"
-        );
-
-
-        try {
-
-          // ======================================
-          // SUPABASE AUTH SIGN UP
-          // ======================================
-
-          const {
-            data,
-            error
-          } =
-            await supabaseClient.auth.signUp({
-
-              email: email,
-
-              password: password,
-
-              options: {
-
-                data: {
-
-                  username: username
-
-                }
-
-              }
-
-            });
-
-
-          // ======================================
-          // SUPABASE ERROR
-          // ======================================
-
-          if (error) {
-
-            throw error;
-
-          }
-
-
-          // ======================================
-          // SUCCESS
-          // ======================================
-
-          if (!data.user) {
-
-            throw new Error(
-              "Account could not be created."
-            );
-
-          }
-
-
-          // ======================================
-          // EMAIL VERIFICATION ENABLED
-          // ======================================
-
-          if (!data.session) {
-
-            showMessage(
-              "Account created! Please check your email and verify your account.",
-              "green"
-            );
-
-
-            registerButton.textContent =
-              "Account Created";
-
-
-            setTimeout(function() {
-
-              window.location.href =
-                "login.html";
-
-            }, 3000);
-
-
-          }
-
-
-          // ======================================
-          // EMAIL VERIFICATION DISABLED
-          // ======================================
-
-          else {
-
-            showMessage(
-              "Account created successfully! Redirecting...",
-              "green"
-            );
-
-
-            registerButton.textContent =
-              "Success";
-
-
-            setTimeout(function() {
-
-              window.location.href =
-                "dashboard.html";
-
-            }, 1500);
-
-          }
-
-
-        } catch (error) {
-
-          console.error(
-            "Supabase registration error:",
-            error
-          );
-
-
-          let errorMessage =
-            "Registration failed. Please try again.";
-
-
-          if (error.message) {
-
-            errorMessage =
-              error.message;
-
-          }
-
-
-          // Common friendly messages
-
-          if (
-            error.message &&
-            error.message
-              .toLowerCase()
-              .includes("already registered")
-          ) {
-
-            errorMessage =
-              "This email is already registered. Please login.";
-
-          }
-
-
-          if (
-            error.message &&
-            error.message
-              .toLowerCase()
-              .includes("invalid email")
-          ) {
-
-            errorMessage =
-              "Please enter a valid email address.";
-
-          }
-
-
-          if (
-            error.message &&
-            error.message
-              .toLowerCase()
-              .includes("password")
-          ) {
-
-            errorMessage =
-              error.message;
-
-          }
-
-
-          showMessage(
-            errorMessage,
-            "red"
-          );
-
-
-          // Enable button again
-
-          registerButton.disabled =
-            false;
-
-          registerButton.textContent =
-            "Create Account";
-
-        }
-
-      }
+    showMessage(
+      "Account created successfully! Balance: 0 ETB",
+      "green"
     );
 
-  </script></body>
-</html>
+    registerButton.textContent =
+      "Success";
+
+
+    setTimeout(() => {
+
+      window.location.href =
+        "dashboard.html";
+
+    }, 1500);
+
+
+  } catch (error) {
+
+    console.error(
+      "Registration error:",
+      error
+    );
+
+
+    let errorMessage =
+      "Registration failed. Please try again.";
+
+
+    if (error.message) {
+
+      const msg =
+        error.message.toLowerCase();
+
+
+      if (
+        msg.includes("already registered") ||
+        msg.includes("already been registered")
+      ) {
+
+        errorMessage =
+          "This email is already registered. Please login.";
+
+      } else if (
+        msg.includes("invalid email")
+      ) {
+
+        errorMessage =
+          "Please enter a valid email address.";
+
+      } else if (
+        msg.includes("password")
+      ) {
+
+        errorMessage =
+          error.message;
+
+      } else {
+
+        errorMessage =
+          error.message;
+
+      }
+    }
+
+
+    showMessage(
+      errorMessage,
+      "red"
+    );
+
+
+    registerButton.disabled =
+      false;
+
+    registerButton.textContent =
+      "Create Account";
+
+  }
+
+});
+</script>

@@ -12,6 +12,9 @@
 
   <title>Login - P2P Social</title>
 
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 
   <style>
 
@@ -21,7 +24,6 @@
       padding: 0;
       font-family: Arial, sans-serif;
     }
-
 
     body {
       min-height: 100vh;
@@ -40,7 +42,6 @@
       padding: 20px;
     }
 
-
     .login-container {
       width: 100%;
       max-width: 400px;
@@ -56,7 +57,6 @@
         rgba(0,0,0,0.25);
     }
 
-
     .logo {
       width: 85px;
       height: 85px;
@@ -65,10 +65,8 @@
 
       display: block;
 
-      margin:
-        0 auto 15px;
+      margin: 0 auto 15px;
     }
-
 
     h1 {
       text-align: center;
@@ -78,7 +76,6 @@
       margin-bottom: 8px;
     }
 
-
     .subtitle {
       text-align: center;
 
@@ -86,7 +83,6 @@
 
       margin-bottom: 25px;
     }
-
 
     label {
       display: block;
@@ -97,7 +93,6 @@
 
       color: #374151;
     }
-
 
     input {
       width: 100%;
@@ -116,12 +111,9 @@
       outline: none;
     }
 
-
     input:focus {
-      border-color:
-        #2563eb;
+      border-color: #2563eb;
     }
-
 
     .login-btn,
     .google-btn {
@@ -138,31 +130,23 @@
       cursor: pointer;
     }
 
-
     .login-btn {
       border: none;
 
-      background:
-        #2563eb;
+      background: #2563eb;
 
       color: white;
     }
 
-
     .login-btn:hover {
-      background:
-        #1d4ed8;
+      background: #1d4ed8;
     }
-
 
     .login-btn:disabled {
-      background:
-        #93c5fd;
+      background: #93c5fd;
 
-      cursor:
-        not-allowed;
+      cursor: not-allowed;
     }
-
 
     .google-btn {
       display: block;
@@ -181,12 +165,9 @@
       text-decoration: none;
     }
 
-
     .google-btn:hover {
-      background:
-        #f3f4f6;
+      background: #f3f4f6;
     }
-
 
     .divider {
       display: flex;
@@ -202,19 +183,16 @@
       font-size: 14px;
     }
 
-
     .divider::before,
     .divider::after {
       content: "";
 
       height: 1px;
 
-      background:
-        #e5e7eb;
+      background: #e5e7eb;
 
       flex: 1;
     }
-
 
     .message {
       text-align: center;
@@ -226,7 +204,6 @@
       min-height: 18px;
     }
 
-
     .register {
       text-align: center;
 
@@ -235,16 +212,13 @@
       color: #6b7280;
     }
 
-
     .register a {
-      color:
-        #2563eb;
+      color: #2563eb;
 
       text-decoration: none;
 
       font-weight: bold;
     }
-
 
     .back {
       display: block;
@@ -290,11 +264,9 @@
 
     <form id="loginForm">
 
-
       <label for="email">
         Email
       </label>
-
 
       <input
         type="email"
@@ -308,7 +280,6 @@
       <label for="password">
         Password
       </label>
-
 
       <input
         type="password"
@@ -333,7 +304,6 @@
         Login
       </button>
 
-
     </form>
 
 
@@ -342,12 +312,13 @@
     </div>
 
 
-    <a
-      href="/api/auth/google"
+    <button
+      type="button"
+      id="googleButton"
       class="google-btn"
     >
       Continue with Google
-    </a>
+    </button>
 
 
     <div class="register">
@@ -374,66 +345,57 @@
 
   <script>
 
-    const loginForm =
-      document.getElementById(
-        "loginForm"
+    // =========================================
+    // SUPABASE CONFIG
+    // =========================================
+
+    const SUPABASE_URL =
+      "https://mbsvuwrgigqfporxwpfr.supabase.co";
+
+    const SUPABASE_PUBLISHABLE_KEY =
+      "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE";
+
+
+    const supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
       );
 
+
+    // =========================================
+    // ELEMENTS
+    // =========================================
+
+    const loginForm =
+      document.getElementById("loginForm");
 
     const loginButton =
-      document.getElementById(
-        "loginButton"
-      );
+      document.getElementById("loginButton");
 
+    const googleButton =
+      document.getElementById("googleButton");
 
     const message =
-      document.getElementById(
-        "message"
-      );
+      document.getElementById("message");
 
 
-    const params =
-      new URLSearchParams(
-        window.location.search
-      );
+    // =========================================
+    // MESSAGE
+    // =========================================
 
+    function showMessage(text, color) {
 
-    if (
-      params.get("google") ===
-      "success"
-    ) {
+      message.textContent = text;
 
-      message.textContent =
-        "Google login successful!";
-
-      message.style.color =
-        "green";
-
-
-      setTimeout(
-        () => {
-          window.location.href =
-            "profile.html";
-        },
-        500
-      );
+      message.style.color = color;
 
     }
 
 
-    if (
-      params.get("google") ===
-      "cancelled"
-    ) {
-
-      message.textContent =
-        "Google login was cancelled.";
-
-      message.style.color =
-        "red";
-
-    }
-
+    // =========================================
+    // EMAIL + PASSWORD LOGIN
+    // =========================================
 
     loginForm.addEventListener(
       "submit",
@@ -455,70 +417,59 @@
             .value;
 
 
-        loginButton.disabled =
-          true;
+        loginButton.disabled = true;
 
         loginButton.textContent =
           "Logging in...";
 
 
-        message.textContent =
-          "Please wait...";
-
-        message.style.color =
-          "#2563eb";
+        showMessage(
+          "Please wait...",
+          "#2563eb"
+        );
 
 
         try {
 
-          const response =
-            await fetch(
-              "/api/login",
-              {
-                method: "POST",
+          const {
+            data,
+            error
+          } =
+          await supabaseClient.auth
+            .signInWithPassword({
 
-                headers: {
-                  "Content-Type":
-                    "application/json"
-                },
+              email: email,
 
-                credentials:
-                  "include",
+              password: password
 
-                body:
-                  JSON.stringify({
-                    email,
-                    password
-                  })
-              }
-            );
+            });
 
 
-          const data =
-            await response.json();
+          if (error) {
 
-
-          if (!response.ok) {
-
-            throw new Error(
-              data.message ||
-              "Login failed."
-            );
+            throw error;
 
           }
 
 
-          message.textContent =
-            "Login successful!";
+          console.log(
+            "Logged in user:",
+            data.user
+          );
 
-          message.style.color =
-            "green";
+
+          showMessage(
+            "Login successful!",
+            "green"
+          );
 
 
           setTimeout(
-            () => {
+            function() {
+
               window.location.href =
                 "profile.html";
+
             },
             500
           );
@@ -526,22 +477,18 @@
 
         } catch (error) {
 
-          console.error(
-            error
+          console.error(error);
+
+
+          showMessage(
+            error.message ||
+            "Login failed.",
+            "red"
           );
-
-
-          message.textContent =
-            error.message;
-
-
-          message.style.color =
-            "red";
 
 
           loginButton.disabled =
             false;
-
 
           loginButton.textContent =
             "Login";
@@ -550,6 +497,92 @@
 
       }
     );
+
+
+    // =========================================
+    // GOOGLE LOGIN
+    // =========================================
+
+    googleButton.addEventListener(
+      "click",
+      async function() {
+
+        googleButton.disabled = true;
+
+        googleButton.textContent =
+          "Connecting to Google...";
+
+
+        const {
+          error
+        } =
+        await supabaseClient.auth
+          .signInWithOAuth({
+
+            provider: "google",
+
+            options: {
+
+              redirectTo:
+                window.location.origin +
+                "/profile.html"
+
+            }
+
+          });
+
+
+        if (error) {
+
+          console.error(error);
+
+
+          showMessage(
+            error.message ||
+            "Google login failed.",
+            "red"
+          );
+
+
+          googleButton.disabled =
+            false;
+
+          googleButton.textContent =
+            "Continue with Google";
+
+        }
+
+      }
+    );
+
+
+    // =========================================
+    // CHECK EXISTING SESSION
+    // =========================================
+
+    async function checkSession() {
+
+      const {
+        data: {
+          session
+        }
+      } =
+      await supabaseClient.auth
+        .getSession();
+
+
+      if (session) {
+
+        window.location.href =
+          "profile.html";
+
+      }
+
+    }
+
+
+    checkSession();
+
 
   </script>
 

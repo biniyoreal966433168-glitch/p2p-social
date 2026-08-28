@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Register - P2P Social</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #111827, #2563eb);
+      padding: 20px;
+    }
+
+    .register-container {
+      width: 100%;
+      max-width: 420px;
+      background: white;
+      padding: 35px 25px;
+      border-radius: 20px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+    }
+
+    .logo {
+      width: 85px;
+      height: 85px;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto 15px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #111827;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #6b7280;
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-weight: bold;
+      color: #374151;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px;
+      margin-bottom: 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #2563eb;
+    }
+
+    .register-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      background: #2563eb;
+      color: white;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .register-btn:hover {
+      background: #1d4ed8;
+    }
+
+    .register-btn:disabled {
+      background: #93c5fd;
+      cursor: not-allowed;
+    }
+
+    .message {
+      text-align: center;
+      margin: 12px 0;
+      font-size: 14px;
+    }
+
+    .login {
+      text-align: center;
+      margin-top: 20px;
+      color: #6b7280;
+    }
+
+    .login a {
+      color: #2563eb;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .back {
+      display: block;
+      text-align: center;
+      margin-top: 18px;
+      color: #6b7280;
+      text-decoration: none;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="register-container">
+
+    <img
+      src="images/logo.png"
+      class="logo"
+      alt="P2P Social Logo"
+    >
+
+    <h1>Create Account</h1>
+
+    <p class="subtitle">
+      Join P2P Social
+    </p>
+
+    <form id="registerForm">
+
+      <label for="username">Username</label>
+
+      <input
+        type="text"
+        id="username"
+        placeholder="Choose a username"
+        minlength="3"
+        required
+      >
+
+      <label for="email">Email</label>
+
+      <input
+        type="email"
+        id="email"
+        placeholder="Enter your email"
+        required
+      >
+
+      <label for="password">Password</label>
+
+      <input
+        type="password"
+        id="password"
+        placeholder="Create a password"
+        minlength="8"
+        required
+      >
+
+      <label for="confirmPassword">Confirm Password</label>
+
+      <input
+        type="password"
+        id="confirmPassword"
+        placeholder="Confirm your password"
+        minlength="8"
+        required
+      >
+
+      <div id="message" class="message"></div>
+
+      <button
+        type="submit"
+        class="register-btn"
+        id="registerButton"
+      >
+        Create Account
+      </button>
+
+    </form>
+
+    <div class="login">
+      Already have an account?
+      <a href="login.html">Login</a>
+    </div>
+
+    <a href="index.html" class="back">
+      ← Back to Home
+    </a>
+
+  </div>
+
+  <script>
+
+    const registerForm =
+      document.getElementById("registerForm");
+
+    const message =
+      document.getElementById("message");
+
+    const registerButton =
+      document.getElementById("registerButton");
+
+
+    registerForm.addEventListener(
+      "submit",
+      async function(event) {
+
+        event.preventDefault();
+
+        const username =
+          document.getElementById("username")
+            .value.trim();
+
+        const email =
+          document.getElementById("email")
+            .value.trim();
+
+        const password =
+          document.getElementById("password")
+            .value;
+
+        const confirmPassword =
+          document.getElementById("confirmPassword")
+            .value;
+
+
+        if (password !== confirmPassword) {
+
+          message.textContent =
+            "Passwords do not match.";
+
+          message.style.color = "red";
+
+          return;
+        }
+
+
+        registerButton.disabled = true;
+
+        registerButton.textContent =
+          "Creating account...";
+
+        message.textContent =
+          "Please wait...";
+
+        message.style.color =
+          "#2563eb";
+
+
+        try {
+
+          const response =
+            await fetch("/api/register", {
+
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              body: JSON.stringify({
+                username: username,
+                email: email,
+                password: password
+              })
+
+            });
+
+
+          /*
+           * Read the response safely.
+           * This prevents:
+           * Unexpected token 'T'
+           */
+
+          const text =
+            await response.text();
+
+          let result;
+
+          try {
+
+            result =
+              JSON.parse(text);
+
+          } catch (jsonError) {
+
+            console.error(
+              "Server returned:",
+              text
+            );
+
+            throw new Error(
+              "Server error: " +
+              text.substring(0, 150)
+            );
+
+          }
+
+
+          if (!response.ok) {
+
+            throw new Error(
+              result.message ||
+              "Registration failed."
+            );
+
+          }
+
+
+          message.textContent =
+            "Account created successfully!";
+
+          message.style.color =
+            "green";
+
+
+          /*
+           * Go to login page
+           */
+
+          setTimeout(function() {
+
+            window.location.href =
+              "login.html";
+
+          }, 1000);
+
+
+        } catch (error) {
+
+          console.error(
+            "Registration error:",
+            error
+          );
+
+          message.textContent =
+            error.message ||
+            "Something went wrong.";
+
+          message.style.color =
+            "red";
+
+          registerButton.disabled =
+            false;
+
+          registerButton.textContent =
+            "Create Account";
+
+        }
+
+      }
+    );
+
+  </script>
+
+</body>
+</html>

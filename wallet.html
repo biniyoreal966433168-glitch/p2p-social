@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Wallet • P2P Social</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #07090D;
+      color: #fff;
+      min-height: 100vh;
+      padding-bottom: 85px;
+    }
+
+    /* HEADER */
+
+    header {
+      height: 64px;
+      background: #0D1016;
+      border-bottom: 1px solid #202632;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 19px;
+      font-weight: bold;
+    }
+
+    .brand img {
+      width: 38px;
+      height: 38px;
+      object-fit: contain;
+    }
+
+    .security {
+      color: #00C2FF;
+      font-size: 13px;
+    }
+
+    /* PAGE */
+
+    .container {
+      width: 100%;
+      max-width: 850px;
+      margin: auto;
+      padding: 18px;
+    }
+
+    /* BALANCE */
+
+    .balance-card {
+      background:
+        linear-gradient(
+          135deg,
+          #101D38,
+          #0D2945
+        );
+      border: 1px solid #214B82;
+      border-radius: 18px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .balance-card::after {
+      content: "";
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      right: -70px;
+      top: -70px;
+      border-radius: 50%;
+      background: rgba(0,194,255,0.10);
+    }
+
+    .label {
+      color: #8EA6C7;
+      font-size: 13px;
+    }
+
+    .balance {
+      font-size: 34px;
+      font-weight: bold;
+      margin: 8px 0;
+    }
+
+    .available {
+      color: #8EA6C7;
+      font-size: 13px;
+    }
+
+    /* ACTIONS */
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    .quick-actions button {
+      padding: 14px 8px;
+      background: #11141B;
+      color: #fff;
+      border: 1px solid #242936;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .quick-actions button:hover {
+      border-color: #2F80FF;
+    }
+
+    .icon {
+      display: block;
+      font-size: 21px;
+      margin-bottom: 5px;
+    }
+
+    /* P2P */
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 22px 0 12px;
+    }
+
+    .section-title h2 {
+      font-size: 20px;
+    }
+
+    .section-title span {
+      color: #00C2FF;
+      font-size: 13px;
+    }
+
+    .trade-card {
+      background: #0F1218;
+      border: 1px solid #202632;
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    .tabs {
+      display: flex;
+      background: #171B23;
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 18px;
+    }
+
+    .tab {
+      width: 50%;
+      padding: 11px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: #8D96A8;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .tab.active {
+      background: #2F80FF;
+      color: white;
+    }
+
+    .trade-row {
+      margin-bottom: 15px;
+    }
+
+    .trade-row label {
+      display: block;
+      color: #8D96A8;
+      font-size: 13px;
+      margin-bottom: 7px;
+    }
+
+    .input-box {
+      display: flex;
+      align-items: center;
+      background: #171B23;
+      border: 1px solid #2A3140;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .input-box input {
+      width: 100%;
+      padding: 13px;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: white;
+      font-size: 16px;
+    }
+
+    .currency {
+      padding: 0 13px;
+      color: #00C2FF;
+      font-weight: bold;
+    }
+
+    .trade-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(
+        135deg,
+        #2F80FF,
+        #00C2FF
+      );
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    /* OFFERS */
+
+    .offer {
+      background: #0F1218;
+      border: 1px solid #202632;
+      border-radius: 15px;
+      padding: 16px;
+      margin-bottom: 10px;
+    }
+
+    .offer-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .seller {
+      font-weight: bold;
+    }
+
+    .online {
+      color: #25D366;
+      font-size: 12px;
+    }
+
+    .price {
+      font-size: 19px;
+      font-weight: bold;
+      color: #00C2FF;
+    }
+
+    .offer-info {
+      display: flex;
+      justify-content: space-between;
+      color: #858EA0;
+      font-size: 12px;
+      margin-bottom: 13px;
+    }
+
+    .buy-btn {
+      width: 100%;
+      padding: 11px;
+      border: none;
+      border-radius: 9px;
+      background: #1B5E3B;
+      color: #7CFFB2;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    /* TRANSACTIONS */
+
+    .transaction {
+      background: #0F1218;
+      border: 1px solid #202632;
+      border-radius: 13px;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 9px;
+    }
+
+    .transaction-left {
+      display: flex;
+      gap: 11px;
+      align-items: center;
+    }
+
+    .transaction-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #182D24;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .transaction-title {
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .transaction-date {
+      color: #697386;
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    .transaction-amount {
+      color: #35D07F;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .empty {
+      text-align: center;
+      color: #697386;
+      padding: 20px;
+    }
+
+    /* BOTTOM NAV */
+
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 70px;
+      background: #0D1016;
+      border-top: 1px solid #202632;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 30;
+    }
+
+    .bottom-nav a {
+      color: #697386;
+      text-decoration: none;
+      text-align: center;
+      font-size: 11px;
+    }
+
+    .bottom-nav a.active {
+      color: #00C2FF;
+      font-weight: bold;
+    }
+
+    .nav-icon {
+      display: block;
+      font-size: 21px;
+      margin-bottom: 4px;
+    }
+
+    .live-nav {
+      color: #FF3158 !important;
+    }
+
+    /* MOBILE */
+
+    @media (max-width: 450px) {
+
+      .quick-actions {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .quick-actions button {
+        font-size: 11px;
+      }
+
+      .balance {
+        font-size: 30px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- HEADER -->
+
+  <header>
+
+    <div class="brand">
+
+      <img
+        src="images/logo.png"
+        alt="P2P Social"
+      >
+
+      <span>P2P Social</span>
+
+    </div>
+
+    <div class="security">
+      🔒 Secure
+    </div>
+
+  </header>
+
+
+  <main class="container">
+
+    <!-- BALANCE -->
+
+    <section class="balance-card">
+
+      <div class="label">
+        TOTAL WALLET BALANCE
+      </div>
+
+      <div
+        class="balance"
+        id="balance">
+        0.00 ETB
+      </div>
+
+      <div class="available">
+        Available for P2P trading
+      </div>
+
+    </section>
+
+
+    <!-- QUICK ACTIONS -->
+
+    <div class="quick-actions">
+
+      <button onclick="deposit()">
+        <span class="icon">＋</span>
+        Deposit
+      </button>
+
+      <button onclick="withdraw()">
+        <span class="icon">↗</span>
+        Withdraw
+      </button>
+
+      <button onclick="history()">
+        <span class="icon">◷</span>
+        History
+      </button>
+
+    </div>
+
+
+    <!-- P2P TRADE -->
+
+    <div class="section-title">
+
+      <h2>
+        P2P Trading
+      </h2>
+
+      <span>
+        USDT / ETB
+      </span>
+
+    </div>
+
+
+    <section class="trade-card">
+
+      <div class="tabs">
+
+        <button
+          class="tab active"
+          id="buyTab"
+          onclick="selectTrade('buy')">
+          Buy
+        </button>
+
+        <button
+          class="tab"
+          id="sellTab"
+          onclick="selectTrade('sell')">
+          Sell
+        </button>
+
+      </div>
+
+
+      <div class="trade-row">
+
+        <label>
+          Amount
+        </label>
+
+        <div class="input-box">
+
+          <input
+            type="number"
+            id="amount"
+            placeholder="0.00"
+            min="0"
+            step="0.01"
+          >
+
+          <span
+            class="currency"
+            id="currency">
+            ETB
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <div class="trade-row">
+
+        <label>
+          Payment method
+        </label>
+
+        <div class="input-box">
+
+          <input
+            type="text"
+            value="Select payment method"
+            readonly
+            onclick="paymentMethod()"
+          >
+
+        </div>
+
+      </div>
+
+
+      <button
+        class="trade-btn"
+        id="tradeButton"
+        onclick="startTrade()">
+        Find USDT Offers
+      </button>
+
+    </section>
+
+
+    <!-- OFFERS -->
+
+    <div class="section-title">
+
+      <h2>
+        Available Offers
+      </h2>
+
+      <span>
+        Live
+      </span>
+
+    </div>
+
+
+    <section id="offers">
+
+      <div class="offer">
+
+        <div class="offer-top">
+
+          <div>
+            <div class="seller">
+              @TraderOne
+            </div>
+
+            <div class="online">
+              ● Online
+            </div>
+          </div>
+
+          <div class="price">
+            198.50 ETB
+          </div>
+
+        </div>
+
+        <div class="offer-info">
+
+          <span>
+            Limit: 1,000 - 50,000 ETB
+          </span>
+
+          <span>
+            99.8% completion
+          </span>
+
+        </div>
+
+        <button
+          class="buy-btn"
+          onclick="selectOffer('@TraderOne')">
+          Buy USDT
+        </button>
+
+      </div>
+
+
+      <div class="offer">
+
+        <div class="offer-top">
+
+          <div>
+            <div class="seller">
+              @FastTrader
+            </div>
+
+            <div class="online">
+              ● Online
+            </div>
+          </div>
+
+          <div class="price">
+            199.10 ETB
+          </div>
+
+        </div>
+
+        <div class="offer-info">
+
+          <span>
+            Limit: 2,000 - 100,000 ETB
+          </span>
+
+          <span>
+            99.5% completion
+          </span>
+
+        </div>
+
+        <button
+          class="buy-btn"
+          onclick="selectOffer('@FastTrader')">
+          Buy USDT
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- TRANSACTIONS -->
+
+    <div class="section-title">
+
+      <h2>
+        Recent Transactions
+      </h2>
+
+      <span>
+        View all
+      </span>
+
+    </div>
+
+
+    <section id="transactions">
+
+      <div class="transaction">
+
+        <div class="transaction-left">
+
+          <div class="transaction-icon">
+            ↓
+          </div>
+
+          <div>
+
+            <div class="transaction-title">
+              Deposit
+            </div>
+
+            <div class="transaction-date">
+              No transactions yet
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="transaction-amount">
+          —
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- BOTTOM NAV -->
+
+  <nav class="bottom-nav">
+
+    <a href="index.html">
+
+      <span class="nav-icon">
+        ⌂
+      </span>
+
+      Home
+
+    </a>
+
+
+    <a
+      href="live.html"
+      class="live-nav">
+
+      <span class="nav-icon">
+        ●
+      </span>
+
+      Live
+
+    </a>
+
+
+    <a
+      href="wallet.html"
+      class="active">
+
+      <span class="nav-icon">
+        ◇
+      </span>
+
+      P2P
+
+    </a>
+
+
+    <a href="messages.html">
+
+      <span class="nav-icon">
+        □
+      </span>
+
+      Messages
+
+    </a>
+
+
+    <a href="profile.html">
+
+      <span class="nav-icon">
+        ○
+      </span>
+
+      Profile
+
+    </a>
+
+  </nav>
+
+
+  <script
+
+    let tradeType = "buy";
+
+
+    /* BUY / SELL */
+
+    function selectTrade(type) {
+
+      tradeType = type;
+
+      const buyTab =
+        document.getElementById("buyTab");
+
+      const sellTab =
+        document.getElementById("sellTab");
+
+      const currency =
+        document.getElementById("currency");
+
+      const tradeButton =
+        document.getElementById("tradeButton");
+
+      if (type === "buy") {
+
+        buyTab.classList.add("active");
+        sellTab.classList.remove("active");
+
+        currency.textContent = "ETB";
+
+        tradeButton.textContent =
+          "Find USDT Offers";
+
+      } else {
+
+        sellTab.classList.add("active");
+        buyTab.classList.remove("active");
+
+        currency.textContent = "USDT";
+
+        tradeButton.textContent =
+          "Find Buyers";
+
+      }
+
+    }
+
+
+    /* START TRADE */
+
+    function startTrade() {
+
+      const amount =
+        document.getElementById("amount").value;
+
+      if (!amount || Number(amount) <= 0) {
+
+        alert(
+          "Please enter a valid amount."
+        );
+
+        return;
+      }
+
+      if (tradeType === "buy") {
+
+        alert(
+          "Searching for USDT offers..."
+        );
+
+      } else {
+
+        alert(
+          "Searching for buyers..."
+        );
+
+      }
+
+    }
+
+
+    /* PAYMENT METHOD */
+
+    function paymentMethod() {
+
+      alert(
+        "Payment methods will be connected to your backend."
+      );
+
+    }
+
+
+    /* OFFER */
+
+    function selectOffer(username) {
+
+      alert(
+        "You selected an offer from " +
+        username +
+        "."
+      );
+
+    }
+
+
+    /* DEPOSIT */
+
+    function deposit() {
+
+      alert(
+        "Deposit will be connected to your payment system."
+      );
+
+    }
+
+
+    /* WITHDRAW */
+
+    function withdraw() {
+
+      alert(
+        "Withdraw will be connected to your secure wallet system."
+      );
+
+    }
+
+
+    /* HISTORY */
+
+    function history() {
+
+      document.getElementById(
+        "transactions"
+      ).scrollIntoView({
+        behavior: "smooth"
+      });
+
+    }
+
+  </script>
+
+</body>
+</html>

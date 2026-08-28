@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Messages • P2P Social</title>
+
+  <link rel="stylesheet" href="css/style.css">
+
+  <style>
+    body {
+      padding-bottom: 85px;
+    }
+
+    .messages-page {
+      max-width: 850px;
+      margin: auto;
+      padding: 18px;
+    }
+
+    /* TITLE */
+
+    .messages-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .messages-title h1 {
+      font-size: 25px;
+    }
+
+    .new-message {
+      width: 42px;
+      height: 42px;
+      border: none;
+      border-radius: 50%;
+      background: linear-gradient(
+        135deg,
+        #2F80FF,
+        #00C2FF
+      );
+      color: white;
+      font-size: 23px;
+      cursor: pointer;
+    }
+
+    /* SEARCH */
+
+    .search-box {
+      margin-bottom: 17px;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 14px 16px;
+
+      background: #11141B;
+      color: white;
+
+      border: 1px solid #242936;
+      border-radius: 12px;
+
+      outline: none;
+    }
+
+    .search-box input:focus {
+      border-color: #00C2FF;
+    }
+
+    /* FILTERS */
+
+    .filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 15px;
+      overflow-x: auto;
+    }
+
+    .filter {
+      white-space: nowrap;
+      border: 1px solid #242936;
+      background: #11141B;
+      color: #8D96A8;
+
+      padding: 9px 15px;
+      border-radius: 20px;
+
+      cursor: pointer;
+    }
+
+    .filter.active {
+      background: #2F80FF;
+      color: white;
+      border-color: #2F80FF;
+    }
+
+    /* CHAT LIST */
+
+    .chat-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .chat-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      padding: 14px;
+
+      background: #0F1218;
+      border: 1px solid #202632;
+      border-radius: 14px;
+
+      text-decoration: none;
+      color: white;
+
+      cursor: pointer;
+    }
+
+    .chat-item:hover {
+      border-color: #2F80FF;
+      background: #121721;
+    }
+
+    /* AVATAR */
+
+    .avatar {
+      width: 50px;
+      height: 50px;
+
+      border-radius: 50%;
+      object-fit: cover;
+
+      background: #202632;
+
+      flex-shrink: 0;
+    }
+
+    .avatar-wrapper {
+      position: relative;
+    }
+
+    .online-dot {
+      position: absolute;
+      right: 1px;
+      bottom: 2px;
+
+      width: 12px;
+      height: 12px;
+
+      background: #35D07F;
+      border: 2px solid #0F1218;
+      border-radius: 50%;
+    }
+
+    /* CHAT INFO */
+
+    .chat-info {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .chat-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .chat-name {
+      font-weight: bold;
+      font-size: 15px;
+    }
+
+    .chat-time {
+      color: #697386;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .chat-preview {
+      color: #858EA0;
+      font-size: 13px;
+
+      margin-top: 5px;
+
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* UNREAD */
+
+    .unread {
+      min-width: 21px;
+      height: 21px;
+
+      padding: 0 6px;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      background: #2F80FF;
+      color: white;
+
+      border-radius: 50%;
+
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    /* EMPTY */
+
+    .empty {
+      display: none;
+      text-align: center;
+      padding: 50px 20px;
+      color: #697386;
+    }
+
+    .empty-icon {
+      font-size: 45px;
+      margin-bottom: 10px;
+    }
+
+    /* BOTTOM NAV */
+
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+
+      height: 70px;
+
+      background: #0D1016;
+      border-top: 1px solid #202632;
+
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+
+      z-index: 100;
+    }
+
+    .bottom-nav a {
+      color: #697386;
+      text-decoration: none;
+      text-align: center;
+      font-size: 11px;
+    }
+
+    .bottom-nav a.active {
+      color: #FFFFFF;
+    }
+
+    .nav-icon {
+      display: block;
+      font-size: 21px;
+      margin-bottom: 4px;
+    }
+
+    .live-nav {
+      color: #FF3158 !important;
+    }
+
+    .p2p-nav {
+      color: #00C2FF !important;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- HEADER -->
+
+  <header>
+
+    <div class="brand">
+
+      <img
+        src="images/logo.png"
+        alt="P2P Social"
+      >
+
+      <span>P2P Social</span>
+
+    </div>
+
+  </header>
+
+
+  <!-- MESSAGES -->
+
+  <main class="messages-page">
+
+    <div class="messages-title">
+
+      <h1>
+        Messages
+      </h1>
+
+      <button
+        class="new-message"
+        onclick="newMessage()">
+        +
+      </button>
+
+    </div>
+
+
+    <!-- SEARCH -->
+
+    <div class="search-box">
+
+      <input
+        type="search"
+        id="searchInput"
+        placeholder="Search messages..."
+        oninput="searchChats()"
+      >
+
+    </div>
+
+
+    <!-- FILTERS -->
+
+    <div class="filters">
+
+      <button
+        class="filter active"
+        onclick="filterChats('all', this)">
+        All
+      </button>
+
+      <button
+        class="filter"
+        onclick="filterChats('unread', this)">
+        Unread
+      </button>
+
+      <button
+        class="filter"
+        onclick="filterChats('online', this)">
+        Online
+      </button>
+
+    </div>
+
+
+    <!-- CHAT LIST -->
+
+    <div
+      class="chat-list"
+      id="chatList">
+
+
+      <!-- CHAT 1 -->
+
+      <div
+        class="chat-item"
+        data-name="Abebe Trader"
+        data-status="online"
+        data-unread="2"
+        onclick="openChat('Abebe Trader')">
+
+        <div class="avatar-wrapper">
+
+          <img
+            src="images/profile.png"
+            class="avatar"
+            alt="Abebe Trader"
+          >
+
+          <span class="online-dot"></span>
+
+        </div>
+
+
+        <div class="chat-info">
+
+          <div class="chat-top">
+
+            <span class="chat-name">
+              Abebe Trader
+            </span>
+
+            <span class="chat-time">
+              10:42
+            </span>
+
+          </div>
+
+          <div class="chat-preview">
+            Your P2P order has been confirmed.
+          </div>
+
+        </div>
+
+
+        <span class="unread">
+          2
+        </span>
+
+      </div>
+
+
+      <!-- CHAT 2 -->
+
+      <div
+        class="chat-item"
+        data-name="Sara Crypto"
+        data-status="online"
+        data-unread="1"
+        onclick="openChat('Sara Crypto')">
+
+        <div class="avatar-wrapper">
+
+          <img
+            src="images/profile.png"
+            class="avatar"
+            alt="Sara Crypto"
+          >
+
+          <span class="online-dot"></span>
+
+        </div>
+
+
+        <div class="chat-info">
+
+          <div class="chat-top">
+
+            <span class="chat-name">
+              Sara Crypto
+            </span>
+
+            <span class="chat-time">
+              09:18
+            </span>
+
+          </div>
+
+          <div class="chat-preview">
+            Is the USDT offer still available?
+          </div>
+
+        </div>
+
+
+        <span class="unread">
+          1
+        </span>
+
+      </div>
+
+
+      <!-- CHAT 3 -->
+
+      <div
+        class="chat-item"
+        data-name="P2P Community"
+        data-status="offline"
+        data-unread="0"
+        onclick="openChat('P2P Community')">
+
+        <div class="avatar-wrapper">
+
+          <img
+            src="images/profile.png"
+            class="avatar"
+            alt="P2P Community"
+          >
+
+        </div>
+
+
+        <div class="chat-info">
+
+          <div class="chat-top">
+
+            <span class="chat-name">
+              P2P Community
+            </span>
+
+            <span class="chat-time">
+              Yesterday
+            </span>
+
+          </div>
+
+          <div class="chat-preview">
+            Welcome to the P2P Social community!
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- CHAT 4 -->
+
+      <div
+        class="chat-item"
+        data-name="Fast Trader"
+        data-status="offline"
+        data-unread="0"
+        onclick="openChat('Fast Trader')">
+
+        <div class="avatar-wrapper">
+
+          <img
+            src="images/profile.png"
+            class="avatar"
+            alt="Fast Trader"
+          >
+
+        </div>
+
+
+        <div class="chat-info">
+
+          <div class="chat-top">
+
+            <span class="chat-name">
+              Fast Trader
+            </span>
+
+            <span class="chat-time">
+              Monday
+            </span>
+
+          </div>
+
+          <div class="chat-preview">
+            Payment received. Thank you!
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- EMPTY -->
+
+    <div
+      class="empty"
+      id="empty">
+
+      <div class="empty-icon">
+        💬
+      </div>
+
+      <p>
+        No conversations found.
+      </p>
+
+    </div>
+
+  </main>
+
+
+  <!-- BOTTOM NAV -->
+
+  <nav class="bottom-nav">
+
+    <a href="index.html">
+
+      <span class="nav-icon">
+        ⌂
+      </span>
+
+      Home
+
+    </a>
+
+
+    <a
+      href="live.html"
+      class="live-nav">
+
+      <span class="nav-icon">
+        ●
+      </span>
+
+      Live
+
+    </a>
+
+
+    <a
+      href="wallet.html"
+      class="p2p-nav">
+
+      <span class="nav-icon">
+        ◇
+      </span>
+
+      P2P
+
+    </a>
+
+
+    <a
+      href="messages.html"
+      class="active">
+
+      <span class="nav-icon">
+        □
+      </span>
+
+      Messages
+
+    </a>
+
+
+    <a href="profile.html">
+
+      <span class="nav-icon">
+        ○
+      </span>
+
+      Profile
+
+    </a>
+
+  </nav>
+
+
+  <script
+
+    /* OPEN CHAT */
+
+    function openChat(name) {
+
+      alert(
+        "Opening conversation with " +
+        name
+      );
+
+    }
+
+
+    /* NEW MESSAGE */
+
+    function newMessage() {
+
+      const username =
+        prompt(
+          "Enter username to message:"
+        );
+
+      if (username) {
+
+        alert(
+          "Starting conversation with @" +
+          username
+        );
+
+      }
+
+    }
+
+
+    /* SEARCH */
+
+    function searchChats() {
+
+      const query =
+        document
+          .getElementById("searchInput")
+          .value
+          .toLowerCase();
+
+      const chats =
+        document.querySelectorAll(
+          ".chat-item"
+        );
+
+      let found = false;
+
+      chats.forEach(chat => {
+
+        const name =
+          chat
+            .dataset
+            .name
+            .toLowerCase();
+
+        if (name.includes(query)) {
+
+          chat.style.display = "flex";
+          found = true;
+
+        } else {
+
+          chat.style.display = "none";
+
+        }
+
+      });
+
+      document.getElementById(
+        "empty"
+      ).style.display =
+        found ? "none" : "block";
+
+    }
+
+
+    /* FILTER */
+
+    function filterChats(type, button) {
+
+      document
+        .querySelectorAll(".filter")
+        .forEach(btn => {
+          btn.classList.remove("active");
+        });
+
+      button.classList.add("active");
+
+      const chats =
+        document.querySelectorAll(
+          ".chat-item"
+        );
+
+      let found = false;
+
+      chats.forEach(chat => {
+
+        const unread =
+          Number(chat.dataset.unread);
+
+        const status =
+          chat.dataset.status;
+
+        let show = true;
+
+        if (type === "unread") {
+          show = unread > 0;
+        }
+
+        if (type === "online") {
+          show = status === "online";
+        }
+
+        chat.style.display =
+          show ? "flex" : "none";
+
+        if (show) {
+          found = true;
+        }
+
+      });
+
+      document.getElementById(
+        "empty"
+      ).style.display =
+        found ? "none" : "block";
+
+    }
+
+  </script>
+
+</body>
+</html>

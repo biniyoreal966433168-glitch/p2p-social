@@ -12,8 +12,9 @@
 
   <title>Login - P2P Social</title>
 
-  <!-- Supabase -->
+  <!-- Supabase JavaScript -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 
   <style>
 
@@ -23,6 +24,7 @@
       padding: 0;
       font-family: Arial, sans-serif;
     }
+
 
     body {
       min-height: 100vh;
@@ -41,6 +43,7 @@
       padding: 20px;
     }
 
+
     .login-container {
       width: 100%;
       max-width: 400px;
@@ -56,6 +59,7 @@
         rgba(0,0,0,0.25);
     }
 
+
     .logo {
       width: 85px;
       height: 85px;
@@ -67,6 +71,7 @@
       margin: 0 auto 15px;
     }
 
+
     h1 {
       text-align: center;
 
@@ -75,6 +80,7 @@
       margin-bottom: 8px;
     }
 
+
     .subtitle {
       text-align: center;
 
@@ -82,6 +88,7 @@
 
       margin-bottom: 25px;
     }
+
 
     label {
       display: block;
@@ -92,6 +99,7 @@
 
       color: #374151;
     }
+
 
     input {
       width: 100%;
@@ -110,9 +118,11 @@
       outline: none;
     }
 
+
     input:focus {
       border-color: #2563eb;
     }
+
 
     .login-btn,
     .google-btn {
@@ -129,6 +139,7 @@
       cursor: pointer;
     }
 
+
     .login-btn {
       border: none;
 
@@ -137,15 +148,18 @@
       color: white;
     }
 
+
     .login-btn:hover {
       background: #1d4ed8;
     }
+
 
     .login-btn:disabled {
       background: #93c5fd;
 
       cursor: not-allowed;
     }
+
 
     .google-btn {
       display: block;
@@ -160,17 +174,22 @@
       color: #111827;
 
       text-align: center;
+
+      text-decoration: none;
     }
+
 
     .google-btn:hover {
       background: #f3f4f6;
     }
+
 
     .google-btn:disabled {
       opacity: 0.6;
 
       cursor: not-allowed;
     }
+
 
     .divider {
       display: flex;
@@ -186,17 +205,18 @@
       font-size: 14px;
     }
 
+
     .divider::before,
     .divider::after {
       content: "";
 
       height: 1px;
 
-      background:
-        #e5e7eb;
+      background: #e5e7eb;
 
       flex: 1;
     }
+
 
     .message {
       text-align: center;
@@ -208,6 +228,7 @@
       min-height: 18px;
     }
 
+
     .register {
       text-align: center;
 
@@ -216,14 +237,15 @@
       color: #6b7280;
     }
 
+
     .register a {
-      color:
-        #2563eb;
+      color: #2563eb;
 
       text-decoration: none;
 
       font-weight: bold;
     }
+
 
     .back {
       display: block;
@@ -361,5 +383,299 @@
     const SUPABASE_URL =
       "https://mbsvuwrgigqfporxwpfr.supabase.co";
 
+
     const SUPABASE_PUBLISHABLE_KEY =
-      "sb_publishable_iclqtQ
+      "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
+
+
+    // Create Supabase client
+    const supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
+      );
+
+
+    // =========================================
+    // GET HTML ELEMENTS
+    // =========================================
+
+    const loginForm =
+      document.getElementById("loginForm");
+
+
+    const loginButton =
+      document.getElementById("loginButton");
+
+
+    const googleButton =
+      document.getElementById("googleButton");
+
+
+    const message =
+      document.getElementById("message");
+
+
+    // =========================================
+    // SHOW MESSAGE
+    // =========================================
+
+    function showMessage(
+      text,
+      color
+    ) {
+
+      message.textContent = text;
+
+      message.style.color = color;
+
+    }
+
+
+    // =========================================
+    // EMAIL + PASSWORD LOGIN
+    // =========================================
+
+    loginForm.addEventListener(
+      "submit",
+      async function(event) {
+
+        event.preventDefault();
+
+
+        const email =
+          document
+            .getElementById("email")
+            .value
+            .trim();
+
+
+        const password =
+          document
+            .getElementById("password")
+            .value;
+
+
+        loginButton.disabled = true;
+
+        loginButton.textContent =
+          "Logging in...";
+
+
+        showMessage(
+          "Checking your account...",
+          "#2563eb"
+        );
+
+
+        try {
+
+          const {
+            data,
+            error
+          } =
+          await supabaseClient.auth
+            .signInWithPassword({
+
+              email: email,
+
+              password: password
+
+            });
+
+
+          if (error) {
+
+            throw error;
+
+          }
+
+
+          console.log(
+            "Login successful:",
+            data.user
+          );
+
+
+          showMessage(
+            "Login successful!",
+            "green"
+          );
+
+
+          // Redirect after successful login
+          setTimeout(
+            function() {
+
+              window.location.href =
+                "profile.html";
+
+            },
+            700
+          );
+
+
+        } catch (error) {
+
+          console.error(
+            "Login error:",
+            error
+          );
+
+
+          showMessage(
+            error.message ||
+            "Login failed.",
+            "red"
+          );
+
+
+          loginButton.disabled =
+            false;
+
+
+          loginButton.textContent =
+            "Login";
+
+        }
+
+      }
+    );
+
+
+    // =========================================
+    // GOOGLE LOGIN
+    // =========================================
+
+    googleButton.addEventListener(
+      "click",
+      async function() {
+
+        googleButton.disabled =
+          true;
+
+
+        googleButton.textContent =
+          "Connecting to Google...";
+
+
+        showMessage(
+          "Opening Google...",
+          "#2563eb"
+        );
+
+
+        try {
+
+          const {
+            error
+          } =
+          await supabaseClient.auth
+            .signInWithOAuth({
+
+              provider: "google",
+
+              options: {
+
+                redirectTo:
+                  window.location.origin +
+                  "/profile.html"
+
+              }
+
+            });
+
+
+          if (error) {
+
+            throw error;
+
+          }
+
+        } catch (error) {
+
+          console.error(
+            "Google login error:",
+            error
+          );
+
+
+          showMessage(
+            error.message ||
+            "Google login failed.",
+            "red"
+          );
+
+
+          googleButton.disabled =
+            false;
+
+
+          googleButton.textContent =
+            "Continue with Google";
+
+        }
+
+      }
+    );
+
+
+    // =========================================
+    // CHECK EXISTING LOGIN
+    // =========================================
+
+    async function checkSession() {
+
+      try {
+
+        const {
+          data,
+          error
+        } =
+        await supabaseClient.auth
+          .getSession();
+
+
+        if (error) {
+
+          console.error(
+            "Session error:",
+            error
+          );
+
+          return;
+
+        }
+
+
+        // If already logged in,
+        // don't show login page again.
+
+        if (data.session) {
+
+          window.location.href =
+            "profile.html";
+
+        }
+
+      } catch (error) {
+
+        console.error(
+          "Session check failed:",
+          error
+        );
+
+      }
+
+    }
+
+
+    checkSession();
+
+
+  </script>
+
+
+</body>
+
+</html>

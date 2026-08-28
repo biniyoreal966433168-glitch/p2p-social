@@ -1,21 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Register - P2P Social</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: #f5f7fb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 420px;
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.10);
+    }
+
+    h1 {
+      text-align: center;
+      color: #075e54;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #777;
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #087f73;
+    }
+
+    #registerButton {
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 10px;
+      background: #087f73;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #registerButton:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #message {
+      text-align: center;
+      margin-top: 15px;
+      min-height: 20px;
+      font-size: 14px;
+    }
+
+    .login-link {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+
+    .login-link a {
+      color: #087f73;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    .back {
+      display: block;
+      text-align: center;
+      margin-top: 15px;
+      color: #777;
+      text-decoration: none;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>Create Account</h1>
+
+  <p class="subtitle">
+    Join P2P Social
+  </p>
+
+  <form id="registerForm">
+
+    <label for="username">
+      Username
+    </label>
+
+    <input
+      type="text"
+      id="username"
+      placeholder="Choose a username"
+      autocomplete="username"
+      required
+    >
+
+    <label for="email">
+      Email
+    </label>
+
+    <input
+      type="email"
+      id="email"
+      placeholder="Enter your email"
+      autocomplete="email"
+      required
+    >
+
+    <label for="password">
+      Password
+    </label>
+
+    <input
+      type="password"
+      id="password"
+      placeholder="Minimum 8 characters"
+      autocomplete="new-password"
+      required
+    >
+
+    <label for="confirmPassword">
+      Confirm Password
+    </label>
+
+    <input
+      type="password"
+      id="confirmPassword"
+      placeholder="Repeat your password"
+      autocomplete="new-password"
+      required
+    >
+
+    <button
+      type="submit"
+      id="registerButton">
+      Create Account
+    </button>
+
+  </form>
+
+  <p id="message"></p>
+
+  <div class="login-link">
+    Already have an account?
+    <a href="login.html">
+      Login
+    </a>
+  </div>
+
+  <a
+    href="index.html"
+    class="back">
+    ← Back to Home
+  </a>
+
+</div>
+
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
+
 const SUPABASE_URL =
   "https://mbsvuwrgigqfporxwpfr.supabase.co";
 
 const SUPABASE_PUBLISHABLE_KEY =
   "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
 
-const supabaseClient = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY
-);
 
-const registerForm = document.getElementById("registerForm");
-const usernameInput = document.getElementById("username");
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
+
+
+const registerForm =
+  document.getElementById("registerForm");
+
+const usernameInput =
+  document.getElementById("username");
+
+const emailInput =
+  document.getElementById("email");
+
+const passwordInput =
+  document.getElementById("password");
+
 const confirmPasswordInput =
   document.getElementById("confirmPassword");
 
@@ -27,169 +239,217 @@ const message =
 
 
 function showMessage(text, color) {
+
   message.textContent = text;
   message.style.color = color;
+
 }
 
 
-registerForm.addEventListener("submit", async (event) => {
+// ===============================
+// REGISTER
+// ===============================
 
-  event.preventDefault();
+registerForm.addEventListener(
+  "submit",
+  async function(event) {
 
-  const username =
-    usernameInput.value.trim();
-
-  const email =
-    emailInput.value.trim().toLowerCase();
-
-  const password =
-    passwordInput.value;
-
-  const confirmPassword =
-    confirmPasswordInput.value;
+    event.preventDefault();
 
 
-  // ================================
-  // VALIDATION
-  // ================================
+    const username =
+      usernameInput.value.trim();
 
-  if (username.length < 3) {
-    showMessage(
-      "Username must be at least 3 characters.",
-      "red"
-    );
-    return;
-  }
+    const email =
+      emailInput.value
+        .trim()
+        .toLowerCase();
 
-  if (username.length > 30) {
-    showMessage(
-      "Username must be 30 characters or less.",
-      "red"
-    );
-    return;
-  }
+    const password =
+      passwordInput.value;
 
-  const usernamePattern =
-    /^[a-zA-Z0-9_]+$/;
-
-  if (!usernamePattern.test(username)) {
-    showMessage(
-      "Username can only contain letters, numbers and underscore.",
-      "red"
-    );
-    return;
-  }
+    const confirmPassword =
+      confirmPasswordInput.value;
 
 
-  // Normal browser email validation
-  const emailPattern =
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // ===============================
+    // VALIDATION
+    // ===============================
 
-  if (!emailPattern.test(email)) {
-    showMessage(
-      "Please enter a valid email address.",
-      "red"
-    );
-    return;
-  }
-
-
-  if (password.length < 8) {
-    showMessage(
-      "Password must be at least 8 characters.",
-      "red"
-    );
-    return;
-  }
-
-
-  if (password !== confirmPassword) {
-    showMessage(
-      "Passwords do not match.",
-      "red"
-    );
-    return;
-  }
-
-
-  registerButton.disabled = true;
-  registerButton.textContent =
-    "Creating account...";
-
-  showMessage(
-    "Please wait...",
-    "#2563eb"
-  );
-
-
-  try {
-
-    // ================================
-    // CREATE SUPABASE AUTH USER
-    // ================================
-
-    const {
-      data,
-      error
-    } =
-      await supabaseClient.auth.signUp({
-
-        email: email,
-
-        password: password,
-
-        options: {
-          data: {
-            username: username
-          }
-        }
-
-      });
-
-
-    if (error) {
-      throw error;
-    }
-
-
-    if (!data.user) {
-      throw new Error(
-        "Account could not be created."
-      );
-    }
-
-
-    // =================================
-    // IF EMAIL VERIFICATION IS REQUIRED
-    // =================================
-
-    if (!data.session) {
+    if (username.length < 3) {
 
       showMessage(
-        "Account created! Check your email and verify your account.",
-        "green"
+        "Username must be at least 3 characters.",
+        "red"
       );
 
-      registerButton.textContent =
-        "Account Created";
-
-      setTimeout(() => {
-        window.location.href =
-          "login.html";
-      }, 3000);
-
       return;
+
     }
 
 
-    // =================================
-    // CREATE PROFILE
-    // BALANCE STARTS AT 0
-    // =================================
+    if (username.length > 30) {
 
-    const {
-      error: profileError
-    } =
+      showMessage(
+        "Username must be 30 characters or less.",
+        "red"
+      );
+
+      return;
+
+    }
+
+
+    const usernamePattern =
+      /^[a-zA-Z0-9_]+$/;
+
+
+    if (
+      !usernamePattern.test(username)
+    ) {
+
+      showMessage(
+        "Username can only contain letters, numbers and underscore.",
+        "red"
+      );
+
+      return;
+
+    }
+
+
+    const emailPattern =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+
+    if (!emailPattern.test(email)) {
+
+      showMessage(
+        "Please enter a valid email address.",
+        "red"
+      );
+
+      return;
+
+    }
+
+
+    if (password.length < 8) {
+
+      showMessage(
+        "Password must be at least 8 characters.",
+        "red"
+      );
+
+      return;
+
+    }
+
+
+    if (password !== confirmPassword) {
+
+      showMessage(
+        "Passwords do not match.",
+        "red"
+      );
+
+      return;
+
+    }
+
+
+    registerButton.disabled = true;
+
+    registerButton.textContent =
+      "Creating account...";
+
+
+    showMessage(
+      "Please wait...",
+      "#2563eb"
+    );
+
+
+    try {
+
+      // ===============================
+      // CREATE AUTH USER
+      // ===============================
+
+      const {
+        data,
+        error
+      } =
+      await supabaseClient.auth
+        .signUp({
+
+          email: email,
+
+          password: password,
+
+          options: {
+
+            data: {
+              username: username
+            }
+
+          }
+
+        });
+
+
+      if (error) {
+
+        throw error;
+
+      }
+
+
+      if (!data || !data.user) {
+
+        throw new Error(
+          "Account could not be created."
+        );
+
+      }
+
+
+      // ===============================
+      // EMAIL CONFIRMATION
+      // ===============================
+
+      if (!data.session) {
+
+        showMessage(
+          "Account created. Please verify your email, then login.",
+          "green"
+        );
+
+        registerButton.textContent =
+          "Account Created";
+
+        setTimeout(
+          function() {
+
+            window.location.href =
+              "/login.html";
+
+          },
+          3000
+        );
+
+        return;
+
+      }
+
+
+      // ===============================
+      // CREATE PROFILE
+      // ===============================
+
+      const {
+        error: profileError
+      } =
       await supabaseClient
         .from("profiles")
         .insert({
@@ -203,107 +463,121 @@ registerForm.addEventListener("submit", async (event) => {
         });
 
 
-    if (profileError) {
+      if (profileError) {
 
-      console.error(
-        "Profile creation error:",
-        profileError
-      );
+        console.error(
+          "Profile error:",
+          profileError
+        );
 
-      // Auth account exists, so don't
-      // pretend registration failed.
-      showMessage(
-        "Account created, but profile setup needs attention.",
-        "orange"
-      );
+        /*
+          If your database has an automatic
+          trigger that creates profiles,
+          duplicate-key errors can happen.
+        */
 
-      return;
-    }
+        if (
+          !profileError.message
+            .toLowerCase()
+            .includes("duplicate")
+        ) {
 
+          throw profileError;
 
-    // =================================
-    // SUCCESS
-    // =================================
-
-    showMessage(
-      "Account created successfully! Balance: 0 ETB",
-      "green"
-    );
-
-    registerButton.textContent =
-      "Success";
-
-
-    setTimeout(() => {
-
-      window.location.href =
-        "dashboard.html";
-
-    }, 1500);
-
-
-  } catch (error) {
-
-    console.error(
-      "Registration error:",
-      error
-    );
-
-
-    let errorMessage =
-      "Registration failed. Please try again.";
-
-
-    if (error.message) {
-
-      const msg =
-        error.message.toLowerCase();
-
-
-      if (
-        msg.includes("already registered") ||
-        msg.includes("already been registered")
-      ) {
-
-        errorMessage =
-          "This email is already registered. Please login.";
-
-      } else if (
-        msg.includes("invalid email")
-      ) {
-
-        errorMessage =
-          "Please enter a valid email address.";
-
-      } else if (
-        msg.includes("password")
-      ) {
-
-        errorMessage =
-          error.message;
-
-      } else {
-
-        errorMessage =
-          error.message;
+        }
 
       }
+
+
+      // ===============================
+      // SUCCESS
+      // ===============================
+
+      showMessage(
+        "Account created successfully! Balance: 0 ETB",
+        "green"
+      );
+
+      registerButton.textContent =
+        "Success";
+
+
+      setTimeout(
+        function() {
+
+          window.location.href =
+            "/index.html";
+
+        },
+        1500
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        "REGISTRATION ERROR:",
+        error
+      );
+
+
+      let errorMessage =
+        "Registration failed. Please try again.";
+
+
+      if (error.message) {
+
+        const msg =
+          error.message.toLowerCase();
+
+
+        if (
+          msg.includes("already registered") ||
+          msg.includes("already been registered")
+        ) {
+
+          errorMessage =
+            "This email is already registered. Please login.";
+
+        }
+
+        else if (
+          msg.includes("invalid email")
+        ) {
+
+          errorMessage =
+            "Please enter a valid email address.";
+
+        }
+
+        else {
+
+          errorMessage =
+            error.message;
+
+        }
+
+      }
+
+
+      showMessage(
+        errorMessage,
+        "red"
+      );
+
+
+      registerButton.disabled =
+        false;
+
+      registerButton.textContent =
+        "Create Account";
+
     }
 
-
-    showMessage(
-      errorMessage,
-      "red"
-    );
-
-
-    registerButton.disabled =
-      false;
-
-    registerButton.textContent =
-      "Create Account";
-
   }
+);
 
-});
 </script>
+
+</body>
+</html>

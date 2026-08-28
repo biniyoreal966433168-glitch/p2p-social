@@ -1,681 +1,336 @@
-<!DOCTYPE html>
-<html lang="en">
+<script>
 
-<head>
+const SUPABASE_URL =
+  "https://mbsvuwrgigqfporxwpfr.supabase.co";
 
-  <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <title>Login - P2P Social</title>
-
-  <!-- Supabase JavaScript -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+const SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
 
 
-  <style>
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
+
+const loginForm =
+  document.getElementById("loginForm");
+
+const loginButton =
+  document.getElementById("loginButton");
+
+const googleButton =
+  document.getElementById("googleButton");
+
+const message =
+  document.getElementById("message");
+
+
+function showMessage(text, color) {
+
+  message.textContent = text;
+  message.style.color = color;
+
+}
+
+
+/*
+=========================================
+GOOGLE LOGIN DISABLED FOR NOW
+=========================================
+
+The Google function is kept here for later.
+The button is hidden until you enable Google
+provider in Supabase.
+*/
+
+googleButton.style.display = "none";
+
+
+/*
+=========================================
+EMAIL + PASSWORD LOGIN
+=========================================
+*/
+
+loginForm.addEventListener(
+  "submit",
+  async function(event) {
+
+    event.preventDefault();
+
+
+    const email =
+      document
+        .getElementById("email")
+        .value
+        .trim()
+        .toLowerCase();
+
+
+    const password =
+      document
+        .getElementById("password")
+        .value;
+
+
+    if (!email || !password) {
+
+      showMessage(
+        "Please enter your email and password.",
+        "red"
+      );
+
+      return;
+
     }
 
 
-    body {
-      min-height: 100vh;
+    loginButton.disabled = true;
 
-      display: flex;
-      justify-content: center;
-      align-items: center;
+    loginButton.textContent =
+      "Logging in...";
 
-      background:
-        linear-gradient(
-          135deg,
-          #111827,
-          #2563eb
+
+    showMessage(
+      "Checking your account...",
+      "#2563eb"
+    );
+
+
+    try {
+
+      /*
+      =====================================
+      SUPABASE AUTH LOGIN
+      =====================================
+      */
+
+      const {
+        data,
+        error
+      } =
+      await supabaseClient.auth
+        .signInWithPassword({
+
+          email: email,
+
+          password: password
+
+        });
+
+
+      if (error) {
+
+        throw error;
+
+      }
+
+
+      if (!data.user) {
+
+        throw new Error(
+          "Login failed."
         );
 
-      padding: 20px;
-    }
+      }
 
 
-    .login-container {
-      width: 100%;
-      max-width: 400px;
+      /*
+      =====================================
+      LOGIN SUCCESS
+      =====================================
+      */
 
-      background: white;
-
-      padding: 35px 25px;
-
-      border-radius: 20px;
-
-      box-shadow:
-        0 15px 40px
-        rgba(0,0,0,0.25);
-    }
-
-
-    .logo {
-      width: 85px;
-      height: 85px;
-
-      object-fit: contain;
-
-      display: block;
-
-      margin: 0 auto 15px;
-    }
-
-
-    h1 {
-      text-align: center;
-
-      color: #111827;
-
-      margin-bottom: 8px;
-    }
-
-
-    .subtitle {
-      text-align: center;
-
-      color: #6b7280;
-
-      margin-bottom: 25px;
-    }
-
-
-    label {
-      display: block;
-
-      margin-bottom: 7px;
-
-      font-weight: bold;
-
-      color: #374151;
-    }
-
-
-    input {
-      width: 100%;
-
-      padding: 13px;
-
-      margin-bottom: 18px;
-
-      border:
-        1px solid #d1d5db;
-
-      border-radius: 10px;
-
-      font-size: 16px;
-
-      outline: none;
-    }
-
-
-    input:focus {
-      border-color: #2563eb;
-    }
-
-
-    .login-btn,
-    .google-btn {
-      width: 100%;
-
-      padding: 14px;
-
-      border-radius: 10px;
-
-      font-size: 17px;
-
-      font-weight: bold;
-
-      cursor: pointer;
-    }
-
-
-    .login-btn {
-      border: none;
-
-      background: #2563eb;
-
-      color: white;
-    }
-
-
-    .login-btn:hover {
-      background: #1d4ed8;
-    }
-
-
-    .login-btn:disabled {
-      background: #93c5fd;
-
-      cursor: not-allowed;
-    }
-
-
-    .google-btn {
-      display: block;
-
-      margin-top: 15px;
-
-      border:
-        1px solid #d1d5db;
-
-      background: white;
-
-      color: #111827;
-
-      text-align: center;
-
-      text-decoration: none;
-    }
-
-
-    .google-btn:hover {
-      background: #f3f4f6;
-    }
-
-
-    .google-btn:disabled {
-      opacity: 0.6;
-
-      cursor: not-allowed;
-    }
-
-
-    .divider {
-      display: flex;
-
-      align-items: center;
-
-      gap: 10px;
-
-      margin: 20px 0;
-
-      color: #9ca3af;
-
-      font-size: 14px;
-    }
-
-
-    .divider::before,
-    .divider::after {
-      content: "";
-
-      height: 1px;
-
-      background: #e5e7eb;
-
-      flex: 1;
-    }
-
-
-    .message {
-      text-align: center;
-
-      margin: 15px 0;
-
-      font-size: 14px;
-
-      min-height: 18px;
-    }
-
-
-    .register {
-      text-align: center;
-
-      margin-top: 20px;
-
-      color: #6b7280;
-    }
-
-
-    .register a {
-      color: #2563eb;
-
-      text-decoration: none;
-
-      font-weight: bold;
-    }
-
-
-    .back {
-      display: block;
-
-      text-align: center;
-
-      margin-top: 18px;
-
-      color: #6b7280;
-
-      text-decoration: none;
-
-      font-size: 14px;
-    }
-
-  </style>
-
-</head>
-
-
-<body>
-
-
-  <div class="login-container">
-
-
-    <img
-      src="images/logo.png"
-      class="logo"
-      alt="P2P Social Logo"
-    >
-
-
-    <h1>
-      Welcome Back
-    </h1>
-
-
-    <p class="subtitle">
-      Login to P2P Social
-    </p>
-
-
-    <form id="loginForm">
-
-
-      <label for="email">
-        Email
-      </label>
-
-
-      <input
-        type="email"
-        id="email"
-        placeholder="Enter your email"
-        autocomplete="email"
-        required
-      >
-
-
-      <label for="password">
-        Password
-      </label>
-
-
-      <input
-        type="password"
-        id="password"
-        placeholder="Enter your password"
-        autocomplete="current-password"
-        required
-      >
-
-
-      <div
-        id="message"
-        class="message"
-      ></div>
-
-
-      <button
-        type="submit"
-        class="login-btn"
-        id="loginButton"
-      >
-        Login
-      </button>
-
-
-    </form>
-
-
-    <div class="divider">
-      OR
-    </div>
-
-
-    <button
-      type="button"
-      id="googleButton"
-      class="google-btn"
-    >
-      Continue with Google
-    </button>
-
-
-    <div class="register">
-
-      Don't have an account?
-
-      <a href="register.html">
-        Register
-      </a>
-
-    </div>
-
-
-    <a
-      href="index.html"
-      class="back"
-    >
-      ← Back to Home
-    </a>
-
-
-  </div>
-
-
-  <script>
-
-    // =========================================
-    // SUPABASE CONFIGURATION
-    // =========================================
-
-    const SUPABASE_URL =
-      "https://mbsvuwrgigqfporxwpfr.supabase.co";
-
-
-    const SUPABASE_PUBLISHABLE_KEY =
-      "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
-
-
-    // Create Supabase client
-    const supabaseClient =
-      window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_PUBLISHABLE_KEY
+      showMessage(
+        "Login successful!",
+        "green"
       );
 
 
-    // =========================================
-    // GET HTML ELEMENTS
-    // =========================================
-
-    const loginForm =
-      document.getElementById("loginForm");
-
-
-    const loginButton =
-      document.getElementById("loginButton");
-
-
-    const googleButton =
-      document.getElementById("googleButton");
-
-
-    const message =
-      document.getElementById("message");
-
-
-    // =========================================
-    // SHOW MESSAGE
-    // =========================================
-
-    function showMessage(
-      text,
-      color
-    ) {
-
-      message.textContent = text;
-
-      message.style.color = color;
-
-    }
-
-
-    // =========================================
-    // EMAIL + PASSWORD LOGIN
-    // =========================================
-
-    loginForm.addEventListener(
-      "submit",
-      async function(event) {
-
-        event.preventDefault();
-
-
-        const email =
-          document
-            .getElementById("email")
-            .value
-            .trim();
-
-
-        const password =
-          document
-            .getElementById("password")
-            .value;
-
-
-        loginButton.disabled = true;
-
-        loginButton.textContent =
-          "Logging in...";
-
-
-        showMessage(
-          "Checking your account...",
-          "#2563eb"
-        );
-
-
-        try {
-
-          const {
-            data,
-            error
-          } =
-          await supabaseClient.auth
-            .signInWithPassword({
-
-              email: email,
-
-              password: password
-
-            });
-
-
-          if (error) {
-
-            throw error;
-
-          }
-
-
-          console.log(
-            "Login successful:",
-            data.user
-          );
-
-
-          showMessage(
-            "Login successful!",
-            "green"
-          );
-
-
-          // Redirect after successful login
-          setTimeout(
-            function() {
-
-              window.location.href =
-                "profile.html";
-
-            },
-            700
-          );
-
-
-        } catch (error) {
-
-          console.error(
-            "Login error:",
-            error
-          );
-
-
-          showMessage(
-            error.message ||
-            "Login failed.",
-            "red"
-          );
-
-
-          loginButton.disabled =
-            false;
-
-
-          loginButton.textContent =
-            "Login";
-
-        }
-
-      }
-    );
-
-
-    // =========================================
-    // GOOGLE LOGIN
-    // =========================================
-
-    googleButton.addEventListener(
-      "click",
-      async function() {
-
-        googleButton.disabled =
-          true;
-
-
-        googleButton.textContent =
-          "Connecting to Google...";
-
-
-        showMessage(
-          "Opening Google...",
-          "#2563eb"
-        );
-
-
-        try {
-
-          const {
-            error
-          } =
-          await supabaseClient.auth
-            .signInWithOAuth({
-
-              provider: "google",
-
-              options: {
-
-                redirectTo:
-                  window.location.origin +
-                  "/profile.html"
-
-              }
-
-            });
-
-
-          if (error) {
-
-            throw error;
-
-          }
-
-        } catch (error) {
-
-          console.error(
-            "Google login error:",
-            error
-          );
-
-
-          showMessage(
-            error.message ||
-            "Google login failed.",
-            "red"
-          );
-
-
-          googleButton.disabled =
-            false;
-
-
-          googleButton.textContent =
-            "Continue with Google";
-
-        }
-
-      }
-    );
-
-
-    // =========================================
-    // CHECK EXISTING LOGIN
-    // =========================================
-
-    async function checkSession() {
-
-      try {
-
-        const {
-          data,
-          error
-        } =
-        await supabaseClient.auth
-          .getSession();
-
-
-        if (error) {
-
-          console.error(
-            "Session error:",
-            error
-          );
-
-          return;
-
-        }
-
-
-        // If already logged in,
-        // don't show login page again.
-
-        if (data.session) {
+      /*
+      =====================================
+      GO TO DASHBOARD
+      =====================================
+      */
+
+      setTimeout(
+        function() {
 
           window.location.href =
-            "profile.html";
+            "dashboard.html";
+
+        },
+        700
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        "Login error:",
+        error
+      );
+
+
+      let errorMessage =
+        "Login failed. Please check your email and password.";
+
+
+      if (error.message) {
+
+        const msg =
+          error.message.toLowerCase();
+
+
+        if (
+          msg.includes("invalid login credentials")
+        ) {
+
+          errorMessage =
+            "Incorrect email or password.";
+
+        }
+        else if (
+          msg.includes("email not confirmed")
+        ) {
+
+          errorMessage =
+            "Please verify your email before logging in.";
+
+        }
+        else {
+
+          errorMessage =
+            error.message;
 
         }
 
-      } catch (error) {
-
-        console.error(
-          "Session check failed:",
-          error
-        );
-
       }
+
+
+      showMessage(
+        errorMessage,
+        "red"
+      );
+
+
+      loginButton.disabled =
+        false;
+
+      loginButton.textContent =
+        "Login";
+
+    }
+
+  }
+);
+
+
+/*
+=========================================
+GOOGLE OAUTH — READY FOR LATER
+=========================================
+
+Do NOT enable the button yet.
+
+When Google authentication is configured
+in Supabase, you can show the button and
+use this function.
+*/
+
+async function loginWithGoogle() {
+
+  try {
+
+    const {
+      data,
+      error
+    } =
+    await supabaseClient.auth
+      .signInWithOAuth({
+
+        provider: "google",
+
+        options: {
+
+          redirectTo:
+            window.location.origin +
+            "/dashboard.html"
+
+        }
+
+      });
+
+
+    if (error) {
+
+      throw error;
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      "Google login error:",
+      error
+    );
+
+  }
+
+}
+
+
+/*
+=========================================
+CHECK EXISTING SESSION
+=========================================
+*/
+
+async function checkSession() {
+
+  try {
+
+    const {
+      data,
+      error
+    } =
+    await supabaseClient.auth
+      .getSession();
+
+
+    if (error) {
+
+      console.error(
+        "Session error:",
+        error
+      );
+
+      return;
 
     }
 
 
-    checkSession();
+    if (data.session) {
+
+      window.location.href =
+        "dashboard.html";
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      "Session check failed:",
+      error
+    );
+
+  }
+
+}
 
 
-  </script>
+checkSession();
 
-
-</body>
-
-</html>
+</script>

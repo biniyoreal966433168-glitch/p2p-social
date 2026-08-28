@@ -24,7 +24,7 @@
       background: white;
       padding: 35px 25px;
       border-radius: 20px;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
     }
 
     .logo {
@@ -79,6 +79,7 @@
       font-size: 17px;
       font-weight: bold;
       cursor: pointer;
+      transition: 0.2s;
     }
 
     .register-btn:hover {
@@ -95,6 +96,7 @@
       margin: 12px 0;
       font-size: 14px;
       line-height: 1.5;
+      min-height: 21px;
     }
 
     .login {
@@ -109,6 +111,10 @@
       font-weight: bold;
     }
 
+    .login a:hover {
+      text-decoration: underline;
+    }
+
     .back {
       display: block;
       text-align: center;
@@ -118,8 +124,7 @@
       font-size: 14px;
     }
 
-    .back:hover,
-    .login a:hover {
+    .back:hover {
       text-decoration: underline;
     }
   </style></head><body>  <div class="register-container"><img
@@ -137,7 +142,9 @@
 
 <form id="registerForm">
 
-  <label for="username">Username</label>
+  <label for="username">
+    Username
+  </label>
 
   <input
     type="text"
@@ -149,7 +156,9 @@
     required
   >
 
-  <label for="email">Email</label>
+  <label for="email">
+    Email
+  </label>
 
   <input
     type="email"
@@ -159,7 +168,9 @@
     required
   >
 
-  <label for="password">Password</label>
+  <label for="password">
+    Password
+  </label>
 
   <input
     type="password"
@@ -170,7 +181,9 @@
     required
   >
 
-  <label for="confirmPassword">Confirm Password</label>
+  <label for="confirmPassword">
+    Confirm Password
+  </label>
 
   <input
     type="password"
@@ -181,7 +194,11 @@
     required
   >
 
-  <div id="message" class="message"></div>
+  <div
+    id="message"
+    class="message"
+    aria-live="polite"
+  ></div>
 
   <button
     type="submit"
@@ -195,17 +212,24 @@
 
 <div class="login">
   Already have an account?
-  <a href="login.html">Login</a>
+  <a href="login.html">
+    Login
+  </a>
 </div>
 
-<a href="index.html" class="back">
+<a
+  href="index.html"
+  class="back"
+>
   ← Back to Home
 </a>
 
-  </div>  <!-- Supabase JavaScript Library -->  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <script>
+  </div>  <!-- ==========================================
+       SUPABASE
+       ========================================== -->  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <script>
 
     // ==========================================
-    // SUPABASE CONFIGURATION
+    // YOUR SUPABASE PROJECT
     // ==========================================
 
     const SUPABASE_URL =
@@ -215,19 +239,19 @@
       "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
 
 
-    // Create Supabase client
-    const { createClient } =
-      window.supabase;
+    // ==========================================
+    // CREATE SUPABASE CLIENT
+    // ==========================================
 
     const supabaseClient =
-      createClient(
+      window.supabase.createClient(
         SUPABASE_URL,
         SUPABASE_PUBLISHABLE_KEY
       );
 
 
     // ==========================================
-    // HTML ELEMENTS
+    // GET HTML ELEMENTS
     // ==========================================
 
     const registerForm =
@@ -265,7 +289,7 @@
 
 
     // ==========================================
-    // REGISTER USER
+    // REGISTER
     // ==========================================
 
     registerForm.addEventListener(
@@ -276,11 +300,12 @@
 
 
         // Get values
+
         const username =
           usernameInput.value.trim();
 
         const email =
-          emailInput.value.trim();
+          emailInput.value.trim().toLowerCase();
 
         const password =
           passwordInput.value;
@@ -297,6 +322,22 @@
 
           showMessage(
             "Username must be at least 3 characters.",
+            "red"
+          );
+
+          return;
+        }
+
+
+        // Username characters
+
+        const usernamePattern =
+          /^[a-zA-Z0-9_]+$/;
+
+        if (!usernamePattern.test(username)) {
+
+          showMessage(
+            "Username can only contain letters, numbers and underscore.",
             "red"
           );
 
@@ -344,10 +385,13 @@
         try {
 
           // ======================================
-          // SUPABASE SIGN UP
+          // SUPABASE AUTH SIGN UP
           // ======================================
 
-          const { data, error } =
+          const {
+            data,
+            error
+          } =
             await supabaseClient.auth.signUp({
 
               email: email,
@@ -368,7 +412,7 @@
 
 
           // ======================================
-          // CHECK ERROR
+          // SUPABASE ERROR
           // ======================================
 
           if (error) {
@@ -382,80 +426,64 @@
           // SUCCESS
           // ======================================
 
-          if (data.user) {
+          if (!data.user) {
 
-            /*
-             * If email confirmation is enabled
-             * in Supabase, the user must verify
-             * their email before logging in.
-             */
+            throw new Error(
+              "Account could not be created."
+            );
 
-            if (
-              data.user.identities &&
-              data.user.identities.length === 0
-            ) {
+          }
 
-              showMessage(
-                "This email is already registered.",
-                "red"
-              );
 
-              registerButton.disabled = false;
+          // ======================================
+          // EMAIL VERIFICATION ENABLED
+          // ======================================
 
-              registerButton.textContent =
-                "Create Account";
-
-              return;
-            }
-
+          if (!data.session) {
 
             showMessage(
-              "Account created successfully!",
+              "Account created! Please check your email and verify your account.",
               "green"
             );
 
 
-            // ==================================
-            // EMAIL CONFIRMATION
-            // ==================================
-
-            if (!data.session) {
-
-              showMessage(
-                "Account created! Check your email to verify your account.",
-                "green"
-              );
+            registerButton.textContent =
+              "Account Created";
 
 
-              setTimeout(function() {
+            setTimeout(function() {
 
-                window.location.href =
-                  "login.html";
+              window.location.href =
+                "login.html";
 
-              }, 2500);
-
-
-            } else {
-
-              /*
-               * Email confirmation is disabled.
-               * User is already logged in.
-               */
-
-              showMessage(
-                "Account created! Redirecting...",
-                "green"
-              );
+            }, 3000);
 
 
-              setTimeout(function() {
+          }
 
-                window.location.href =
-                  "dashboard.html";
 
-              }, 1000);
+          // ======================================
+          // EMAIL VERIFICATION DISABLED
+          // ======================================
 
-            }
+          else {
+
+            showMessage(
+              "Account created successfully! Redirecting...",
+              "green"
+            );
+
+
+            registerButton.textContent =
+              "Success";
+
+
+            setTimeout(function() {
+
+              window.location.href =
+                "dashboard.html";
+
+            }, 1500);
 
           }
 
@@ -463,36 +491,57 @@
         } catch (error) {
 
           console.error(
-            "Registration error:",
+            "Supabase registration error:",
             error
           );
 
 
           let errorMessage =
-            "Registration failed.";
+            "Registration failed. Please try again.";
 
 
-          // Friendly Supabase errors
-
-          if (
-            error.message &&
-            error.message.toLowerCase()
-              .includes("already registered")
-          ) {
-
-            errorMessage =
-              "This email is already registered.";
-
-          } else if (
-            error.message &&
-            error.message.toLowerCase()
-              .includes("password")
-          ) {
+          if (error.message) {
 
             errorMessage =
               error.message;
 
-          } else if (error.message) {
+          }
+
+
+          // Common friendly messages
+
+          if (
+            error.message &&
+            error.message
+              .toLowerCase()
+              .includes("already registered")
+          ) {
+
+            errorMessage =
+              "This email is already registered. Please login.";
+
+          }
+
+
+          if (
+            error.message &&
+            error.message
+              .toLowerCase()
+              .includes("invalid email")
+          ) {
+
+            errorMessage =
+              "Please enter a valid email address.";
+
+          }
+
+
+          if (
+            error.message &&
+            error.message
+              .toLowerCase()
+              .includes("password")
+          ) {
 
             errorMessage =
               error.message;
@@ -506,7 +555,7 @@
           );
 
 
-          // Re-enable button
+          // Enable button again
 
           registerButton.disabled =
             false;

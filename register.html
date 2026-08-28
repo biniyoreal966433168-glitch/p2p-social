@@ -1,12 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>Register - P2P Social</title>
-
-  <style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>Register - P2P Social</title>  <style>
     * {
       box-sizing: border-box;
       margin: 0;
@@ -71,6 +66,7 @@
 
     input:focus {
       border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     }
 
     .register-btn {
@@ -98,6 +94,7 @@
       text-align: center;
       margin: 12px 0;
       font-size: 14px;
+      line-height: 1.5;
     }
 
     .login {
@@ -120,100 +117,156 @@
       text-decoration: none;
       font-size: 14px;
     }
-  </style>
-</head>
 
-<body>
+    .back:hover,
+    .login a:hover {
+      text-decoration: underline;
+    }
+  </style></head><body>  <div class="register-container"><img
+  src="images/logo.png"
+  class="logo"
+  alt="P2P Social Logo"
+  onerror="this.style.display='none'"
+>
 
-  <div class="register-container">
+<h1>Create Account</h1>
 
-    <img
-      src="images/logo.png"
-      class="logo"
-      alt="P2P Social Logo"
-    >
+<p class="subtitle">
+  Join P2P Social
+</p>
 
-    <h1>Create Account</h1>
+<form id="registerForm">
 
-    <p class="subtitle">
-      Join P2P Social
-    </p>
+  <label for="username">Username</label>
 
-    <form id="registerForm">
+  <input
+    type="text"
+    id="username"
+    placeholder="Choose a username"
+    minlength="3"
+    maxlength="30"
+    autocomplete="username"
+    required
+  >
 
-      <label for="username">Username</label>
+  <label for="email">Email</label>
 
-      <input
-        type="text"
-        id="username"
-        placeholder="Choose a username"
-        minlength="3"
-        required
-      >
+  <input
+    type="email"
+    id="email"
+    placeholder="Enter your email"
+    autocomplete="email"
+    required
+  >
 
-      <label for="email">Email</label>
+  <label for="password">Password</label>
 
-      <input
-        type="email"
-        id="email"
-        placeholder="Enter your email"
-        required
-      >
+  <input
+    type="password"
+    id="password"
+    placeholder="Create a password"
+    minlength="8"
+    autocomplete="new-password"
+    required
+  >
 
-      <label for="password">Password</label>
+  <label for="confirmPassword">Confirm Password</label>
 
-      <input
-        type="password"
-        id="password"
-        placeholder="Create a password"
-        minlength="8"
-        required
-      >
+  <input
+    type="password"
+    id="confirmPassword"
+    placeholder="Confirm your password"
+    minlength="8"
+    autocomplete="new-password"
+    required
+  >
 
-      <label for="confirmPassword">Confirm Password</label>
+  <div id="message" class="message"></div>
 
-      <input
-        type="password"
-        id="confirmPassword"
-        placeholder="Confirm your password"
-        minlength="8"
-        required
-      >
+  <button
+    type="submit"
+    class="register-btn"
+    id="registerButton"
+  >
+    Create Account
+  </button>
 
-      <div id="message" class="message"></div>
+</form>
 
-      <button
-        type="submit"
-        class="register-btn"
-        id="registerButton"
-      >
-        Create Account
-      </button>
+<div class="login">
+  Already have an account?
+  <a href="login.html">Login</a>
+</div>
 
-    </form>
+<a href="index.html" class="back">
+  ← Back to Home
+</a>
 
-    <div class="login">
-      Already have an account?
-      <a href="login.html">Login</a>
-    </div>
+  </div>  <!-- Supabase JavaScript Library -->  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <script>
 
-    <a href="index.html" class="back">
-      ← Back to Home
-    </a>
+    // ==========================================
+    // SUPABASE CONFIGURATION
+    // ==========================================
 
-  </div>
+    const SUPABASE_URL =
+      "https://mbsvuwrgigqfporxwpfr.supabase.co";
 
-  <script>
+    const SUPABASE_PUBLISHABLE_KEY =
+      "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
+
+
+    // Create Supabase client
+    const { createClient } =
+      window.supabase;
+
+    const supabaseClient =
+      createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
+      );
+
+
+    // ==========================================
+    // HTML ELEMENTS
+    // ==========================================
 
     const registerForm =
       document.getElementById("registerForm");
 
-    const message =
-      document.getElementById("message");
+    const usernameInput =
+      document.getElementById("username");
+
+    const emailInput =
+      document.getElementById("email");
+
+    const passwordInput =
+      document.getElementById("password");
+
+    const confirmPasswordInput =
+      document.getElementById("confirmPassword");
 
     const registerButton =
       document.getElementById("registerButton");
 
+    const message =
+      document.getElementById("message");
+
+
+    // ==========================================
+    // SHOW MESSAGE
+    // ==========================================
+
+    function showMessage(text, color) {
+
+      message.textContent = text;
+      message.style.color = color;
+
+    }
+
+
+    // ==========================================
+    // REGISTER USER
+    // ==========================================
 
     registerForm.addEventListener(
       "submit",
@@ -221,125 +274,190 @@
 
         event.preventDefault();
 
+
+        // Get values
         const username =
-          document.getElementById("username")
-            .value.trim();
+          usernameInput.value.trim();
 
         const email =
-          document.getElementById("email")
-            .value.trim();
+          emailInput.value.trim();
 
         const password =
-          document.getElementById("password")
-            .value;
+          passwordInput.value;
 
         const confirmPassword =
-          document.getElementById("confirmPassword")
-            .value;
+          confirmPasswordInput.value;
 
 
-        if (password !== confirmPassword) {
+        // ========================================
+        // VALIDATION
+        // ========================================
 
-          message.textContent =
-            "Passwords do not match.";
+        if (username.length < 3) {
 
-          message.style.color = "red";
+          showMessage(
+            "Username must be at least 3 characters.",
+            "red"
+          );
 
           return;
         }
 
+
+        if (password.length < 8) {
+
+          showMessage(
+            "Password must be at least 8 characters.",
+            "red"
+          );
+
+          return;
+        }
+
+
+        if (password !== confirmPassword) {
+
+          showMessage(
+            "Passwords do not match.",
+            "red"
+          );
+
+          return;
+        }
+
+
+        // ========================================
+        // DISABLE BUTTON
+        // ========================================
 
         registerButton.disabled = true;
 
         registerButton.textContent =
           "Creating account...";
 
-        message.textContent =
-          "Please wait...";
-
-        message.style.color =
-          "#2563eb";
+        showMessage(
+          "Please wait...",
+          "#2563eb"
+        );
 
 
         try {
 
-          const response =
-            await fetch("/api/register", {
+          // ======================================
+          // SUPABASE SIGN UP
+          // ======================================
 
-              method: "POST",
+          const { data, error } =
+            await supabaseClient.auth.signUp({
 
-              headers: {
-                "Content-Type":
-                  "application/json"
-              },
+              email: email,
 
-              body: JSON.stringify({
-                username: username,
-                email: email,
-                password: password
-              })
+              password: password,
+
+              options: {
+
+                data: {
+
+                  username: username
+
+                }
+
+              }
 
             });
 
 
-          /*
-           * Read the response safely.
-           * This prevents:
-           * Unexpected token 'T'
-           */
+          // ======================================
+          // CHECK ERROR
+          // ======================================
 
-          const text =
-            await response.text();
+          if (error) {
 
-          let result;
-
-          try {
-
-            result =
-              JSON.parse(text);
-
-          } catch (jsonError) {
-
-            console.error(
-              "Server returned:",
-              text
-            );
-
-            throw new Error(
-              "Server error: " +
-              text.substring(0, 150)
-            );
+            throw error;
 
           }
 
 
-          if (!response.ok) {
+          // ======================================
+          // SUCCESS
+          // ======================================
 
-            throw new Error(
-              result.message ||
-              "Registration failed."
+          if (data.user) {
+
+            /*
+             * If email confirmation is enabled
+             * in Supabase, the user must verify
+             * their email before logging in.
+             */
+
+            if (
+              data.user.identities &&
+              data.user.identities.length === 0
+            ) {
+
+              showMessage(
+                "This email is already registered.",
+                "red"
+              );
+
+              registerButton.disabled = false;
+
+              registerButton.textContent =
+                "Create Account";
+
+              return;
+            }
+
+
+            showMessage(
+              "Account created successfully!",
+              "green"
             );
 
+
+            // ==================================
+            // EMAIL CONFIRMATION
+            // ==================================
+
+            if (!data.session) {
+
+              showMessage(
+                "Account created! Check your email to verify your account.",
+                "green"
+              );
+
+
+              setTimeout(function() {
+
+                window.location.href =
+                  "login.html";
+
+              }, 2500);
+
+
+            } else {
+
+              /*
+               * Email confirmation is disabled.
+               * User is already logged in.
+               */
+
+              showMessage(
+                "Account created! Redirecting...",
+                "green"
+              );
+
+
+              setTimeout(function() {
+
+                window.location.href =
+                  "dashboard.html";
+
+              }, 1000);
+
+            }
+
           }
-
-
-          message.textContent =
-            "Account created successfully!";
-
-          message.style.color =
-            "green";
-
-
-          /*
-           * Go to login page
-           */
-
-          setTimeout(function() {
-
-            window.location.href =
-              "login.html";
-
-          }, 1000);
 
 
         } catch (error) {
@@ -349,12 +467,46 @@
             error
           );
 
-          message.textContent =
-            error.message ||
-            "Something went wrong.";
 
-          message.style.color =
-            "red";
+          let errorMessage =
+            "Registration failed.";
+
+
+          // Friendly Supabase errors
+
+          if (
+            error.message &&
+            error.message.toLowerCase()
+              .includes("already registered")
+          ) {
+
+            errorMessage =
+              "This email is already registered.";
+
+          } else if (
+            error.message &&
+            error.message.toLowerCase()
+              .includes("password")
+          ) {
+
+            errorMessage =
+              error.message;
+
+          } else if (error.message) {
+
+            errorMessage =
+              error.message;
+
+          }
+
+
+          showMessage(
+            errorMessage,
+            "red"
+          );
+
+
+          // Re-enable button
 
           registerButton.disabled =
             false;
@@ -367,7 +519,5 @@
       }
     );
 
-  </script>
-
-</body>
+  </script></body>
 </html>

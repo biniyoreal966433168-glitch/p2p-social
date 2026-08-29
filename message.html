@@ -327,6 +327,13 @@
       touch-action: manipulation;
     }
 
+    .send-message:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    /* BOTTOM NAV */
+
     .bottom-nav {
       position: fixed;
       left: 0;
@@ -346,6 +353,8 @@
       text-decoration: none;
       text-align: center;
       font-size: 11px;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
 
     .bottom-nav a.active {
@@ -382,7 +391,8 @@
     <input
       id="searchInput"
       type="search"
-      placeholder="Search users...">
+      placeholder="Search users..."
+      autocomplete="off">
   </div>  <div
     id="searchResults"
     class="search-results">
@@ -510,31 +520,10 @@ let currentConversation = null;
 let currentOtherUser = null;
 let realtimeChannel = null;
 let searchTimer = null;
-let actionLock = false;
 
-
-/* =====================================================
-   SAFE BUTTON ACTION
-   Prevent accidental repeated/double taps
-===================================================== */
-
-function runOnce(action) {
-
-  if (actionLock) return;
-
-  actionLock = true;
-
-  try {
-    action();
-  } finally {
-
-    setTimeout(() => {
-      actionLock = false;
-    }, 350);
-
-  }
-
-}
+let openingConversation = false;
+let creatingConversation = false;
+let sendingMessage = false;
 
 
 /* =====================================================
@@ -579,8 +568,15 @@ async function startApp() {
 
 async function loadConversations() {
 
+  if (!currentUser) return;
+
   const list =
     document.getElementById("chatList");
+
+  const empty =
+    document.getElementById("empty");
+
+  empty.style.display = "none";
 
   list.innerHTML =
     `<div class="loading">
@@ -622,15 +618,13 @@ async function loadConversations() {
 
   if (!data || data.length === 0) {
 
-    document.getElementById("empty")
-      .style.display = "block";
+    empty.style.display = "block";
 
     return;
 
   }
 
-  document.getElementById("empty")
-    .style.display = "none";
+  empty.style.display = "none";
 
   for (const conversation of data) {
 
@@ -735,13 +729,18 @@ async function createConversationItem(
 
   item.addEventListener(
     "click",
-    function(event) {
+    async function(event) {
 
       event.preventDefault();
+      event.stopPropagation();
 
-      runOnce(() => {
+      if (openingConversation) return;
 
-        openConversation(
+      openingConversation = true;
+
+      try {
+
+        await openConversation(
           conversation,
           profile || {
             id: otherId,
@@ -750,7 +749,11 @@ async function createConversationItem(
           }
         );
 
-      });
+      } finally {
+
+        openingConversation = false;
+
+      }
 
     }
   );
@@ -822,7 +825,8 @@ function searchUsers() {
               Search failed.
             </div>`;
 
-          results.style.display = "block";
+          results.style.display =
+            "block";
 
           return;
 
@@ -880,17 +884,28 @@ function searchUsers() {
 
               user.addEventListener(
                 "click",
-                function(event) {
+                async function(event) {
 
                   event.preventDefault();
+                  event.stopPropagation();
 
-                  runOnce(() => {
+                  if (creatingConversation) {
+                    return;
+                  }
 
-                    startConversation(
+                  creatingConversation = true;
+
+                  try {
+
+                    await startConversation(
                       profile
                     );
 
-                  });
+                  } finally {
+
+                    creatingConversation = false;
+
+                  }
 
                 }
               );
@@ -902,7 +917,8 @@ function searchUsers() {
 
         }
 
-        results.style.display = "block";
+        results.style.display =
+          "block";
 
       },
       300
@@ -917,7 +933,9 @@ function searchUsers() {
 
 async function startConversation(profile) {
 
-  if (!currentUser || !profile?.id) return;
+  if (!currentUser || !profile?.id) {
+    return;
+  }
 
   const otherId =
     profile.id;
@@ -1013,7 +1031,9 @@ async function openConversation(
   profile
 ) {
 
-  if (!conversation || !profile) return;
+  if (!conversation || !profile) {
+    return;
+  }
 
   currentConversation =
     conversation;
@@ -1044,9 +1064,14 @@ async function openConversation(
 
   setTimeout(() => {
 
-    document.getElementById(
-      "messageInput"
-    ).focus();
+    const input =
+      document.getElementById(
+        "messageInput"
+      );
+
+    if (input) {
+      input.focus();
+    }
 
   }, 100);
 
@@ -1059,7 +1084,12 @@ async function openConversation(
 
 async function loadMessages() {
 
-  if (!currentConversation) return;
+  if (!currentConversation) {
+    return;
+  }
+
+  const conversationId =
+    currentConversation.id;
 
   const container =
     document.getElementById(
@@ -1077,12 +1107,20 @@ async function loadMessages() {
     .select("*")
     .eq(
       "conversation_id",
-      currentConversation.id
+      conversationId
     )
     .order(
       "created_at",
       { ascending: true }
     );
+
+  if (
+    !currentConversation ||
+    currentConversation.id !==
+      conversationId
+  ) {
+    return;
+  }
 
   if (error) {
 
@@ -1170,31 +1208,38 @@ function renderMessage(message) {
 
 async function sendMessage() {
 
-  if (!currentUser) return;
+  if (sendingMessage) {
+    return;
+  }
 
-  if (!currentConversation) return;
+  if (!currentUser) {
+    return;
+  }
+
+  if (!currentConversation) {
+    return;
+  }
 
   const input =
     document.getElementById(
       "messageInput"
     );
 
-  const text =
-    input.value.trim();
-
-  if (!text) return;
-
-  /*
-    Clear immediately so repeated taps
-    cannot send the same text twice.
-  */
-  input.value = "";
-
   const sendButton =
     document.getElementById(
       "sendMessageButton"
     );
 
+  const text =
+    input.value.trim();
+
+  if (!text) {
+    return;
+  }
+
+  sendingMessage = true;
+
+  input.value = "";
   sendButton.disabled = true;
 
   const {
@@ -1213,8 +1258,6 @@ async function sendMessage() {
         text
     });
 
-  sendButton.disabled = false;
-
   if (error) {
 
     input.value = text;
@@ -1224,9 +1267,15 @@ async function sendMessage() {
       error.message
     );
 
+    sendButton.disabled = false;
+    sendingMessage = false;
+
     return;
 
   }
+
+  sendButton.disabled = false;
+  sendingMessage = false;
 
   await loadMessages();
 
@@ -1239,7 +1288,9 @@ async function sendMessage() {
 
 function subscribeRealtime() {
 
-  if (!currentConversation) return;
+  if (!currentConversation) {
+    return;
+  }
 
   if (realtimeChannel) {
 
@@ -1278,7 +1329,7 @@ function subscribeRealtime() {
           if (
             currentConversation &&
             currentConversation.id ===
-            conversationId
+              conversationId
           ) {
 
             loadMessages();
@@ -1296,11 +1347,11 @@ function subscribeRealtime() {
    CLOSE CHAT
 ===================================================== */
 
-function closeChat() {
+async function closeChat() {
 
   if (realtimeChannel) {
 
-    supabaseClient
+    await supabaseClient
       .removeChannel(
         realtimeChannel
       );
@@ -1321,7 +1372,11 @@ function closeChat() {
     "messageInput"
   ).value = "";
 
-  loadConversations();
+  document.getElementById(
+    "messagesContainer"
+  ).innerHTML = "";
+
+  await loadConversations();
 
 }
 
@@ -1413,11 +1468,7 @@ function messageKey(event) {
 
     event.preventDefault();
 
-    runOnce(() => {
-
-      sendMessage();
-
-    });
+    sendMessage();
 
   }
 
@@ -1472,101 +1523,97 @@ function escapeHTML(value) {
 
 /* =====================================================
    BUTTON EVENTS
-   These replace inline onclick handlers.
 ===================================================== */
 
 document
-  .getElementById("newMessageButton")
+  .getElementById(
+    "newMessageButton"
+  )
   .addEventListener(
     "click",
     function(event) {
 
       event.preventDefault();
+      event.stopPropagation();
 
-      runOnce(() => {
-
-        focusSearch();
-
-      });
+      focusSearch();
 
     }
   );
 
 
 document
-  .getElementById("allFilter")
+  .getElementById(
+    "allFilter"
+  )
   .addEventListener(
     "click",
     function(event) {
 
       event.preventDefault();
+      event.stopPropagation();
 
-      runOnce(() => {
-
-        showAll(this);
-
-      });
+      showAll(this);
 
     }
   );
 
 
 document
-  .getElementById("unreadFilter")
+  .getElementById(
+    "unreadFilter"
+  )
   .addEventListener(
     "click",
     function(event) {
 
       event.preventDefault();
+      event.stopPropagation();
 
-      runOnce(() => {
-
-        showUnread(this);
-
-      });
+      showUnread(this);
 
     }
   );
 
 
 document
-  .getElementById("backButton")
+  .getElementById(
+    "backButton"
+  )
   .addEventListener(
     "click",
-    function(event) {
+    async function(event) {
 
       event.preventDefault();
+      event.stopPropagation();
 
-      runOnce(() => {
-
-        closeChat();
-
-      });
+      await closeChat();
 
     }
   );
 
 
 document
-  .getElementById("sendMessageButton")
+  .getElementById(
+    "sendMessageButton"
+  )
   .addEventListener(
     "click",
     function(event) {
 
       event.preventDefault();
+      event.stopPropagation();
 
-      runOnce(() => {
-
-        sendMessage();
-
-      });
+      sendMessage();
 
     }
   );
 
 
 document
-  .getElementById("searchInput")
+  .getElementById(
+    "searchInput"
+  )
   .addEventListener(
     "input",
     searchUsers
@@ -1574,10 +1621,38 @@ document
 
 
 document
-  .getElementById("messageInput")
+  .getElementById(
+    "messageInput"
+  )
   .addEventListener(
     "keydown",
     messageKey
+  );
+
+
+/* =====================================================
+   BOTTOM NAV
+   Normal links. Repeated taps do not create
+   JavaScript navigation.
+===================================================== */
+
+document
+  .querySelectorAll(
+    ".bottom-nav a"
+  )
+  .forEach(
+    link => {
+
+      link.addEventListener(
+        "click",
+        function(event) {
+
+          event.stopPropagation();
+
+        }
+      );
+
+    }
   );
 
 

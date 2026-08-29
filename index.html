@@ -912,7 +912,7 @@ button:active{
 
     <span
       class="see-all"
-      onclick="protectedAction()">
+      onclick="openLive()">
       See all
     </span>
 
@@ -922,7 +922,7 @@ button:active{
 
     <div
       class="live-card"
-      onclick="protectedAction()">
+      onclick="openLive()">
 
       <div class="live-image">
         👩
@@ -945,7 +945,7 @@ button:active{
 
     <div
       class="live-card"
-      onclick="protectedAction()">
+      onclick="openLive()">
 
       <div class="live-image">
         👨
@@ -968,7 +968,7 @@ button:active{
 
     <div
       class="live-card"
-      onclick="protectedAction()">
+      onclick="openLive()">
 
       <div class="live-image">
         👩‍🦱
@@ -1005,7 +1005,7 @@ button:active{
 
     <span
       class="see-all"
-      onclick="protectedAction()">
+      onclick="openWallet()">
       See all
     </span>
 
@@ -1340,7 +1340,7 @@ button:active{
 
   <div
     class="nav-item"
-    onclick="protectedAction()">
+    onclick="openLive()">
 
     <span>🔴</span>
     Live
@@ -1403,11 +1403,8 @@ window.supabase.createClient(
 
 
 let currentSession = null;
-
 let allPosts = [];
-
 let displayedPostCount = 10;
-
 let commentsOpen = {};
 
 
@@ -1439,7 +1436,6 @@ async function checkLogin(){
   currentSession =
     data.session;
 
-
   await updateAuthUI();
 
 }
@@ -1469,53 +1465,32 @@ async function updateAuthUI(){
 
   if(!currentSession){
 
-    loginBtn.style.display =
-      "block";
-
-    registerBtn.style.display =
-      "block";
-
-    logoutBtn.style.display =
-      "none";
-
-    userInfo.style.display =
-      "none";
-
+    loginBtn.style.display = "block";
+    registerBtn.style.display = "block";
+    logoutBtn.style.display = "none";
+    userInfo.style.display = "none";
 
     document.getElementById(
       "balanceDisplay"
-    ).textContent =
-      "0 ETB";
-
+    ).textContent = "0 ETB";
 
     document.getElementById(
       "etbDisplay"
-    ).textContent =
-      "0.00";
-
+    ).textContent = "0.00";
 
     document.getElementById(
       "usdtDisplay"
-    ).textContent =
-      "0.00";
-
+    ).textContent = "0.00";
 
     return;
 
   }
 
 
-  loginBtn.style.display =
-    "none";
-
-  registerBtn.style.display =
-    "none";
-
-  logoutBtn.style.display =
-    "block";
-
-  userInfo.style.display =
-    "block";
+  loginBtn.style.display = "none";
+  registerBtn.style.display = "none";
+  logoutBtn.style.display = "block";
+  userInfo.style.display = "block";
 
 
   const user =
@@ -1680,7 +1655,6 @@ async function loadPosts(shuffle=false){
 
   displayedPostCount = 10;
 
-
   await renderPosts();
 
 }
@@ -1703,7 +1677,6 @@ async function loadMorePosts(){
 
 
   displayedPostCount += 10;
-
 
   await renderPosts();
 
@@ -1742,9 +1715,7 @@ async function renderPosts(){
 
     document.getElementById(
       "loadMoreBtn"
-    ).style.display =
-      "none";
-
+    ).style.display = "none";
 
     return;
 
@@ -1757,9 +1728,7 @@ async function renderPosts(){
     );
 
 
-  /* ===============================
-     PROFILES
-  =============================== */
+  /* PROFILES */
 
   const userIds =
     [
@@ -1806,16 +1775,13 @@ async function renderPosts(){
 
       profileMap[
         profile.id
-      ] =
-      profile;
+      ] = profile;
 
     }
   );
 
 
-  /* ===============================
-     LIKES
-  =============================== */
+  /* LIKES */
 
   let likes = [];
 
@@ -1882,9 +1848,7 @@ async function renderPosts(){
     );
 
 
-  /* ===============================
-     COMMENTS
-  =============================== */
+  /* COMMENTS */
 
   let comments = [];
 
@@ -2184,28 +2148,11 @@ function toggleComments(postId){
   }
 
 
-  /*
-    Re-render this post's comments
-    so minimize/maximize works correctly.
-  */
-
   if(box){
 
-    const post =
-      allPosts.find(
-        item =>
-          String(item.id) ===
-          String(postId)
-      );
-
-
-    if(post){
-
-      refreshSinglePostComments(
-        postId
-      );
-
-    }
+    refreshSinglePostComments(
+      postId
+    );
 
   }
 
@@ -2310,8 +2257,7 @@ async function refreshSinglePostComments(postId){
 
       profileMap[
         profile.id
-      ] =
-      profile;
+      ] = profile;
 
     }
   );
@@ -3073,7 +3019,6 @@ async function createPost(){
 
   closeCreatePost();
 
-
   await loadPosts(true);
 
 }
@@ -3275,6 +3220,22 @@ function openRegister(){
 }
 
 
+/* ===============================
+   LIVE PAGE
+=============================== */
+
+function openLive(){
+
+  window.location.href =
+    "live.html";
+
+}
+
+
+/* ===============================
+   DEPOSIT
+=============================== */
+
 function openDeposit(){
 
   if(!currentSession){
@@ -3295,6 +3256,10 @@ function openDeposit(){
 
 }
 
+
+/* ===============================
+   WALLET
+=============================== */
 
 function openWallet(){
 
@@ -3582,11 +3547,6 @@ supabaseClient.auth.onAuthStateChange(
     currentSession =
       session;
 
-
-    /*
-      Delay database work slightly
-      to avoid Supabase auth-lock issues.
-    */
 
     setTimeout(
       async function(){

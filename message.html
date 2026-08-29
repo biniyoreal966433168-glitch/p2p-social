@@ -328,8 +328,8 @@
     }
 
     .send-message:disabled {
-      opacity: .55;
-      cursor: not-allowed;
+      opacity: .6;
+      cursor: default;
     }
 
     /* BOTTOM NAV */
@@ -379,20 +379,20 @@
     <img src="images/logo.png" alt="P2P Social">
     <span>P2P Social</span>
   </div>
-</header><main class="messages-page">  <div class="messages-title">
-    <h1>Messages</h1><button
+</header><main class="messages-page">  <div class="messages-title"><h1>Messages</h1>
+
+<button
   type="button"
   class="new-message"
   id="newMessageButton">
   +
 </button>
 
-  </div>  <div class="search-box">
-    <input
-      id="searchInput"
-      type="search"
-      placeholder="Search users..."
-      autocomplete="off">
+  </div>  <div class="search-box"><input
+  id="searchInput"
+  type="search"
+  placeholder="Search users...">
+
   </div>  <div
     id="searchResults"
     class="search-results">
@@ -482,14 +482,17 @@ class="p2p-nav">
 P2P
 </a>
 
-<a
+  <!-- IMPORTANT:
+       This button does NOT navigate again
+       when already on messages.html. --><a
 href="messages.html"
-class="active">
+class="active"
+id="messagesNavButton">
+
 <span class="nav-icon">□</span>
 Messages
-</a>
 
-  <a href="profile.html">
+  </a>  <a href="profile.html">
     <span class="nav-icon">○</span>
     Profile
   </a></nav><script>
@@ -521,10 +524,6 @@ let currentOtherUser = null;
 let realtimeChannel = null;
 let searchTimer = null;
 
-let openingConversation = false;
-let creatingConversation = false;
-let sendingMessage = false;
-
 
 /* =====================================================
    START
@@ -541,6 +540,7 @@ async function startApp() {
   if (error) {
 
     console.error(error);
+
     return;
 
   }
@@ -655,7 +655,8 @@ async function createConversationItem(
 ) {
 
   const {
-    data: profile
+    data: profile,
+    error: profileError
   } =
   await supabaseClient
     .from("profiles")
@@ -664,6 +665,12 @@ async function createConversationItem(
     )
     .eq("id", otherId)
     .maybeSingle();
+
+  if (profileError) {
+
+    console.error(profileError);
+
+  }
 
   const name =
     profile?.username ||
@@ -674,7 +681,8 @@ async function createConversationItem(
     "images/profile.png";
 
   const {
-    data: last
+    data: last,
+    error: lastError
   } =
   await supabaseClient
     .from("messages")
@@ -690,6 +698,12 @@ async function createConversationItem(
       { ascending: false }
     )
     .limit(1);
+
+  if (lastError) {
+
+    console.error(lastError);
+
+  }
 
   const item =
     document.createElement("div");
@@ -717,11 +731,13 @@ async function createConversationItem(
       </div>
 
       <div class="chat-preview">
+
         ${
           last && last.length
             ? escapeHTML(last[0].content)
             : "Start a conversation"
         }
+
       </div>
 
     </div>
@@ -732,28 +748,15 @@ async function createConversationItem(
     async function(event) {
 
       event.preventDefault();
-      event.stopPropagation();
 
-      if (openingConversation) return;
-
-      openingConversation = true;
-
-      try {
-
-        await openConversation(
-          conversation,
-          profile || {
-            id: otherId,
-            username: "User",
-            avatar_url: "images/profile.png"
-          }
-        );
-
-      } finally {
-
-        openingConversation = false;
-
-      }
+      await openConversation(
+        conversation,
+        profile || {
+          id: otherId,
+          username: "User",
+          avatar_url: "images/profile.png"
+        }
+      );
 
     }
   );
@@ -887,25 +890,10 @@ function searchUsers() {
                 async function(event) {
 
                   event.preventDefault();
-                  event.stopPropagation();
 
-                  if (creatingConversation) {
-                    return;
-                  }
-
-                  creatingConversation = true;
-
-                  try {
-
-                    await startConversation(
-                      profile
-                    );
-
-                  } finally {
-
-                    creatingConversation = false;
-
-                  }
+                  await startConversation(
+                    profile
+                  );
 
                 }
               );
@@ -933,9 +921,9 @@ function searchUsers() {
 
 async function startConversation(profile) {
 
-  if (!currentUser || !profile?.id) {
-    return;
-  }
+  if (!currentUser) return;
+
+  if (!profile?.id) return;
 
   const otherId =
     profile.id;
@@ -1031,9 +1019,9 @@ async function openConversation(
   profile
 ) {
 
-  if (!conversation || !profile) {
-    return;
-  }
+  if (!conversation) return;
+
+  if (!profile) return;
 
   currentConversation =
     conversation;
@@ -1062,18 +1050,23 @@ async function openConversation(
 
   subscribeRealtime();
 
-  setTimeout(() => {
+  setTimeout(
+    () => {
 
-    const input =
-      document.getElementById(
-        "messageInput"
-      );
+      const input =
+        document.getElementById(
+          "messageInput"
+        );
 
-    if (input) {
-      input.focus();
-    }
+      if (input) {
 
-  }, 100);
+        input.focus();
+
+      }
+
+    },
+    100
+  );
 
 }
 
@@ -1084,12 +1077,7 @@ async function openConversation(
 
 async function loadMessages() {
 
-  if (!currentConversation) {
-    return;
-  }
-
-  const conversationId =
-    currentConversation.id;
+  if (!currentConversation) return;
 
   const container =
     document.getElementById(
@@ -1107,20 +1095,12 @@ async function loadMessages() {
     .select("*")
     .eq(
       "conversation_id",
-      conversationId
+      currentConversation.id
     )
     .order(
       "created_at",
       { ascending: true }
     );
-
-  if (
-    !currentConversation ||
-    currentConversation.id !==
-      conversationId
-  ) {
-    return;
-  }
 
   if (error) {
 
@@ -1145,8 +1125,11 @@ async function loadMessages() {
   }
 
   data.forEach(
-    message =>
-      renderMessage(message)
+    message => {
+
+      renderMessage(message);
+
+    }
   );
 
   scrollMessages();
@@ -1206,40 +1189,35 @@ function renderMessage(message) {
    SEND MESSAGE
 ===================================================== */
 
+let sendingMessage = false;
+
 async function sendMessage() {
 
-  if (sendingMessage) {
-    return;
-  }
+  if (sendingMessage) return;
 
-  if (!currentUser) {
-    return;
-  }
+  if (!currentUser) return;
 
-  if (!currentConversation) {
-    return;
-  }
+  if (!currentConversation) return;
 
   const input =
     document.getElementById(
       "messageInput"
     );
 
+  const text =
+    input.value.trim();
+
+  if (!text) return;
+
   const sendButton =
     document.getElementById(
       "sendMessageButton"
     );
 
-  const text =
-    input.value.trim();
-
-  if (!text) {
-    return;
-  }
-
   sendingMessage = true;
 
   input.value = "";
+
   sendButton.disabled = true;
 
   const {
@@ -1258,6 +1236,10 @@ async function sendMessage() {
         text
     });
 
+  sendingMessage = false;
+
+  sendButton.disabled = false;
+
   if (error) {
 
     input.value = text;
@@ -1267,15 +1249,9 @@ async function sendMessage() {
       error.message
     );
 
-    sendButton.disabled = false;
-    sendingMessage = false;
-
     return;
 
   }
-
-  sendButton.disabled = false;
-  sendingMessage = false;
 
   await loadMessages();
 
@@ -1288,9 +1264,7 @@ async function sendMessage() {
 
 function subscribeRealtime() {
 
-  if (!currentConversation) {
-    return;
-  }
+  if (!currentConversation) return;
 
   if (realtimeChannel) {
 
@@ -1329,7 +1303,7 @@ function subscribeRealtime() {
           if (
             currentConversation &&
             currentConversation.id ===
-              conversationId
+            conversationId
           ) {
 
             loadMessages();
@@ -1361,6 +1335,7 @@ async function closeChat() {
   }
 
   currentConversation = null;
+
   currentOtherUser = null;
 
   document.getElementById(
@@ -1371,10 +1346,6 @@ async function closeChat() {
   document.getElementById(
     "messageInput"
   ).value = "";
-
-  document.getElementById(
-    "messagesContainer"
-  ).innerHTML = "";
 
   await loadConversations();
 
@@ -1430,8 +1401,13 @@ function setActiveFilter(button) {
   document
     .querySelectorAll(".filter")
     .forEach(
-      b =>
-        b.classList.remove("active")
+      b => {
+
+        b.classList.remove(
+          "active"
+        );
+
+      }
     );
 
   button.classList.add("active");
@@ -1525,6 +1501,9 @@ function escapeHTML(value) {
    BUTTON EVENTS
 ===================================================== */
 
+
+/* NEW MESSAGE */
+
 document
   .getElementById(
     "newMessageButton"
@@ -1534,13 +1513,14 @@ document
     function(event) {
 
       event.preventDefault();
-      event.stopPropagation();
 
       focusSearch();
 
     }
   );
 
+
+/* ALL */
 
 document
   .getElementById(
@@ -1551,13 +1531,14 @@ document
     function(event) {
 
       event.preventDefault();
-      event.stopPropagation();
 
       showAll(this);
 
     }
   );
 
+
+/* UNREAD */
 
 document
   .getElementById(
@@ -1568,13 +1549,14 @@ document
     function(event) {
 
       event.preventDefault();
-      event.stopPropagation();
 
       showUnread(this);
 
     }
   );
 
+
+/* BACK */
 
 document
   .getElementById(
@@ -1585,13 +1567,14 @@ document
     async function(event) {
 
       event.preventDefault();
-      event.stopPropagation();
 
       await closeChat();
 
     }
   );
 
+
+/* SEND */
 
 document
   .getElementById(
@@ -1602,13 +1585,14 @@ document
     function(event) {
 
       event.preventDefault();
-      event.stopPropagation();
 
       sendMessage();
 
     }
   );
 
+
+/* SEARCH */
 
 document
   .getElementById(
@@ -1619,6 +1603,8 @@ document
     searchUsers
   );
 
+
+/* MESSAGE ENTER */
 
 document
   .getElementById(
@@ -1631,26 +1617,50 @@ document
 
 
 /* =====================================================
-   BOTTOM NAV
-   Normal links. Repeated taps do not create
-   JavaScript navigation.
+   IMPORTANT FIX:
+   □ MESSAGE BUTTON
 ===================================================== */
 
 document
-  .querySelectorAll(
-    ".bottom-nav a"
+  .getElementById(
+    "messagesNavButton"
   )
-  .forEach(
-    link => {
+  .addEventListener(
+    "click",
+    async function(event) {
 
-      link.addEventListener(
-        "click",
-        function(event) {
+      /*
+        We are already on messages.html.
 
-          event.stopPropagation();
+        Stop the browser from navigating/reloading
+        the page again.
 
-        }
-      );
+        This prevents repeated/double clicks from
+        triggering the 404 page.
+      */
+
+      event.preventDefault();
+
+      /*
+        If a chat is currently open,
+        clicking Messages returns to the
+        conversation list.
+      */
+
+      const chatScreen =
+        document.getElementById(
+          "chatScreen"
+        );
+
+      if (
+        chatScreen &&
+        chatScreen.style.display ===
+        "block"
+      ) {
+
+        await closeChat();
+
+      }
 
     }
   );

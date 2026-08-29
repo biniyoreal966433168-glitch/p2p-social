@@ -1,15 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>Messages • P2P Social</title>
-
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>Messages • P2P Social</title>  <!-- Supabase -->  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <style>
     * {
       box-sizing: border-box;
       margin: 0;
@@ -70,6 +62,7 @@
       color: white;
       font-size: 23px;
       cursor: pointer;
+      touch-action: manipulation;
     }
 
     .search-box {
@@ -101,6 +94,7 @@
       border: 1px solid #242936;
       border-radius: 12px;
       cursor: pointer;
+      touch-action: manipulation;
     }
 
     .search-user img {
@@ -138,6 +132,7 @@
       padding: 9px 15px;
       border-radius: 20px;
       cursor: pointer;
+      touch-action: manipulation;
     }
 
     .filter.active {
@@ -161,6 +156,9 @@
       border: 1px solid #202632;
       border-radius: 14px;
       cursor: pointer;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .avatar {
@@ -235,6 +233,7 @@
       color: white;
       font-size: 27px;
       cursor: pointer;
+      touch-action: manipulation;
     }
 
     .chat-avatar {
@@ -260,6 +259,7 @@
       right: 0;
       overflow-y: auto;
       padding: 15px;
+      -webkit-overflow-scrolling: touch;
     }
 
     .message-row {
@@ -276,6 +276,7 @@
       padding: 10px 13px;
       border-radius: 15px;
       background: #161b24;
+      word-break: break-word;
     }
 
     .message-row.mine .message-bubble {
@@ -321,6 +322,7 @@
       color: white;
       font-size: 20px;
       cursor: pointer;
+      touch-action: manipulation;
     }
 
     /* BOTTOM NAV */
@@ -363,181 +365,127 @@
     .p2p-nav {
       color: #00C2FF !important;
     }
-  </style>
-</head>
-
-<body>
-
-<header>
+  </style></head><body><header>
   <div class="brand">
     <img src="images/logo.png" alt="P2P Social">
     <span>P2P Social</span>
   </div>
-</header>
+</header><main class="messages-page">  <div class="messages-title">
+    <h1>Messages</h1><button
+  type="button"
+  class="new-message"
+  onclick="focusSearch()">
+  +
+</button>
 
-<main class="messages-page">
-
-  <div class="messages-title">
-    <h1>Messages</h1>
-
-    <button
-      class="new-message"
-      onclick="focusSearch()">
-      +
-    </button>
-  </div>
-
-  <div class="search-box">
+  </div>  <div class="search-box">
     <input
       id="searchInput"
       type="search"
       placeholder="Search users..."
       oninput="searchUsers()">
-  </div>
-
-  <div
+  </div>  <div
     id="searchResults"
     class="search-results">
-  </div>
+  </div>  <div class="filters"><button
+  type="button"
+  class="filter active"
+  onclick="showAll(this)">
+  All
+</button>
 
-  <div class="filters">
+<button
+  type="button"
+  class="filter"
+  onclick="showUnread(this)">
+  Unread
+</button>
 
-    <button
-      class="filter active"
-      onclick="showAll(this)">
-      All
-    </button>
-
-    <button
-      class="filter"
-      onclick="showUnread(this)">
-      Unread
-    </button>
-
-  </div>
-
-  <div
+  </div>  <div
     id="chatList"
-    class="chat-list">
+    class="chat-list"><div class="loading">
+  Loading conversations...
+</div>
 
-    <div class="loading">
-      Loading conversations...
-    </div>
-
-  </div>
-
-  <div
+  </div>  <div
     id="empty"
-    class="empty">
+    class="empty"><div style="font-size:45px;">
+  💬
+</div>
 
-    <div style="font-size:45px;">
-      💬
-    </div>
+<p>No conversations yet.</p>
 
-    <p>No conversations yet.</p>
-
-  </div>
-
-</main>
-
-
-<!-- CHAT SCREEN -->
-
-<div
+  </div></main><!-- CHAT SCREEN --><div
   id="chatScreen"
-  class="chat-screen">
+  class="chat-screen">  <div class="chat-header"><button
+  type="button"
+  class="back-btn"
+  onclick="closeChat()">
+  ←
+</button>
 
-  <div class="chat-header">
+<img
+  id="chatAvatar"
+  class="chat-avatar"
+  src="images/profile.png"
+  alt="Profile">
 
-    <button
-      class="back-btn"
-      onclick="closeChat()">
-      ←
-    </button>
-
-    <img
-      id="chatAvatar"
-      class="chat-avatar"
-      src="images/profile.png"
-      alt="Profile">
-
-    <div class="chat-header-info">
-
-      <div
-        id="chatName"
-        class="chat-header-name">
-        User
-      </div>
-
-    </div>
-
-  </div>
+<div class="chat-header-info">
 
   <div
-    id="messagesContainer"
-    class="messages-container">
-  </div>
-
-  <div class="message-input-area">
-
-    <textarea
-      id="messageInput"
-      class="message-input"
-      rows="1"
-      placeholder="Write a message..."
-      onkeydown="messageKey(event)">
-    </textarea>
-
-    <button
-      class="send-message"
-      onclick="sendMessage()">
-      ➤
-    </button>
-
+    id="chatName"
+    class="chat-header-name">
+    User
   </div>
 
 </div>
 
+  </div>  <div
+    id="messagesContainer"
+    class="messages-container">
+  </div>  <div class="message-input-area"><textarea
+  id="messageInput"
+  class="message-input"
+  rows="1"
+  placeholder="Write a message..."
+  onkeydown="messageKey(event)">
+</textarea>
 
-<!-- BOTTOM NAV -->
+<button
+  type="button"
+  class="send-message"
+  onclick="sendMessage()">
+  ➤
+</button>
 
-<nav class="bottom-nav">
-
-  <a href="index.html">
+  </div></div><!-- BOTTOM NAV --><nav class="bottom-nav">  <a href="index.html">
     <span class="nav-icon">⌂</span>
     Home
-  </a>
+  </a><a
+href="live.html"
+class="live-nav">
+<span class="nav-icon">●</span>
+Live
+</a>
 
-  <a
-    href="live.html"
-    class="live-nav">
-    <span class="nav-icon">●</span>
-    Live
-  </a>
+<a
+href="wallet.html"
+class="p2p-nav">
+<span class="nav-icon">◇</span>
+P2P
+</a>
 
-  <a
-    href="wallet.html"
-    class="p2p-nav">
-    <span class="nav-icon">◇</span>
-    P2P
-  </a>
-
-  <a
-    href="messages.html"
-    class="active">
-    <span class="nav-icon">□</span>
-    Messages
-  </a>
+<a
+href="messages.html"
+class="active">
+<span class="nav-icon">□</span>
+Messages
+</a>
 
   <a href="profile.html">
     <span class="nav-icon">○</span>
     Profile
-  </a>
-
-</nav>
-
-
-<script>
+  </a></nav><script>
 
 /* =====================================================
    SUPABASE
@@ -565,6 +513,11 @@ let currentConversation = null;
 let currentOtherUser = null;
 let realtimeChannel = null;
 
+let openingConversation = false;
+let startingConversation = false;
+let sendingMessage = false;
+let loadingMessages = false;
+
 
 /* =====================================================
    START
@@ -572,33 +525,41 @@ let realtimeChannel = null;
 
 async function startApp() {
 
-  const {
-    data,
-    error
-  } =
-  await supabaseClient.auth.getSession();
+  try {
 
-  if (error) {
+    const {
+      data,
+      error
+    } =
+    await supabaseClient.auth.getSession();
 
-    console.error(error);
+    if (error) {
 
-    return;
+      console.error("Session error:", error);
+
+      return;
+
+    }
+
+    if (!data.session) {
+
+      window.location.href =
+        "login.html";
+
+      return;
+
+    }
+
+    currentUser =
+      data.session.user;
+
+    await loadConversations();
+
+  } catch (error) {
+
+    console.error("Start error:", error);
 
   }
-
-  if (!data.session) {
-
-    window.location.href =
-      "login.html";
-
-    return;
-
-  }
-
-  currentUser =
-    data.session.user;
-
-  await loadConversations();
 
 }
 
@@ -609,13 +570,20 @@ async function startApp() {
 
 async function loadConversations() {
 
+  if (!currentUser) return;
+
   const list =
     document.getElementById("chatList");
+
+  const empty =
+    document.getElementById("empty");
 
   list.innerHTML =
     `<div class="loading">
       Loading conversations...
     </div>`;
+
+  empty.style.display = "none";
 
   const {
     data,
@@ -652,15 +620,13 @@ async function loadConversations() {
 
   if (!data || data.length === 0) {
 
-    document.getElementById("empty")
-      .style.display = "block";
+    empty.style.display = "block";
 
     return;
 
   }
 
-  document.getElementById("empty")
-    .style.display = "none";
+  empty.style.display = "none";
 
   for (const conversation of data) {
 
@@ -763,9 +729,27 @@ async function createConversationItem(
     </div>
   `;
 
-  item.onclick =
-    () =>
-      openConversation(
+  /*
+    IMPORTANT:
+    Use addEventListener instead of inline onclick
+    so repeated/double clicks cannot open multiple
+    chat screens at the same time.
+  */
+
+  let clickLock = false;
+
+  item.addEventListener("click", async function(event) {
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (clickLock) return;
+
+    clickLock = true;
+
+    try {
+
+      await openConversation(
         conversation,
         profile || {
           id: otherId,
@@ -773,6 +757,16 @@ async function createConversationItem(
           avatar_url: "images/profile.png"
         }
       );
+
+    } finally {
+
+      setTimeout(() => {
+        clickLock = false;
+      }, 400);
+
+    }
+
+  });
 
   list.appendChild(item);
 
@@ -813,6 +807,8 @@ function searchUsers() {
     setTimeout(
       async () => {
 
+        if (!currentUser) return;
+
         const {
           data,
           error
@@ -835,6 +831,13 @@ function searchUsers() {
         if (error) {
 
           console.error(error);
+
+          results.innerHTML =
+            `<div class="loading">
+              Search failed.
+            </div>`;
+
+          results.style.display = "block";
 
           return;
 
@@ -870,7 +873,8 @@ function searchUsers() {
                       profile.avatar_url ||
                       "images/profile.png"
                     )
-                  }">
+                  }"
+                  alt="Profile">
 
                 <div class="search-info">
 
@@ -890,11 +894,35 @@ function searchUsers() {
                 </div>
               `;
 
-              user.onclick =
-                () =>
-                  startConversation(
-                    profile
-                  );
+              let searchClickLock = false;
+
+              user.addEventListener(
+                "click",
+                async function(event) {
+
+                  event.preventDefault();
+                  event.stopPropagation();
+
+                  if (searchClickLock) return;
+
+                  searchClickLock = true;
+
+                  try {
+
+                    await startConversation(
+                      profile
+                    );
+
+                  } finally {
+
+                    setTimeout(() => {
+                      searchClickLock = false;
+                    }, 400);
+
+                  }
+
+                }
+              );
 
               results.appendChild(user);
 
@@ -918,87 +946,140 @@ function searchUsers() {
 
 async function startConversation(profile) {
 
-  const otherId =
-    profile.id;
+  if (!currentUser) return;
 
-  const userOne =
-    currentUser.id < otherId
-      ? currentUser.id
-      : otherId;
+  if (startingConversation) return;
 
-  const userTwo =
-    currentUser.id < otherId
-      ? otherId
-      : currentUser.id;
+  startingConversation = true;
 
-  const {
-    data: existing,
-    error: findError
-  } =
-  await supabaseClient
-    .from("conversations")
-    .select("*")
-    .eq("user_one", userOne)
-    .eq("user_two", userTwo)
-    .maybeSingle();
+  try {
 
-  if (findError) {
+    const otherId =
+      profile.id;
 
-    alert(
-      "Conversation error: " +
-      findError.message
-    );
+    if (!otherId) {
 
-    return;
-
-  }
-
-  let conversation =
-    existing;
-
-  if (!conversation) {
-
-    const {
-      data,
-      error
-    } =
-    await supabaseClient
-      .from("conversations")
-      .insert({
-        user_one: userOne,
-        user_two: userTwo
-      })
-      .select()
-      .single();
-
-    if (error) {
-
-      alert(
-        "Could not create conversation: " +
-        error.message
+      console.error(
+        "User ID missing."
       );
 
       return;
 
     }
 
-    conversation =
-      data;
+    const userOne =
+      currentUser.id < otherId
+        ? currentUser.id
+        : otherId;
+
+    const userTwo =
+      currentUser.id < otherId
+        ? otherId
+        : currentUser.id;
+
+    const {
+      data: existing,
+      error: findError
+    } =
+    await supabaseClient
+      .from("conversations")
+      .select("*")
+      .eq("user_one", userOne)
+      .eq("user_two", userTwo)
+      .maybeSingle();
+
+    if (findError) {
+
+      alert(
+        "Conversation error: " +
+        findError.message
+      );
+
+      return;
+
+    }
+
+    let conversation =
+      existing;
+
+    if (!conversation) {
+
+      const {
+        data,
+        error
+      } =
+      await supabaseClient
+        .from("conversations")
+        .insert({
+          user_one: userOne,
+          user_two: userTwo
+        })
+        .select()
+        .single();
+
+      if (error) {
+
+        /*
+          If two clicks caused a duplicate request,
+          try to retrieve the conversation instead
+          of breaking the page.
+        */
+
+        const {
+          data: retryConversation
+        } =
+        await supabaseClient
+          .from("conversations")
+          .select("*")
+          .eq("user_one", userOne)
+          .eq("user_two", userTwo)
+          .maybeSingle();
+
+        if (retryConversation) {
+
+          conversation =
+            retryConversation;
+
+        } else {
+
+          alert(
+            "Could not create conversation: " +
+            error.message
+          );
+
+          return;
+
+        }
+
+      } else {
+
+        conversation =
+          data;
+
+      }
+
+    }
+
+    document.getElementById(
+      "searchInput"
+    ).value = "";
+
+    document.getElementById(
+      "searchResults"
+    ).style.display = "none";
+
+    await openConversation(
+      conversation,
+      profile
+    );
+
+  } finally {
+
+    setTimeout(() => {
+      startingConversation = false;
+    }, 400);
 
   }
-
-  document.getElementById(
-    "searchInput"
-  ).value = "";
-
-  document.getElementById(
-    "searchResults"
-  ).style.display = "none";
-
-  openConversation(
-    conversation,
-    profile
-  );
 
 }
 
@@ -1012,32 +1093,74 @@ async function openConversation(
   profile
 ) {
 
-  currentConversation =
-    conversation;
+  if (!conversation || !conversation.id) {
 
-  currentOtherUser =
-    profile;
+    console.error(
+      "Invalid conversation."
+    );
 
-  document.getElementById(
-    "chatName"
-  ).textContent =
-    profile.username ||
+    return;
+
+  }
+
+  if (openingConversation) return;
+
+  openingConversation = true;
+
+  try {
+
+    currentConversation =
+      conversation;
+
+    currentOtherUser =
+      profile;
+
+    document.getElementById(
+      "chatName"
+    ).textContent =
+    profile?.username ||
     "User";
 
-  document.getElementById(
-    "chatAvatar"
-  ).src =
-    profile.avatar_url ||
+    document.getElementById(
+      "chatAvatar"
+    ).src =
+    profile?.avatar_url ||
     "images/profile.png";
 
-  document.getElementById(
-    "chatScreen"
-  ).style.display =
+    document.getElementById(
+      "chatScreen"
+    ).style.display =
     "block";
 
-  await loadMessages();
+    document.body.style.overflow =
+    "hidden";
 
-  subscribeRealtime();
+    await loadMessages();
+
+    subscribeRealtime();
+
+    setTimeout(() => {
+
+      document.getElementById(
+        "messageInput"
+      ).focus();
+
+    }, 100);
+
+  } catch (error) {
+
+    console.error(
+      "Open conversation error:",
+      error
+    );
+
+  } finally {
+
+    setTimeout(() => {
+      openingConversation = false;
+    }, 350);
+
+  }
 
 }
 
@@ -1048,57 +1171,78 @@ async function openConversation(
 
 async function loadMessages() {
 
+  if (!currentConversation) return;
+
+  if (loadingMessages) return;
+
+  loadingMessages = true;
+
   const container =
     document.getElementById(
       "messagesContainer"
     );
 
-  container.innerHTML = "";
+  try {
 
-  const {
-    data,
-    error
-  } =
-  await supabaseClient
-    .from("messages")
-    .select("*")
-    .eq(
-      "conversation_id",
-      currentConversation.id
-    )
-    .order(
-      "created_at",
-      { ascending: true }
+    container.innerHTML = "";
+
+    const {
+      data,
+      error
+    } =
+    await supabaseClient
+      .from("messages")
+      .select("*")
+      .eq(
+        "conversation_id",
+        currentConversation.id
+      )
+      .order(
+        "created_at",
+        { ascending: true }
+      );
+
+    if (error) {
+
+      container.innerHTML =
+        `<div class="loading">
+          ${escapeHTML(error.message)}
+        </div>`;
+
+      return;
+
+    }
+
+    if (!data || data.length === 0) {
+
+      container.innerHTML =
+        `<div class="loading">
+          No messages yet 👋
+        </div>`;
+
+      return;
+
+    }
+
+    data.forEach(
+      message =>
+        renderMessage(message)
     );
 
-  if (error) {
+    scrollMessages();
 
-    container.innerHTML =
-      `<div class="loading">
-        ${escapeHTML(error.message)}
-      </div>`;
+  } catch (error) {
 
-    return;
+    console.error(
+      "Load messages error:",
+      error
+    );
 
-  }
+  } finally {
 
-  if (!data || data.length === 0) {
-
-    container.innerHTML =
-      `<div class="loading">
-        No messages yet 👋
-      </div>`;
-
-    return;
+    loadingMessages = false;
 
   }
-
-  data.forEach(
-    message =>
-      renderMessage(message)
-  );
-
-  scrollMessages();
 
 }
 
@@ -1157,6 +1301,12 @@ function renderMessage(message) {
 
 async function sendMessage() {
 
+  if (sendingMessage) return;
+
+  if (!currentUser) return;
+
+  if (!currentConversation) return;
+
   const input =
     document.getElementById(
       "messageInput"
@@ -1167,38 +1317,79 @@ async function sendMessage() {
 
   if (!text) return;
 
-  if (!currentConversation) return;
+  sendingMessage = true;
 
-  const {
-    error
-  } =
-  await supabaseClient
-    .from("messages")
-    .insert({
-      conversation_id:
-        currentConversation.id,
+  /*
+    Disable repeated sending while the first
+    database request is running.
+  */
 
-      sender_id:
-        currentUser.id,
-
-      content:
-        text
-    });
-
-  if (error) {
-
-    alert(
-      "Message failed: " +
-      error.message
+  const sendButton =
+    document.querySelector(
+      ".send-message"
     );
 
-    return;
+  if (sendButton) {
+
+    sendButton.disabled = true;
+    sendButton.style.opacity = "0.6";
 
   }
 
-  input.value = "";
+  try {
 
-  await loadMessages();
+    const {
+      error
+    } =
+    await supabaseClient
+      .from("messages")
+      .insert({
+        conversation_id:
+          currentConversation.id,
+
+        sender_id:
+          currentUser.id,
+
+        content:
+          text
+      });
+
+    if (error) {
+
+      alert(
+        "Message failed: " +
+        error.message
+      );
+
+      return;
+
+    }
+
+    input.value = "";
+
+    await loadMessages();
+
+  } catch (error) {
+
+    console.error(
+      "Send message error:",
+      error
+    );
+
+  } finally {
+
+    if (sendButton) {
+
+      sendButton.disabled = false;
+      sendButton.style.opacity = "1";
+
+    }
+
+    setTimeout(() => {
+      sendingMessage = false;
+    }, 300);
+
+  }
 
 }
 
@@ -1209,6 +1400,8 @@ async function sendMessage() {
 
 function subscribeRealtime() {
 
+  if (!currentConversation) return;
+
   if (realtimeChannel) {
 
     supabaseClient
@@ -1216,13 +1409,17 @@ function subscribeRealtime() {
         realtimeChannel
       );
 
+    realtimeChannel = null;
+
   }
 
   realtimeChannel =
     supabaseClient
       .channel(
         "conversation-" +
-        currentConversation.id
+        currentConversation.id +
+        "-" +
+        Date.now()
       )
       .on(
         "postgres_changes",
@@ -1234,9 +1431,11 @@ function subscribeRealtime() {
             "conversation_id=eq." +
             currentConversation.id
         },
-        () => {
+        async () => {
 
-          loadMessages();
+          if (!loadingMessages) {
+            await loadMessages();
+          }
 
         }
       )
@@ -1263,11 +1462,19 @@ function closeChat() {
   }
 
   currentConversation = null;
+  currentOtherUser = null;
 
   document.getElementById(
     "chatScreen"
   ).style.display =
-    "none";
+  "none";
+
+  document.body.style.overflow =
+  "";
+
+  document.getElementById(
+    "messagesContainer"
+  ).innerHTML = "";
 
   loadConversations();
 
@@ -1335,9 +1542,17 @@ function setActiveFilter(button) {
 
 function focusSearch() {
 
-  document
-    .getElementById("searchInput")
-    .focus();
+  const input =
+    document.getElementById(
+      "searchInput"
+    );
+
+  input.focus();
+
+  input.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
 
 }
 
@@ -1433,7 +1648,5 @@ supabaseClient.auth
 
 startApp();
 
-</script>
-
-</body>
+</script></body>
 </html>

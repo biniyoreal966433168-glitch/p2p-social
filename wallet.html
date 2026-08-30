@@ -2,95 +2,429 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Wallet • P2P Social</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
-body{background:#f4f7f8;color:#172033;min-height:100vh;padding-bottom:90px}
-header{height:68px;background:#fff;border-bottom:1px solid #e2e8ea;display:flex;align-items:center;justify-content:space-between;padding:0 18px;position:sticky;top:0;z-index:20}
-.brand{display:flex;align-items:center;gap:10px}
-.brand-logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#064e46,#10a889);position:relative;display:flex;align-items:center;justify-content:center}
-.p-left{position:absolute;left:8px;top:10px;width:13px;height:23px;border:4px solid white;border-right:0;border-radius:8px 0 0 8px}
-.p-right{position:absolute;right:8px;top:10px;width:13px;height:23px;border:4px solid white;border-left:0;border-radius:0 8px 8px 0}
-.center-dot{width:10px;height:10px;background:white;border-radius:50%;position:absolute}
-.brand-name{font-size:19px;font-weight:800}
-.brand-name span{color:#087f73}
-.security{color:#087f73;font-size:13px;font-weight:bold}
-.container{width:100%;max-width:850px;margin:auto;padding:18px}
-.balance-card{background:linear-gradient(135deg,#064e46,#10a889);color:white;border-radius:20px;padding:24px;position:relative;overflow:hidden;box-shadow:0 10px 25px rgba(8,127,115,.18)}
-.balance-card:after{content:"";position:absolute;width:190px;height:190px;right:-70px;top:-75px;border-radius:50%;background:rgba(255,255,255,.09)}
-.label{font-size:13px;opacity:.8}
-.balance{font-size:34px;font-weight:bold;margin:8px 0}
-.available{font-size:13px;opacity:.8}
-.quick-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
-.quick-actions button{padding:14px 8px;background:white;color:#172033;border:1px solid #dce5e7;border-radius:13px;cursor:pointer;font-weight:bold}
-.action-icon{display:block;font-size:21px;color:#087f73;margin-bottom:5px}
-.section-title{display:flex;justify-content:space-between;align-items:center;margin:22px 0 12px}
-.section-title h2{font-size:20px}
-.section-title span{color:#087f73;font-size:13px;font-weight:bold}
-.order-card{background:white;border:1px solid #dfe7e9;border-radius:17px;padding:18px}
-.order-tabs{display:flex;gap:8px;margin-bottom:16px}
-.order-tab{flex:1;padding:12px;border:none;border-radius:10px;background:#edf3f3;color:#71808a;font-weight:bold;cursor:pointer}
-.order-tab.active{background:#087f73;color:white}
-.field{margin-bottom:14px}
-.field label{display:block;color:#71808a;font-size:13px;margin-bottom:7px}
-.select-box,.input-box{width:100%;background:#f5f8f8;border:1px solid #dce5e7;border-radius:10px;outline:none;font-size:15px}
-.select-box{padding:13px}
-.input-box{display:flex;align-items:center;padding:0}
-.input-box input{width:100%;padding:13px;background:transparent;border:none;outline:none;font-size:16px}
-.currency{padding:0 13px;color:#087f73;font-weight:bold}
-.create-btn{width:100%;padding:14px;border:none;border-radius:10px;background:linear-gradient(135deg,#064e46,#10a889);color:white;font-size:16px;font-weight:bold;cursor:pointer}
-.order-list{display:flex;flex-direction:column;gap:10px}
-.market-order{background:white;border:1px solid #dfe7e9;border-radius:15px;overflow:hidden}
-.order-main{padding:16px}
-.order-top{display:flex;justify-content:space-between;align-items:center}
-.order-title{font-weight:bold;font-size:16px}
-.order-pair{color:#087f73;font-weight:bold;margin-top:4px;font-size:13px}
-.order-type{padding:6px 9px;border-radius:8px;font-size:12px;font-weight:bold}
-.buy-type{background:#e2f5ef;color:#087f73}
-.sell-type{background:#fde8ed;color:#d72c50}
-.more-btn{width:100%;border:none;border-top:1px solid #e5ebec;background:#fafcfc;padding:11px;color:#087f73;font-weight:bold;cursor:pointer}
-.order-details{display:none;padding:15px 16px;border-top:1px solid #e5ebec;background:#fafcfc}
-.order-details.show{display:block}
-.detail-row{display:flex;justify-content:space-between;margin-bottom:9px;font-size:13px}
-.detail-row span:first-child{color:#7a8790}
-.cancel-btn{width:100%;margin-top:8px;padding:10px;border:1px solid #e1d7d9;border-radius:9px;background:white;color:#d72c50;font-weight:bold;cursor:pointer}
-.empty-offers{background:white;border:1px dashed #ccd8da;border-radius:15px;padding:35px 18px;text-align:center;color:#7b8790}
-.empty-icon{font-size:34px;margin-bottom:10px}
-.transaction{background:white;border:1px solid #dfe7e9;border-radius:13px;padding:15px;display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
-.transaction-left{display:flex;gap:11px;align-items:center}
-.transaction-icon{width:38px;height:38px;border-radius:50%;background:#e2f5ef;color:#087f73;display:flex;justify-content:center;align-items:center;font-weight:bold}
-.transaction-title{font-weight:bold;font-size:14px}
-.transaction-date{color:#89949b;font-size:11px;margin-top:4px}
-.transaction-amount{font-weight:bold;font-size:14px}
-.message{display:none;margin:12px 0;padding:12px;border-radius:10px;font-size:13px}
-.message.show{display:block}
-.success{background:#e2f5ef;color:#087f73}
-.error{background:#fff0f2;color:#d72c50}
-.offer{background:white;border:1px solid #dfe7e9;border-radius:15px;padding:16px;margin-bottom:10px}
-.offer-title{font-weight:bold}
-.offer-info{color:#71808a;font-size:12px;line-height:1.7;margin-top:8px}
-.offer-btn{width:100%;margin-top:12px;padding:11px;border:0;border-radius:9px;background:#e2f5ef;color:#087f73;font-weight:bold}
-.trade{background:white;border:1px solid #dfe7e9;border-radius:15px;padding:16px;margin-bottom:10px}
-.trade-title{font-weight:bold;margin-bottom:8px}
-.trade-status{color:#087f73;font-size:13px;margin-bottom:8px}
-.trade-info{color:#71808a;font-size:12px;line-height:1.7}
-.trade-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
-.trade-actions button{padding:10px;border:0;border-radius:9px;font-weight:bold;cursor:pointer}
-.pay-btn{background:#e2f5ef;color:#087f73}
-.release-btn{background:#e8f0ff;color:#315fbd}
-.dispute-btn{background:#fff7df;color:#a46a00}
-.trade-cancel{background:#fff0f2;color:#d92d4f}
-.bottom-nav{position:fixed;left:0;right:0;bottom:0;height:72px;background:white;border-top:1px solid #dfe7e9;display:flex;justify-content:space-around;align-items:center;z-index:30;box-shadow:0 -4px 15px rgba(0,0,0,.05)}
-.bottom-nav a{color:#7b8790;text-decoration:none;text-align:center;font-size:11px;min-width:55px}
-.bottom-nav a.active{color:#087f73;font-weight:bold}
-.nav-icon{display:block;font-size:21px;margin-bottom:4px}
-.live-nav{color:#ef3155!important}
-@media(max-width:450px){
-.container{padding:14px}.brand-name{font-size:17px}.security{font-size:11px}.balance{font-size:30px}
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+body{
+  font-family:Arial,Helvetica,sans-serif;
+  background:#f4f6f8;
+  color:#111827;
+  padding-bottom:82px;
+}
+
+header{
+  position:sticky;
+  top:0;
+  z-index:100;
+  background:#111827;
+  color:#fff;
+  padding:15px;
+  box-shadow:0 2px 10px rgba(0,0,0,.18);
+}
+
+.header{
+  max-width:760px;
+  margin:auto;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.logo{
+  font-size:20px;
+  font-weight:900;
+}
+
+.user{
+  font-size:13px;
+  opacity:.8;
+}
+
+.container{
+  width:100%;
+  max-width:760px;
+  margin:auto;
+  padding:14px;
+}
+
+.card{
+  background:#fff;
+  border-radius:18px;
+  padding:17px;
+  margin-bottom:14px;
+  box-shadow:0 4px 15px rgba(0,0,0,.06);
+}
+
+.balance-card{
+  background:linear-gradient(135deg,#111827,#263449);
+  color:#fff;
+}
+
+.label{
+  font-size:13px;
+  opacity:.7;
+}
+
+.etb{
+  font-size:34px;
+  font-weight:900;
+  margin:6px 0 17px;
+}
+
+.usdt{
+  font-size:24px;
+  font-weight:900;
+}
+
+.wallet-buttons{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+  margin-top:20px;
+}
+
+button{
+  border:0;
+  border-radius:11px;
+  padding:13px;
+  font-size:14px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+button:disabled{
+  opacity:.55;
+}
+
+.deposit{
+  background:#16a34a;
+  color:#fff;
+}
+
+.withdraw{
+  background:#dc2626;
+  color:#fff;
+}
+
+.refresh{
+  background:#e5e7eb;
+  color:#111827;
+  width:100%;
+}
+
+.title{
+  font-size:18px;
+  font-weight:900;
+  margin-bottom:14px;
+}
+
+.trade-tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-bottom:15px;
+}
+
+.buy{
+  background:#16a34a;
+  color:#fff;
+}
+
+.sell{
+  background:#dc2626;
+  color:#fff;
+}
+
+.inactive{
+  background:#e5e7eb!important;
+  color:#374151!important;
+}
+
+.group{
+  margin-bottom:12px;
+}
+
+label{
+  display:block;
+  font-size:13px;
+  font-weight:800;
+  margin-bottom:6px;
+}
+
+input,
+select,
+textarea{
+  width:100%;
+  border:1px solid #d1d5db;
+  border-radius:10px;
+  padding:12px;
+  background:#fff;
+  font-size:15px;
+  outline:none;
+}
+
+textarea{
+  resize:vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+  border-color:#2563eb;
+}
+
+.create{
+  width:100%;
+  background:#111827;
+  color:#fff;
+}
+
+.offer,
+.order,
+.trade{
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  padding:14px;
+  margin-bottom:11px;
+}
+
+.offer:last-child,
+.order:last-child,
+.trade:last-child{
+  margin-bottom:0;
+}
+
+.offer-head,
+.order-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+}
+
+.green{
+  color:#16a34a;
+  font-weight:900;
+}
+
+.red{
+  color:#dc2626;
+  font-weight:900;
+}
+
+.status{
+  background:#eef2ff;
+  border-radius:20px;
+  padding:5px 9px;
+  font-size:11px;
+  font-weight:800;
+}
+
+.row{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  padding:7px 0;
+  border-bottom:1px solid #f0f0f0;
+  font-size:14px;
+}
+
+.row:last-child{
+  border-bottom:0;
+}
+
+.trade-btn{
+  width:100%;
+  background:#2563eb;
+  color:#fff;
+  margin-top:10px;
+}
+
+.cancel{
+  width:100%;
+  background:#dc2626;
+  color:#fff;
+  margin-top:10px;
+}
+
+.payment{
+  width:100%;
+  background:#2563eb;
+  color:#fff;
+  margin-top:10px;
+}
+
+.release{
+  width:100%;
+  background:#16a34a;
+  color:#fff;
+  margin-top:10px;
+}
+
+.dispute{
+  width:100%;
+  background:#f59e0b;
+  color:#111827;
+  margin-top:10px;
+}
+
+.empty{
+  text-align:center;
+  padding:20px 5px;
+  color:#6b7280;
+  font-size:14px;
+}
+
+.loading{
+  text-align:center;
+  padding:18px;
+  color:#6b7280;
+}
+
+.notice{
+  padding:12px;
+  border-radius:10px;
+  background:#fff7ed;
+  color:#9a3412;
+  font-size:13px;
+  margin-bottom:12px;
+}
+
+.transaction{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  padding:13px 0;
+  border-bottom:1px solid #eee;
+}
+
+.transaction:last-child{
+  border-bottom:0;
+}
+
+.tx-type{
+  font-weight:800;
+}
+
+.tx-date{
+  color:#6b7280;
+  font-size:11px;
+  margin-top:4px;
+}
+
+.plus{
+  color:#16a34a;
+  font-weight:900;
+}
+
+.minus{
+  color:#dc2626;
+  font-weight:900;
+}
+
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.58);
+  z-index:500;
+  padding:15px;
+  align-items:center;
+  justify-content:center;
+}
+
+.modal.show{
+  display:flex;
+}
+
+.modal-box{
+  width:100%;
+  max-width:500px;
+  max-height:90vh;
+  overflow:auto;
+  background:#fff;
+  border-radius:18px;
+  padding:19px;
+}
+
+.modal-title{
+  font-size:20px;
+  font-weight:900;
+  margin-bottom:15px;
+}
+
+.modal-buttons{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+  margin-top:15px;
+}
+
+.close{
+  background:#e5e7eb;
+}
+
+.confirm{
+  background:#111827;
+  color:#fff;
+}
+
+.bottom{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  height:68px;
+  background:#fff;
+  border-top:1px solid #ddd;
+  z-index:200;
+}
+
+.bottom-inner{
+  max-width:760px;
+  height:100%;
+  margin:auto;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+}
+
+.nav{
+  border-radius:0;
+  background:#fff;
+  color:#6b7280;
+  font-size:12px;
+}
+
+.nav.active{
+  color:#111827;
+}
+
+.hidden{
+  display:none!important;
+}
+
+@media(max-width:480px){
+  .container{
+    padding:10px;
+  }
+
+  .etb{
+    font-size:29px;
+  }
+
+  .usdt{
+    font-size:21px;
+  }
 }
 </style>
 </head>
@@ -98,755 +432,2490 @@ header{height:68px;background:#fff;border-bottom:1px solid #e2e8ea;display:flex;
 <body>
 
 <header>
-<div class="brand">
-<div class="brand-logo">
-<div class="p-left"></div>
-<div class="p-right"></div>
-<div class="center-dot"></div>
-</div>
-<div class="brand-name">P2P <span>Social</span></div>
-</div>
-<div class="security">🔒 Secure</div>
+  <div class="header">
+    <div class="logo">💰 P2P Social</div>
+    <div class="user" id="username">Loading...</div>
+  </div>
 </header>
+
 
 <main class="container">
 
-<section class="balance-card">
-<div class="label">TOTAL WALLET BALANCE</div>
-<div class="balance" id="balance">0.00 ETB</div>
-<div class="available">Available for P2P trading</div>
-</section>
 
-<div class="quick-actions">
-<button onclick="deposit()"><span class="action-icon">＋</span>Deposit</button>
-<button onclick="withdraw()"><span class="action-icon">↗</span>Withdraw</button>
-<button onclick="showHistory()"><span class="action-icon">◷</span>History</button>
+<!-- =====================================================
+     WALLET
+===================================================== -->
+
+<div class="card balance-card">
+
+  <div class="label">ETB Balance</div>
+
+  <div class="etb" id="etbBalance">
+    0.00 ETB
+  </div>
+
+  <div class="label">USDT Balance</div>
+
+  <div class="usdt" id="usdtBalance">
+    0.00000000 USDT
+  </div>
+
+  <div class="wallet-buttons">
+
+    <button
+      class="deposit"
+      onclick="openDeposit()">
+      ➕ Deposit
+    </button>
+
+    <button
+      class="withdraw"
+      onclick="openWithdraw()">
+      ➖ Withdraw
+    </button>
+
+  </div>
+
 </div>
 
-<div id="message" class="message"></div>
 
-<div class="section-title">
-<h2>Create Order</h2>
-<span>P2P Market</span>
+<!-- =====================================================
+     P2P ORDER
+===================================================== -->
+
+<div class="card">
+
+  <div class="title">
+    💱 P2P Exchange
+  </div>
+
+  <div class="trade-tabs">
+
+    <button
+      id="buyButton"
+      class="buy"
+      onclick="setOrderType('buy')">
+      🟢 BUY
+    </button>
+
+    <button
+      id="sellButton"
+      class="sell inactive"
+      onclick="setOrderType('sell')">
+      🔴 SELL
+    </button>
+
+  </div>
+
+
+  <div class="group">
+
+    <label>Asset</label>
+
+    <select id="asset">
+
+      <option value="USDT">
+        USDT
+      </option>
+
+      <option value="ETB">
+        ETB
+      </option>
+
+    </select>
+
+  </div>
+
+
+  <div class="group">
+
+    <label>Payment</label>
+
+    <select id="paymentAsset">
+
+      <option value="ETB">
+        ETB
+      </option>
+
+      <option value="USDT">
+        USDT
+      </option>
+
+    </select>
+
+  </div>
+
+
+  <div class="group">
+
+    <label>Amount</label>
+
+    <input
+      id="amount"
+      type="number"
+      min="0"
+      step="0.00000001"
+      placeholder="Enter amount">
+
+  </div>
+
+
+  <div class="group">
+
+    <label>Price</label>
+
+    <input
+      id="price"
+      type="number"
+      min="0"
+      step="0.00000001"
+      placeholder="Price">
+
+  </div>
+
+
+  <div class="group">
+
+    <label>Minimum Amount</label>
+
+    <input
+      id="minAmount"
+      type="number"
+      min="0"
+      step="0.00000001"
+      placeholder="Minimum">
+
+  </div>
+
+
+  <div class="group">
+
+    <label>Maximum Amount</label>
+
+    <input
+      id="maxAmount"
+      type="number"
+      min="0"
+      step="0.00000001"
+      placeholder="Maximum">
+
+  </div>
+
+
+  <button
+    class="create"
+    id="createButton"
+    onclick="createOrder()">
+
+    ➕ Create P2P Order
+
+  </button>
+
 </div>
 
-<section class="order-card">
 
-<div class="order-tabs">
-<button id="buyOrderTab" class="order-tab active" onclick="setOrderType('buy')">🟢 Buy</button>
-<button id="sellOrderTab" class="order-tab" onclick="setOrderType('sell')">🔴 Sell</button>
+<!-- =====================================================
+     AVAILABLE OFFERS
+===================================================== -->
+
+<div class="card">
+
+  <div class="title">
+    👥 Available Offers
+  </div>
+
+  <button
+    class="refresh"
+    onclick="loadOffers()">
+
+    🔄 Refresh / Realtime
+
+  </button>
+
+  <br><br>
+
+  <div id="offers">
+    <div class="loading">
+      Loading offers...
+    </div>
+  </div>
+
 </div>
 
-<div class="field">
-<label>Trading pair</label>
-<select id="pair" class="select-box" onchange="updateCurrency()">
-<option value="USDT_ETB">USDT / ETB</option>
-<option value="ETB_ETB">ETB / ETB</option>
-</select>
+
+<!-- =====================================================
+     MY ORDERS
+===================================================== -->
+
+<div class="card">
+
+  <div class="title">
+    📋 My Orders
+  </div>
+
+  <div id="myOrders">
+    <div class="loading">
+      Loading orders...
+    </div>
+  </div>
+
 </div>
 
-<div class="field">
-<label>Amount</label>
-<div class="input-box">
-<input id="orderAmount" type="number" min="0" step="0.01" placeholder="0.00">
-<span class="currency" id="amountCurrency">USDT</span>
-</div>
-</div>
 
-<div class="field">
-<label>Price</label>
-<div class="input-box">
-<input id="orderPrice" type="number" min="0" step="0.01" placeholder="0.00">
-<span class="currency">ETB</span>
-</div>
-</div>
+<!-- =====================================================
+     MY TRADES
+===================================================== -->
 
-<div class="field">
-<label>Payment method</label>
-<select id="paymentMethod" class="select-box">
-<option value="">Select payment method</option>
-<option value="Telebirr">Telebirr</option>
-<option value="CBE">CBE</option>
-<option value="Bank">Bank Transfer</option>
-</select>
+<div class="card">
+
+  <div class="title">
+    🤝 My Trades
+  </div>
+
+  <div id="myTrades">
+    <div class="loading">
+      Loading trades...
+    </div>
+  </div>
+
 </div>
 
-<button class="create-btn" onclick="createOrder()">Create Order</button>
 
-</section>
+<!-- =====================================================
+     TRANSACTION HISTORY
+===================================================== -->
 
-<div class="section-title">
-<h2>My Orders</h2>
-<span id="orderCount">0</span>
+<div class="card">
+
+  <div class="title">
+    💳 ETB / USDT Transaction History
+  </div>
+
+  <div id="history">
+    <div class="loading">
+      Loading history...
+    </div>
+  </div>
+
 </div>
 
-<section id="myOrders" class="order-list">
-<div class="empty-offers"><div class="empty-icon">📋</div>You have no orders yet.</div>
-</section>
-
-<div class="section-title">
-<h2>Available Offers</h2>
-<span>Live</span>
-</div>
-
-<section id="offers">
-<div class="empty-offers">
-<div class="empty-icon">👥</div>
-No P2P traders available right now.
-<div style="font-size:12px;margin-top:7px">New offers will appear here when traders create orders.</div>
-</div>
-</section>
-
-<div class="section-title">
-<h2>My Trades</h2>
-<span>Active</span>
-</div>
-
-<section id="trades">
-<div class="empty-offers">No active trades.</div>
-</section>
-
-<div class="section-title" id="historySection">
-<h2>Recent Transactions</h2>
-<span>History</span>
-</div>
-
-<section id="transactions">
-<div class="empty-offers">No transactions yet.</div>
-</section>
 
 </main>
 
-<nav class="bottom-nav">
-<a href="index.html"><span class="nav-icon">🏠</span>Home</a>
-<a href="live.html" class="live-nav"><span class="nav-icon">🔴</span>Live</a>
-<a href="wallet.html" class="active"><span class="nav-icon">🔄</span>P2P</a>
-<a href="message.html"><span class="nav-icon">💬</span>Messages</a>
-<a href="profile.html"><span class="nav-icon">👤</span>Profile</a>
-</nav>
+
+<!-- =====================================================
+     DEPOSIT MODAL
+===================================================== -->
+
+<div
+  class="modal"
+  id="depositModal">
+
+  <div class="modal-box">
+
+    <div class="modal-title">
+      ➕ Deposit
+    </div>
+
+    <div class="notice">
+
+      Your balance must only be credited by
+      the protected backend/admin deposit
+      verification system.
+
+    </div>
+
+    <div class="group">
+
+      <label>Asset</label>
+
+      <select id="depositAsset">
+
+        <option value="ETB">ETB</option>
+        <option value="USDT">USDT</option>
+
+      </select>
+
+    </div>
+
+    <div class="group">
+
+      <label>Amount</label>
+
+      <input
+        id="depositAmount"
+        type="number"
+        min="0"
+        placeholder="Amount">
+
+    </div>
+
+    <div class="group">
+
+      <label>Payment Reference</label>
+
+      <input
+        id="depositReference"
+        placeholder="Reference number">
+
+    </div>
+
+    <div class="modal-buttons">
+
+      <button
+        class="close"
+        onclick="closeDeposit()">
+        Close
+      </button>
+
+      <button
+        class="confirm"
+        onclick="submitDeposit()">
+        Submit
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     WITHDRAW MODAL
+===================================================== -->
+
+<div
+  class="modal"
+  id="withdrawModal">
+
+  <div class="modal-box">
+
+    <div class="modal-title">
+      ➖ Withdraw
+    </div>
+
+    <div class="notice">
+
+      Withdrawals must be processed by a
+      protected backend function.
+
+    </div>
+
+    <div class="group">
+
+      <label>Asset</label>
+
+      <select id="withdrawAsset">
+
+        <option value="ETB">ETB</option>
+        <option value="USDT">USDT</option>
+
+      </select>
+
+    </div>
+
+    <div class="group">
+
+      <label>Amount</label>
+
+      <input
+        id="withdrawAmount"
+        type="number"
+        min="0"
+        placeholder="Amount">
+
+    </div>
+
+    <div class="group">
+
+      <label>Destination</label>
+
+      <input
+        id="withdrawDestination"
+        placeholder="Bank/account/wallet">
+
+    </div>
+
+    <div class="modal-buttons">
+
+      <button
+        class="close"
+        onclick="closeWithdraw()">
+        Close
+      </button>
+
+      <button
+        class="confirm"
+        onclick="submitWithdraw()">
+        Submit
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     TRADE MODAL
+===================================================== -->
+
+<div
+  class="modal"
+  id="tradeModal">
+
+  <div class="modal-box">
+
+    <div class="modal-title">
+      🤝 Create Trade
+    </div>
+
+    <div id="offerDetails"></div>
+
+    <br>
+
+    <div class="group">
+
+      <label>
+        Trade Amount
+      </label>
+
+      <input
+        id="tradeAmount"
+        type="number"
+        min="0"
+        step="0.00000001"
+        placeholder="Enter amount">
+
+    </div>
+
+    <div class="modal-buttons">
+
+      <button
+        class="close"
+        onclick="closeTradeModal()">
+        Cancel
+      </button>
+
+      <button
+        class="confirm"
+        onclick="createTrade()">
+        Create Trade
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     DISPUTE MODAL
+===================================================== -->
+
+<div
+  class="modal"
+  id="disputeModal">
+
+  <div class="modal-box">
+
+    <div class="modal-title">
+      ⚠️ Open Dispute
+    </div>
+
+    <div class="group">
+
+      <label>
+        Reason
+      </label>
+
+      <textarea
+        id="disputeReason"
+        rows="5"
+        placeholder="Explain the problem"></textarea>
+
+    </div>
+
+    <div class="modal-buttons">
+
+      <button
+        class="close"
+        onclick="closeDispute()">
+        Cancel
+      </button>
+
+      <button
+        class="confirm"
+        onclick="submitDispute()">
+        Open Dispute
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     BOTTOM NAV
+===================================================== -->
+
+<div class="bottom">
+
+  <div class="bottom-inner">
+
+    <button
+      class="nav"
+      onclick="location.href='index.html'">
+      🏠<br>Home
+    </button>
+
+    <button
+      class="nav active"
+      onclick="window.scrollTo({top:0,behavior:'smooth'})">
+      💰<br>Wallet
+    </button>
+
+    <button
+      class="nav"
+      onclick="document.getElementById('offers').scrollIntoView({behavior:'smooth'})">
+      🤝<br>P2P
+    </button>
+
+    <button
+      class="nav"
+      onclick="location.href='profile.html'">
+      👤<br>Profile
+    </button>
+
+  </div>
+
+</div>
+
 
 <script>
-const SUPABASE_URL="YOUR_SUPABASE_PROJECT_URL";
-const SUPABASE_KEY="YOUR_SUPABASE_PUBLISHABLE_KEY";
 
-const supabaseClient=supabase.createClient(
-SUPABASE_URL,
-SUPABASE_KEY
+/* =====================================================
+   SUPABASE
+===================================================== */
+
+const SUPABASE_URL =
+"YOUR_SUPABASE_PROJECT_URL";
+
+const SUPABASE_KEY =
+"YOUR_SUPABASE_PUBLISHABLE_KEY";
+
+const db =
+supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
 );
 
-let currentUser=null;
-let orderType="buy";
 
-function showMessage(text,type="success"){
-const box=document.getElementById("message");
-box.textContent=text;
-box.className="message show "+type;
-setTimeout(()=>box.className="message",4000);
-}
+/* =====================================================
+   GLOBAL STATE
+===================================================== */
 
-async function requireLogin(){
-const {data,error}=await supabaseClient.auth.getUser();
+let currentUser = null;
 
-if(error||!data.user){
-window.location.replace("login.html");
-return false;
-}
+let orderType = "buy";
 
-currentUser=data.user;
-return true;
-}
+let selectedOffer = null;
 
-/*
- IMPORTANT:
- This reads the same basic structure:
- wallet.id = authenticated user's id
- wallet.balance = user's ETB balance
-*/
+let disputeTradeId = null;
 
-async function loadBalance(){
-const balanceBox=document.getElementById("balance");
 
-if(!currentUser){
-balanceBox.textContent="0.00 ETB";
-return;
-}
+/* =====================================================
+   START
+===================================================== */
 
-const {data,error}=await supabaseClient
-.from("wallet")
-.select("balance")
-.eq("id",currentUser.id)
-.maybeSingle();
-
-if(error){
-console.error("Wallet balance error:",error);
-balanceBox.textContent="0.00 ETB";
-return;
-}
-
-const amount=Number(data?.balance ?? 0);
-
-balanceBox.textContent=amount.toLocaleString(
-"en-US",
-{minimumFractionDigits:2,maximumFractionDigits:2}
-)+" ETB";
-}
-
-function setOrderType(type){
-orderType=type;
-
-document.getElementById("buyOrderTab").classList.toggle(
-"active",type==="buy"
+document.addEventListener(
+  "DOMContentLoaded",
+  init
 );
 
-document.getElementById("sellOrderTab").classList.toggle(
-"active",type==="sell"
-);
-}
-
-function updateCurrency(){
-const pair=document.getElementById("pair").value;
-
-document.getElementById("amountCurrency").textContent=
-pair==="ETB_ETB"?"ETB":"USDT";
-}
-
-async function createOrder(){
-
-if(!currentUser){
-showMessage("Please login first.","error");
-return;
-}
-
-const pair=document.getElementById("pair").value;
-const amount=Number(document.getElementById("orderAmount").value);
-const price=Number(document.getElementById("orderPrice").value);
-const payment=document.getElementById("paymentMethod").value;
-
-if(!amount||amount<=0){
-showMessage("Enter a valid amount.","error");
-return;
-}
-
-if(!price||price<=0){
-showMessage("Enter a valid price.","error");
-return;
-}
-
-if(!payment){
-showMessage("Select a payment method.","error");
-return;
-}
-
-const {data,error}=await supabaseClient
-.from("p2p_orders")
-.insert({
-user_id:currentUser.id,
-order_type:orderType,
-pair:pair,
-amount:amount,
-price:price,
-payment_method:payment,
-status:"open"
-})
-.select()
-.single();
-
-if(error){
-console.error(error);
-showMessage(
-"Order failed: "+error.message,
-"error"
-);
-return;
-}
-
-showMessage("Real P2P order created.","success");
-
-document.getElementById("orderAmount").value="";
-document.getElementById("orderPrice").value="";
-document.getElementById("paymentMethod").value="";
-
-await loadMyOrders();
-await loadOffers();
-}
-
-async function loadMyOrders(){
-
-const box=document.getElementById("myOrders");
-
-const {data,error}=await supabaseClient
-.from("p2p_orders")
-.select("*")
-.eq("user_id",currentUser.id)
-.order("created_at",{ascending:false});
-
-if(error){
-console.error(error);
-return;
-}
-
-document.getElementById("orderCount").textContent=data?.length||0;
-
-if(!data||data.length===0){
-box.innerHTML='<div class="empty-offers"><div class="empty-icon">📋</div>You have no orders yet.</div>';
-return;
-}
-
-box.innerHTML="";
-
-data.forEach(order=>{
-
-const card=document.createElement("div");
-card.className="market-order";
-
-const type=order.order_type==="buy"?"BUY":"SELL";
-const typeClass=order.order_type==="buy"?"buy-type":"sell-type";
-const pair=order.pair==="ETB_ETB"?"ETB / ETB":"USDT / ETB";
-
-card.innerHTML=`
-<div class="order-main">
-<div class="order-top">
-<div>
-<div class="order-title">${type}</div>
-<div class="order-pair">${pair}</div>
-</div>
-<div class="order-type ${typeClass}">${type}</div>
-</div>
-</div>
-
-<button class="more-btn">More... ▼</button>
-
-<div class="order-details">
-<div class="detail-row"><span>Amount</span><strong>${Number(order.amount||0).toFixed(2)} ${pair==="ETB / ETB"?"ETB":"USDT"}</strong></div>
-<div class="detail-row"><span>Price</span><strong>${Number(order.price||0).toFixed(2)} ETB</strong></div>
-<div class="detail-row"><span>Payment</span><strong>${escapeHtml(order.payment_method)}</strong></div>
-<div class="detail-row"><span>Status</span><strong>${escapeHtml(order.status)}</strong></div>
-<button class="cancel-btn">❌ Cancel Order</button>
-</div>
-`;
-
-const more=card.querySelector(".more-btn");
-const details=card.querySelector(".order-details");
-const cancel=card.querySelector(".cancel-btn");
-
-more.onclick=()=>{
-details.classList.toggle("show");
-more.textContent=details.classList.contains("show")
-?"More... ▲":"More... ▼";
-};
-
-cancel.onclick=()=>cancelOrder(order.id);
-
-box.appendChild(card);
-});
-}
-
-async function cancelOrder(orderId){
-
-if(!confirm("Cancel this order?"))return;
-
-const {error}=await supabaseClient
-.from("p2p_orders")
-.update({status:"cancelled"})
-.eq("id",orderId)
-.eq("user_id",currentUser.id)
-.eq("status","open");
-
-if(error){
-showMessage("Could not cancel order.","error");
-console.error(error);
-return;
-}
-
-showMessage("Order cancelled.","success");
-
-await loadMyOrders();
-await loadOffers();
-}
-
-async function loadOffers(){
-
-const box=document.getElementById("offers");
-
-const {data,error}=await supabaseClient
-.from("p2p_orders")
-.select("id,user_id,order_type,pair,amount,price,payment_method,status,created_at")
-.eq("status","open")
-.neq("user_id",currentUser.id)
-.order("created_at",{ascending:false});
-
-if(error){
-console.error("Offers error:",error);
-box.innerHTML='<div class="empty-offers"><div class="empty-icon">👥</div>No P2P traders available right now.</div>';
-return;
-}
-
-if(!data||data.length===0){
-box.innerHTML='<div class="empty-offers"><div class="empty-icon">👥</div>No P2P traders available right now.<div style="font-size:12px;margin-top:7px">New offers will appear here when traders create orders.</div></div>';
-return;
-}
-
-box.innerHTML="";
-
-data.forEach(order=>{
-
-const div=document.createElement("div");
-div.className="offer";
-
-const name=order.order_type==="buy"
-?"🟢 Buy"
-:"🔴 Sell";
-
-const pair=order.pair==="ETB_ETB"
-?"ETB / ETB"
-:"USDT / ETB";
-
-div.innerHTML=`
-<div class="offer-title">${name} ${pair}</div>
-<div class="offer-info">
-Amount: ${Number(order.amount||0).toFixed(2)}<br>
-Price: ${Number(order.price||0).toFixed(2)} ETB<br>
-Payment: ${escapeHtml(order.payment_method)}
-</div>
-<button class="offer-btn">Trade</button>
-`;
-
-div.querySelector(".offer-btn").onclick=()=>{
-startTrade(order.id);
-};
-
-box.appendChild(div);
-});
-}
-
-async function startTrade(orderId){
-
-const amount=prompt("Enter trade amount:");
-
-if(!amount)return;
-
-const tradeAmount=Number(amount);
-
-if(!tradeAmount||tradeAmount<=0){
-showMessage("Invalid amount.","error");
-return;
-}
-
-const {data:order,error:orderError}=await supabaseClient
-.from("p2p_orders")
-.select("*")
-.eq("id",orderId)
-.eq("status","open")
-.single();
-
-if(orderError||!order){
-showMessage("Order is no longer available.","error");
-return;
-}
-
-if(order.user_id===currentUser.id){
-showMessage("You cannot trade with your own order.","error");
-return;
-}
-
-if(tradeAmount>Number(order.amount)){
-showMessage("Amount is greater than the available order.","error");
-return;
-}
-
-/*
- Real money movement should be performed by
- protected Supabase database functions.
-
- The client only creates the trade request.
-*/
-
-const {error}=await supabaseClient
-.from("p2p_trades")
-.insert({
-order_id:order.id,
-buyer_id:order.order_type==="buy"?currentUser.id:order.user_id,
-seller_id:order.order_type==="buy"?order.user_id:currentUser.id,
-amount:tradeAmount,
-rate:Number(order.price),
-status:"pending_payment",
-expires_at:new Date(Date.now()+30*60*1000).toISOString()
-});
-
-if(error){
-console.error(error);
-showMessage("Trade could not be created: "+error.message,"error");
-return;
-}
-
-showMessage("P2P trade created.","success");
-await loadTrades();
-}
-
-async function loadTrades(){
-
-const box=document.getElementById("trades");
-
-const {data,error}=await supabaseClient
-.from("p2p_trades")
-.select("*")
-.or(`buyer_id.eq.${currentUser.id},seller_id.eq.${currentUser.id}`)
-.order("created_at",{ascending:false});
-
-if(error){
-console.error(error);
-box.innerHTML='<div class="empty-offers">No active trades.</div>';
-return;
-}
-
-if(!data||data.length===0){
-box.innerHTML='<div class="empty-offers">No active trades.</div>';
-return;
-}
-
-box.innerHTML="";
-
-data.forEach(trade=>{
-
-const div=document.createElement("div");
-div.className="trade";
-
-const buyer=trade.buyer_id===currentUser.id;
-
-div.innerHTML=`
-<div class="trade-title">🤝 P2P Trade</div>
-<div class="trade-status">${escapeHtml(trade.status)}</div>
-<div class="trade-info">
-Amount: ${Number(trade.amount||0).toFixed(2)}<br>
-Rate: ${Number(trade.rate||0).toFixed(2)} ETB<br>
-Expires: ${trade.expires_at?new Date(trade.expires_at).toLocaleString():"—"}
-</div>
-
-<div class="trade-actions">
-${buyer&&trade.status==="pending_payment"
-?'<button class="pay-btn">💰 Buyer Payment</button>':""}
-
-${!buyer&&trade.status==="payment_sent"
-?'<button class="release-btn">💵 Seller Release</button>':""}
-
-<button class="trade-cancel">❌ Cancel</button>
-<button class="dispute-btn">⚠️ Dispute</button>
-</div>
-`;
-
-if(buyer&&trade.status==="pending_payment")
-div.querySelector(".pay-btn").onclick=()=>payTrade(trade.id);
-
-if(!buyer&&trade.status==="payment_sent")
-div.querySelector(".release-btn").onclick=()=>releaseTrade(trade.id);
-
-div.querySelector(".trade-cancel").onclick=()=>cancelTrade(trade.id);
-div.querySelector(".dispute-btn").onclick=()=>disputeTrade(trade.id);
-
-box.appendChild(div);
-});
-}
-
-async function payTrade(id){
-
-const {error}=await supabaseClient
-.from("p2p_trades")
-.update({status:"payment_sent"})
-.eq("id",id)
-.eq("buyer_id",currentUser.id)
-.eq("status","pending_payment");
-
-if(error){
-showMessage("Payment update failed.","error");
-return;
-}
-
-showMessage("Buyer payment marked.","success");
-await loadTrades();
-}
-
-async function releaseTrade(id){
-
-const {error}=await supabaseClient
-.from("p2p_trades")
-.update({
-status:"completed",
-completed_at:new Date().toISOString()
-})
-.eq("id",id)
-.eq("seller_id",currentUser.id)
-.eq("status","payment_sent");
-
-if(error){
-showMessage("Release failed.","error");
-return;
-}
-
-showMessage("Seller release completed.","success");
-await loadTrades();
-await loadBalance();
-}
-
-async function cancelTrade(id){
-
-if(!confirm("Cancel this trade?"))return;
-
-const {error}=await supabaseClient
-.from("p2p_trades")
-.update({
-status:"cancelled",
-cancelled_at:new Date().toISOString()
-})
-.eq("id",id)
-.or(`buyer_id.eq.${currentUser.id},seller_id.eq.${currentUser.id}`);
-
-if(error){
-showMessage("Could not cancel trade.","error");
-return;
-}
-
-showMessage("Trade cancelled.","success");
-await loadTrades();
-}
-
-async function disputeTrade(id){
-
-const reason=prompt("Enter dispute reason:");
-
-if(!reason||!reason.trim())return;
-
-const {error}=await supabaseClient
-.from("p2p_trades")
-.update({
-status:"disputed",
-dispute_reason:reason.trim()
-})
-.eq("id",id)
-.or(`buyer_id.eq.${currentUser.id},seller_id.eq.${currentUser.id}`);
-
-if(error){
-showMessage("Could not open dispute.","error");
-return;
-}
-
-showMessage("Dispute opened.","success");
-await loadTrades();
-}
-
-async function loadTransactions(){
-
-const box=document.getElementById("transactions");
-
-const {data,error}=await supabaseClient
-.from("wallet_transactions")
-.select("*")
-.eq("user_id",currentUser.id)
-.order("created_at",{ascending:false})
-.limit(20);
-
-if(error){
-console.error(error);
-box.innerHTML='<div class="empty-offers">No transactions yet.</div>';
-return;
-}
-
-if(!data||data.length===0){
-box.innerHTML='<div class="empty-offers">No transactions yet.</div>';
-return;
-}
-
-box.innerHTML="";
-
-data.forEach(tx=>{
-
-const amount=Number(tx.amount||0);
-
-const div=document.createElement("div");
-div.className="transaction";
-
-div.innerHTML=`
-<div class="transaction-left">
-<div class="transaction-icon">💳</div>
-<div>
-<div class="transaction-title">${escapeHtml(tx.type||"Wallet")}</div>
-<div class="transaction-date">${tx.created_at?new Date(tx.created_at).toLocaleString():""}</div>
-</div>
-</div>
-<div class="transaction-amount">
-${amount>=0?"+":""}${amount.toFixed(2)} ETB
-</div>
-`;
-
-box.appendChild(div);
-});
-}
-
-function deposit(){
-showMessage("Deposit must be connected to your protected payment/backend system.");
-}
-
-function withdraw(){
-showMessage("Withdraw must be connected to your protected payment/backend system.");
-}
-
-function showHistory(){
-document.getElementById("historySection").scrollIntoView({behavior:"smooth"});
-}
-
-function escapeHtml(value){
-const div=document.createElement("div");
-div.textContent=value??"";
-return div.innerHTML;
-}
-
-/* Refresh offers without reloading the page */
-async function refreshMarket(){
-if(!currentUser)return;
-await loadOffers();
-}
-
-/* Supabase realtime */
-function subscribeToOrders(){
-
-supabaseClient
-.channel("p2p-orders-wallet")
-.on(
-"postgres_changes",
-{
-event:"*",
-schema:"public",
-table:"p2p_orders"
-},
-()=>{
-loadOffers();
-loadMyOrders();
-}
-)
-.subscribe();
-}
 
 async function init(){
 
-const loggedIn=await requireLogin();
+  const {
+    data,
+    error
+  } = await db.auth.getUser();
 
-if(!loggedIn)return;
 
-/*
- Balance is loaded immediately after authentication.
- */
-await loadBalance();
+  if(error || !data.user){
 
-await Promise.all([
-loadMyOrders(),
-loadOffers(),
-loadTrades(),
-loadTransactions()
-]);
+    location.href =
+      "login.html";
 
-subscribeToOrders();
+    return;
+
+  }
+
+
+  currentUser =
+    data.user;
+
+
+  await loadProfile();
+
+  await loadWallet();
+
+  await loadOffers();
+
+  await loadMyOrders();
+
+  await loadMyTrades();
+
+  await loadHistory();
+
+  startRealtime();
+
 }
 
-init();
+
+/* =====================================================
+   PROFILE
+===================================================== */
+
+async function loadProfile(){
+
+  const {
+    data,
+    error
+  } =
+  await db
+    .from("profiles")
+    .select(
+      "username,user_number"
+    )
+    .eq(
+      "id",
+      currentUser.id
+    )
+    .maybeSingle();
+
+
+  if(error){
+
+    console.error(error);
+
+    return;
+
+  }
+
+
+  if(data){
+
+    document.getElementById(
+      "username"
+    ).textContent =
+      data.username
+      ? "@" + data.username
+      : "User";
+
+  }
+
+}
+
+
+/* =====================================================
+   WALLET
+===================================================== */
+
+async function loadWallet(){
+
+  const {
+    data,
+    error
+  } =
+  await db
+    .from("wallets")
+    .select(
+      "etb_balance,usdt_balance"
+    )
+    .eq(
+      "user_id",
+      currentUser.id
+    )
+    .maybeSingle();
+
+
+  if(error){
+
+    console.error(error);
+
+    return;
+
+  }
+
+
+  const etb =
+    data
+    ? Number(data.etb_balance || 0)
+    : 0;
+
+  const usdt =
+    data
+    ? Number(data.usdt_balance || 0)
+    : 0;
+
+
+  document.getElementById(
+    "etbBalance"
+  ).textContent =
+    etb.toFixed(2)
+    + " ETB";
+
+
+  document.getElementById(
+    "usdtBalance"
+  ).textContent =
+    usdt.toFixed(8)
+    + " USDT";
+
+}
+
+
+/* =====================================================
+   BUY / SELL
+===================================================== */
+
+function setOrderType(type){
+
+  orderType =
+    type;
+
+
+  const buy =
+    document.getElementById(
+      "buyButton"
+    );
+
+  const sell =
+    document.getElementById(
+      "sellButton"
+    );
+
+
+  if(type === "buy"){
+
+    buy.classList.remove(
+      "inactive"
+    );
+
+    sell.classList.add(
+      "inactive"
+    );
+
+  }else{
+
+    buy.classList.add(
+      "inactive"
+    );
+
+    sell.classList.remove(
+      "inactive"
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   CREATE ORDER
+===================================================== */
+
+async function createOrder(){
+
+  const amount =
+    Number(
+      document.getElementById(
+        "amount"
+      ).value
+    );
+
+  const price =
+    Number(
+      document.getElementById(
+        "price"
+      ).value
+    );
+
+  const minAmount =
+    Number(
+      document.getElementById(
+        "minAmount"
+      ).value
+    );
+
+  const maxAmount =
+    Number(
+      document.getElementById(
+        "maxAmount"
+      ).value
+    );
+
+  const asset =
+    document.getElementById(
+      "asset"
+    ).value;
+
+  const paymentAsset =
+    document.getElementById(
+      "paymentAsset"
+    ).value;
+
+
+  if(
+    amount <= 0 ||
+    price <= 0 ||
+    minAmount <= 0 ||
+    maxAmount <= 0
+  ){
+
+    alert(
+      "Please enter valid order information."
+    );
+
+    return;
+
+  }
+
+
+  if(maxAmount < minAmount){
+
+    alert(
+      "Maximum amount cannot be smaller than minimum."
+    );
+
+    return;
+
+  }
+
+
+  const button =
+    document.getElementById(
+      "createButton"
+    );
+
+
+  button.disabled = true;
+
+  button.textContent =
+    "Creating...";
+
+
+  const {
+    data,
+    error
+  } =
+  await db.rpc(
+    "create_p2p_order",
+    {
+      p_order_type:
+        orderType,
+
+      p_asset:
+        asset,
+
+      p_payment_asset:
+        paymentAsset,
+
+      p_amount:
+        amount,
+
+      p_price:
+        price,
+
+      p_min_amount:
+        minAmount,
+
+      p_max_amount:
+        maxAmount
+    }
+  );
+
+
+  button.disabled = false;
+
+  button.textContent =
+    "➕ Create P2P Order";
+
+
+  if(error){
+
+    alert(
+      "❌ "
+      + error.message
+    );
+
+    return;
+
+  }
+
+
+  alert(
+    "✅ P2P order created."
+  );
+
+
+  document.getElementById(
+    "amount"
+  ).value = "";
+
+  document.getElementById(
+    "price"
+  ).value = "";
+
+  document.getElementById(
+    "minAmount"
+  ).value = "";
+
+  document.getElementById(
+    "maxAmount"
+  ).value = "";
+
+
+  await loadOffers();
+
+  await loadMyOrders();
+
+}
+
+
+/* =====================================================
+   AVAILABLE OFFERS
+===================================================== */
+
+async function loadOffers(){
+
+  const box =
+    document.getElementById(
+      "offers"
+    );
+
+
+  box.innerHTML =
+    `<div class="loading">
+      Loading offers...
+    </div>`;
+
+
+  const {
+    data,
+    error
+  } =
+  await db
+    .from("p2p_orders")
+    .select(`
+      id,
+      user_id,
+      order_type,
+      asset,
+      payment_asset,
+      amount,
+      price,
+      min_amount,
+      max_amount,
+      status,
+      created_at
+    `)
+    .in(
+      "status",
+      [
+        "open",
+        "partial"
+      ]
+    )
+    .neq(
+      "user_id",
+      currentUser.id
+    )
+    .order(
+      "created_at",
+      {
+        ascending:false
+      }
+    );
+
+
+  if(error){
+
+    box.innerHTML =
+      `<div class="empty">
+        ${safe(error.message)}
+      </div>`;
+
+    return;
+
+  }
+
+
+  if(!data.length){
+
+    box.innerHTML =
+      `<div class="empty">
+        👥 No offers available.
+      </div>`;
+
+    return;
+
+  }
+
+
+  box.innerHTML =
+    data.map(
+      order => `
+
+      <div class="offer">
+
+        <div class="offer-head">
+
+          <span class="${
+            order.order_type === "buy"
+            ? "green"
+            : "red"
+          }">
+
+            ${
+              order.order_type === "buy"
+              ? "🟢 BUY"
+              : "🔴 SELL"
+            }
+
+          </span>
+
+          <span class="status">
+            ${safe(order.status)}
+          </span>
+
+        </div>
+
+
+        <div class="row">
+
+          <span>Amount</span>
+
+          <b>
+            ${Number(order.amount)}
+            ${safe(order.asset)}
+          </b>
+
+        </div>
+
+
+        <div class="row">
+
+          <span>Price</span>
+
+          <b>
+            ${Number(order.price)}
+            ${safe(order.payment_asset)}
+          </b>
+
+        </div>
+
+
+        <div class="row">
+
+          <span>Minimum</span>
+
+          <b>
+            ${Number(order.min_amount)}
+          </b>
+
+        </div>
+
+
+        <div class="row">
+
+          <span>Maximum</span>
+
+          <b>
+            ${Number(order.max_amount)}
+          </b>
+
+        </div>
+
+
+        <button
+          class="trade-btn"
+          onclick="openTrade('${order.id}')">
+
+          🤝 Create Trade
+
+        </button>
+
+      </div>
+
+    `
+    ).join("");
+
+}
+
+
+/* =====================================================
+   OPEN TRADE
+===================================================== */
+
+async function openTrade(orderId){
+
+  const {
+    data,
+    error
+  } =
+  await db
+    .from("p2p_orders")
+    .select("*")
+    .eq(
+      "id",
+      orderId
+    )
+    .single();
+
+
+  if(error){
+
+    alert(error.message);
+
+    return;
+
+  }
+
+
+  selectedOffer =
+    data;
+
+
+  document.getElementById(
+    "offerDetails"
+  ).innerHTML = `
+
+    <div class="row">
+      <span>Type</span>
+      <b>
+        ${safe(data.order_type)}
+      </b>
+    </div>
+
+    <div class="row">
+      <span>Asset</span>
+      <b>
+        ${Number(data.amount)}
+        ${safe(data.asset)}
+      </b>
+    </div>
+
+    <div class="row">
+      <span>Price</span>
+      <b>
+        ${Number(data.price)}
+        ${safe(data.payment_asset)}
+      </b>
+    </div>
+
+    <div class="row">
+      <span>Limits</span>
+      <b>
+        ${Number(data.min_amount)}
+        -
+        ${Number(data.max_amount)}
+      </b>
+    </div>
+
+  `;
+
+
+  document.getElementById(
+    "tradeAmount"
+  ).value = "";
+
+
+  document.getElementById(
+    "tradeModal"
+  ).classList.add(
+    "show"
+  );
+
+}
+
+
+/* =====================================================
+   CREATE TRADE
+===================================================== */
+
+async function createTrade(){
+
+  if(!selectedOffer){
+
+    return;
+
+  }
+
+
+  const amount =
+    Number(
+      document.getElementById(
+        "tradeAmount"
+      ).value
+    );
+
+
+  if(amount <= 0){
+
+    alert(
+      "Enter a valid trade amount."
+    );
+
+    return;
+
+  }
+
+
+  if(
+    amount <
+    Number(selectedOffer.min_amount)
+    ||
+    amount >
+    Number(selectedOffer.max_amount)
+  ){
+
+    alert(
+      "Amount is outside the order limits."
+    );
+
+    return;
+
+  }
+
+
+  const {
+    data,
+    error
+  } =
+  await db.rpc(
+    "create_p2p_trade",
+    {
+      p_order_id:
+        selectedOffer.id,
+
+      p_amount:
+        amount
+    }
+  );
+
+
+  if(error){
+
+    alert(
+      "❌ "
+      + error.message
+    );
+
+    return;
+
+  }
+
+
+  closeTradeModal();
+
+
+  alert(
+    "✅ Trade created successfully."
+  );
+
+
+  await loadOffers();
+
+  await loadMyOrders();
+
+  await loadMyTrades();
+
+}
+
+
+/* =====================================================
+   MY ORDERS
+===================================================== */
+
+async function loadMyOrders(){
+
+  const box =
+    document.getElementById(
+      "myOrders"
+    );
+
+
+  const {
+    data,
+    error
+  } =
+  await db
+    .from("p2p_orders")
+    .select("*")
+    .eq(
+      "user_id",
+      currentUser.id
+    )
+    .order(
+      "created_at",
+      {
+        ascending:false
+      }
+    );
+
+
+  if(error){
+
+    box.innerHTML =
+      `<div class="empty">
+        ${safe(error.message)}
+      </div>`;
+
+    return;
+
+  }
+
+
+  if(!data.length){
+
+    box.innerHTML =
+      `<div class="empty">
+        📋 No orders yet.
+      </div>`;
+
+    return;
+
+  }
+
+
+  box.innerHTML =
+    data.map(
+      order => `
+
+      <div class="order">
+
+        <div class="order-head">
+
+          <b class="${
+            order.order_type === "buy"
+            ? "green"
+            : "red"
+          }">
+
+            ${
+              order.order_type === "buy"
+              ? "🟢 BUY"
+              : "🔴 SELL"
+            }
+
+          </b>
+
+          <span class="status">
+            ${safe(order.status)}
+          </span>
+
+        </div>
+
+
+        <div class="row">
+
+          <span>Amount</span>
+
+          <b>
+            ${Number(order.amount)}
+            ${safe(order.asset)}
+          </b>
+
+        </div>
+
+
+        <div class="row">
+
+          <span>Price</span>
+
+          <b>
+            ${Number(order.price)}
+            ${safe(order.payment_asset)}
+          </b>
+
+        </div>
+
+
+        ${
+          ["open","partial"]
+          .includes(order.status)
+          ? `
+
+            <button
+              class="cancel"
+              onclick="cancelOrder('${order.id}')">
+
+              ❌ Cancel Order
+
+            </button>
+
+          `
+          : ""
+        }
+
+      </div>
+
+    `
+    ).join("");
+
+}
+
+
+/* =====================================================
+   CANCEL ORDER
+===================================================== */
+
+async function cancelOrder(id){
+
+  if(
+    !confirm(
+      "Cancel this order?"
+    )
+  ){
+
+    return;
+
+  }
+
+
+  const {
+    error
+  } =
+  await db.rpc(
+    "cancel_p2p_order",
+    {
+      p_order_id:id
+    }
+  );
+
+
+  if(error){
+
+    alert(
+      error.message
+    );
+
+    return;
+
+  }
+
+
+  alert(
+    "✅ Order cancelled."
+  );
+
+
+  await loadOffers();
+
+  await loadMyOrders();
+
+}
+
+
+/* =====================================================
+   MY TRADES
+===================================================== */
+
+async function loadMyTrades(){
+
+  const box =
+    document.getElementById(
+      "myTrades"
+    );
+
+
+  const {
+    data,
+    error
+  } =
+  await db
+    .from("p2p_trades")
+    .select("*")
+    .or(
+      "buyer_id.eq."
+      + currentUser.id
+      + ",seller_id.eq."
+      + currentUser.id
+    )
+    .order(
+      "created_at",
+      {
+        ascending:false
+      }
+    );
+
+
+  if(error){
+
+    box.innerHTML =
+      `<div class="empty">
+        ${safe(error.message)}
+      </div>`;
+
+    return;
+
+  }
+
+
+  if(!data.length){
+
+    box.innerHTML =
+      `<div class="empty">
+        🤝 No trades yet.
+      </div>`;
+
+    return;
+
+  }
+
+
+  box.innerHTML =
+    data.map(
+      trade => {
+
+        const buyer =
+          trade.buyer_id ===
+          currentUser.id;
+
+        const seller =
+          trade.seller_id ===
+          currentUser.id;
+
+
+        return `
+
+        <div class="trade">
+
+          <div class="trade-number">
+            🔢 Trade #${trade.trade_number}
+          </div>
+
+          <br>
+
+
+          <div class="row">
+            <span>Role</span>
+            <b>
+              ${
+                buyer
+                ? "🟢 Buyer"
+                : seller
+                ? "🔴 Seller"
+                : "Trader"
+              }
+            </b>
+          </div>
+
+
+          <div class="row">
+            <span>Amount</span>
+            <b>
+              ${Number(trade.amount)}
+              ${safe(trade.asset)}
+            </b>
+          </div>
+
+
+          <div class="row">
+            <span>Price</span>
+            <b>
+              ${Number(trade.price)} ETB
+            </b>
+          </div>
+
+
+          <div class="row">
+            <span>Total</span>
+            <b>
+              ${Number(trade.total_etb).toFixed(2)} ETB
+            </b>
+          </div>
+
+
+          <div class="row">
+            <span>Platform Fee</span>
+            <b>
+              ${Number(trade.platform_fee).toFixed(2)} ETB
+            </b>
+          </div>
+
+
+          <div class="row">
+            <span>Trader Commission</span>
+            <b>
+              ${Number(trade.trader_commission).toFixed(2)} ETB
+            </b>
+          </div>
+
+
+          <div class="row">
+            <span>Status</span>
+            <b>
+              ${safe(trade.status)}
+            </b>
+          </div>
+
+
+          <div class="row">
+            <span>Buyer Payment</span>
+            <b>
+              ${
+                trade.buyer_payment_confirmed
+                ? "✅ Confirmed"
+                : "⏳ Waiting"
+              }
+            </b>
+          </div>
+
+
+          <div class="row">
+            <span>Seller Release</span>
+            <b>
+              ${
+                trade.seller_released
+                ? "✅ Released"
+                : "⏳ Waiting"
+              }
+            </b>
+          </div>
+
+
+          <div class="row">
+            <span>Expires</span>
+            <b>
+              ${date(trade.expires_at)}
+            </b>
+          </div>
+
+
+          ${
+            buyer &&
+            trade.status === "pending_payment"
+            ? `
+
+              <button
+                class="payment"
+                onclick="confirmPayment('${trade.id}')">
+
+                💵 I Paid
+
+              </button>
+
+
+              <button
+                class="cancel"
+                onclick="cancelTrade('${trade.id}')">
+
+                ❌ Cancel Trade
+
+              </button>
+
+            `
+            : ""
+          }
+
+
+          ${
+            seller &&
+            trade.status === "paid"
+            ? `
+
+              <button
+                class="release"
+                onclick="releaseTrade('${trade.id}')">
+
+                💰 Release USDT
+
+              </button>
+
+            `
+            : ""
+          }
+
+
+          ${
+            [
+              "pending_payment",
+              "paid"
+            ].includes(
+              trade.status
+            )
+            ? `
+
+              <button
+                class="dispute"
+                onclick="openDispute('${trade.id}')">
+
+                ⚠️ Open Dispute
+
+              </button>
+
+            `
+            : ""
+          }
+
+        </div>
+
+      `;
+
+      }
+    ).join("");
+
+}
+
+
+/* =====================================================
+   PAYMENT
+===================================================== */
+
+async function confirmPayment(id){
+
+  if(
+    !confirm(
+      "Confirm that you paid the seller?"
+    )
+  ){
+
+    return;
+
+  }
+
+
+  const {
+    error
+  } =
+  await db.rpc(
+    "confirm_buyer_payment",
+    {
+      p_trade_id:id
+    }
+  );
+
+
+  if(error){
+
+    alert(
+      error.message
+    );
+
+    return;
+
+  }
+
+
+  alert(
+    "✅ Payment confirmed."
+  );
+
+
+  await loadMyTrades();
+
+}
+
+
+/* =====================================================
+   RELEASE
+===================================================== */
+
+async function releaseTrade(id){
+
+  if(
+    !confirm(
+      "You received the buyer's payment. Release the USDT?"
+    )
+  ){
+
+    return;
+
+  }
+
+
+  const {
+    error
+  } =
+  await db.rpc(
+    "release_p2p_trade",
+    {
+      p_trade_id:id
+    }
+  );
+
+
+  if(error){
+
+    alert(
+      error.message
+    );
+
+    return;
+
+  }
+
+
+  alert(
+    "✅ USDT released."
+  );
+
+
+  await loadWallet();
+
+  await loadMyTrades();
+
+  await loadHistory();
+
+}
+
+
+/* =====================================================
+   CANCEL TRADE
+===================================================== */
+
+async function cancelTrade(id){
+
+  if(
+    !confirm(
+      "Cancel this trade?"
+    )
+  ){
+
+    return;
+
+  }
+
+
+  const {
+    error
+  } =
+  await db.rpc(
+    "cancel_p2p_trade",
+    {
+      p_trade_id:id
+    }
+  );
+
+
+  if(error){
+
+    alert(
+      error.message
+    );
+
+    return;
+
+  }
+
+
+  alert(
+    "✅ Trade cancelled."
+  );
+
+
+  await loadMyTrades();
+
+  await loadOffers();
+
+}
+
+
+/* =====================================================
+   DISPUTE
+===================================================== */
+
+function openDispute(id){
+
+  disputeTradeId =
+    id;
+
+
+  document.getElementById(
+    "disputeReason"
+  ).value = "";
+
+
+  document.getElementById(
+    "disputeModal"
+  ).classList.add(
+    "show"
+  );
+
+}
+
+
+async function submitDispute(){
+
+  if(!disputeTradeId){
+
+    return;
+
+  }
+
+
+  const reason =
+    document.getElementById(
+      "disputeReason"
+    ).value.trim();
+
+
+  if(!reason){
+
+    alert(
+      "Enter the reason."
+    );
+
+    return;
+
+  }
+
+
+  const {
+    error
+  } =
+  await db.rpc(
+    "open_p2p_dispute",
+    {
+      p_trade_id:
+        disputeTradeId,
+
+      p_reason:
+        reason
+    }
+  );
+
+
+  if(error){
+
+    alert(
+      error.message
+    );
+
+    return;
+
+  }
+
+
+  closeDispute();
+
+
+  alert(
+    "⚠️ Dispute opened."
+  );
+
+
+  await loadMyTrades();
+
+}
+
+
+/* =====================================================
+   HISTORY
+===================================================== */
+
+async function loadHistory(){
+
+  const box =
+    document.getElementById(
+      "history"
+    );
+
+
+  const {
+    data,
+    error
+  } =
+  await db
+    .from("wallet_transactions")
+    .select("*")
+    .eq(
+      "user_id",
+      currentUser.id
+    )
+    .order(
+      "created_at",
+      {
+        ascending:false
+      }
+    )
+    .limit(100);
+
+
+  if(error){
+
+    box.innerHTML =
+      `<div class="empty">
+        ${safe(error.message)}
+      </div>`;
+
+    return;
+
+  }
+
+
+  if(!data.length){
+
+    box.innerHTML =
+      `<div class="empty">
+        💳 No transactions yet.
+      </div>`;
+
+    return;
+
+  }
+
+
+  box.innerHTML =
+    data.map(
+      tx => {
+
+        const n =
+          Number(tx.amount);
+
+        const positive =
+          n >= 0;
+
+
+        return `
+
+        <div class="transaction">
+
+          <div>
+
+            <div class="tx-type">
+
+              ${icon(tx.transaction_type)}
+              ${safe(tx.transaction_type)}
+
+            </div>
+
+            <div class="tx-date">
+
+              ${date(tx.created_at)}
+
+            </div>
+
+            ${
+              tx.description
+              ? `
+                <div class="tx-date">
+                  ${safe(tx.description)}
+                </div>
+              `
+              : ""
+            }
+
+          </div>
+
+
+          <div class="${
+            positive
+            ? "plus"
+            : "minus"
+          }">
+
+            ${positive ? "+" : ""}
+
+            ${n.toFixed(
+              tx.asset === "USDT"
+              ? 8
+              : 2
+            )}
+
+            ${safe(tx.asset)}
+
+          </div>
+
+        </div>
+
+      `;
+
+      }
+    ).join("");
+
+}
+
+
+/* =====================================================
+   DEPOSIT
+===================================================== */
+
+function openDeposit(){
+
+  document.getElementById(
+    "depositModal"
+  ).classList.add(
+    "show"
+  );
+
+}
+
+
+function closeDeposit(){
+
+  document.getElementById(
+    "depositModal"
+  ).classList.remove(
+    "show"
+  );
+
+}
+
+
+function submitDeposit(){
+
+  const asset =
+    document.getElementById(
+      "depositAsset"
+    ).value;
+
+  const amount =
+    Number(
+      document.getElementById(
+        "depositAmount"
+      ).value
+    );
+
+  const reference =
+    document.getElementById(
+      "depositReference"
+    ).value.trim();
+
+
+  if(amount <= 0){
+
+    alert(
+      "Enter a valid amount."
+    );
+
+    return;
+
+  }
+
+
+  /*
+    IMPORTANT:
+    No wallet balance is changed here.
+
+    Real deposit crediting must happen
+    through a protected backend/admin
+    verification function.
+  */
+
+
+  alert(
+    "Deposit request:\n\n"
+    + amount
+    + " "
+    + asset
+    + "\nReference: "
+    + (
+      reference || "None"
+    )
+    + "\n\n"
+    + "Waiting for protected deposit verification."
+  );
+
+
+  closeDeposit();
+
+}
+
+
+/* =====================================================
+   WITHDRAW
+===================================================== */
+
+function openWithdraw(){
+
+  document.getElementById(
+    "withdrawModal"
+  ).classList.add(
+    "show"
+  );
+
+}
+
+
+function closeWithdraw(){
+
+  document.getElementById(
+    "withdrawModal"
+  ).classList.remove(
+    "show"
+  );
+
+}
+
+
+function submitWithdraw(){
+
+  const asset =
+    document.getElementById(
+      "withdrawAsset"
+    ).value;
+
+  const amount =
+    Number(
+      document.getElementById(
+        "withdrawAmount"
+      ).value
+    );
+
+  const destination =
+    document.getElementById(
+      "withdrawDestination"
+    ).value.trim();
+
+
+  if(amount <= 0){
+
+    alert(
+      "Enter a valid amount."
+    );
+
+    return;
+
+  }
+
+
+  if(!destination){
+
+    alert(
+      "Enter a destination."
+    );
+
+    return;
+
+  }
+
+
+  /*
+    IMPORTANT:
+    Never change wallet balance
+    directly from browser JavaScript.
+
+    A protected withdrawal RPC/backend
+    must verify balance and execute
+    the transaction.
+  */
+
+
+  alert(
+    "Withdrawal request submitted.\n\n"
+    + amount
+    + " "
+    + asset
+    + "\n"
+    + destination
+    + "\n\n"
+    + "Waiting for protected processing."
+  );
+
+
+  closeWithdraw();
+
+}
+
+
+/* =====================================================
+   MODALS
+===================================================== */
+
+function closeTradeModal(){
+
+  document.getElementById(
+    "tradeModal"
+  ).classList.remove(
+    "show"
+  );
+
+  selectedOffer =
+    null;
+
+}
+
+
+function closeDispute(){
+
+  document.getElementById(
+    "disputeModal"
+  ).classList.remove(
+    "show"
+  );
+
+  disputeTradeId =
+    null;
+
+}
+
+
+/* =====================================================
+   REALTIME
+===================================================== */
+
+function startRealtime(){
+
+  db
+    .channel(
+      "wallet-p2p-realtime"
+    )
+
+    .on(
+      "postgres_changes",
+      {
+        event:"*",
+        schema:"public",
+        table:"p2p_orders"
+      },
+      async function(){
+
+        await loadOffers();
+
+        await loadMyOrders();
+
+      }
+    )
+
+    .on(
+      "postgres_changes",
+      {
+        event:"*",
+        schema:"public",
+        table:"p2p_trades"
+      },
+      async function(){
+
+        await loadMyTrades();
+
+        await loadWallet();
+
+      }
+    )
+
+    .on(
+      "postgres_changes",
+      {
+        event:"*",
+        schema:"public",
+        table:"wallet_transactions",
+        filter:
+          "user_id=eq."
+          + currentUser.id
+      },
+      async function(){
+
+        await loadHistory();
+
+        await loadWallet();
+
+      }
+    )
+
+    .subscribe();
+
+}
+
+
+/* =====================================================
+   AUTO REFRESH
+===================================================== */
+
+setInterval(
+  async function(){
+
+    if(!currentUser){
+      return;
+    }
+
+    await loadWallet();
+
+    await loadOffers();
+
+    await loadMyOrders();
+
+    await loadMyTrades();
+
+    await loadHistory();
+
+  },
+  30000
+);
+
+
+/* =====================================================
+   HELPERS
+===================================================== */
+
+function date(value){
+
+  if(!value){
+    return "-";
+  }
+
+  return new Date(
+    value
+  ).toLocaleString();
+
+}
+
+
+function icon(type){
+
+  const icons = {
+
+    deposit:"➕",
+
+    withdraw:"➖",
+
+    trade_buy:"🟢",
+
+    trade_sell:"🔴",
+
+    platform_fee:"🏦",
+
+    commission:"💰",
+
+    refund:"↩️",
+
+    adjustment:"⚙️"
+
+  };
+
+  return icons[type] || "💳";
+
+}
+
+
+function safe(value){
+
+  if(
+    value === null ||
+    value === undefined
+  ){
+
+    return "";
+
+  }
+
+  return String(value)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+
+}
+
 </script>
 
 </body>

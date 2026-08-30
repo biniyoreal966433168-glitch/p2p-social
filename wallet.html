@@ -6,6 +6,8 @@
 
 <title>Wallet • P2P Social</title>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 *{
   box-sizing:border-box;
@@ -19,6 +21,16 @@ body{
   color:#172033;
   min-height:100vh;
   padding-bottom:90px;
+}
+
+button,
+select,
+input{
+  font-family:inherit;
+}
+
+button{
+  cursor:pointer;
 }
 
 /* HEADER */
@@ -49,8 +61,8 @@ header{
   background:linear-gradient(135deg,#064e46,#10a889);
   position:relative;
   display:flex;
-  justify-content:center;
   align-items:center;
+  justify-content:center;
 }
 
 .p-left{
@@ -111,7 +123,7 @@ header{
 
 .balance-card{
   background:linear-gradient(135deg,#064e46,#10a889);
-  color:white;
+  color:#fff;
   border-radius:20px;
   padding:24px;
   position:relative;
@@ -157,16 +169,11 @@ header{
 
 .quick-actions button{
   padding:14px 8px;
-  background:white;
+  background:#fff;
   color:#172033;
   border:1px solid #dce5e7;
   border-radius:13px;
-  cursor:pointer;
   font-weight:bold;
-}
-
-.quick-actions button:hover{
-  border-color:#087f73;
 }
 
 .action-icon{
@@ -195,14 +202,16 @@ header{
   font-weight:bold;
 }
 
-/* CREATE ORDER */
+/* CARD */
 
-.order-card{
-  background:white;
+.card{
+  background:#fff;
   border:1px solid #dfe7e9;
   border-radius:17px;
   padding:18px;
 }
+
+/* CREATE ORDER */
 
 .order-tabs{
   display:flex;
@@ -213,17 +222,16 @@ header{
 .order-tab{
   flex:1;
   padding:12px;
-  border:none;
+  border:0;
   border-radius:10px;
   background:#edf3f3;
   color:#71808a;
   font-weight:bold;
-  cursor:pointer;
 }
 
 .order-tab.active{
   background:#087f73;
-  color:white;
+  color:#fff;
 }
 
 .field{
@@ -243,22 +251,25 @@ header{
   background:#f5f8f8;
   border:1px solid #dce5e7;
   border-radius:10px;
-  padding:13px;
   outline:none;
+}
+
+.select-box{
+  padding:13px;
   font-size:15px;
 }
 
 .input-box{
   display:flex;
   align-items:center;
-  padding:0;
+  overflow:hidden;
 }
 
 .input-box input{
   width:100%;
   padding:13px;
   background:transparent;
-  border:none;
+  border:0;
   outline:none;
   font-size:16px;
 }
@@ -272,38 +283,42 @@ header{
 .create-btn{
   width:100%;
   padding:14px;
-  border:none;
+  border:0;
   border-radius:10px;
   background:linear-gradient(135deg,#064e46,#10a889);
-  color:white;
+  color:#fff;
   font-size:16px;
   font-weight:bold;
-  cursor:pointer;
 }
 
 /* ORDERS */
 
-.order-list{
+.order-list,
+.offer-list{
   display:flex;
   flex-direction:column;
   gap:10px;
 }
 
-.market-order{
-  background:white;
+.market-order,
+.offer{
+  background:#fff;
   border:1px solid #dfe7e9;
   border-radius:15px;
   overflow:hidden;
 }
 
-.order-main{
+.order-main,
+.offer-main{
   padding:16px;
 }
 
-.order-top{
+.order-top,
+.offer-top{
   display:flex;
   justify-content:space-between;
   align-items:center;
+  gap:10px;
 }
 
 .order-title{
@@ -313,9 +328,9 @@ header{
 
 .order-pair{
   color:#087f73;
+  font-size:13px;
   font-weight:bold;
   margin-top:4px;
-  font-size:13px;
 }
 
 .order-type{
@@ -337,13 +352,12 @@ header{
 
 .more-btn{
   width:100%;
-  border:none;
+  border:0;
   border-top:1px solid #e5ebec;
   background:#fafcfc;
   padding:11px;
   color:#087f73;
   font-weight:bold;
-  cursor:pointer;
 }
 
 .order-details{
@@ -360,6 +374,7 @@ header{
 .detail-row{
   display:flex;
   justify-content:space-between;
+  gap:10px;
   margin-bottom:9px;
   font-size:13px;
 }
@@ -368,22 +383,74 @@ header{
   color:#7a8790;
 }
 
-.cancel-btn{
+.cancel-btn,
+.dispute-btn,
+.trade-btn{
   width:100%;
-  margin-top:8px;
   padding:10px;
-  border:1px solid #e1d7d9;
   border-radius:9px;
-  background:white;
-  color:#d72c50;
   font-weight:bold;
-  cursor:pointer;
+  margin-top:7px;
+}
+
+.cancel-btn{
+  border:1px solid #e1d7d9;
+  background:#fff;
+  color:#d72c50;
+}
+
+.dispute-btn{
+  border:0;
+  background:#fff0d9;
+  color:#a76300;
+}
+
+.trade-btn{
+  border:0;
+  background:#e2f5ef;
+  color:#087f73;
 }
 
 /* OFFERS */
 
-.empty-offers{
-  background:white;
+.offer-name{
+  font-weight:bold;
+}
+
+.offer-pair{
+  color:#087f73;
+  font-size:13px;
+  margin-top:4px;
+}
+
+.offer-price{
+  color:#087f73;
+  font-size:18px;
+  font-weight:bold;
+}
+
+.offer-info{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  color:#71808a;
+  font-size:12px;
+  margin-top:12px;
+}
+
+.offer-button{
+  width:100%;
+  padding:11px;
+  border:0;
+  border-radius:9px;
+  background:#e2f5ef;
+  color:#087f73;
+  font-weight:bold;
+  margin-top:13px;
+}
+
+.empty{
+  background:#fff;
   border:1px dashed #ccd8da;
   border-radius:15px;
   padding:35px 18px;
@@ -399,7 +466,7 @@ header{
 /* TRANSACTIONS */
 
 .transaction{
-  background:white;
+  background:#fff;
   border:1px solid #dfe7e9;
   border-radius:13px;
   padding:15px;
@@ -422,8 +489,8 @@ header{
   background:#e2f5ef;
   color:#087f73;
   display:flex;
-  justify-content:center;
   align-items:center;
+  justify-content:center;
   font-weight:bold;
 }
 
@@ -439,12 +506,23 @@ header{
 }
 
 .transaction-amount{
-  color:#159447;
   font-weight:bold;
   font-size:14px;
 }
 
-/* BOTTOM NAV */
+/* TRADE STATUS */
+
+.status{
+  display:inline-block;
+  padding:5px 8px;
+  border-radius:7px;
+  background:#edf3f3;
+  color:#687780;
+  font-size:11px;
+  font-weight:bold;
+}
+
+/* NAV */
 
 .bottom-nav{
   position:fixed;
@@ -452,7 +530,7 @@ header{
   right:0;
   bottom:0;
   height:72px;
-  background:white;
+  background:#fff;
   border-top:1px solid #dfe7e9;
   display:flex;
   justify-content:space-around;
@@ -484,6 +562,52 @@ header{
   color:#ef3155 !important;
 }
 
+/* ADMIN */
+
+.permission-box{
+  background:#fff;
+  border:1px solid #dfe7e9;
+  border-radius:13px;
+  padding:15px;
+}
+
+.permission{
+  display:flex;
+  justify-content:space-between;
+  padding:8px 0;
+  border-bottom:1px solid #edf1f2;
+  font-size:13px;
+}
+
+.permission:last-child{
+  border-bottom:0;
+}
+
+.owner{
+  color:#8a5b00;
+  font-weight:bold;
+}
+
+.admin{
+  color:#087f73;
+  font-weight:bold;
+}
+
+.user{
+  color:#71808a;
+  font-weight:bold;
+}
+
+.hidden{
+  display:none;
+}
+
+.loading{
+  text-align:center;
+  padding:20px;
+  color:#71808a;
+}
+
 /* MOBILE */
 
 @media(max-width:450px){
@@ -505,6 +629,10 @@ header{
   }
 
   .quick-actions button{
+    font-size:11px;
+  }
+
+  .offer-info{
     font-size:11px;
   }
 }
@@ -530,7 +658,7 @@ header{
   </div>
 
   <div class="security">
-    🔒 Secure
+    🔐 Secure
   </div>
 
 </header>
@@ -546,8 +674,10 @@ header{
     TOTAL WALLET BALANCE
   </div>
 
-  <div class="balance" id="balance">
-    0.00 ETB
+  <div
+    class="balance"
+    id="balance">
+    Loading...
   </div>
 
   <div class="available">
@@ -590,22 +720,26 @@ header{
 </div>
 
 
-<section class="order-card">
+<section class="card">
 
   <div class="order-tabs">
 
     <button
-      id="buyOrderTab"
+      id="buyTab"
       class="order-tab active"
       onclick="setOrderType('buy')">
-      Buy
+
+      🟢 Buy
+
     </button>
 
     <button
-      id="sellOrderTab"
+      id="sellTab"
       class="order-tab"
       onclick="setOrderType('sell')">
-      Sell
+
+      🔴 Sell
+
     </button>
 
   </div>
@@ -644,16 +778,16 @@ header{
     <div class="input-box">
 
       <input
-        id="orderAmount"
+        id="amount"
         type="number"
         min="0"
         step="0.01"
         placeholder="0.00">
 
       <span
-        class="currency"
-        id="amountCurrency">
-        ETB
+        id="amountCurrency"
+        class="currency">
+        USDT
       </span>
 
     </div>
@@ -670,14 +804,13 @@ header{
     <div class="input-box">
 
       <input
-        id="orderPrice"
+        id="price"
         type="number"
         min="0"
         step="0.01"
         placeholder="0.00">
 
-      <span
-        class="currency">
+      <span class="currency">
         ETB
       </span>
 
@@ -693,7 +826,7 @@ header{
     </label>
 
     <select
-      id="paymentMethod"
+      id="payment"
       class="select-box">
 
       <option value="">
@@ -717,6 +850,37 @@ header{
   </div>
 
 
+  <div class="field">
+
+    <label>
+      Trade expiration
+    </label>
+
+    <select
+      id="expiration"
+      class="select-box">
+
+      <option value="15">
+        15 minutes
+      </option>
+
+      <option value="30">
+        30 minutes
+      </option>
+
+      <option value="60">
+        1 hour
+      </option>
+
+      <option value="1440">
+        24 hours
+      </option>
+
+    </select>
+
+  </div>
+
+
   <button
     class="create-btn"
     onclick="createOrder()">
@@ -732,7 +896,9 @@ header{
 
 <div class="section-title">
 
-  <h2>My Orders</h2>
+  <h2>
+    My Orders
+  </h2>
 
   <span id="orderCount">
     0
@@ -745,16 +911,8 @@ header{
   id="myOrders"
   class="order-list">
 
-  <div class="empty-offers">
-
-    <div class="empty-icon">
-      📋
-    </div>
-
-    <div>
-      You have no orders yet.
-    </div>
-
+  <div class="loading">
+    Loading orders...
   </div>
 
 </section>
@@ -764,7 +922,9 @@ header{
 
 <div class="section-title">
 
-  <h2>Available Offers</h2>
+  <h2>
+    Available Offers
+  </h2>
 
   <span>
     Live
@@ -773,11 +933,11 @@ header{
 </div>
 
 
-<section id="offers">
+<section
+  id="offers"
+  class="offer-list">
 
-  <!-- EMPTY UNTIL REAL TRADERS EXIST -->
-
-  <div class="empty-offers">
+  <div class="empty">
 
     <div class="empty-icon">
       👥
@@ -788,8 +948,40 @@ header{
     </div>
 
     <div style="font-size:12px;margin-top:7px;">
-      New offers will appear here when traders create orders.
+      Real trader offers will appear here.
     </div>
+
+  </div>
+
+</section>
+
+
+<!-- ACTIVE TRADES -->
+
+<div class="section-title">
+
+  <h2>
+    Active Trades
+  </h2>
+
+  <span id="tradeCount">
+    0
+  </span>
+
+</div>
+
+
+<section
+  id="trades"
+  class="order-list">
+
+  <div class="empty">
+
+    <div class="empty-icon">
+      🤝
+    </div>
+
+    No active trades.
 
   </div>
 
@@ -803,7 +995,7 @@ header{
   id="historySection">
 
   <h2>
-    Recent Transactions
+    ETB Transactions
   </h2>
 
   <span>
@@ -815,31 +1007,71 @@ header{
 
 <section id="transactions">
 
-  <div class="transaction">
+  <div class="loading">
+    Loading transactions...
+  </div>
 
-    <div class="transaction-left">
+</section>
 
-      <div class="transaction-icon">
-        ↓
-      </div>
 
-      <div>
+<!-- PERMISSIONS -->
 
-        <div class="transaction-title">
-          Wallet
-        </div>
+<div class="section-title">
 
-        <div class="transaction-date">
-          No transactions yet
-        </div>
+  <h2>
+    Permissions
+  </h2>
 
-      </div>
+  <span id="roleText">
+    User
+  </span>
 
-    </div>
+</div>
 
-    <div class="transaction-amount">
+
+<section class="permission-box">
+
+  <div class="permission">
+
+    <span>
+      👑 Owner
+    </span>
+
+    <span
+      id="ownerPermission"
+      class="user">
       —
-    </div>
+    </span>
+
+  </div>
+
+
+  <div class="permission">
+
+    <span>
+      🛡️ Admin
+    </span>
+
+    <span
+      id="adminPermission"
+      class="user">
+      —
+    </span>
+
+  </div>
+
+
+  <div class="permission">
+
+    <span>
+      👤 User
+    </span>
+
+    <span
+      id="userPermission"
+      class="user">
+      Active
+    </span>
 
   </div>
 
@@ -848,7 +1080,7 @@ header{
 </main>
 
 
-<!-- BOTTOM NAVIGATION -->
+<!-- BOTTOM NAV -->
 
 <nav class="bottom-nav">
 
@@ -915,108 +1147,243 @@ header{
 
 <script>
 
-/* =========================
-   DATA
-========================= */
+/* =====================================================
+   SUPABASE
+===================================================== */
+
+const SUPABASE_URL =
+  "YOUR_SUPABASE_PROJECT_URL";
+
+const SUPABASE_KEY =
+  "YOUR_SUPABASE_PUBLISHABLE_KEY";
+
+
+const supabaseClient =
+  supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+
+/* =====================================================
+   STATE
+===================================================== */
+
+let currentUser = null;
 
 let orderType = "buy";
 
-let orders = [];
+let myOrders = [];
+
+let activeTrades = [];
 
 
-/* =========================
-   ORDER TYPE
-========================= */
+/* =====================================================
+   LOGIN PROTECTION
+===================================================== */
 
-function setOrderType(type){
+async function requireLogin(){
 
-  orderType = type;
+  const {
+    data,
+    error
+  } = await supabaseClient.auth.getSession();
 
-  const buy =
-    document.getElementById("buyOrderTab");
 
-  const sell =
-    document.getElementById("sellOrderTab");
+  if(error){
 
-  if(type === "buy"){
+    console.error(error);
 
-    buy.classList.add("active");
+    location.href = "login.html";
 
-    sell.classList.remove("active");
-
-  }else{
-
-    sell.classList.add("active");
-
-    buy.classList.remove("active");
+    return false;
 
   }
+
+
+  currentUser =
+    data.session?.user || null;
+
+
+  if(!currentUser){
+
+    location.href = "login.html";
+
+    return false;
+
+  }
+
+
+  return true;
 
 }
 
 
-/* =========================
-   PAIR
-========================= */
+/* =====================================================
+   BALANCE
+===================================================== */
 
-function updateCurrency(){
+async function loadBalance(){
 
-  const pair =
-    document.getElementById("pair").value;
-
-  const currency =
-    document.getElementById("amountCurrency");
-
-  if(pair === "USDT_ETB"){
-
-    currency.textContent = "USDT";
-
-  }
-
-  if(pair === "ETB_ETB"){
-
-    currency.textContent = "ETB";
-
-  }
-
-}
+  if(!currentUser) return;
 
 
-/* =========================
-   CREATE ORDER
-========================= */
+  const {
+    data,
+    error
+  } =
+  await supabaseClient
+    .from("wallets")
+    .select("balance")
+    .eq("user_id",currentUser.id)
+    .maybeSingle();
 
-function createOrder(){
 
-  const pair =
-    document.getElementById("pair").value;
+  if(error){
 
-  const amount =
-    Number(
-      document.getElementById("orderAmount").value
+    console.error(
+      "Wallet balance error:",
+      error
     );
 
-  const price =
-    Number(
-      document.getElementById("orderPrice").value
-    );
-
-  const payment =
-    document.getElementById("paymentMethod").value;
-
-
-  if(!amount || amount <= 0){
-
-    alert("Please enter a valid amount.");
+    document.getElementById(
+      "balance"
+    ).textContent =
+      "0.00 ETB";
 
     return;
 
   }
 
 
-  if(!price || price <= 0){
+  const balance =
+    Number(data?.balance || 0);
 
-    alert("Please enter a valid price.");
+
+  document.getElementById(
+    "balance"
+  ).textContent =
+    balance.toFixed(2) + " ETB";
+
+}
+
+
+/* =====================================================
+   ORDER TYPE
+===================================================== */
+
+function setOrderType(type){
+
+  orderType = type;
+
+
+  document
+    .getElementById("buyTab")
+    .classList.toggle(
+      "active",
+      type === "buy"
+    );
+
+
+  document
+    .getElementById("sellTab")
+    .classList.toggle(
+      "active",
+      type === "sell"
+    );
+
+}
+
+
+/* =====================================================
+   PAIR CURRENCY
+===================================================== */
+
+function updateCurrency(){
+
+  const pair =
+    document.getElementById(
+      "pair"
+    ).value;
+
+
+  document.getElementById(
+    "amountCurrency"
+  ).textContent =
+    pair === "ETB_ETB"
+      ? "ETB"
+      : "USDT";
+
+}
+
+
+/* =====================================================
+   CREATE REAL P2P ORDER
+===================================================== */
+
+async function createOrder(){
+
+  if(!currentUser){
+
+    alert("Please login first.");
+
+    return;
+
+  }
+
+
+  const pair =
+    document.getElementById(
+      "pair"
+    ).value;
+
+
+  const amount =
+    Number(
+      document.getElementById(
+        "amount"
+      ).value
+    );
+
+
+  const price =
+    Number(
+      document.getElementById(
+        "price"
+      ).value
+    );
+
+
+  const payment =
+    document.getElementById(
+      "payment"
+    ).value;
+
+
+  const expiration =
+    Number(
+      document.getElementById(
+        "expiration"
+      ).value
+    );
+
+
+  if(amount <= 0){
+
+    alert(
+      "Enter a valid amount."
+    );
+
+    return;
+
+  }
+
+
+  if(price <= 0){
+
+    alert(
+      "Enter a valid price."
+    );
 
     return;
 
@@ -1025,100 +1392,165 @@ function createOrder(){
 
   if(!payment){
 
-    alert("Please select a payment method.");
+    alert(
+      "Select a payment method."
+    );
 
     return;
 
   }
 
 
-  const pairName =
-    pair === "USDT_ETB"
-      ? "USDT / ETB"
-      : "ETB / ETB";
+  const expiresAt =
+    new Date(
+      Date.now() +
+      expiration * 60000
+    ).toISOString();
 
 
-  const newOrder = {
+  const {
+    error
+  } =
+  await supabaseClient
+    .from("p2p_orders")
+    .insert({
 
-    id:Date.now(),
+      user_id:
+        currentUser.id,
 
-    type:orderType,
+      order_type:
+        orderType,
 
-    pair:pairName,
+      pair:
+        pair,
 
-    amount:amount,
+      amount:
+        amount,
 
-    price:price,
+      price:
+        price,
 
-    payment:payment
+      payment_method:
+        payment,
 
-  };
+      status:
+        "open",
+
+      expires_at:
+        expiresAt
+
+    });
 
 
-  orders.unshift(newOrder);
+  if(error){
 
-  renderOrders();
+    console.error(error);
+
+    alert(
+      "Order could not be created:\n" +
+      error.message
+    );
+
+    return;
+
+  }
 
 
   document.getElementById(
-    "orderAmount"
+    "amount"
   ).value = "";
 
 
   document.getElementById(
-    "orderPrice"
+    "price"
   ).value = "";
 
 
   document.getElementById(
-    "paymentMethod"
+    "payment"
   ).value = "";
 
 
   alert(
     "Your " +
     orderType.toUpperCase() +
-    " " +
-    pairName +
     " order was created."
   );
+
+
+  await loadOrders();
+
+  await loadOffers();
 
 }
 
 
-/* =========================
-   RENDER ORDERS
-========================= */
+/* =====================================================
+   LOAD MY ORDERS
+===================================================== */
 
-function renderOrders(){
+async function loadOrders(){
 
   const container =
-    document.getElementById("myOrders");
-
-  const count =
-    document.getElementById("orderCount");
-
-
-  count.textContent = orders.length;
+    document.getElementById(
+      "myOrders"
+    );
 
 
-  if(orders.length === 0){
+  const {
+    data,
+    error
+  } =
+  await supabaseClient
+    .from("p2p_orders")
+    .select("*")
+    .eq(
+      "user_id",
+      currentUser.id
+    )
+    .order(
+      "created_at",
+      {
+        ascending:false
+      }
+    );
 
-    container.innerHTML = `
 
-      <div class="empty-offers">
+  if(error){
+
+    console.error(error);
+
+    container.innerHTML =
+      `<div class="empty">
+        Unable to load orders.
+      </div>`;
+
+    return;
+
+  }
+
+
+  myOrders = data || [];
+
+
+  document.getElementById(
+    "orderCount"
+  ).textContent =
+    myOrders.length;
+
+
+  if(!myOrders.length){
+
+    container.innerHTML =
+      `<div class="empty">
 
         <div class="empty-icon">
           📋
         </div>
 
-        <div>
-          You have no orders yet.
-        </div>
+        You have no orders yet.
 
-      </div>
-
-    `;
+      </div>`;
 
     return;
 
@@ -1128,223 +1560,1217 @@ function renderOrders(){
   container.innerHTML = "";
 
 
-  orders.forEach(order => {
+  myOrders.forEach(
+    order => {
 
-    const card =
-      document.createElement("div");
-
-    card.className =
-      "market-order";
-
-
-    const typeClass =
-      order.type === "buy"
-        ? "buy-type"
-        : "sell-type";
+      const card =
+        document.createElement(
+          "div"
+        );
 
 
-    card.innerHTML = `
+      card.className =
+        "market-order";
 
-      <div class="order-main">
 
-        <div class="order-top">
+      const typeClass =
+        order.order_type === "buy"
+          ? "buy-type"
+          : "sell-type";
 
-          <div>
 
-            <div class="order-title">
-              ${order.type.toUpperCase()}
+      const pairName =
+        order.pair === "ETB_ETB"
+          ? "ETB / ETB"
+          : "USDT / ETB";
+
+
+      card.innerHTML = `
+
+        <div class="order-main">
+
+          <div class="order-top">
+
+            <div>
+
+              <div class="order-title">
+                ${order.order_type.toUpperCase()}
+              </div>
+
+              <div class="order-pair">
+                ${pairName}
+              </div>
+
             </div>
 
-            <div class="order-pair">
-              ${order.pair}
+            <div class="order-type ${typeClass}">
+              ${order.order_type.toUpperCase()}
             </div>
 
           </div>
 
-          <div class="order-type ${typeClass}">
-            ${order.type.toUpperCase()}
-          </div>
-
         </div>
-
-      </div>
-
-
-      <button
-        class="more-btn"
-        onclick="toggleOrder(${order.id})">
-
-        More... ↓
-
-      </button>
-
-
-      <div
-        id="details-${order.id}"
-        class="order-details">
-
-        <div class="detail-row">
-
-          <span>
-            Amount
-          </span>
-
-          <strong>
-            ${order.amount}
-            ${order.pair === "ETB / ETB" ? "ETB" : "USDT"}
-          </strong>
-
-        </div>
-
-
-        <div class="detail-row">
-
-          <span>
-            Price
-          </span>
-
-          <strong>
-            ${order.price} ETB
-          </strong>
-
-        </div>
-
-
-        <div class="detail-row">
-
-          <span>
-            Payment
-          </span>
-
-          <strong>
-            ${order.payment}
-          </strong>
-
-        </div>
-
-
-        <div class="detail-row">
-
-          <span>
-            Status
-          </span>
-
-          <strong>
-            Active
-          </strong>
-
-        </div>
-
 
         <button
-          class="cancel-btn"
-          onclick="cancelOrder(${order.id})">
+          class="more-btn"
+          onclick="toggleDetails('${order.id}')">
 
-          Cancel Order
+          More... ↓
 
         </button>
 
-      </div>
+        <div
+          id="details-${order.id}"
+          class="order-details">
 
-    `;
+          <div class="detail-row">
+            <span>Amount</span>
+            <strong>
+              ${Number(order.amount).toFixed(2)}
+              ${order.pair === "ETB_ETB"
+                ? "ETB"
+                : "USDT"}
+            </strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Price</span>
+            <strong>
+              ${Number(order.price).toFixed(2)}
+              ETB
+            </strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Payment</span>
+            <strong>
+              ${escapeHTML(
+                order.payment_method || "-"
+              )}
+            </strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Status</span>
+            <span class="status">
+              ${escapeHTML(
+                order.status || "open"
+              )}
+            </span>
+          </div>
+
+          <div class="detail-row">
+            <span>Expires</span>
+            <strong>
+              ${formatDate(
+                order.expires_at
+              )}
+            </strong>
+          </div>
+
+          ${
+            order.status === "open"
+              ? `
+                <button
+                  class="cancel-btn"
+                  onclick="cancelOrder('${order.id}')">
+
+                  ❌ Cancel Order
+
+                </button>
+              `
+              : ""
+          }
+
+        </div>
+      `;
 
 
-    container.appendChild(card);
+      container.appendChild(card);
 
-  });
+    }
+  );
 
 }
 
 
-/* =========================
-   EXPAND / MINIMIZE
-========================= */
+/* =====================================================
+   MORE EXPAND / MINIMIZE
+===================================================== */
 
-function toggleOrder(id){
+function toggleDetails(id){
 
-  const details =
+  const box =
     document.getElementById(
       "details-" + id
     );
 
 
-  if(details.classList.contains("show")){
+  if(!box) return;
 
-    details.classList.remove("show");
 
-  }else{
-
-    details.classList.add("show");
-
-  }
+  box.classList.toggle(
+    "show"
+  );
 
 }
 
 
-/* =========================
+/* =====================================================
    CANCEL ORDER
-========================= */
+===================================================== */
 
-function cancelOrder(id){
+async function cancelOrder(id){
 
-  const confirmCancel =
-    confirm(
-      "Cancel this order?"
-    );
-
-
-  if(!confirmCancel){
+  if(
+    !confirm(
+      "Cancel this P2P order?"
+    )
+  ){
 
     return;
 
   }
 
 
-  orders =
-    orders.filter(
-      order => order.id !== id
+  const {
+    error
+  } =
+  await supabaseClient
+    .from("p2p_orders")
+    .update({
+      status:"cancelled"
+    })
+    .eq(
+      "id",
+      id
+    )
+    .eq(
+      "user_id",
+      currentUser.id
     );
 
 
-  renderOrders();
+  if(error){
+
+    alert(
+      error.message
+    );
+
+    return;
+
+  }
+
+
+  await loadOrders();
+
+  await loadOffers();
 
 }
 
 
-/* =========================
+/* =====================================================
+   REAL AVAILABLE OFFERS
+===================================================== */
+
+async function loadOffers(){
+
+  const container =
+    document.getElementById(
+      "offers"
+    );
+
+
+  const {
+    data,
+    error
+  } =
+  await supabaseClient
+    .from("p2p_orders")
+    .select("*")
+    .eq(
+      "status",
+      "open"
+    )
+    .neq(
+      "user_id",
+      currentUser.id
+    )
+    .gt(
+      "expires_at",
+      new Date().toISOString()
+    )
+    .order(
+      "created_at",
+      {
+        ascending:false
+      }
+    );
+
+
+  if(error){
+
+    console.error(error);
+
+    container.innerHTML =
+      `<div class="empty">
+
+        <div class="empty-icon">
+          👥
+        </div>
+
+        No P2P traders available right now.
+
+      </div>`;
+
+    return;
+
+  }
+
+
+  if(!data || !data.length){
+
+    container.innerHTML =
+      `<div class="empty">
+
+        <div class="empty-icon">
+          👥
+        </div>
+
+        <div>
+          No P2P traders available right now.
+        </div>
+
+        <div style="font-size:12px;margin-top:7px;">
+          Real trader offers will appear here.
+        </div>
+
+      </div>`;
+
+    return;
+
+  }
+
+
+  container.innerHTML = "";
+
+
+  data.forEach(
+    order => {
+
+      const card =
+        document.createElement(
+          "div"
+        );
+
+
+      card.className =
+        "offer";
+
+
+      const pairName =
+        order.pair === "ETB_ETB"
+          ? "ETB / ETB"
+          : "USDT / ETB";
+
+
+      card.innerHTML = `
+
+        <div class="offer-main">
+
+          <div class="offer-top">
+
+            <div>
+
+              <div class="offer-name">
+                Trader
+              </div>
+
+              <div class="offer-pair">
+                ${pairName}
+              </div>
+
+            </div>
+
+            <div class="offer-price">
+              ${Number(order.price).toFixed(2)}
+              ETB
+            </div>
+
+          </div>
+
+          <div class="offer-info">
+
+            <span>
+              Amount:
+              ${Number(order.amount).toFixed(2)}
+            </span>
+
+            <span>
+              ${escapeHTML(
+                order.payment_method || "-"
+              )}
+            </span>
+
+          </div>
+
+          <button
+            class="offer-button"
+            onclick="startTrade('${order.id}')">
+
+            🤝 Start Trade
+
+          </button>
+
+        </div>
+      `;
+
+
+      container.appendChild(card);
+
+    }
+  );
+
+}
+
+
+/* =====================================================
+   START REAL TRADE
+===================================================== */
+
+async function startTrade(
+  orderId
+){
+
+  if(
+    !confirm(
+      "Start a trade with this trader?"
+    )
+  ){
+
+    return;
+
+  }
+
+
+  const {
+    data:
+      order,
+    error:
+      orderError
+  } =
+  await supabaseClient
+    .from("p2p_orders")
+    .select("*")
+    .eq(
+      "id",
+      orderId
+    )
+    .eq(
+      "status",
+      "open"
+    )
+    .maybeSingle();
+
+
+  if(orderError){
+
+    alert(
+      orderError.message
+    );
+
+    return;
+
+  }
+
+
+  if(!order){
+
+    alert(
+      "This order is no longer available."
+    );
+
+    await loadOffers();
+
+    return;
+
+  }
+
+
+  const expiresAt =
+    new Date(
+      Date.now() +
+      15 * 60000
+    ).toISOString();
+
+
+  const {
+    error
+  } =
+  await supabaseClient
+    .from("p2p_trades")
+    .insert({
+
+      order_id:
+        order.id,
+
+      buyer_id:
+        order.order_type === "sell"
+          ? currentUser.id
+          : order.user_id,
+
+      seller_id:
+        order.order_type === "sell"
+          ? order.user_id
+          : currentUser.id,
+
+      pair:
+        order.pair,
+
+      amount:
+        order.amount,
+
+      price:
+        order.price,
+
+      status:
+        "payment_pending",
+
+      expires_at:
+        expiresAt
+
+    });
+
+
+  if(error){
+
+    alert(
+      "Trade could not be created:\n" +
+      error.message
+    );
+
+    return;
+
+  }
+
+
+  alert(
+    "P2P trade created."
+  );
+
+
+  await loadOffers();
+
+  await loadTrades();
+
+}
+
+
+/* =====================================================
+   ACTIVE TRADES
+===================================================== */
+
+async function loadTrades(){
+
+  const container =
+    document.getElementById(
+      "trades"
+    );
+
+
+  const {
+    data,
+    error
+  } =
+  await supabaseClient
+    .from("p2p_trades")
+    .select("*")
+    .or(
+      "buyer_id.eq." +
+      currentUser.id +
+      ",seller_id.eq." +
+      currentUser.id
+    )
+    .order(
+      "created_at",
+      {
+        ascending:false
+      }
+    );
+
+
+  if(error){
+
+    console.error(error);
+
+    container.innerHTML =
+      `<div class="empty">
+        Unable to load trades.
+      </div>`;
+
+    return;
+
+  }
+
+
+  activeTrades =
+    data || [];
+
+
+  document.getElementById(
+    "tradeCount"
+  ).textContent =
+    activeTrades.filter(
+      t =>
+        ![
+          "completed",
+          "cancelled",
+          "expired"
+        ].includes(t.status)
+    ).length;
+
+
+  const active =
+    activeTrades.filter(
+      t =>
+        ![
+          "completed",
+          "cancelled",
+          "expired"
+        ].includes(t.status)
+    );
+
+
+  if(!active.length){
+
+    container.innerHTML =
+      `<div class="empty">
+
+        <div class="empty-icon">
+          🤝
+        </div>
+
+        No active trades.
+
+      </div>`;
+
+    return;
+
+  }
+
+
+  container.innerHTML = "";
+
+
+  active.forEach(
+    trade => {
+
+      const card =
+        document.createElement(
+          "div"
+        );
+
+
+      card.className =
+        "market-order";
+
+
+      card.innerHTML = `
+
+        <div class="order-main">
+
+          <div class="order-top">
+
+            <div>
+
+              <div class="order-title">
+                ${trade.pair === "ETB_ETB"
+                  ? "ETB / ETB"
+                  : "USDT / ETB"}
+              </div>
+
+              <div class="order-pair">
+                Trade #${escapeHTML(
+                  String(trade.id)
+                )}
+              </div>
+
+            </div>
+
+            <span class="status">
+              ${escapeHTML(
+                trade.status
+              )}
+            </span>
+
+          </div>
+
+        </div>
+
+        <button
+          class="more-btn"
+          onclick="toggleDetails('trade-${trade.id}')">
+
+          More... ↓
+
+        </button>
+
+        <div
+          id="details-trade-${trade.id}"
+          class="order-details">
+
+          <div class="detail-row">
+            <span>Amount</span>
+            <strong>
+              ${Number(trade.amount).toFixed(2)}
+            </strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Price</span>
+            <strong>
+              ${Number(trade.price).toFixed(2)}
+              ETB
+            </strong>
+          </div>
+
+          <div class="detail-row">
+            <span>Expiration</span>
+            <strong>
+              ${formatDate(
+                trade.expires_at
+              )}
+            </strong>
+          </div>
+
+          ${
+            trade.status ===
+            "payment_pending"
+              ? `
+                <button
+                  class="trade-btn"
+                  onclick="markPayment('${trade.id}')">
+
+                  💰 Buyer Payment
+
+                </button>
+              `
+              : ""
+          }
+
+          ${
+            trade.status ===
+            "payment_sent"
+              ? `
+                <button
+                  class="trade-btn"
+                  onclick="releaseTrade('${trade.id}')">
+
+                  💵 Seller Release
+
+                </button>
+              `
+              : ""
+          }
+
+          ${
+            ![
+              "completed",
+              "cancelled",
+              "expired"
+            ].includes(
+              trade.status
+            )
+              ? `
+                <button
+                  class="cancel-btn"
+                  onclick="cancelTrade('${trade.id}')">
+
+                  ❌ Cancel Trade
+
+                </button>
+
+                <button
+                  class="dispute-btn"
+                  onclick="openDispute('${trade.id}')">
+
+                  ⚠️ Dispute
+
+                </button>
+              `
+              : ""
+          }
+
+        </div>
+      `;
+
+
+      container.appendChild(card);
+
+    }
+  );
+
+}
+
+
+/* =====================================================
+   BUYER PAYMENT
+===================================================== */
+
+async function markPayment(
+  tradeId
+){
+
+  if(
+    !confirm(
+      "Confirm that you have paid the seller?"
+    )
+  ){
+
+    return;
+
+  }
+
+
+  const {
+    data:
+      trade,
+    error:
+      tradeError
+  } =
+  await supabaseClient
+    .from("p2p_trades")
+    .select("*")
+    .eq(
+      "id",
+      tradeId
+    )
+    .eq(
+      "buyer_id",
+      currentUser.id
+    )
+    .maybeSingle();
+
+
+  if(tradeError){
+
+    alert(
+      tradeError.message
+    );
+
+    return;
+
+  }
+
+
+  if(!trade){
+
+    alert(
+      "Trade not found."
+    );
+
+    return;
+
+  }
+
+
+  const {
+    error
+  } =
+  await supabaseClient
+    .from("p2p_trades")
+    .update({
+      status:
+        "payment_sent"
+    })
+    .eq(
+      "id",
+      tradeId
+    )
+    .eq(
+      "buyer_id",
+      currentUser.id
+    );
+
+
+  if(error){
+
+    alert(
+      error.message
+    );
+
+    return;
+
+  }
+
+
+  await loadTrades();
+
+}
+
+
+/* =====================================================
+   SELLER RELEASE
+===================================================== */
+
+async function releaseTrade(
+  tradeId
+){
+
+  if(
+    !confirm(
+      "Release the funds to the buyer?"
+    )
+  ){
+
+    return;
+
+  }
+
+
+  const {
+    error
+  } =
+  await supabaseClient
+    .from("p2p_trades")
+    .update({
+      status:
+        "completed",
+      completed_at:
+        new Date().toISOString()
+    })
+    .eq(
+      "id",
+      tradeId
+    )
+    .eq(
+      "seller_id",
+      currentUser.id
+    )
+    .eq(
+      "status",
+      "payment_sent"
+    );
+
+
+  if(error){
+
+    alert(
+      error.message
+    );
+
+    return;
+
+  }
+
+
+  await loadTrades();
+
+  await loadBalance();
+
+  await loadTransactions();
+
+}
+
+
+/* =====================================================
+   CANCEL TRADE
+===================================================== */
+
+async function cancelTrade(
+  tradeId
+){
+
+  if(
+    !confirm(
+      "Cancel this trade?"
+    )
+  ){
+
+    return;
+
+  }
+
+
+  const {
+    error
+  } =
+  await supabaseClient
+    .from("p2p_trades")
+    .update({
+      status:
+        "cancelled"
+    })
+    .eq(
+      "id",
+      tradeId
+    );
+
+
+  if(error){
+
+    alert(
+      error.message
+    );
+
+    return;
+
+  }
+
+
+  await loadTrades();
+
+}
+
+
+/* =====================================================
+   DISPUTE
+===================================================== */
+
+async function openDispute(
+  tradeId
+){
+
+  const reason =
+    prompt(
+      "Enter dispute reason:"
+    );
+
+
+  if(
+    !reason ||
+    !reason.trim()
+  ){
+
+    return;
+
+  }
+
+
+  const {
+    error
+  } =
+  await supabaseClient
+    .from("p2p_disputes")
+    .insert({
+
+      trade_id:
+        tradeId,
+
+      opened_by:
+        currentUser.id,
+
+      reason:
+        reason.trim(),
+
+      status:
+        "open"
+
+    });
+
+
+  if(error){
+
+    alert(
+      "Dispute could not be opened:\n" +
+      error.message
+    );
+
+    return;
+
+  }
+
+
+  alert(
+    "Dispute opened for review."
+  );
+
+}
+
+
+/* =====================================================
+   TRANSACTIONS
+===================================================== */
+
+async function loadTransactions(){
+
+  const container =
+    document.getElementById(
+      "transactions"
+    );
+
+
+  const {
+    data,
+    error
+  } =
+  await supabaseClient
+    .from("transactions")
+    .select("*")
+    .eq(
+      "user_id",
+      currentUser.id
+    )
+    .eq(
+      "currency",
+      "ETB"
+    )
+    .order(
+      "created_at",
+      {
+        ascending:false
+      }
+    )
+    .limit(20);
+
+
+  if(error){
+
+    console.error(error);
+
+    container.innerHTML =
+      `<div class="empty">
+        No transactions available.
+      </div>`;
+
+    return;
+
+  }
+
+
+  if(!data || !data.length){
+
+    container.innerHTML =
+      `<div class="empty">
+
+        <div class="empty-icon">
+          💳
+        </div>
+
+        No ETB transactions yet.
+
+      </div>`;
+
+    return;
+
+  }
+
+
+  container.innerHTML = "";
+
+
+  data.forEach(
+    transaction => {
+
+      const amount =
+        Number(
+          transaction.amount || 0
+        );
+
+
+      const positive =
+        amount >= 0;
+
+
+      const div =
+        document.createElement(
+          "div"
+        );
+
+
+      div.className =
+        "transaction";
+
+
+      div.innerHTML = `
+
+        <div class="transaction-left">
+
+          <div class="transaction-icon">
+            ${positive ? "↓" : "↑"}
+          </div>
+
+          <div>
+
+            <div class="transaction-title">
+              ${escapeHTML(
+                transaction.type ||
+                "Transaction"
+              )}
+            </div>
+
+            <div class="transaction-date">
+              ${formatDate(
+                transaction.created_at
+              )}
+            </div>
+
+          </div>
+
+        </div>
+
+        <div
+          class="transaction-amount"
+          style="color:${
+            positive
+              ? "#159447"
+              : "#d72c50"
+          }">
+
+          ${positive ? "+" : ""}
+          ${amount.toFixed(2)}
+          ETB
+
+        </div>
+      `;
+
+
+      container.appendChild(
+        div
+      );
+
+    }
+  );
+
+}
+
+
+/* =====================================================
    DEPOSIT
-========================= */
+===================================================== */
 
 function deposit(){
 
   alert(
-    "Deposit system will be connected to your wallet payment system."
+    "Deposit must be connected to your approved payment provider."
   );
 
 }
 
 
-/* =========================
+/* =====================================================
    WITHDRAW
-========================= */
+===================================================== */
 
 function withdraw(){
 
   alert(
-    "Withdraw system will be connected to your secure wallet system."
+    "Withdraw must be connected to your approved payment provider."
   );
 
 }
 
 
-/* =========================
+/* =====================================================
    HISTORY
-========================= */
+===================================================== */
 
 function showHistory(){
 
   document
-    .getElementById("historySection")
+    .getElementById(
+      "historySection"
+    )
     .scrollIntoView({
       behavior:"smooth"
     });
@@ -1352,13 +2778,270 @@ function showHistory(){
 }
 
 
-/* =========================
-   INITIAL
-========================= */
+/* =====================================================
+   ROLE / PERMISSIONS
+===================================================== */
 
-renderOrders();
+async function loadPermissions(){
 
-updateCurrency();
+  const {
+    data,
+    error
+  } =
+  await supabaseClient
+    .from("profiles")
+    .select(
+      "role"
+    )
+    .eq(
+      "id",
+      currentUser.id
+    )
+    .maybeSingle();
+
+
+  if(error){
+
+    console.error(error);
+
+    return;
+
+  }
+
+
+  const role =
+    data?.role || "user";
+
+
+  document.getElementById(
+    "roleText"
+  ).textContent =
+    role.toUpperCase();
+
+
+  document.getElementById(
+    "ownerPermission"
+  ).textContent =
+    role === "owner"
+      ? "Active"
+      : "—";
+
+
+  document.getElementById(
+    "adminPermission"
+  ).textContent =
+    [
+      "owner",
+      "admin"
+    ].includes(role)
+      ? "Active"
+      : "—";
+
+
+  document.getElementById(
+    "userPermission"
+  ).textContent =
+    "Active";
+
+
+  if(role === "owner"){
+
+    document.getElementById(
+      "roleText"
+    ).className =
+      "owner";
+
+  }
+
+
+  if(role === "admin"){
+
+    document.getElementById(
+      "roleText"
+    ).className =
+      "admin";
+
+  }
+
+}
+
+
+/* =====================================================
+   EXPIRATION CHECK
+===================================================== */
+
+async function expireOldOrders(){
+
+  if(!currentUser) return;
+
+
+  const now =
+    new Date().toISOString();
+
+
+  await supabaseClient
+    .from("p2p_orders")
+    .update({
+      status:
+        "expired"
+    })
+    .eq(
+      "status",
+      "open"
+    )
+    .lt(
+      "expires_at",
+      now
+    );
+
+
+  await supabaseClient
+    .from("p2p_trades")
+    .update({
+      status:
+        "expired"
+    })
+    .in(
+      "status",
+      [
+        "payment_pending",
+        "payment_sent"
+      ]
+    )
+    .lt(
+      "expires_at",
+      now
+    );
+
+}
+
+
+/* =====================================================
+   HELPERS
+===================================================== */
+
+function formatDate(value){
+
+  if(!value){
+
+    return "-";
+
+  }
+
+
+  const date =
+    new Date(value);
+
+
+  if(
+    Number.isNaN(
+      date.getTime()
+    )
+  ){
+
+    return "-";
+
+  }
+
+
+  return date.toLocaleString();
+
+}
+
+
+function escapeHTML(value){
+
+  return String(value ?? "")
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+
+}
+
+
+/* =====================================================
+   INITIALIZE
+===================================================== */
+
+async function initialize(){
+
+  const loggedIn =
+    await requireLogin();
+
+
+  if(!loggedIn){
+
+    return;
+
+  }
+
+
+  await expireOldOrders();
+
+  await loadBalance();
+
+  await loadOrders();
+
+  await loadOffers();
+
+  await loadTrades();
+
+  await loadTransactions();
+
+  await loadPermissions();
+
+}
+
+
+/* =====================================================
+   AUTO REFRESH
+===================================================== */
+
+setInterval(
+  async function(){
+
+    if(!currentUser){
+
+      return;
+
+    }
+
+
+    await expireOldOrders();
+
+    await loadBalance();
+
+    await loadOrders();
+
+    await loadOffers();
+
+    await loadTrades();
+
+  },
+  15000
+);
+
+
+/* START */
+
+initialize();
 
 </script>
 

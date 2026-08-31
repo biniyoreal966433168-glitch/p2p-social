@@ -1,3820 +1,5339 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>P2P Order • P2P Social</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<style>
-
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-  font-family:Arial,sans-serif;
-}
-
-html{
-  scroll-behavior:smooth;
-}
-
-body{
-  background:#f4f7f8;
-  color:#172033;
-  min-height:100vh;
-  padding-bottom:90px;
-}
-
-button,
-input,
-select,
-textarea{
-  font-family:Arial,sans-serif;
-}
-
-button{
-  cursor:pointer;
-}
-
-button:disabled{
-  opacity:.6;
-  cursor:not-allowed;
-}
-
-/* HEADER */
-
-header{
-  height:68px;
-  background:white;
-  border-bottom:1px solid #e2e8ea;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 18px;
-  position:sticky;
-  top:0;
-  z-index:100;
-}
-
-.brand{
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-.brand-logo{
-  width:42px;
-  height:42px;
-  border-radius:13px;
-  background:linear-gradient(135deg,#064e46,#10a889);
-  position:relative;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  box-shadow:0 4px 12px rgba(0,0,0,.12);
-  flex-shrink:0;
-}
-
-.p-left{
-  position:absolute;
-  left:8px;
-  top:10px;
-  width:13px;
-  height:23px;
-  border:4px solid white;
-  border-right:0;
-  border-radius:8px 0 0 8px;
-}
-
-.p-right{
-  position:absolute;
-  right:8px;
-  top:10px;
-  width:13px;
-  height:23px;
-  border:4px solid white;
-  border-left:0;
-  border-radius:0 8px 8px 0;
-}
-
-.center-dot{
-  width:10px;
-  height:10px;
-  background:white;
-  border-radius:50%;
-  position:absolute;
-}
-
-.brand-name{
-  font-size:19px;
-  font-weight:800;
-}
-
-.brand-name span{
-  color:#087f73;
-}
-
-.security{
-  color:#087f73;
-  font-size:13px;
-  font-weight:bold;
-}
-
-/* CONTAINER */
-
-.container{
-  width:100%;
-  max-width:850px;
-  margin:auto;
-  padding:18px;
-}
-
-/* BACK */
-
-.back-row{
-  margin-bottom:14px;
-}
-
-.back-btn{
-  border:none;
-  background:white;
-  border:1px solid #dfe7e9;
-  color:#087f73;
-  padding:10px 13px;
-  border-radius:10px;
-  font-weight:bold;
-}
-
-/* TITLE */
-
-.page-title{
-  margin:8px 0 16px;
-}
-
-.page-title h1{
-  font-size:24px;
-}
-
-.page-title p{
-  color:#7b8790;
-  font-size:13px;
-  margin-top:5px;
-}
-
-/* OFFER CARD */
-
-.offer-card{
-  background:white;
-  border:1px solid #dfe7e9;
-  border-radius:18px;
-  overflow:hidden;
-  box-shadow:0 5px 18px rgba(0,0,0,.04);
-}
-
-.offer-header{
-  padding:18px;
-  background:#fafcfc;
-  border-bottom:1px solid #e5ebec;
-}
-
-.offer-user-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-}
-
-.user-area{
-  display:flex;
-  align-items:center;
-  gap:11px;
-  min-width:0;
-}
-
-.avatar{
-  width:45px;
-  height:45px;
-  border-radius:50%;
-  background:#e2f5ef;
-  color:#087f73;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  font-weight:bold;
-  font-size:18px;
-  flex-shrink:0;
-}
-
-.user-name{
-  font-weight:bold;
-  font-size:15px;
-  overflow-wrap:anywhere;
-}
-
-.user-meta{
-  color:#7b8790;
-  font-size:12px;
-  margin-top:4px;
-}
-
-.type{
-  padding:7px 10px;
-  border-radius:8px;
-  font-size:12px;
-  font-weight:bold;
-  white-space:nowrap;
-}
-
-.buy-type{
-  background:#e2f5ef;
-  color:#087f73;
-}
-
-.sell-type{
-  background:#fde8ed;
-  color:#d72c50;
-}
-
-/* OFFER DETAILS */
-
-.offer-details{
-  padding:18px;
-}
-
-.detail-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-}
-
-.detail-box{
-  background:#f7fafa;
-  border:1px solid #e4ebec;
-  border-radius:12px;
-  padding:13px;
-}
-
-.detail-label{
-  color:#7b8790;
-  font-size:11px;
-  margin-bottom:5px;
-}
-
-.detail-value{
-  font-weight:bold;
-  font-size:15px;
-  overflow-wrap:anywhere;
-}
-
-.price-large{
-  color:#087f73;
-  font-size:21px;
-}
-
-/* STATUS */
-
-.status{
-  display:inline-block;
-  padding:6px 9px;
-  border-radius:8px;
-  font-size:11px;
-  font-weight:bold;
-  background:#edf3f3;
-  color:#596579;
-  text-transform:capitalize;
-}
-
-.status.active,
-.status.open,
-.status.pending,
-.status.paid{
-  background:#e2f5ef;
-  color:#087f73;
-}
-
-.status.expired,
-.status.cancelled{
-  background:#fde8ed;
-  color:#d72c50;
-}
-
-.status.disputed{
-  background:#fff2d9;
-  color:#a56a00;
-}
-
-.status.completed,
-.status.released{
-  background:#e9f7eb;
-  color:#159447;
-}
-
-/* TRADE FORM */
-
-.trade-card{
-  margin-top:14px;
-  background:white;
-  border:1px solid #dfe7e9;
-  border-radius:18px;
-  padding:18px;
-}
-
-.trade-card h2{
-  font-size:19px;
-  margin-bottom:14px;
-}
-
-.field{
-  margin-bottom:14px;
-}
-
-.field label{
-  display:block;
-  color:#71808a;
-  font-size:13px;
-  margin-bottom:7px;
-}
-
-.input-box{
-  width:100%;
-  background:#f5f8f8;
-  border:1px solid #dce5e7;
-  border-radius:10px;
-  display:flex;
-  align-items:center;
-}
-
-.input-box input{
-  width:100%;
-  padding:14px;
-  background:transparent;
-  border:none;
-  outline:none;
-  font-size:16px;
-  min-width:0;
-}
-
-.currency{
-  padding:0 13px;
-  color:#087f73;
-  font-weight:bold;
-  white-space:nowrap;
-}
-
-/* FEE */
-
-.fee-card{
-  margin-top:12px;
-  background:#f7fbfa;
-  border:1px solid #d7ebe7;
-  border-radius:13px;
-  padding:14px;
-}
-
-.fee-title{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:10px;
-}
-
-.fee-title strong{
-  color:#172033;
-}
-
-.fee-badge{
-  background:#e2f5ef;
-  color:#087f73;
-  border-radius:7px;
-  padding:5px 8px;
-  font-size:11px;
-  font-weight:bold;
-}
-
-.fee-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  padding:6px 0;
-  font-size:13px;
-}
-
-.fee-row span:first-child{
-  color:#71808a;
-}
-
-.fee-row strong{
-  text-align:right;
-}
-
-.fee-total{
-  border-top:1px solid #dce9e7;
-  margin-top:5px;
-  padding-top:10px;
-}
-
-.fee-note{
-  margin-top:8px;
-  color:#89949b;
-  font-size:11px;
-  line-height:1.4;
-}
-
-/* BUTTON */
-
-.create-trade-btn{
-  width:100%;
-  margin-top:14px;
-  padding:14px;
-  border:none;
-  border-radius:11px;
-  background:linear-gradient(135deg,#064e46,#10a889);
-  color:white;
-  font-size:16px;
-  font-weight:bold;
-}
-
-/* TRADE LIST */
-
-.section-title{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  margin:24px 0 12px;
-}
-
-.section-title h2{
-  font-size:20px;
-}
-
-.section-title span{
-  color:#087f73;
-  font-size:13px;
-  font-weight:bold;
-}
-
-.trade-list{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-
-.trade-card-list{
-  background:white;
-  border:1px solid #dfe7e9;
-  border-radius:16px;
-  overflow:hidden;
-}
-
-.trade-main{
-  padding:16px;
-}
-
-.row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-}
-
-.trade-number{
-  color:#087f73;
-  font-size:12px;
-  font-weight:bold;
-  margin-top:4px;
-}
-
-.trade-info{
-  margin-top:13px;
-}
-
-.detail-row{
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  padding:7px 0;
-  font-size:13px;
-}
-
-.detail-row span:first-child{
-  color:#7a8790;
-}
-
-.detail-row strong{
-  text-align:right;
-  overflow-wrap:anywhere;
-}
-
-.trade-expiry{
-  margin-top:8px;
-  color:#d72c50;
-  font-size:12px;
-  font-weight:bold;
-}
-
-/* ACTIONS */
-
-.payment-btn,
-.release-btn,
-.dispute-btn,
-.cancel-btn{
-  width:100%;
-  padding:11px;
-  border:none;
-  border-radius:9px;
-  font-weight:bold;
-  margin-top:8px;
-}
-
-.payment-btn{
-  background:#087f73;
-  color:white;
-}
-
-.release-btn{
-  background:#159447;
-  color:white;
-}
-
-.dispute-btn{
-  background:#fff5e6;
-  color:#b36b00;
-}
-
-.cancel-btn{
-  background:white;
-  border:1px solid #ead9dc;
-  color:#d72c50;
-}
-
-/* EMPTY */
-
-.empty{
-  background:white;
-  border:1px dashed #ccd8da;
-  border-radius:15px;
-  padding:30px 18px;
-  text-align:center;
-  color:#7b8790;
-}
-
-.empty-icon{
-  font-size:34px;
-  margin-bottom:10px;
-}
-
-/* MODAL */
-
-.modal{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.5);
-  z-index:500;
-  align-items:center;
-  justify-content:center;
-  padding:18px;
-}
-
-.modal.show{
-  display:flex;
-}
-
-.modal-box{
-  width:100%;
-  max-width:430px;
-  max-height:90vh;
-  overflow:auto;
-  background:white;
-  border-radius:18px;
-  padding:20px;
-  box-shadow:0 20px 50px rgba(0,0,0,.2);
-}
-
-.modal-box h3{
-  margin-bottom:15px;
-}
-
-.modal-box textarea{
-  width:100%;
-  border:1px solid #dfe4eb;
-  border-radius:10px;
-  padding:11px;
-  margin-bottom:10px;
-  outline:none;
-  font-size:14px;
-  min-height:100px;
-  resize:vertical;
-}
-
-.modal-actions{
-  display:flex;
-  gap:8px;
-  margin-top:5px;
-}
-
-.modal-actions button{
-  flex:1;
-  padding:11px;
-  border:none;
-  border-radius:10px;
-  font-weight:bold;
-}
-
-.close-btn{
-  background:#edf0f4;
-  color:#172033;
-}
-
-.confirm-btn{
-  background:#087f73;
-  color:white;
-}
-
-/* TOAST */
-
-.toast{
-  position:fixed;
-  left:50%;
-  bottom:90px;
-  transform:translateX(-50%);
-  background:#172033;
-  color:white;
-  padding:12px 16px;
-  border-radius:10px;
-  font-size:13px;
-  z-index:1000;
-  display:none;
-  max-width:90%;
-  text-align:center;
-  box-shadow:0 8px 25px rgba(0,0,0,.18);
-}
-
-.toast.show{
-  display:block;
-}
-
-.toast.success{
-  background:#087f73;
-}
-
-.toast.error{
-  background:#b4233f;
-}
-
-.toast.warning{
-  background:#9a6500;
-}
-
-/* NAV */
-
-.bottom-nav{
-  position:fixed;
-  left:0;
-  right:0;
-  bottom:0;
-  height:72px;
-  background:white;
-  border-top:1px solid #dfe7e9;
-  display:flex;
-  justify-content:space-around;
-  align-items:center;
-  z-index:300;
-  box-shadow:0 -4px 15px rgba(0,0,0,.05);
-}
-
-.bottom-nav a{
-  color:#7b8790;
-  text-decoration:none;
-  text-align:center;
-  font-size:11px;
-  min-width:55px;
-}
-
-.bottom-nav a.active{
-  color:#087f73;
-  font-weight:bold;
-}
-
-.nav-icon{
-  display:block;
-  font-size:21px;
-  margin-bottom:4px;
-}
-
-.live-nav{
-  color:#ef3155 !important;
-}
-
-/* MOBILE */
-
-@media(max-width:500px){
-
-  .container{
-    padding:14px;
-  }
-
-  .brand-name{
-    font-size:17px;
-  }
-
-  .security{
-    font-size:11px;
-  }
-
-  .detail-grid{
-    grid-template-columns:1fr 1fr;
-  }
-
-}
-
-@media(max-width:370px){
-
-  .detail-grid{
-    grid-template-columns:1fr;
-  }
-
-  .offer-user-row{
-    align-items:flex-start;
-  }
-
-}
-
-</style>
-</head>
-
-<body>
-
-<header>
-
-  <div class="brand">
-
-    <div class="brand-logo" aria-label="P2P Social logo">
-
-      <div class="p-left"></div>
-      <div class="p-right"></div>
-      <div class="center-dot"></div>
-
-    </div>
-
-    <div class="brand-name">
-      P2P <span>Social</span>
-    </div>
-
-  </div>
-
-  <div class="security">
-    🔒 Secure
-  </div>
-
-</header>
-
-
-<main class="container">
-
-  <div class="back-row">
-
-    <button
-      type="button"
-      class="back-btn"
-      onclick="goBack()">
-
-      ← Back to P2P
-
-    </button>
-
-  </div>
-
-
-  <div class="page-title">
-
-    <h1>
-      🤝 P2P Order
-    </h1>
-
-    <p>
-      Review the offer and create a secure P2P trade.
-    </p>
-
-  </div>
-
-
-  <!-- OFFER -->
-
-  <section
-    id="offerContainer"
-    class="offer-card">
-
-    <div class="empty">
-
-      <div class="empty-icon">
-        ⏳
-      </div>
-
-      Loading offer...
-
-    </div>
-
-  </section>
-
-
-  <!-- TRADE FORM -->
-
-  <section
-    id="tradeForm"
-    class="trade-card"
-    style="display:none;">
-
-    <h2>
-      🤝 Create Trade
-    </h2>
-
-
-    <div class="field">
-
-      <label for="tradeAmount">
-        Trade amount
-      </label>
-
-      <div class="input-box">
-
-        <input
-          id="tradeAmount"
-          type="number"
-          min="0"
-          step="0.000001"
-          inputmode="decimal"
-          placeholder="Enter amount"
-          oninput="updateTradePreview()">
-
-        <span
-          id="tradeCurrency"
-          class="currency">
-          USDT
-        </span>
-
-      </div>
-
-    </div>
-
-
-    <div
-      id="feeCard"
-      class="fee-card">
-
-      <div class="fee-title">
-
-        <strong>
-          💸 Platform Fee
-        </strong>
-
-        <span class="fee-badge">
-          <span id="feeRateText">
-            1%
-          </span>
-        </span>
-
-      </div>
-
-
-      <div class="fee-row">
-
-        <span>
-          Trade value
-        </span>
-
-        <strong id="tradeValue">
-          0.00 ETB
-        </strong>
-
-      </div>
-
-
-      <div class="fee-row">
-
-        <span>
-          Platform fee
-        </span>
-
-        <strong id="feeAmount">
-          0.00 ETB
-        </strong>
-
-      </div>
-
-
-      <div class="fee-row fee-total">
-
-        <span>
-          Total
-        </span>
-
-        <strong id="totalAmount">
-          0.00 ETB
-        </strong>
-
-      </div>
-
-
-      <div class="fee-note">
-
-        This is an estimated fee preview.
-        The secure backend calculates and enforces
-        the final platform fee.
-
-      </div>
-
-    </div>
-
-
-    <button
-      type="button"
-      id="createTradeButton"
-      class="create-trade-btn"
-      onclick="createTrade()">
-
-      🤝 Create Trade
-
-    </button>
-
-  </section>
-
-
-  <!-- MY TRADES -->
-
-  <div class="section-title">
-
-    <h2>
-      🤝 My Trade
-    </h2>
-
-    <span id="tradeCount">
-      0
-    </span>
-
-  </div>
-
-
-  <section
-    id="myTrades"
-    class="trade-list">
-
-    <div class="empty">
-
-      <div class="empty-icon">
-        🤝
-      </div>
-
-      Loading trades...
-
-    </div>
-
-  </section>
-
-</main>
-
-
-<!-- DISPUTE MODAL -->
-
-<div
-  id="disputeModal"
-  class="modal"
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="disputeTitle">
-
-  <div class="modal-box">
-
-    <h3 id="disputeTitle">
-      ⚠️ Open Dispute
-    </h3>
-
-    <textarea
-      id="disputeReason"
-      maxlength="1000"
-      placeholder="Explain the problem"></textarea>
-
-    <div class="modal-actions">
-
-      <button
-        type="button"
-        class="close-btn"
-        onclick="closeModal('disputeModal')">
-
-        Cancel
-
-      </button>
-
-      <button
-        type="button"
-        class="confirm-btn"
-        id="disputeSubmitButton"
-        onclick="submitDispute()">
-
-        Open Dispute
-
-      </button>
-
-    </div>
-
-  </div>
+wallet.html
+
+<!DOCTYPE html>  <html lang="en">  
+<head>  
+<meta charset="UTF-8">  
+<meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>Wallet • P2P Social</title>  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <style>  
+*{  
+  box-sizing:border-box;  
+  margin:0;  
+  padding:0;  
+  font-family:Arial,sans-serif;  
+}  
+  
+html{  
+  scroll-behavior:smooth;  
+}  
+  
+body{  
+  background:#f4f7f8;  
+  color:#172033;  
+  min-height:100vh;  
+  padding-bottom:90px;  
+}  
+  
+button,  
+input,  
+select,  
+textarea{  
+  font-family:Arial,sans-serif;  
+}  
+  
+button{  
+  cursor:pointer;  
+}  
+  
+button:disabled{  
+  opacity:.6;  
+  cursor:not-allowed;  
+}  
+  
+header{  
+  height:68px;  
+  background:white;  
+  border-bottom:1px solid #e2e8ea;  
+  display:flex;  
+  align-items:center;  
+  justify-content:space-between;  
+  padding:0 18px;  
+  position:sticky;  
+  top:0;  
+  z-index:100;  
+}  
+  
+.brand{  
+  display:flex;  
+  align-items:center;  
+  gap:10px;  
+}  
+  
+.brand-logo{  
+  width:42px;  
+  height:42px;  
+  border-radius:13px;  
+  background:linear-gradient(135deg,#064e46,#10a889);  
+  position:relative;  
+  display:flex;  
+  align-items:center;  
+  justify-content:center;  
+  box-shadow:0 4px 12px rgba(0,0,0,.12);  
+  flex-shrink:0;  
+}  
+  
+.p-left{  
+  position:absolute;  
+  left:8px;  
+  top:10px;  
+  width:13px;  
+  height:23px;  
+  border:4px solid white;  
+  border-right:0;  
+  border-radius:8px 0 0 8px;  
+}  
+  
+.p-right{  
+  position:absolute;  
+  right:8px;  
+  top:10px;  
+  width:13px;  
+  height:23px;  
+  border:4px solid white;  
+  border-left:0;  
+  border-radius:0 8px 8px 0;  
+}  
+  
+.center-dot{  
+  width:10px;  
+  height:10px;  
+  background:white;  
+  border-radius:50%;  
+  position:absolute;  
+}  
+  
+.brand-name{  
+  font-size:19px;  
+  font-weight:800;  
+}  
+  
+.brand-name span{  
+  color:#087f73;  
+}  
+  
+.security{  
+  color:#087f73;  
+  font-size:13px;  
+  font-weight:bold;  
+}  
+  
+.container{  
+  width:100%;  
+  max-width:850px;  
+  margin:auto;  
+  padding:18px;  
+}  
+  
+.balance-card{  
+  background:linear-gradient(135deg,#064e46,#10a889);  
+  color:white;  
+  border-radius:20px;  
+  padding:24px;  
+  position:relative;  
+  overflow:hidden;  
+  box-shadow:0 10px 25px rgba(8,127,115,.18);  
+}  
+  
+.balance-card:after{  
+  content:"";  
+  position:absolute;  
+  width:190px;  
+  height:190px;  
+  right:-70px;  
+  top:-75px;  
+  border-radius:50%;  
+  background:rgba(255,255,255,.09);  
+}  
+  
+.balance-card:before{  
+  content:"";  
+  position:absolute;  
+  width:110px;  
+  height:110px;  
+  right:50px;  
+  bottom:-80px;  
+  border-radius:50%;  
+  background:rgba(255,255,255,.06);  
+}  
+  
+.label{  
+  font-size:13px;  
+  opacity:.8;  
+}  
+  
+.balance{  
+  font-size:34px;  
+  font-weight:bold;  
+  margin:8px 0;  
+  position:relative;  
+  z-index:2;  
+}  
+  
+.available{  
+  font-size:13px;  
+  opacity:.8;  
+  position:relative;  
+  z-index:2;  
+}  
+  
+.quick-actions{  
+  display:grid;  
+  grid-template-columns:repeat(3,1fr);  
+  gap:10px;  
+  margin:16px 0;  
+}  
+  
+.quick-actions button{  
+  padding:14px 8px;  
+  background:white;  
+  color:#172033;  
+  border:1px solid #dce5e7;  
+  border-radius:13px;  
+  font-weight:bold;  
+  transition:.15s;  
+}  
+  
+.quick-actions button:hover{  
+  transform:translateY(-1px);  
+  border-color:#b9d9d4;  
+}  
+  
+.action-icon{  
+  display:block;  
+  font-size:21px;  
+  color:#087f73;  
+  margin-bottom:5px;  
+}  
+  
+.section-title{  
+  display:flex;  
+  justify-content:space-between;  
+  align-items:center;  
+  gap:10px;  
+  margin:22px 0 12px;  
+}  
+  
+.section-title h2{  
+  font-size:20px;  
+}  
+  
+.section-title span{  
+  color:#087f73;  
+  font-size:13px;  
+  font-weight:bold;  
+}  
+  
+.card{  
+  background:white;  
+  border:1px solid #dfe7e9;  
+  border-radius:17px;  
+  padding:18px;  
+}  
+  
+.order-tabs{  
+  display:flex;  
+  gap:8px;  
+  margin-bottom:16px;  
+}  
+  
+.order-tab{  
+  flex:1;  
+  padding:12px;  
+  border:none;  
+  border-radius:10px;  
+  background:#edf3f3;  
+  color:#71808a;  
+  font-weight:bold;  
+}  
+  
+.order-tab.active.buy{  
+  background:#087f73;  
+  color:white;  
+}  
+  
+.order-tab.active.sell{  
+  background:#d72c50;  
+  color:white;  
+}  
+  
+.field{  
+  margin-bottom:14px;  
+}  
+  
+.field label{  
+  display:block;  
+  color:#71808a;  
+  font-size:13px;  
+  margin-bottom:7px;  
+}  
+  
+.select-box,  
+.input-box{  
+  width:100%;  
+  background:#f5f8f8;  
+  border:1px solid #dce5e7;  
+  border-radius:10px;  
+  padding:13px;  
+  outline:none;  
+  font-size:15px;  
+}  
+  
+.select-box:focus,  
+.input-box:focus-within,  
+.modal-box input:focus,  
+.modal-box select:focus,  
+.modal-box textarea:focus{  
+  border-color:#087f73;  
+  box-shadow:0 0 0 3px rgba(8,127,115,.08);  
+}  
+  
+.input-box{  
+  display:flex;  
+  align-items:center;  
+  padding:0;  
+}  
+  
+.input-box input{  
+  width:100%;  
+  padding:13px;  
+  background:transparent;  
+  border:none;  
+  outline:none;  
+  font-size:16px;  
+  min-width:0;  
+}  
+  
+.currency{  
+  padding:0 13px;  
+  color:#087f73;  
+  font-weight:bold;  
+  white-space:nowrap;  
+}  
+  
+.create-btn{  
+  width:100%;  
+  padding:14px;  
+  border:none;  
+  border-radius:10px;  
+  background:linear-gradient(135deg,#064e46,#10a889);  
+  color:white;  
+  font-size:16px;  
+  font-weight:bold;  
+  margin-top:2px;  
+}  
+  
+.create-btn.sell{  
+  background:linear-gradient(135deg,#a91f3d,#d72c50);  
+}  
+  
+/* PLATFORM FEE */  
+  
+.fee-card{  
+  margin-top:14px;  
+  background:#f7fbfa;  
+  border:1px solid #d7ebe7;  
+  border-radius:13px;  
+  padding:14px;  
+}  
+  
+.fee-title{  
+  display:flex;  
+  justify-content:space-between;  
+  align-items:center;  
+  margin-bottom:10px;  
+}  
+  
+.fee-title strong{  
+  color:#172033;  
+}  
+  
+.fee-badge{  
+  background:#e2f5ef;  
+  color:#087f73;  
+  border-radius:7px;  
+  padding:5px 8px;  
+  font-size:11px;  
+  font-weight:bold;  
+}  
+  
+.fee-row{  
+  display:flex;  
+  justify-content:space-between;  
+  align-items:center;  
+  gap:10px;  
+  padding:6px 0;  
+  font-size:13px;  
+}  
+  
+.fee-row span:first-child{  
+  color:#71808a;  
+}  
+  
+.fee-row strong{  
+  text-align:right;  
+}  
+  
+.fee-total{  
+  border-top:1px solid #dce9e7;  
+  margin-top:5px;  
+  padding-top:10px;  
+}  
+  
+.fee-note{  
+  margin-top:8px;  
+  color:#89949b;  
+  font-size:11px;  
+  line-height:1.4;  
+}  
+  
+.order-list,  
+.offer-list,  
+.trade-list,  
+.transaction-list{  
+  display:flex;  
+  flex-direction:column;  
+  gap:10px;  
+}  
+  
+.market-order,  
+.offer-card,  
+.trade-card{  
+  background:white;  
+  border:1px solid #dfe7e9;  
+  border-radius:15px;  
+  overflow:hidden;  
+}  
+  
+.order-main,  
+.offer-main,  
+.trade-main{  
+  padding:16px;  
+}  
+  
+.row{  
+  display:flex;  
+  justify-content:space-between;  
+  align-items:center;  
+  gap:10px;  
+}  
+  
+.order-title{  
+  font-weight:bold;  
+  font-size:16px;  
+}  
+  
+.order-pair{  
+  color:#087f73;  
+  font-weight:bold;  
+  margin-top:4px;  
+  font-size:13px;  
+}  
+  
+.type{  
+  padding:6px 9px;  
+  border-radius:8px;  
+  font-size:12px;  
+  font-weight:bold;  
+  white-space:nowrap;  
+}  
+  
+.buy-type{  
+  background:#e2f5ef;  
+  color:#087f73;  
+}  
+  
+.sell-type{  
+  background:#fde8ed;  
+  color:#d72c50;  
+}  
+  
+.details{  
+  padding:15px 16px;  
+  border-top:1px solid #e5ebec;  
+  background:#fafcfc;  
+}  
+  
+.detail-row{  
+  display:flex;  
+  justify-content:space-between;  
+  gap:10px;  
+  margin-bottom:9px;  
+  font-size:13px;  
+}  
+  
+.detail-row:last-child{  
+  margin-bottom:0;  
+}  
+  
+.detail-row span:first-child{  
+  color:#7a8790;  
+}  
+  
+.detail-row strong{  
+  text-align:right;  
+  overflow-wrap:anywhere;  
+}  
+  
+.action-row{  
+  display:flex;  
+  gap:8px;  
+  margin-top:12px;  
+}  
+  
+.small-btn{  
+  flex:1;  
+  border:none;  
+  border-radius:9px;  
+  padding:10px;  
+  font-weight:bold;  
+}  
+  
+.trade-btn{  
+  background:#087f73;  
+  color:white;  
+}  
+  
+.cancel-btn{  
+  background:white;  
+  border:1px solid #ead9dc;  
+  color:#d72c50;  
+}  
+  
+.payment-btn,  
+.release-btn,  
+.dispute-btn{  
+  width:100%;  
+  padding:11px;  
+  border:none;  
+  border-radius:9px;  
+  font-weight:bold;  
+  margin-top:8px;  
+}  
+  
+.payment-btn{  
+  background:#087f73;  
+  color:white;  
+}  
+  
+.release-btn{  
+  background:#159447;  
+  color:white;  
+}  
+  
+.dispute-btn{  
+  background:#fff5e6;  
+  color:#b36b00;  
+}  
+  
+.offer-user{  
+  font-weight:bold;  
+}  
+  
+.offer-meta{  
+  color:#7b8790;  
+  font-size:12px;  
+  margin-top:5px;  
+}  
+  
+.offer-price{  
+  font-size:18px;  
+  font-weight:bold;  
+  color:#087f73;  
+  text-align:right;  
+}  
+  
+.offer-amount{  
+  margin-top:10px;  
+  font-size:13px;  
+  color:#596579;  
+}  
+  
+.offer-trade{  
+  width:100%;  
+  margin-top:12px;  
+  border:none;  
+  padding:11px;  
+  border-radius:9px;  
+  background:#087f73;  
+  color:white;  
+  font-weight:bold;  
+}  
+  
+.status{  
+  display:inline-block;  
+  padding:6px 9px;  
+  border-radius:8px;  
+  font-size:11px;  
+  font-weight:bold;  
+  background:#edf3f3;  
+  color:#596579;  
+  text-transform:capitalize;  
+}  
+  
+.status.active,  
+.status.pending,  
+.status.paid,  
+.status.open{  
+  background:#e2f5ef;  
+  color:#087f73;  
+}  
+  
+.status.expired,  
+.status.cancelled{  
+  background:#fde8ed;  
+  color:#d72c50;  
+}  
+  
+.status.disputed{  
+  background:#fff2d9;  
+  color:#a56a00;  
+}  
+  
+.status.completed,  
+.status.released{  
+  background:#e9f7eb;  
+  color:#159447;  
+}  
+  
+.trade-number{  
+  color:#087f73;  
+  font-size:12px;  
+  font-weight:bold;  
+  margin-top:4px;  
+}  
+  
+.trade-info{  
+  margin-top:12px;  
+}  
+  
+.trade-expiry{  
+  margin-top:8px;  
+  color:#d72c50;  
+  font-size:12px;  
+  font-weight:bold;  
+}  
+  
+.transaction{  
+  background:white;  
+  border:1px solid #dfe7e9;  
+  border-radius:13px;  
+  padding:15px;  
+  display:flex;  
+  justify-content:space-between;  
+  align-items:center;  
+  gap:10px;  
+}  
+  
+.transaction-left{  
+  display:flex;  
+  gap:11px;  
+  align-items:center;  
+  min-width:0;  
+}  
+  
+.transaction-icon{  
+  width:38px;  
+  height:38px;  
+  min-width:38px;  
+  border-radius:50%;  
+  background:#e2f5ef;  
+  color:#087f73;  
+  display:flex;  
+  justify-content:center;  
+  align-items:center;  
+  font-weight:bold;  
+}  
+  
+.transaction-title{  
+  font-weight:bold;  
+  font-size:14px;  
+  overflow-wrap:anywhere;  
+}  
+  
+.transaction-date{  
+  color:#89949b;  
+  font-size:11px;  
+  margin-top:4px;  
+}  
+  
+.transaction-amount{  
+  font-weight:bold;  
+  font-size:14px;  
+  white-space:nowrap;  
+}  
+  
+.positive{  
+  color:#159447;  
+}  
+  
+.negative{  
+  color:#d72c50;  
+}  
+  
+.empty{  
+  background:white;  
+  border:1px dashed #ccd8da;  
+  border-radius:15px;  
+  padding:30px 18px;  
+  text-align:center;  
+  color:#7b8790;  
+}  
+  
+.empty-icon{  
+  font-size:34px;  
+  margin-bottom:10px;  
+}  
+  
+.refresh-btn{  
+  border:none;  
+  background:#edf7f5;  
+  color:#087f73;  
+  padding:7px 10px;  
+  border-radius:8px;  
+  font-weight:bold;  
+}  
+  
+.refresh-btn:active{  
+  transform:scale(.98);  
+}  
+  
+.modal{  
+  display:none;  
+  position:fixed;  
+  inset:0;  
+  background:rgba(0,0,0,.5);  
+  z-index:500;  
+  align-items:center;  
+  justify-content:center;  
+  padding:18px;  
+}  
+  
+.modal.show{  
+  display:flex;  
+}  
+  
+.modal-box{  
+  width:100%;  
+  max-width:430px;  
+  max-height:90vh;  
+  overflow:auto;  
+  background:white;  
+  border-radius:18px;  
+  padding:20px;  
+  box-shadow:0 20px 50px rgba(0,0,0,.2);  
+}  
+  
+.modal-box h3{  
+  margin-bottom:15px;  
+}  
+  
+.modal-box input,  
+.modal-box select,  
+.modal-box textarea{  
+  width:100%;  
+  border:1px solid #dfe4eb;  
+  border-radius:10px;  
+  padding:11px;  
+  margin-bottom:10px;  
+  outline:none;  
+  font-size:14px;  
+}  
+  
+.modal-box textarea{  
+  min-height:90px;  
+  resize:vertical;  
+}  
+  
+.modal-actions{  
+  display:flex;  
+  gap:8px;  
+  margin-top:5px;  
+}  
+  
+.modal-actions button{  
+  flex:1;  
+  padding:11px;  
+  border:none;  
+  border-radius:10px;  
+  font-weight:bold;  
+}  
+  
+.close-btn{  
+  background:#edf0f4;  
+  color:#172033;  
+}  
+  
+.confirm-btn{  
+  background:#087f73;  
+  color:white;  
+}  
+  
+.bottom-nav{  
+  position:fixed;  
+  left:0;  
+  right:0;  
+  bottom:0;  
+  height:72px;  
+  background:white;  
+  border-top:1px solid #dfe7e9;  
+  display:flex;  
+  justify-content:space-around;  
+  align-items:center;  
+  z-index:300;  
+  box-shadow:0 -4px 15px rgba(0,0,0,.05);  
+}  
+  
+.bottom-nav a{  
+  color:#7b8790;  
+  text-decoration:none;  
+  text-align:center;  
+  font-size:11px;  
+  min-width:55px;  
+}  
+  
+.bottom-nav a.active{  
+  color:#087f73;  
+  font-weight:bold;  
+}  
+  
+.nav-icon{  
+  display:block;  
+  font-size:21px;  
+  margin-bottom:4px;  
+}  
+  
+.live-nav{  
+  color:#ef3155 !important;  
+}  
+  
+.toast{  
+  position:fixed;  
+  left:50%;  
+  bottom:90px;  
+  transform:translateX(-50%);  
+  background:#172033;  
+  color:white;  
+  padding:12px 16px;  
+  border-radius:10px;  
+  font-size:13px;  
+  z-index:1000;  
+  display:none;  
+  max-width:90%;  
+  text-align:center;  
+  box-shadow:0 8px 25px rgba(0,0,0,.18);  
+}  
+  
+.toast.show{  
+  display:block;  
+}  
+  
+.toast.success{  
+  background:#087f73;  
+}  
+  
+.toast.error{  
+  background:#b4233f;  
+}  
+  
+.toast.warning{  
+  background:#9a6500;  
+}  
+  
+.loading{  
+  opacity:.65;  
+  pointer-events:none;  
+}  
+  
+@media(max-width:450px){  
+  
+  .container{  
+    padding:14px;  
+  }  
+  
+  .brand-name{  
+    font-size:17px;  
+  }  
+  
+  .security{  
+    font-size:11px;  
+  }  
+  
+  .balance{  
+    font-size:30px;  
+  }  
+  
+  .quick-actions button{  
+    font-size:11px;  
+  }  
+  
+  .action-row{  
+    flex-direction:column;  
+  }  
+  
+  .offer-price{  
+    font-size:16px;  
+  }  
+  
+  .transaction{  
+    align-items:flex-start;  
+  }  
+  
+  .transaction-amount{  
+    font-size:13px;  
+  }  
+  
+  .bottom-nav{  
+    height:70px;  
+  }  
+}  
+</style>  </head>  <body>  <header>    <div class="brand">  <div class="brand-logo" aria-label="P2P Social logo">  
+  <div class="p-left"></div>  
+  <div class="p-right"></div>  
+  <div class="center-dot"></div>  
+</div>  
+
+<div class="brand-name">  
+  P2P <span>Social</span>  
+</div>
+
+  </div>    <div class="security">  
+    🔒 Secure  
+  </div>  </header>  <main class="container">  <section class="balance-card">    <div class="label">  
+    TOTAL WALLET BALANCE  
+  </div>    <div id="balance" class="balance">  
+    0.00 ETB  
+  </div>    <div class="available">  
+    Available for P2P trading  
+  </div>  </section>  <div class="quick-actions">    <button type="button" onclick="openDeposit()">  
+    <span class="action-icon">＋</span>  
+    Deposit  
+  </button>    <button type="button" onclick="openWithdraw()">  
+    <span class="action-icon">↗</span>  
+    Withdraw  
+  </button>    <button type="button" onclick="showHistory()">  
+    <span class="action-icon">◷</span>  
+    History  
+  </button>  </div>  <div class="section-title">  
+  <h2>Create Order</h2>  
+  <span>P2P Market</span>  
+</div>  <section class="card">    <div class="order-tabs">  <button  
+  type="button"  
+  id="buyOrderTab"  
+  class="order-tab active buy"  
+  onclick="setOrderType('buy')">  
+  🟢 Buy  
+</button>  
+
+<button  
+  type="button"  
+  id="sellOrderTab"  
+  class="order-tab"  
+  onclick="setOrderType('sell')">  
+  🔴 Sell  
+</button>
+
+  </div>    <div class="field">  <label for="pair">  
+  Trading pair  
+</label>  
+
+<select  
+  id="pair"  
+  class="select-box"  
+  onchange="updateCurrency();updateFeePreview();">  
+
+  <option value="USDT_ETB">  
+    USDT / ETB  
+  </option>  
+
+  <option value="ETB_ETB">  
+    ETB / ETB  
+  </option>  
+
+</select>
+
+  </div>    <div class="field">  <label for="orderAmount">  
+  Amount  
+</label>  
+
+<div class="input-box">  
+
+  <input  
+    id="orderAmount"  
+    type="number"  
+    min="0"  
+    step="0.000001"  
+    placeholder="0.00"  
+    inputmode="decimal"  
+    oninput="updateFeePreview()">  
+
+  <span  
+    id="amountCurrency"  
+    class="currency">  
+    USDT  
+  </span>  
 
 </div>
 
+  </div>    <div class="field">  <label for="orderPrice">  
+  Price  
+</label>  
 
-<div
-  id="toast"
-  class="toast"
-  role="status"
-  aria-live="polite">
+<div class="input-box">  
+
+  <input  
+    id="orderPrice"  
+    type="number"  
+    min="0"  
+    step="0.01"  
+    placeholder="0.00"  
+    inputmode="decimal"  
+    oninput="updateFeePreview()">  
+
+  <span class="currency">  
+    ETB  
+  </span>  
+
 </div>
 
+  </div>    <div class="field">  <label for="paymentMethod">  
+  Payment method  
+</label>  
 
-<nav class="bottom-nav">
+<select  
+  id="paymentMethod"  
+  class="select-box">  
 
-  <a href="index.html">
+  <option value="">  
+    Select payment method  
+  </option>  
 
-    <span class="nav-icon">
-      🏠
-    </span>
+  <option value="Telebirr">  
+    Telebirr  
+  </option>  
 
-    Home
+  <option value="CBE">  
+    CBE  
+  </option>  
+
+  <option value="Bank">  
+    Bank Transfer  
+  </option>  
+
+</select>
+
+  </div>    <div class="fee-card">  <div class="fee-title">  
+
+  <strong>  
+    💸 Platform Fee  
+  </strong>  
+
+  <span class="fee-badge">  
+    <span id="feeRateText">1%</span>  
+  </span>  
+
+</div>  
+
+<div class="fee-row">  
+
+  <span>  
+    Trade value  
+  </span>  
+
+  <strong id="feeTradeValue">  
+    0.00 ETB  
+  </strong>  
+
+</div>  
+
+<div class="fee-row">  
+
+  <span>  
+    Platform fee  
+  </span>  
 
-  </a>
-
-
-  <a
-    href="live.html"
-    class="live-nav">
-
-    <span class="nav-icon">
-      🔴
-    </span>
-
-    Live
-
-  </a>
-
-
-  <a
-    href="wallet.html"
-    class="active">
-
-    <span class="nav-icon">
-      🔄
-    </span>
-
-    P2P
-
-  </a>
-
-
-  <a href="message.html">
-
-    <span class="nav-icon">
-      💬
-    </span>
-
-    Messages
-
-  </a>
-
-
-  <a href="profile.html">
-
-    <span class="nav-icon">
-      👤
-    </span>
-
-    Profile
-
-  </a>
-
-</nav>
-
-
-<script>
-
-/* =====================================================
-   SUPABASE
-===================================================== */
-
-const SUPABASE_URL =
-  "https://mbsvuwrgigqfporxwpfr.supabase.co";
-
-const SUPABASE_PUBLISHABLE_KEY =
-  "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
-
-const supabaseClient =
-  window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY
-  );
-
-
-/* =====================================================
-   PLATFORM FEE
-===================================================== */
-
-const PLATFORM_FEE_RATE = 0.01;
-
-
-/* =====================================================
-   STATE
-===================================================== */
-
-let currentSession = null;
-let currentUser = null;
-
-let selectedOrder = null;
-
-let myTrades = [];
-
-let selectedTradeId = null;
-
-let realtimeChannel = null;
-
-let toastTimer = null;
-
-
-/* =====================================================
-   START
-===================================================== */
-
-document.addEventListener(
-  "DOMContentLoaded",
-  startApp
-);
-
-
-async function startApp(){
-
-  try{
-
-    const {
-      data,
-      error
-    } =
-    await supabaseClient.auth.getSession();
-
-
-    if(error){
-
-      console.error(
-        "SESSION ERROR:",
-        error
-      );
-
-      showLogin();
-
-      return;
-
-    }
-
-
-    currentSession =
-      data.session;
-
-
-    if(!currentSession){
-
-      showLogin();
-
-      return;
-
-    }
-
-
-    currentUser =
-      currentSession.user;
-
-
-    updateFeeRate();
-
-    await loadOffer();
-
-    await loadTrades();
-
-    setupRealtime();
-
-
-  }catch(error){
-
-    console.error(
-      "START ERROR:",
-      error
-    );
-
-    toast(
-      getErrorMessage(error),
-      "error"
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   AUTH
-===================================================== */
-
-function showLogin(){
-
-  alert(
-    "Please login first."
-  );
-
-  window.location.href =
-    "login.html";
-
-}
-
-
-supabaseClient.auth.onAuthStateChange(
-  function(event,session){
-
-    currentSession =
-      session;
-
-    currentUser =
-      session?.user || null;
-
-
-    if(
-      event === "SIGNED_OUT"
-    ){
-
-      if(realtimeChannel){
-
-        supabaseClient.removeChannel(
-          realtimeChannel
-        );
-
-        realtimeChannel =
-          null;
-
-      }
-
-      window.location.href =
-        "login.html";
-
-    }
-
-  }
-);
-
-
-/* =====================================================
-   GET ORDER ID
-===================================================== */
-
-function getOrderId(){
-
-  const params =
-    new URLSearchParams(
-      window.location.search
-    );
-
-
-  return (
-    params.get("id") ||
-    params.get("order_id") ||
-    params.get("order")
-  );
-
-}
-
-
-/* =====================================================
-   LOAD OFFER
-===================================================== */
-
-async function loadOffer(){
-
-  const container =
-    document.getElementById(
-      "offerContainer"
-    );
-
-
-  if(!container){
-
-    return;
-
-  }
-
-
-  const orderId =
-    getOrderId();
-
-
-  if(!orderId){
-
-    renderOfferError(
-      "No P2P order was selected.",
-      "Open this page from an Available Offer."
-    );
-
-    return;
-
-  }
-
-
-  const {
-    data,
-    error
-  } =
-  await supabaseClient
-    .from("p2p_orders")
-    .select("*")
-    .eq(
-      "id",
-      orderId
-    )
-    .maybeSingle();
-
-
-  if(error){
-
-    console.error(
-      "OFFER ERROR:",
-      error
-    );
-
-    renderOfferError(
-      "Could not load this offer.",
-      getErrorMessage(error)
-    );
-
-    return;
-
-  }
-
-
-  if(!data){
-
-    renderOfferError(
-      "This offer does not exist.",
-      "It may have been cancelled or removed."
-    );
-
-    return;
-
-  }
-
-
-  if(
-    String(data.user_id) ===
-    String(currentUser.id)
-  ){
-
-    renderOfferError(
-      "This is your own order.",
-      "You cannot create a trade with your own offer."
-    );
-
-    return;
-
-  }
-
-
-  selectedOrder =
-    data;
-
-
-  renderOffer();
-
-}
-
-
-/* =====================================================
-   RENDER OFFER
-===================================================== */
-
-function renderOffer(){
-
-  const container =
-    document.getElementById(
-      "offerContainer"
-    );
-
-
-  if(
-    !container ||
-    !selectedOrder
-  ){
-
-    return;
-
-  }
-
-
-  const type =
-    String(
-      selectedOrder.order_type ||
-      selectedOrder.type ||
-      "buy"
-    ).toLowerCase();
-
-
-  const safeType =
-    type === "sell"
-      ? "sell"
-      : "buy";
-
-
-  const status =
-    normalizeStatus(
-      selectedOrder.status
-    );
-
-
-  const pair =
-    formatPair(
-      selectedOrder
-    );
-
-
-  const amount =
-    Number(
-      selectedOrder.amount
-    ) || 0;
-
-
-  const price =
-    Number(
-      selectedOrder.price
-    ) || 0;
-
-
-  const canTrade =
-    [
-      "active",
-      "open",
-      "pending"
-    ].includes(status) &&
-    amount > 0 &&
-    price > 0;
-
-
-  container.innerHTML = `
-
-    <div class="offer-header">
-
-      <div class="offer-user-row">
-
-        <div class="user-area">
-
-          <div class="avatar">
-            👤
-          </div>
-
-          <div>
-
-            <div class="user-name">
-              P2P Trader
-            </div>
-
-            <div class="user-meta">
-              Verified P2P offer
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <span class="type ${
-          safeType === "buy"
-            ? "buy-type"
-            : "sell-type"
-        }">
-
-          ${
-            safeType === "buy"
-              ? "🟢 BUY"
-              : "🔴 SELL"
-          }
-
-        </span>
-
-      </div>
-
-    </div>
-
-
-    <div class="offer-details">
-
-      <div class="detail-grid">
-
-        <div class="detail-box">
-
-          <div class="detail-label">
-            Trading Pair
-          </div>
-
-          <div class="detail-value">
-            ${escapeHtml(pair)}
-          </div>
-
-        </div>
-
-
-        <div class="detail-box">
-
-          <div class="detail-label">
-            Status
-          </div>
-
-          <div class="detail-value">
-
-            <span class="status ${
-              statusClass(status)
-            }">
-
-              ${escapeHtml(status)}
-
-            </span>
-
-          </div>
-
-        </div>
-
-
-        <div class="detail-box">
-
-          <div class="detail-label">
-            Available
-          </div>
-
-          <div class="detail-value">
-
-            ${escapeHtml(
-              formatAmount(
-                selectedOrder
-              )
-            )}
-
-          </div>
-
-        </div>
-
-
-        <div class="detail-box">
-
-          <div class="detail-label">
-            Price
-          </div>
-
-          <div class="detail-value price-large">
-
-            ${money(price)}
-            ETB
-
-          </div>
-
-        </div>
-
-
-        <div class="detail-box">
-
-          <div class="detail-label">
-            Payment Method
-          </div>
-
-          <div class="detail-value">
-
-            ${escapeHtml(
-              selectedOrder.payment_method ||
-              selectedOrder.payment ||
-              "—"
-            )}
-
-          </div>
-
-        </div>
-
-
-        <div class="detail-box">
-
-          <div class="detail-label">
-            Created
-          </div>
-
-          <div class="detail-value">
-
-            ${escapeHtml(
-              formatDate(
-                selectedOrder.created_at
-              )
-            )}
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  `;
-
-
-  const form =
-    document.getElementById(
-      "tradeForm"
-    );
-
-
-  if(form){
-
-    form.style.display =
-      canTrade
-        ? "block"
-        : "none";
-
-  }
-
-
-  const amountInput =
-    document.getElementById(
-      "tradeAmount"
-    );
-
-
-  if(amountInput){
-
-    amountInput.max =
-      amount;
-
-    amountInput.value =
-      "";
-
-  }
-
-
-  const currency =
-    document.getElementById(
-      "tradeCurrency"
-    );
-
-
-  if(currency){
-
-    currency.textContent =
-      pair.startsWith("USDT")
-        ? "USDT"
-        : "ETB";
-
-  }
-
-
-  updateTradePreview();
-
-}
-
-
-/* =====================================================
-   OFFER ERROR
-===================================================== */
-
-function renderOfferError(
-  title,
-  message
-){
-
-  const container =
-    document.getElementById(
-      "offerContainer"
-    );
-
-
-  if(!container){
-
-    return;
-
-  }
-
-
-  container.innerHTML = `
-
-    <div class="empty">
-
-      <div class="empty-icon">
-        ⚠️
-      </div>
-
-      <strong>
-        ${escapeHtml(title)}
-      </strong>
-
-      <div style="margin-top:7px;">
-        ${escapeHtml(message)}
-      </div>
-
-      <button
-        type="button"
-        class="back-btn"
-        style="margin-top:15px;"
-        onclick="goBack()">
-
-        ← Back to P2P
-
-      </button>
-
-    </div>
-
-  `;
-
-
-  const form =
-    document.getElementById(
-      "tradeForm"
-    );
-
-
-  if(form){
-
-    form.style.display =
-      "none";
-
-  }
-
-}
-
-
-/* =====================================================
-   FEE
-===================================================== */
-
-function updateFeeRate(){
-
-  const rate =
-    PLATFORM_FEE_RATE * 100;
-
-
-  const text =
-    rate.toLocaleString(
-      undefined,
-      {
-        maximumFractionDigits:4
-      }
-    ) +
-    "%";
-
-
-  const element =
-    document.getElementById(
-      "feeRateText"
-    );
-
-
-  if(element){
-
-    element.textContent =
-      text;
-
-  }
-
-}
-
-
-function calculateFee(
-  value
-){
-
-  const amount =
-    Number(value) || 0;
-
-
-  if(amount <= 0){
-
-    return 0;
-
-  }
-
-
-  return amount *
-    PLATFORM_FEE_RATE;
-
-}
-
-
-/* =====================================================
-   TRADE VALUE
-===================================================== */
-
-function getTradeValue(){
-
-  if(!selectedOrder){
-
-    return 0;
-
-  }
-
-
-  const amount =
-    Number(
-      document.getElementById(
-        "tradeAmount"
-      )?.value
-    ) || 0;
-
-
-  const price =
-    Number(
-      selectedOrder.price
-    ) || 0;
-
-
-  if(
-    amount <= 0 ||
-    price <= 0
-  ){
-
-    return 0;
-
-  }
-
-
-  const pair =
-    formatPair(
-      selectedOrder
-    );
-
-
-  if(
-    pair.startsWith("USDT")
-  ){
-
-    return amount * price;
-
-  }
-
-
-  return amount;
-
-}
-
-
-/* =====================================================
-   TRADE PREVIEW
-===================================================== */
-
-function updateTradePreview(){
-
-  const value =
-    getTradeValue();
-
-
-  const fee =
-    calculateFee(
-      value
-    );
-
-
-  const total =
-    value + fee;
-
-
-  const valueElement =
-    document.getElementById(
-      "tradeValue"
-    );
-
-
-  const feeElement =
-    document.getElementById(
-      "feeAmount"
-    );
-
-
-  const totalElement =
-    document.getElementById(
-      "totalAmount"
-    );
-
-
-  if(valueElement){
-
-    valueElement.textContent =
-      money(value) +
-      " ETB";
-
-  }
-
-
-  if(feeElement){
-
-    feeElement.textContent =
-      money(fee) +
-      " ETB";
-
-  }
-
-
-  if(totalElement){
-
-    totalElement.textContent =
-      money(total) +
-      " ETB";
-
-  }
-
-}
-
-
-/* =====================================================
-   CREATE TRADE
-===================================================== */
-
-async function createTrade(){
-
-  if(!currentUser){
-
-    showLogin();
-
-    return;
-
-  }
-
-
-  if(!selectedOrder){
-
-    toast(
-      "Offer not selected.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-
-  const amount =
-    Number(
-      document.getElementById(
-        "tradeAmount"
-      ).value
-    );
-
-
-  if(
-    !Number.isFinite(amount) ||
-    amount <= 0
-  ){
-
-    toast(
-      "Enter a valid trade amount.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-
-  const available =
-    Number(
-      selectedOrder.amount
-    );
-
-
-  if(
-    Number.isFinite(available) &&
-    amount > available
-  ){
-
-    toast(
-      "Amount is greater than the available offer.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-
-  const status =
-    normalizeStatus(
-      selectedOrder.status
-    );
-
-
-  if(
-    ![
-      "active",
-      "open",
-      "pending"
-    ].includes(status)
-  ){
-
-    toast(
-      "This offer is no longer available.",
-      "warning"
-    );
-
-    await loadOffer();
-
-    return;
-
-  }
-
-
-  const tradeValue =
-    getTradeValue();
-
-
-  const fee =
-    calculateFee(
-      tradeValue
-    );
-
-
-  const confirmMessage =
-    "Trade value: " +
-    money(tradeValue) +
-    " ETB\n\n" +
-
-    "Estimated platform fee: " +
-    money(fee) +
-    " ETB\n\n" +
-
-    "The final fee is calculated by the secure backend.\n\n" +
-
-    "Continue?";
-
-
-  if(
-    !confirm(
-      confirmMessage
-    )
-  ){
-
-    return;
-
-  }
-
-
-  const button =
-    document.getElementById(
-      "createTradeButton"
-    );
-
-
-  button.disabled =
-    true;
-
-
-  button.textContent =
-    "Creating...";
-
-
-  try{
-
-    const {
-      data,
-      error
-    } =
-    await supabaseClient.rpc(
-      "create_p2p_trade",
-      {
-        p_order_id:
-          selectedOrder.id,
-
-        p_amount:
-          amount
-      }
-    );
-
-
-    if(error){
-
-      console.error(
-        "CREATE TRADE ERROR:",
-        error
-      );
-
-      toast(
-        getErrorMessage(error),
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    toast(
-      "Trade created successfully.",
-      "success"
-    );
-
-
-    document.getElementById(
-      "tradeAmount"
-    ).value = "";
-
-
-    updateTradePreview();
-
-
-    await loadOffer();
-
-    await loadTrades();
-
-
-  }catch(error){
-
-    console.error(
-      "CREATE TRADE EXCEPTION:",
-      error
-    );
-
-    toast(
-      getErrorMessage(error),
-      "error"
-    );
-
-  }finally{
-
-    button.disabled =
-      false;
-
-    button.textContent =
-      "🤝 Create Trade";
-
-  }
-
-}
-
-
-/* =====================================================
-   LOAD TRADES
-===================================================== */
-
-async function loadTrades(){
-
-  const container =
-    document.getElementById(
-      "myTrades"
-    );
-
-
-  if(!container){
-
-    return;
-
-  }
-
-
-  container.innerHTML =
-    `<div class="empty">Loading trades...</div>`;
-
-
-  if(!currentUser){
-
-    return;
-
-  }
-
-
-  const {
-    data,
-    error
-  } =
-  await supabaseClient
-    .from("p2p_trades")
-    .select("*")
-    .or(
-      "buyer_id.eq." +
-      currentUser.id +
-      ",seller_id.eq." +
-      currentUser.id
-    )
-    .order(
-      "created_at",
-      {
-        ascending:false
-      }
-    );
-
-
-  if(error){
-
-    console.error(
-      "TRADES ERROR:",
-      error
-    );
-
-
-    container.innerHTML =
-      emptyHtml(
-        "🤝",
-        "Could not load trades.",
-        getErrorMessage(error)
-      );
-
-
-    document.getElementById(
-      "tradeCount"
-    ).textContent =
-      "0";
-
-
-    return;
-
-  }
-
-
-  myTrades =
-    data || [];
-
-
-  document.getElementById(
-    "tradeCount"
-  ).textContent =
-    myTrades.length;
-
-
-  renderTrades();
-
-}
-
-
-/* =====================================================
-   RENDER TRADES
-===================================================== */
-
-function renderTrades(){
-
-  const container =
-    document.getElementById(
-      "myTrades"
-    );
-
-
-  if(!container){
-
-    return;
-
-  }
-
-
-  if(!myTrades.length){
-
-    container.innerHTML =
-      emptyHtml(
-        "🤝",
-        "No trades yet."
-      );
-
-    return;
-
-  }
-
-
-  container.innerHTML = "";
-
-
-  myTrades.forEach(
-    trade => {
-
-      const card =
-        document.createElement(
-          "div"
-        );
-
-
-      card.className =
-        "trade-card-list";
-
-
-      const status =
-        normalizeStatus(
-          trade.status
-        );
-
-
-      const isBuyer =
-        String(
-          trade.buyer_id
-        ) ===
-        String(
-          currentUser.id
-        );
-
-
-      const isSeller =
-        String(
-          trade.seller_id
-        ) ===
-        String(
-          currentUser.id
-        );
-
-
-      const paid =
-        Boolean(
-          trade.buyer_paid ||
-          trade.payment_confirmed ||
-          trade.payment_status ===
-          "paid"
-        );
-
-
-      const expired =
-        Boolean(
-          trade.expires_at &&
-          new Date(
-            trade.expires_at
-          ).getTime() <
-          Date.now()
-        );
-
-
-      card.innerHTML = `
-
-        <div class="trade-main">
-
-          <div class="row">
-
-            <div>
-
-              <strong>
-                🤝 P2P Trade
-              </strong>
-
-              <div class="trade-number">
-
-                Trade #
-
-                ${escapeHtml(
-                  String(
-                    trade.trade_number ||
-                    trade.id ||
-                    "—"
-                  )
-                )}
-
-              </div>
-
-            </div>
-
-
-            <span class="status ${
-              statusClass(
-                expired
-                  ? "expired"
-                  : status
-              )
-            }">
-
-              ${
-                expired
-                  ? "Expired"
-                  : escapeHtml(status)
-              }
-
-            </span>
-
-          </div>
-
-
-          <div class="trade-info">
-
-            ${detailRow(
-              "Amount",
-              formatTradeAmount(
-                trade
-              )
-            )}
-
-
-            ${detailRow(
-              "Price",
-              money(
-                trade.price ||
-                trade.unit_price ||
-                0
-              ) +
-              " ETB"
-            )}
-
-
-            ${
-              trade.trade_value != null
-              ?
-              detailRow(
-                "Trade value",
-                money(
-                  trade.trade_value
-                ) +
-                " ETB"
-              )
-              :
-              ""
-            }
-
-
-            ${
-              trade.platform_fee != null
-              ?
-              detailRow(
-                "Platform fee",
-                money(
-                  trade.platform_fee
-                ) +
-                " ETB"
-              )
-              :
-              ""
-            }
-
-
-            ${
-              trade.total_amount != null
-              ?
-              detailRow(
-                "Total",
-                money(
-                  trade.total_amount
-                ) +
-                " ETB"
-              )
-              :
-              ""
-            }
-
-
-            ${detailRow(
-              "Buyer",
-              isBuyer
-                ? "You"
-                : "Trader"
-            )}
-
-
-            ${detailRow(
-              "Seller",
-              isSeller
-                ? "You"
-                : "Trader"
-            )}
-
-
-            ${
-              trade.payment_method
-              ?
-              detailRow(
-                "Payment",
-                trade.payment_method
-              )
-              :
-              ""
-            }
-
-
-            ${
-              trade.expires_at
-              ?
-              `<div class="trade-expiry">
-
-                ⏱️ Expires:
-                ${escapeHtml(
-                  formatDate(
-                    trade.expires_at
-                  )
-                )}
-
-              </div>`
-              :
-              ""
-            }
-
-          </div>
-
-
-          ${renderTradeActions(
-            trade,
-            isBuyer,
-            isSeller,
-            paid,
-            expired
-          )}
-
-        </div>
-
-      `;
-
-
-      container.appendChild(
-        card
-      );
-
-    }
-  );
-
-}
-
-
-/* =====================================================
-   TRADE ACTIONS
-===================================================== */
-
-function renderTradeActions(
-  trade,
-  isBuyer,
-  isSeller,
-  paid,
-  expired
-){
-
-  const status =
-    normalizeStatus(
-      trade.status
-    );
-
-
-  if(
-    expired ||
-    [
-      "released",
-      "completed",
-      "cancelled",
-      "expired"
-    ].includes(status)
-  ){
-
-    return "";
-
-  }
-
-
-  let html = "";
-
-
-  if(
-    isBuyer &&
-    !paid
-  ){
-
-    html += `
-
-      <button
-        type="button"
-        class="payment-btn"
-        onclick="confirmBuyerPayment('${escapeJs(trade.id)}')">
-
-        💰 I Have Paid
-
-      </button>
-
-
-      <button
-        type="button"
-        class="dispute-btn"
-        onclick="openDispute('${escapeJs(trade.id)}')">
-
-        ⚠️ Open Dispute
-
-      </button>
-
-
-      <button
-        type="button"
-        class="cancel-btn"
-        onclick="cancelTrade('${escapeJs(trade.id)}')">
-
-        ❌ Cancel Trade
-
-      </button>
-
-    `;
-
-  }
-
-
-  if(
-    isSeller &&
-    paid
-  ){
-
-    html += `
-
-      <button
-        type="button"
-        class="release-btn"
-        onclick="releaseTrade('${escapeJs(trade.id)}')">
-
-        💵 Release Trade
-
-      </button>
-
-
-      <button
-        type="button"
-        class="dispute-btn"
-        onclick="openDispute('${escapeJs(trade.id)}')">
-
-        ⚠️ Open Dispute
-
-      </button>
-
-    `;
-
-  }
-
-
-  if(
-    isBuyer &&
-    paid
-  ){
-
-    html += `
-
-      <button
-        type="button"
-        class="dispute-btn"
-        onclick="openDispute('${escapeJs(trade.id)}')">
-
-        ⚠️ Open Dispute
-
-      </button>
-
-    `;
-
-  }
-
-
-  return html;
-
-}
-
-
-/* =====================================================
-   BUYER PAYMENT
-===================================================== */
-
-async function confirmBuyerPayment(
-  tradeId
-){
-
-  if(
-    !tradeId
-  ){
-
-    return;
-
-  }
-
-
-  if(
-    !confirm(
-      "Confirm that you have paid the seller?"
-    )
-  ){
-
-    return;
-
-  }
-
-
-  try{
-
-    const {
-      error
-    } =
-    await supabaseClient.rpc(
-      "buyer_confirm_payment",
-      {
-        p_trade_id:
-          tradeId
-      }
-    );
-
-
-    if(error){
-
-      console.error(
-        "PAYMENT ERROR:",
-        error
-      );
-
-      toast(
-        getErrorMessage(error),
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    toast(
-      "Payment confirmed.",
-      "success"
-    );
-
-
-    await loadTrades();
-
-
-  }catch(error){
-
-    console.error(
-      "PAYMENT EXCEPTION:",
-      error
-    );
-
-    toast(
-      getErrorMessage(error),
-      "error"
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   SELLER RELEASE
-===================================================== */
-
-async function releaseTrade(
-  tradeId
-){
-
-  if(
-    !tradeId
-  ){
-
-    return;
-
-  }
-
-
-  if(
-    !confirm(
-      "Release the trade to the buyer?"
-    )
-  ){
-
-    return;
-
-  }
-
-
-  try{
-
-    const {
-      error
-    } =
-    await supabaseClient.rpc(
-      "seller_release_trade",
-      {
-        p_trade_id:
-          tradeId
-      }
-    );
-
-
-    if(error){
-
-      console.error(
-        "RELEASE ERROR:",
-        error
-      );
-
-      toast(
-        getErrorMessage(error),
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    toast(
-      "Trade released successfully.",
-      "success"
-    );
-
-
-    await loadTrades();
-
-
-  }catch(error){
-
-    console.error(
-      "RELEASE EXCEPTION:",
-      error
-    );
-
-    toast(
-      getErrorMessage(error),
-      "error"
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   CANCEL TRADE
-===================================================== */
-
-async function cancelTrade(
-  tradeId
-){
-
-  if(
-    !tradeId
-  ){
-
-    return;
-
-  }
-
-
-  if(
-    !confirm(
-      "Cancel this trade?"
-    )
-  ){
-
-    return;
-
-  }
-
-
-  try{
-
-    const {
-      error
-    } =
-    await supabaseClient.rpc(
-      "buyer_cancel_trade",
-      {
-        p_trade_id:
-          tradeId
-      }
-    );
-
-
-    if(error){
-
-      console.error(
-        "CANCEL TRADE ERROR:",
-        error
-      );
-
-      toast(
-        getErrorMessage(error),
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    toast(
-      "Trade cancelled.",
-      "success"
-    );
-
-
-    await loadTrades();
-
-    await loadOffer();
-
-
-  }catch(error){
-
-    console.error(
-      "CANCEL TRADE EXCEPTION:",
-      error
-    );
-
-    toast(
-      getErrorMessage(error),
-      "error"
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   DISPUTE
-===================================================== */
-
-function openDispute(
-  tradeId
-){
-
-  if(
-    !tradeId
-  ){
-
-    return;
-
-  }
-
-
-  selectedTradeId =
-    tradeId;
-
-
-  document.getElementById(
-    "disputeReason"
-  ).value = "";
-
-
-  openModal(
-    "disputeModal"
-  );
-
-}
-
-
-async function submitDispute(){
-
-  if(
-    !selectedTradeId
-  ){
-
-    toast(
-      "Trade not selected.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-
-  const reason =
-    document.getElementById(
-      "disputeReason"
-    ).value.trim();
-
-
-  if(
-    !reason
-  ){
-
-    toast(
-      "Please explain the problem.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-
-  const button =
-    document.getElementById(
-      "disputeSubmitButton"
-    );
-
-
-  button.disabled =
-    true;
-
-
-  button.textContent =
-    "Opening...";
-
-
-  try{
-
-    const {
-      error
-    } =
-    await supabaseClient.rpc(
-      "open_p2p_dispute",
-      {
-        p_trade_id:
-          selectedTradeId,
-
-        p_reason:
-          reason
-      }
-    );
-
-
-    if(error){
-
-      console.error(
-        "DISPUTE ERROR:",
-        error
-      );
-
-      toast(
-        getErrorMessage(error),
-        "error"
-      );
-
-      return;
-
-    }
-
-
-    closeModal(
-      "disputeModal"
-    );
-
-
-    selectedTradeId =
-      null;
-
-
-    toast(
-      "Dispute opened.",
-      "success"
-    );
-
-
-    await loadTrades();
-
-
-  }catch(error){
-
-    console.error(
-      "DISPUTE EXCEPTION:",
-      error
-    );
-
-    toast(
-      getErrorMessage(error),
-      "error"
-    );
-
-  }finally{
-
-    button.disabled =
-      false;
-
-    button.textContent =
-      "Open Dispute";
-
-  }
-
-}
-
-
-/* =====================================================
-   REALTIME
-===================================================== */
-
-function setupRealtime(){
-
-  if(
-    !currentUser
-  ){
-
-    return;
-
-  }
-
-
-  if(
-    realtimeChannel
-  ){
-
-    supabaseClient.removeChannel(
-      realtimeChannel
-    );
-
-  }
-
-
-  realtimeChannel =
-    supabaseClient
-      .channel(
-        "p2p-order-live-" +
-        currentUser.id
-      )
-
-
-      .on(
-        "postgres_changes",
-        {
-          event:"*",
-          schema:"public",
-          table:"p2p_orders"
-        },
-        function(){
-
-          loadOffer();
-
-        }
-      )
-
-
-      .on(
-        "postgres_changes",
-        {
-          event:"*",
-          schema:"public",
-          table:"p2p_trades"
-        },
-        function(){
-
-          loadTrades();
-
-        }
-      )
-
-
-      .subscribe(
-        function(status){
-
-          console.log(
-            "P2P order realtime:",
-            status
-          );
-
-        }
-      );
-
-}
-
-
-/* =====================================================
-   MODALS
-===================================================== */
-
-function openModal(
-  id
-){
-
-  const element =
-    document.getElementById(
-      id
-    );
-
-
-  if(element){
-
-    element.classList.add(
-      "show"
-    );
-
-
-    setTimeout(
-      function(){
-
-        const input =
-          element.querySelector(
-            "textarea,input,select"
-          );
-
-
-        if(input){
-
-          input.focus();
-
-        }
-
-      },
-      50
-    );
-
-  }
-
-}
-
-
-function closeModal(
-  id
-){
-
-  const element =
-    document.getElementById(
-      id
-    );
-
-
-  if(element){
-
-    element.classList.remove(
-      "show"
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   NAVIGATION
-===================================================== */
-
-function goBack(){
-
-  if(
-    document.referrer &&
-    document.referrer.includes(
-      window.location.host
-    )
-  ){
-
-    window.history.back();
-
-    return;
-
-  }
-
-
-  window.location.href =
-    "wallet.html";
-
-}
-
-
-/* =====================================================
-   HELPERS
-===================================================== */
-
-function formatPair(
-  order
-){
-
-  const pair =
-    String(
-      order?.pair ||
-      order?.trading_pair ||
-      ""
-    );
-
-
-  if(
-    pair === "USDT_ETB"
-  ){
-
-    return "USDT / ETB";
-
-  }
-
-
-  if(
-    pair === "ETB_ETB"
-  ){
-
-    return "ETB / ETB";
-
-  }
-
-
-  if(
-    pair.includes("_")
-  ){
-
-    return pair.replace(
-      "_",
-      " / "
-    );
-
-  }
-
-
-  return pair ||
-    "P2P";
-
-}
-
-
-function formatAmount(
-  order
-){
-
-  const amount =
-    Number(
-      order?.amount
-    ) || 0;
-
-
-  const pair =
-    formatPair(
-      order
-    );
-
-
-  return amount.toLocaleString(
-    undefined,
-    {
-      maximumFractionDigits:6
-    }
-  ) +
-  " " +
-  (
-    pair.startsWith("USDT")
-      ? "USDT"
-      : "ETB"
-  );
-
-}
-
-
-function formatTradeAmount(
-  trade
-){
-
-  const amount =
-    Number(
-      trade?.amount ??
-      trade?.trade_amount ??
-      0
-    ) || 0;
-
-
-  const pair =
-    formatPair(
-      trade
-    );
-
-
-  return amount.toLocaleString(
-    undefined,
-    {
-      maximumFractionDigits:6
-    }
-  ) +
-  " " +
-  (
-    pair.startsWith("USDT")
-      ? "USDT"
-      : "ETB"
-  );
-
-}
-
-
-function money(
-  value
-){
-
-  const number =
-    Number(value);
-
-
-  if(
-    !Number.isFinite(number)
-  ){
-
-    return "0.00";
-
-  }
-
-
-  return number.toLocaleString(
-    undefined,
-    {
-      minimumFractionDigits:2,
-      maximumFractionDigits:2
-    }
-  );
-
-}
-
-
-function formatDate(
-  value
-){
-
-  if(
-    !value
-  ){
-
-    return "—";
-
-  }
-
-
-  const date =
-    new Date(value);
-
-
-  if(
-    Number.isNaN(
-      date.getTime()
-    )
-  ){
-
-    return String(value);
-
-  }
-
-
-  return date.toLocaleString();
-
-}
-
-
-function normalizeStatus(
-  status
-){
-
-  const value =
-    String(
-      status ||
-      "pending"
-    )
-    .trim()
-    .toLowerCase();
-
-
-  return value ||
-    "pending";
-
-}
-
-
-function statusClass(
-  status
-){
-
-  const value =
-    normalizeStatus(
-      status
-    );
-
-
-  if(
-    [
-      "active",
-      "open",
-      "pending",
-      "paid"
-    ].includes(value)
-  ){
-
-    return value;
-
-  }
-
-
-  if(
-    [
-      "expired",
-      "cancelled"
-    ].includes(value)
-  ){
-
-    return value;
-
-  }
-
-
-  if(
-    value === "disputed"
-  ){
-
-    return "disputed";
-
-  }
-
-
-  if(
-    [
-      "completed",
-      "released"
-    ].includes(value)
-  ){
-
-    return value;
-
-  }
-
-
-  return "";
-
-}
-
-
-function detailRow(
-  label,
-  value
-){
-
-  return `
-
-    <div class="detail-row">
-
-      <span>
-        ${escapeHtml(label)}
-      </span>
-
-      <strong>
-        ${escapeHtml(
-          String(
-            value ?? ""
-          )
-        )}
-      </strong>
-
-    </div>
-
-  `;
-
-}
-
-
-function emptyHtml(
-  icon,
-  title,
-  message
-){
-
-  return `
-
-    <div class="empty">
-
-      <div class="empty-icon">
-
-        ${escapeHtml(
-          icon || "ℹ️"
-        )}
-
-      </div>
-
-      <strong>
-
-        ${escapeHtml(
-          title || ""
-        )}
-
-      </strong>
-
-      ${
-        message
-        ?
-        `<div style="margin-top:7px;">
-          ${escapeHtml(message)}
-        </div>`
-        :
-        ""
-      }
-
-    </div>
-
-  `;
-
-}
-
-
-function escapeHtml(
-  value
-){
-
-  return String(
-    value ?? ""
-  )
-  .replace(
-    /&/g,
-    "&amp;"
-  )
-  .replace(
-    /</g,
-    "&lt;"
-  )
-  .replace(
-    />/g,
-    "&gt;"
-  )
-  .replace(
-    /"/g,
-    "&quot;"
-  )
-  .replace(
-    /'/g,
-    "&#039;"
-  );
-
-}
-
-
-function escapeJs(
-  value
-){
-
-  return String(
-    value ?? ""
-  )
-  .replace(
-    /\\/g,
-    "\\\\"
-  )
-  .replace(
-    /'/g,
-    "\\'"
-  )
-  .replace(
-    /"/g,
-    '\\"'
-  )
-  .replace(
-    /\r/g,
-    "\\r"
-  )
-  .replace(
-    /\n/g,
-    "\\n"
-  );
-
-}
-
-
-function getErrorMessage(
-  error
-){
-
-  if(!error){
-
-    return "Something went wrong.";
-
-  }
-
-
-  return (
-    error.message ||
-    error.details ||
-    error.hint ||
-    "Something went wrong."
-  );
-
-}
-
-
-/* =====================================================
-   TOAST
-===================================================== */
-
-function toast(
-  message,
-  type = "normal"
-){
-
-  const element =
-    document.getElementById(
-      "toast"
-    );
-
-
-  if(!element){
-
-    return;
-
-  }
-
-
-  clearTimeout(
-    toastTimer
-  );
-
-
-  element.textContent =
-    String(
-      message || ""
-    );
-
-
-  element.classList.remove(
-    "success",
-    "error",
-    "warning"
-  );
-
-
-  if(
-    [
-      "success",
-      "error",
-      "warning"
-    ].includes(type)
-  ){
-
-    element.classList.add(
-      type
-    );
-
-  }
-
-
-  element.classList.add(
-    "show"
-  );
-
-
-  toastTimer =
-    setTimeout(
-      function(){
-
-        element.classList.remove(
-          "show"
-        );
-
-      },
-      3500
-    );
-
-}
-
-
-/* =====================================================
-   OUTSIDE MODAL CLICK
-===================================================== */
-
-document.addEventListener(
-  "click",
-  function(event){
-
-    if(
-      event.target.classList.contains(
-        "modal"
-      )
-    ){
-
-      event.target.classList.remove(
-        "show"
-      );
-
-    }
-
-  }
-);
-
-
-/* =====================================================
-   ESCAPE
-===================================================== */
-
-document.addEventListener(
-  "keydown",
-  function(event){
-
-    if(
-      event.key !== "Escape"
-    ){
-
-      return;
-
-    }
-
-
-    document
-      .querySelectorAll(
-        ".modal.show"
-      )
-      .forEach(
-        modal => {
-
-          modal.classList.remove(
-            "show"
-          );
-
-        }
-      );
-
-  }
-);
-
-
-/* =====================================================
-   CLEANUP
-===================================================== */
-
-window.addEventListener(
-  "beforeunload",
-  function(){
-
-    if(
-      realtimeChannel
-    ){
-
-      supabaseClient.removeChannel(
-        realtimeChannel
-      );
-
-    }
-
-  }
-);
-
-</script>
-
-</body>
+  <strong id="feeAmount">  
+    0.00 ETB  
+  </strong>  
+
+</div>  
+
+<div class="fee-row fee-total">  
+
+  <span>  
+    Total  
+  </span>  
+
+  <strong id="feeTotal">  
+    0.00 ETB  
+  </strong>  
+
+</div>  
+
+<div class="fee-note">  
+  Estimated platform fee. The final fee must be calculated and enforced by the secure database transaction.  
+</div>
+
+  </div>  <button  
+type="button"  
+id="createOrderButton"  
+class="create-btn"  
+onclick="createOrder()">
+
+Create Buy Order
+
+  </button>  </section>  <div class="section-title">    <h2>📋 My Orders</h2>  <span id="orderCount">0</span>
+
+</div>  <section id="myOrders" class="order-list">    <div class="empty">  
+    Loading orders...  
+  </div>  </section>  <div class="section-title">    <h2>👥 Available Offers</h2>  <button  
+type="button"  
+class="refresh-btn"  
+onclick="loadAll()">
+🔄 Refresh
+</button>
+
+</div>  <section id="offers" class="offer-list">    <div class="empty">  
+    Loading offers...  
+  </div>  </section>  <div class="section-title">    <h2>🤝 My Trades</h2>  <span id="tradeCount">0</span>
+
+</div>  <section id="trades" class="trade-list">    <div class="empty">  
+    Loading trades...  
+  </div>  </section>  <div  
+  id="historySection"  
+  class="section-title">    <h2>💳 ETB Transactions</h2>    <span>  
+    History  
+  </span>  </div>  <section  
+  id="transactions"  
+  class="transaction-list">    <div class="empty">  
+    Loading transactions...  
+  </div>  </section>  </main>  <!-- DEPOSIT MODAL -->  <div  
+  id="depositModal"  
+  class="modal"  
+  role="dialog"  
+  aria-modal="true"  
+  aria-labelledby="depositTitle">    <div class="modal-box">  <h3 id="depositTitle">  
+  ➕ Deposit ETB  
+</h3>  
+
+<input  
+  id="depositAmount"  
+  type="number"  
+  min="0.01"  
+  step="0.01"  
+  inputmode="decimal"  
+  placeholder="Amount in ETB">  
+
+<select id="depositMethod">  
+
+  <option value="">  
+    Select payment method  
+  </option>  
+
+  <option value="Telebirr">  
+    Telebirr  
+  </option>  
+
+  <option value="CBE">  
+    CBE  
+  </option>  
+
+  <option value="Bank">  
+    Bank Transfer  
+  </option>  
+
+</select>  
+
+<textarea  
+  id="depositNote"  
+  maxlength="300"  
+  placeholder="Payment reference / note"></textarea>  
+
+<div class="modal-actions">  
+
+  <button  
+    type="button"  
+    class="close-btn"  
+    onclick="closeModal('depositModal')">  
+    Cancel  
+  </button>  
+
+  <button  
+    type="button"  
+    class="confirm-btn"  
+    id="depositSubmitButton"  
+    onclick="submitDeposit()">  
+    Submit Deposit  
+  </button>  
+
+</div>
+
+  </div>  </div>  <!-- WITHDRAW MODAL -->  <div  
+  id="withdrawModal"  
+  class="modal"  
+  role="dialog"  
+  aria-modal="true"  
+  aria-labelledby="withdrawTitle">    <div class="modal-box">  <h3 id="withdrawTitle">  
+  ↗ Withdraw ETB  
+</h3>  
+
+<input  
+  id="withdrawAmount"  
+  type="number"  
+  min="0.01"  
+  step="0.01"  
+  inputmode="decimal"  
+  placeholder="Amount in ETB">  
+
+<select id="withdrawMethod">  
+
+  <option value="">  
+    Select withdrawal method  
+  </option>  
+
+  <option value="Telebirr">  
+    Telebirr  
+  </option>  
+
+  <option value="CBE">  
+    CBE  
+  </option>  
+
+  <option value="Bank">  
+    Bank Transfer  
+  </option>  
+
+</select>  
+
+<input  
+  id="withdrawAccount"  
+  maxlength="150"  
+  placeholder="Account / phone number">  
+
+<textarea  
+  id="withdrawNote"  
+  maxlength="300"  
+  placeholder="Optional note"></textarea>  
+
+<div class="modal-actions">  
+
+  <button  
+    type="button"  
+    class="close-btn"  
+    onclick="closeModal('withdrawModal')">  
+    Cancel  
+  </button>  
+
+  <button  
+    type="button"  
+    class="confirm-btn"  
+    id="withdrawSubmitButton"  
+    onclick="submitWithdraw()">  
+    Request Withdraw  
+  </button>  
+
+</div>
+
+  </div>  </div>  <!-- TRADE MODAL -->  <div  
+  id="tradeModal"  
+  class="modal"  
+  role="dialog"  
+  aria-modal="true"  
+  aria-labelledby="tradeTitle">    <div class="modal-box">  <h3 id="tradeTitle">  
+  🤝 Create Trade  
+</h3>  
+
+<div id="tradeSummary"></div>  
+
+<input  
+  id="tradeAmount"  
+  type="number"  
+  min="0"  
+  step="0.000001"  
+  inputmode="decimal"  
+  placeholder="Trade amount"  
+  oninput="updateTradeFeePreview()">  
+
+<div  
+  id="tradeFeePreview"  
+  class="fee-card"  
+  style="margin-top:4px;margin-bottom:12px;">  
+
+  <div class="fee-title">  
+
+    <strong>  
+      💸 Platform Fee  
+    </strong>  
+
+    <span class="fee-badge">  
+      <span id="tradeFeeRateText">  
+        1%  
+      </span>  
+    </span>  
+
+  </div>  
+
+  <div class="fee-row">  
+
+    <span>  
+      Trade value  
+    </span>  
+
+    <strong id="tradeValuePreview">  
+      0.00 ETB  
+    </strong>  
+
+  </div>  
+
+  <div class="fee-row">  
+
+    <span>  
+      Platform fee  
+    </span>  
+
+    <strong id="tradeFeePreviewAmount">  
+      0.00 ETB  
+    </strong>  
+
+  </div>  
+
+  <div class="fee-row fee-total">  
+
+    <span>  
+      Total  
+    </span>  
+
+    <strong id="tradeTotalPreview">  
+      0.00 ETB  
+    </strong>  
+
+  </div>  
+
+</div>  
+
+<div class="modal-actions">  
+
+  <button  
+    type="button"  
+    class="close-btn"  
+    onclick="closeModal('tradeModal')">  
+    Cancel  
+  </button>  
+
+  <button  
+    type="button"  
+    class="confirm-btn"  
+    id="tradeSubmitButton"  
+    onclick="submitTrade()">  
+    Create Trade  
+  </button>  
+
+</div>
+
+  </div>  </div>  <!-- DISPUTE MODAL -->  <div  
+  id="disputeModal"  
+  class="modal"  
+  role="dialog"  
+  aria-modal="true"  
+  aria-labelledby="disputeTitle">    <div class="modal-box">  <h3 id="disputeTitle">  
+  ⚠️ Open Dispute  
+</h3>  
+
+<textarea  
+  id="disputeReason"  
+  maxlength="1000"  
+  placeholder="Explain the problem"></textarea>  
+
+<div class="modal-actions">  
+
+  <button  
+    type="button"  
+    class="close-btn"  
+    onclick="closeModal('disputeModal')">  
+    Cancel  
+  </button>  
+
+  <button  
+    type="button"  
+    class="confirm-btn"  
+    id="disputeSubmitButton"  
+    onclick="submitDispute()">  
+    Open Dispute  
+  </button>  
+
+</div>
+
+  </div>  </div>  <div  
+  id="toast"  
+  class="toast"  
+  role="status"  
+  aria-live="polite">  
+</div>  <nav class="bottom-nav">    <a href="index.html">  
+    <span class="nav-icon">🏠</span>  
+    Home  
+  </a>  <a  
+href="live.html"  
+class="live-nav">
+<span class="nav-icon">🔴</span>
+Live
+</a>
+
+<a  
+href="wallet.html"  
+class="active">
+<span class="nav-icon">🔄</span>
+P2P
+</a>
+
+  <a href="message.html">  
+    <span class="nav-icon">💬</span>  
+    Messages  
+  </a>    <a href="profile.html">  
+    <span class="nav-icon">👤</span>  
+    Profile  
+  </a>  </nav>  <script>  
+  
+/* =====================================================  
+   SUPABASE  
+===================================================== */  
+  
+const SUPABASE_URL =  
+  "https://mbsvuwrgigqfporxwpfr.supabase.co";  
+  
+const SUPABASE_PUBLISHABLE_KEY =  
+  "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";  
+  
+const supabaseClient =  
+  window.supabase.createClient(  
+    SUPABASE_URL,  
+    SUPABASE_PUBLISHABLE_KEY  
+  );  
+  
+  
+/* =====================================================  
+   PLATFORM FEE  
+===================================================== */  
+  
+const PLATFORM_FEE_RATE = 0.01;  
+  
+  
+/* =====================================================  
+   STATE  
+===================================================== */  
+  
+let currentSession = null;  
+let currentUser = null;  
+let currentProfile = null;  
+  
+let orderType = "buy";  
+  
+let myOrders = [];  
+let availableOrders = [];  
+let myTrades = [];  
+  
+let selectedOffer = null;  
+let selectedTradeId = null;  
+  
+let realtimeChannel = null;  
+let toastTimer = null;  
+  
+let isLoading = false;  
+  
+  
+/* =====================================================  
+   START  
+===================================================== */  
+  
+document.addEventListener(  
+  "DOMContentLoaded",  
+  startApp  
+);  
+  
+  
+async function startApp(){  
+  
+  try{  
+  
+    const {  
+      data,  
+      error  
+    } =  
+    await supabaseClient.auth.getSession();  
+  
+    if(error){  
+  
+      console.error(  
+        "SESSION ERROR:",  
+        error  
+      );  
+  
+      showLogin();  
+      return;  
+  
+    }  
+  
+    currentSession =  
+      data.session;  
+  
+    if(!currentSession){  
+  
+      showLogin();  
+      return;  
+  
+    }  
+  
+    currentUser =  
+      currentSession.user;  
+  
+    updateFeeRateText();  
+    updateCurrency();  
+    updateFeePreview();  
+  
+    await loadAll();  
+  
+    setupRealtime();  
+  
+  }catch(error){  
+  
+    console.error(  
+      "START ERROR:",  
+      error  
+    );  
+  
+    toast(  
+      getErrorMessage(error),  
+      "error"  
+    );  
+  
+  }  
+  
+}  
+  
+  
+/* =====================================================  
+   AUTH  
+===================================================== */  
+  
+function showLogin(){  
+  
+  alert(  
+    "Please login first."  
+  );  
+  
+  window.location.href =  
+    "login.html";  
+  
+}  
+  
+  
+supabaseClient.auth.onAuthStateChange(  
+  function(event, session){  
+  
+    currentSession =  
+      session;  
+  
+    currentUser =  
+      session?.user || null;  
+  
+    if(  
+      event === "SIGNED_OUT"  
+    ){  
+  
+      if(realtimeChannel){  
+  
+        supabaseClient.removeChannel(  
+          realtimeChannel  
+        );  
+  
+        realtimeChannel =  
+          null;  
+  
+      }  
+  
+      window.location.href =  
+        "login.html";  
+  
+    }  
+  
+  }  
+);  
+  
+  
+/* =====================================================  
+   PROFILE  
+===================================================== */  
+  
+async function loadProfile(){  
+  
+  if(!currentUser){  
+  
+    return;  
+  
+  }  
+  
+  const {  
+    data,  
+    error  
+  } =  
+  await supabaseClient  
+    .from("profiles")  
+    .select("*")  
+    .eq(  
+      "id",  
+      currentUser.id  
+    )  
+    .maybeSingle();  
+  
+  if(error){  
+  
+    console.error(  
+      "PROFILE ERROR:",  
+      error  
+    );  
+  
+    /*  
+      Do not destroy the page if the profile  
+      table has another schema.  
+    */  
+  
+  }  
+  
+  currentProfile =  
+    data || {};  
+  
+  updateBalance();  
+  
+}  
+  
+  
+/* =====================================================  
+   BALANCE  
+===================================================== */  
+  
+function getProfileBalance(){  
+  
+  if(!currentProfile){  
+  
+    return 0;  
+  
+  }  
+  
+  const possibleValues = [  
+  
+    currentProfile.balance,  
+  
+    currentProfile.etb_balance,  
+  
+    currentProfile.wallet_balance,  
+  
+    currentProfile.available_balance,  
+  
+    currentProfile.available_etb,  
+  
+    currentProfile.total_balance  
+  
+  ];  
+  
+  for(  
+    const value of possibleValues  
+  ){  
+  
+    if(  
+      value !== null &&  
+      value !== undefined &&  
+      value !== ""  
+    ){  
+  
+      const number =  
+        Number(value);  
+  
+      if(  
+        Number.isFinite(number)  
+      ){  
+  
+        return number;  
+  
+      }  
+  
+    }  
+  
+  }  
+  
+  return 0;  
+  
+}  
+  
+  
+function updateBalance(){  
+  
+  const balance =  
+    getProfileBalance();  
+  
+  const element =  
+    document.getElementById(  
+      "balance"  
+    );  
+  
+  if(!element){  
+  
+    return;  
+  
+  }  
+  
+  element.textContent =  
+    money(balance) +  
+    " ETB";  
+  
+}  
+  
+  
+/* =====================================================  
+   LOAD EVERYTHING  
+===================================================== */  
+  
+async function loadAll(){  
+  
+  if(!currentUser){  
+  
+    showLogin();  
+    return;  
+  
+  }  
+  
+  if(isLoading){  
+  
+    return;  
+  
+  }  
+  
+  isLoading = true;  
+  
+  try{  
+  
+    await loadProfile();  
+  
+    await Promise.allSettled([  
+  
+      loadMyOrders(),  
+  
+      loadAvailableOffers(),  
+  
+      loadTrades(),  
+  
+      loadTransactions()  
+  
+    ]);  
+  
+  }finally{  
+  
+    isLoading = false;  
+  
+  }  
+  
+}  
+  
+  
+/* =====================================================  
+   ORDER TYPE  
+===================================================== */  
+  
+function setOrderType(type){  
+  
+  orderType =  
+    type === "sell"  
+      ? "sell"  
+      : "buy";  
+  
+  const buy =  
+    document.getElementById(  
+      "buyOrderTab"  
+    );  
+  
+  const sell =  
+    document.getElementById(  
+      "sellOrderTab"  
+    );  
+  
+  const button =  
+    document.getElementById(  
+      "createOrderButton"  
+    );  
+  
+  if(!buy || !sell || !button){  
+  
+    return;  
+  
+  }  
+  
+  buy.classList.remove(  
+    "active",  
+    "buy"  
+  );  
+  
+  sell.classList.remove(  
+    "active",  
+    "sell"  
+  );  
+  
+  if(orderType === "buy"){  
+  
+    buy.classList.add(  
+      "active",  
+      "buy"  
+    );  
+  
+    button.classList.remove(  
+      "sell"  
+    );  
+  
+    button.textContent =  
+      "Create Buy Order";  
+  
+  }else{  
+  
+    sell.classList.add(  
+      "active",  
+      "sell"  
+    );  
+  
+    button.classList.add(  
+      "sell"  
+    );  
+  
+    button.textContent =  
+      "Create Sell Order";  
+  
+  }  
+  
+  updateFeePreview();  
+  
+}  
+  
+  
+/* =====================================================  
+   PAIR  
+===================================================== */  
+  
+function updateCurrency(){  
+  
+  const pairElement =  
+    document.getElementById(  
+      "pair"  
+    );  
+  
+  const currencyElement =  
+    document.getElementById(  
+      "amountCurrency"  
+    );  
+  
+  if(  
+    !pairElement ||  
+    !currencyElement  
+  ){  
+  
+    return;  
+  
+  }  
+  
+  currencyElement.textContent =  
+    pairElement.value === "USDT_ETB"  
+      ? "USDT"  
+      : "ETB";  
+  
+}  
+  
+  
+/* =====================================================  
+   PLATFORM FEE CALCULATION  
+===================================================== */  
+  
+function calculatePlatformFee(  
+  tradeValue  
+){  
+  
+  const value =  
+    Number(tradeValue) || 0;  
+  
+  if(value <= 0){  
+  
+    return 0;  
+  
+  }  
+  
+  return value *  
+    PLATFORM_FEE_RATE;  
+  
+}  
+  
+  
+function calculateTotalWithFee(  
+  tradeValue  
+){  
+  
+  const value =  
+    Number(tradeValue) || 0;  
+  
+  return value +  
+    calculatePlatformFee(value);  
+  
+}  
+  
+  
+function updateFeeRateText(){  
+  
+  const percentage =  
+    PLATFORM_FEE_RATE * 100;  
+  
+  const text =  
+    percentage.toLocaleString(  
+      undefined,  
+      {  
+        maximumFractionDigits:4  
+      }  
+    ) +  
+    "%";  
+  
+  [  
+    "feeRateText",  
+    "tradeFeeRateText"  
+  ].forEach(  
+    id => {  
+  
+      const element =  
+        document.getElementById(id);  
+  
+      if(element){  
+  
+        element.textContent =  
+          text;  
+  
+      }  
+  
+    }  
+  );  
+  
+}  
+  
+  
+/* =====================================================  
+   ORDER FEE PREVIEW  
+===================================================== */  
+  
+function getOrderTradeValue(){  
+  
+  const amount =  
+    Number(  
+      document.getElementById(  
+        "orderAmount"  
+      )?.value  
+    ) || 0;  
+  
+  const price =  
+    Number(  
+      document.getElementById(  
+        "orderPrice"  
+      )?.value  
+    ) || 0;  
+  
+  const pair =  
+    document.getElementById(  
+      "pair"  
+    )?.value;  
+  
+  if(  
+    amount <= 0 ||  
+    price <= 0  
+  ){  
+  
+    return 0;  
+  
+  }  
+  
+  if(pair === "USDT_ETB"){  
+  
+    return amount * price;  
+  
+  }  
+  
+  return amount;  
+  
+}  
+  
+  
+function updateFeePreview(){  
+  
+  const tradeValue =  
+    getOrderTradeValue();  
+  
+  const fee =  
+    calculatePlatformFee(  
+      tradeValue  
+    );  
+  
+  const total =  
+    calculateTotalWithFee(  
+      tradeValue  
+    );  
+  
+  const valueElement =  
+    document.getElementById(  
+      "feeTradeValue"  
+    );  
+  
+  const feeElement =  
+    document.getElementById(  
+      "feeAmount"  
+    );  
+  
+  const totalElement =  
+    document.getElementById(  
+      "feeTotal"  
+    );  
+  
+  if(valueElement){  
+  
+    valueElement.textContent =  
+      money(tradeValue) +  
+      " ETB";  
+  
+  }  
+  
+  if(feeElement){  
+  
+    feeElement.textContent =  
+      money(fee) +  
+      " ETB";  
+  
+  }  
+  
+  if(totalElement){  
+  
+    totalElement.textContent =  
+      money(total) +  
+      " ETB";  
+  
+  }  
+  
+}  
+  
+  
+/* =====================================================  
+   CREATE ORDER  
+===================================================== */  
+  
+async function createOrder(){  
+  
+  if(!currentUser){  
+  
+    showLogin();  
+    return;  
+  
+  }  
+  
+  const pair =  
+    document.getElementById(  
+      "pair"  
+    ).value;  
+  
+  const amount =  
+    Number(  
+      document.getElementById(  
+        "orderAmount"  
+      ).value  
+    );  
+  
+  const price =  
+    Number(  
+      document.getElementById(  
+        "orderPrice"  
+      ).value  
+    );  
+  
+  const payment =  
+    document.getElementById(  
+      "paymentMethod"  
+    ).value;  
+  
+  
+  if(  
+    !Number.isFinite(amount) ||  
+    amount <= 0  
+  ){  
+  
+    toast(  
+      "Enter a valid amount.",  
+      "warning"  
+    );  
+  
+    return;  
+  
+  }  
+  
+  
+  if(  
+    !Number.isFinite(price) ||  
+    price <= 0  
+  ){  
+  
+    toast(  
+      "Enter a valid price.",  
+      "warning"  
+    );  
+  
+    return;  
+  
+  }  
+  
+  
+  if(!payment){  
+  
+    toast(  
+      "Select a payment method.",  
+      "warning"  
+    );  
+  
+    return;  
+  
+  }  
+  
+  
+  const button =  
+    document.getElementById(  
+      "createOrderButton"  
+    );  
+  
+  button.disabled =  
+    true;  
+  
+  button.textContent =  
+    "Creating...";  
+  
+  
+  try{  
+  
+    const {  
+      data,  
+      error  
+    } =  
+    await supabaseClient.rpc(  
+      "create_p2p_order",  
+      {  
+        p_order_type:  
+          orderType,  
+  
+        p_pair:  
+          pair,  
+  
+        p_amount:  
+          amount,  
+  
+        p_price:  
+          price,  
+  
+        p_payment_method:  
+          payment  
+      }  
+    );  
+  
+  
+    if(error){  
+  
+      console.error(  
+        "CREATE ORDER ERROR:",  
+        error  
+      );  
+  
+      toast(  
+        getErrorMessage(error),  
+        "error"  
+      );  
+  
+      return;  
+  
+    }  
+  
+  
+    document.getElementById(  
+      "orderAmount"  
+    ).value = "";  
+  
+    document.getElementById(  
+      "orderPrice"  
+    ).value = "";  
+  
+    document.getElementById(  
+      "paymentMethod"  
+    ).value = "";  
+  
+  
+    updateFeePreview();  
+  
+  
+    toast(  
+      "Order created successfully.",  
+      "success"  
+    );  
+  
+  
+    await loadAll();  
+  
+  }catch(error){  
+  
+    console.error(  
+      "CREATE ORDER EXCEPTION:",  
+      error  
+    );  
+  
+    toast(  
+      getErrorMessage(error),  
+      "error"  
+    );  
+  
+  }finally{  
+  
+    button.disabled =  
+      false;  
+  
+    setOrderType(  
+      orderType  
+    );  
+  
+  }  
+  
+}  
+  
+  
+/* =====================================================  
+   MY ORDERS  
+===================================================== */  
+  
+async function loadMyOrders(){  
+  
+  const container =  
+    document.getElementById(  
+      "myOrders"  
+    );  
+  
+  if(!container){  
+  
+    return;  
+  
+  }  
+  
+  container.innerHTML =  
+    `<div class="empty">Loading orders...</div>`;  
+  
+  
+  const {  
+    data,  
+    error  
+  } =  
+  await supabaseClient  
+    .from("p2p_orders")  
+    .select("*")  
+    .eq(  
+      "user_id",  
+      currentUser.id  
+    )  
+    .order(  
+      "created_at",  
+      {  
+        ascending:false  
+      }  
+    );  
+  
+  
+  if(error){  
+  
+    console.error(  
+      "MY ORDERS ERROR:",  
+      error  
+    );  
+  
+    container.innerHTML =  
+      emptyHtml(  
+        "📋",  
+        "Could not load orders.",  
+        getErrorMessage(error)  
+      );  
+  
+    document.getElementById(  
+      "orderCount"  
+    ).textContent =  
+      "0";  
+  
+    return;  
+  
+  }  
+  
+  
+  myOrders =  
+    data || [];  
+  
+  
+  document.getElementById(  
+    "orderCount"  
+  ).textContent =  
+    myOrders.length;  
+  
+  
+  renderMyOrders();  
+  
+}  
+  
+  
+/* =====================================================  
+   RENDER MY ORDERS  
+===================================================== */  
+  
+function renderMyOrders(){  
+  
+  const container =  
+    document.getElementById(  
+      "myOrders"  
+    );  
+  
+  if(!container){  
+  
+    return;  
+  
+  }  
+  
+  
+  if(!myOrders.length){  
+  
+    container.innerHTML =  
+      emptyHtml(  
+        "📋",  
+        "You have no orders yet."  
+      );  
+  
+    return;  
+  
+  }  
+  
+  
+  container.innerHTML = "";  
+  
+  
+  myOrders.forEach(  
+    order => {  
+  
+      const pair =  
+        formatPair(order);  
+  
+      const type =  
+        String(  
+          order.order_type ||  
+          order.type ||  
+          ""  
+        ).toLowerCase();  
+  
+      const safeType =  
+        type === "sell"  
+          ? "sell"  
+          : "buy";  
+  
+      const status =  
+        normalizeStatus(  
+          order.status  
+        );  
+  
+  
+      const card =  
+        document.createElement(  
+          "div"  
+        );  
+  
+      card.className =  
+        "market-order";  
+  
+  
+      const canCancel =  
+        [  
+          "active",  
+          "open",  
+          "pending"  
+        ].includes(status);  
+  
+  
+      card.innerHTML = `  
+  
+        <div class="order-main">  
+  
+          <div class="row">  
+  
+            <div>  
+  
+              <div class="order-title">  
+                ${escapeHtml(  
+                  safeType.toUpperCase()  
+                )}  
+              </div>  
+  
+              <div class="order-pair">  
+                ${escapeHtml(pair)}  
+              </div>  
+  
+            </div>  
+  
+            <span class="type ${  
+              safeType === "buy"  
+                ? "buy-type"  
+                : "sell-type"  
+            }">  
+  
+              ${  
+                safeType === "buy"  
+                  ? "🟢 BUY"  
+                  : "🔴 SELL"  
+              }  
+  
+            </span>  
+  
+          </div>  
+  
+          <div class="details"  
+               style="margin:12px -16px -16px;">  
+  
+            ${detail(  
+              "Amount",  
+              formatAmount(order)  
+            )}  
+  
+            ${detail(  
+              "Price",  
+              money(order.price) + " ETB"  
+            )}  
+  
+            ${detail(  
+              "Payment",  
+              order.payment_method ||  
+              order.payment ||  
+              "—"  
+            )}  
+  
+            ${  
+              order.platform_fee != null  
+              ?  
+              detail(  
+                "Platform fee",  
+                money(  
+                  order.platform_fee  
+                ) + " ETB"  
+              )  
+              :  
+              ""  
+            }  
+  
+            ${detail(  
+              "Status",  
+              `<span class="status ${  
+                statusClass(status)  
+              }">${escapeHtml(status)}</span>`  
+            )}  
+  
+            ${  
+              canCancel  
+              ?  
+              `<button  
+                type="button"  
+                class="small-btn cancel-btn"  
+                style="width:100%;margin-top:8px;"  
+                onclick="cancelOrder('${escapeJs(order.id)}')">  
+                ❌ Cancel Order  
+              </button>`  
+              :  
+              ""  
+            }  
+  
+          </div>  
+  
+        </div>  
+  
+      `;  
+  
+  
+      container.appendChild(  
+        card  
+      );  
+  
+    }  
+  );  
+  
+}  
+  
+  
+/* =====================================================  
+   CANCEL ORDER  
+===================================================== */  
+  
+async function cancelOrder(orderId){  
+  
+  if(!orderId){  
+  
+    return;  
+  
+  }  
+  
+  
+  if(  
+    !confirm(  
+      "Cancel this order?"  
+    )  
+  ){  
+  
+    return;  
+  
+  }  
+  
+  
+  try{  
+  
+    const {  
+      error  
+    } =  
+    await supabaseClient.rpc(  
+      "cancel_p2p_order",  
+      {  
+        p_order_id:  
+          orderId  
+      }  
+    );  
+  
+  
+    if(error){  
+  
+      console.error(  
+        "CANCEL ORDER ERROR:",  
+        error  
+      );  
+  
+      toast(  
+        getErrorMessage(error),  
+        "error"  
+      );  
+  
+      return;  
+  
+    }  
+  
+  
+    toast(  
+      "Order cancelled.",  
+      "success"  
+    );  
+  
+  
+    await loadAll();  
+  
+  }catch(error){  
+  
+    console.error(  
+      "CANCEL ORDER EXCEPTION:",  
+      error  
+    );  
+  
+    toast(  
+      getErrorMessage(error),  
+      "error"  
+    );  
+  
+  }  
+  
+}  
+  
+  
+/* =====================================================  
+   AVAILABLE OFFERS  
+===================================================== */  
+  
+async function loadAvailableOffers(){  
+  
+  const container =  
+    document.getElementById(  
+      "offers"  
+    );  
+  
+  if(!container){  
+  
+    return;  
+  
+  }  
+  
+  container.innerHTML =  
+    `<div class="empty">Loading offers...</div>`;  
+  
+  
+  const {  
+    data,  
+    error  
+  } =  
+  await supabaseClient  
+    .from("p2p_orders")  
+    .select("*")  
+    .neq(  
+      "user_id",  
+      currentUser.id  
+    )  
+    .in(  
+      "status",  
+      [  
+        "active",  
+        "open",  
+        "pending"  
+      ]  
+    )  
+    .order(  
+      "created_at",  
+      {  
+        ascending:false  
+      }  
+    );  
+  
+  
+  if(error){  
+  
+    console.error(  
+      "OFFERS ERROR:",  
+      error  
+    );  
+  
+    container.innerHTML =  
+      emptyHtml(  
+        "👥",  
+        "Could not load offers.",  
+        getErrorMessage(error)  
+      );  
+  
+    return;  
+  
+  }  
+  
+  
+  availableOrders =  
+    data || [];  
+  
+  
+  renderOffers();  
+  
+}  
+  
+  
+/* =====================================================  
+   RENDER OFFERS  
+===================================================== */  
+  
+function renderOffers(){  
+  
+  const container =  
+    document.getElementById(  
+      "offers"  
+    );  
+  
+  if(!container){  
+  
+    return;  
+  
+  }  
+  
+  
+  if(!availableOrders.length){  
+  
+    container.innerHTML =  
+      emptyHtml(  
+        "👥",  
+        "No P2P traders available right now.",  
+        "New offers will appear here when traders create orders."  
+      );  
+  
+    return;  
+  
+  }  
+  
+  
+  container.innerHTML = "";  
+  
+  
+  availableOrders.forEach(  
+    order => {  
+  
+      const type =  
+        String(  
+          order.order_type ||  
+          order.type ||  
+          ""  
+        ).toLowerCase();  
+  
+      const pair =  
+        formatPair(order);  
+  
+  
+      const card =  
+        document.createElement(  
+          "div"  
+        );  
+  
+      card.className =  
+        "offer-card";  
+  
+  
+      card.innerHTML = `  
+  
+        <div class="offer-main">  
+  
+          <div class="row">  
+  
+            <div>  
+  
+              <div class="offer-user">  
+                P2P Trader  
+              </div>  
+  
+              <div class="offer-meta">  
+  
+                ${  
+                  type === "sell"  
+                    ? "🔴 Selling"  
+                    : "🟢 Buying"  
+                }  
+  
+                ·  
+  
+                ${escapeHtml(pair)}  
+  
+              </div>  
+  
+            </div>  
+  
+            <div class="offer-price">  
+  
+              ${money(order.price)}  
+              ETB  
+  
+            </div>  
+  
+          </div>  
+  
+  
+          <div class="offer-amount">  
+  
+            Available:  
+            <strong>  
+              ${escapeHtml(  
+                formatAmount(order)  
+              )}  
+            </strong>  
+  
+          </div>  
+  
+  
+          <button  
+            type="button"  
+            class="offer-trade"  
+            onclick="openTrade('${escapeJs(order.id)}')">  
+  
+            🤝 Create Trade  
+  
+          </button>  
+  
+        </div>  
+  
+      `;  
+  
+  
+      container.appendChild(  
+        card  
+      );  
+  
+    }  
+  );  
+  
+}  
+  
+  
+/* =====================================================  
+   OPEN TRADE  
+===================================================== */  
+  
+function openTrade(orderId){  
+  
+  selectedOffer =  
+    availableOrders.find(  
+      order =>  
+        String(order.id) ===  
+        String(orderId)  
+    );  
+  
+  
+  if(!selectedOffer){  
+  
+    toast(  
+      "Offer no longer exists.",  
+      "warning"  
+    );  
+  
+    return;  
+  
+  }  
+  
+  
+  const amount =  
+    Number(  
+      selectedOffer.amount  
+    ) || 0;  
+  
+  
+  const input =  
+    document.getElementById(  
+      "tradeAmount"  
+    );  
+  
+  input.value =  
+    amount > 0  
+      ? amount  
+      : "";  
+  
+  input.max =  
+    amount;  
+  
+  
+  document.getElementById(  
+    "tradeSummary"  
+  ).innerHTML = `  
+  
+    <div class="details"  
+         style="margin-bottom:12px;">  
+  
+      ${detail(  
+        "Pair",  
+        formatPair(selectedOffer)  
+      )}  
+  
+      ${detail(  
+        "Price",  
+        money(selectedOffer.price) + " ETB"  
+      )}  
+  
+      ${detail(  
+        "Available",  
+        formatAmount(selectedOffer)  
+      )}  
+  
+      ${detail(  
+        "Payment",  
+        selectedOffer.payment_method ||  
+        selectedOffer.payment ||  
+        "—"  
+      )}  
+  
+    </div>  
+  
+  `;  
+  
+  
+  updateTradeFeePreview();  
+  
+  openModal(  
+    "tradeModal"  
+  );  
+  
+}  
+  
+  
+/* =====================================================  
+   TRADE FEE PREVIEW  
+===================================================== */  
+  
+function getTradeValue(){  
+  
+  if(!selectedOffer){  
+  
+    return 0;  
+  
+  }  
+  
+  const amount =  
+    Number(  
+      document.getElementById(  
+        "tradeAmount"  
+      )?.value  
+    ) || 0;  
+  
+  const price =  
+    Number(  
+      selectedOffer.price  
+    ) || 0;  
+  
+  if(  
+    amount <= 0 ||  
+    price <= 0  
+  ){  
+  
+    return 0;  
+  
+  }  
+  
+  const pair =  
+    formatPair(  
+      selectedOffer  
+    );  
+  
+  if(pair.startsWith("USDT")){  
+  
+    return amount * price;  
+  
+  }  
+  
+  return amount;  
+  
+}  
+  
+  
+function updateTradeFeePreview(){  
+  
+  const tradeValue =  
+    getTradeValue();  
+  
+  const fee =  
+    calculatePlatformFee(  
+      tradeValue  
+    );  
+  
+  const total =  
+    calculateTotalWithFee(  
+      tradeValue  
+    );  
+  
+  
+  const valueElement =  
+    document.getElementById(  
+      "tradeValuePreview"  
+    );  
+  
+  const feeElement =  
+    document.getElementById(  
+      "tradeFeePreviewAmount"  
+    );  
+  
+  const totalElement =  
+    document.getElementById(  
+      "tradeTotalPreview"  
+    );  
+  
+  
+  if(valueElement){  
+  
+    valueElement.textContent =  
+      money(tradeValue) +  
+      " ETB";  
+  
+  }  
+  
+  if(feeElement){  
+  
+    feeElement.textContent =  
+      money(fee) +  
+      " ETB";  
+  
+  }  
+  
+  if(totalElement){  
+  
+    totalElement.textContent =  
+      money(total) +  
+      " ETB";  
+  
+  }  
+  
+}  
+  
+  
+/* =====================================================  
+   CREATE TRADE  
+===================================================== */  
+  
+async function submitTrade(){  
+  
+  if(!selectedOffer){  
+  
+    toast(  
+      "Select an offer first.",  
+      "warning"  
+    );  
+  
+    return;  
+  
+  }  
+  
+  
+  const amount =  
+    Number(  
+      document.getElementById(  
+        "tradeAmount"  
+      ).value  
+    );  
+  
+  
+  if(  
+    !Number.isFinite(amount) ||  
+    amount <= 0  
+  ){  
+  
+    toast(  
+      "Enter a valid trade amount.",  
+      "warning"  
+    );  
+  
+    return;  
+  
+  }  
+  
+  
+  const max =  
+    Number(  
+      selectedOffer.amount  
+    );  
+  
+  
+  if(  
+    Number.isFinite(max) &&  
+    amount > max  
+  ){  
+  
+    toast(  
+      "Amount is greater than the available offer.",  
+      "warning"  
+    );  
+  
+    return;  
+  
+  }  
+  
+  
+  const tradeValue =  
+    getTradeValue();  
+  
+  const fee =  
+    calculatePlatformFee(  
+      tradeValue  
+    );  
+  
+  
+  const confirmMessage =  
+    "Trade value: " +  
+    money(tradeValue) +  
+    " ETB\n\n" +  
+  
+    "Platform fee (" +  
+    (PLATFORM_FEE_RATE * 100) +  
+    "%): " +  
+    money(fee) +  
+    " ETB\n\n" +  
+  
+    "Continue creating this trade?";  
+  
+  
+  if(  
+    !confirm(  
+      confirmMessage  
+    )  
+  ){  
+  
+    return;  
+  
+  }  
+  
+  
+  const button =  
+    document.getElementById(  
+      "tradeSubmitButton"  
+    );  
+  
+  button.disabled =  
+    true;  
+  
+  button.textContent =  
+    "Creating...";  
+  
+  
+  try{  
+  
+    const {  
+      data,  
+      error  
+    } =  
+    await supabaseClient.rpc(  
+      "create_p2p_trade",  
+      {  
+        p_order_id:  
+          selectedOffer.id,  
+  
+        p_amount:  
+          amount  
+      }  
+    );  
+  
+  
+    if(error){  
+  
+      console.error(  
+        "CREATE TRADE ERROR:",  
+        error  
+      );  
+  
+      toast(  
+        getErrorMessage(error),  
+        "error"  
+      );  
+  
+      return;  
+  
+    }  
+  
+  
+    closeModal(  
+      "tradeModal"  
+    );  
+  
+    selectedOffer =  
+      null;  
+  
+  
+    toast(  
+      "Trade created successfully.",  
+      "success"  
+    );  
+  
+  
+    await loadAll();  
+  
+  }catch(error){  
+  
+    console.error(  
+      "CREATE TRADE EXCEPTION:",  
+      error  
+    );  
+  
+    toast(  
+      getErrorMessage(error),  
+      "error"  
+    );  
+  
+  }finally{  
+  
+    button.disabled =  
+      false;  
+  
+    button.textContent =  
+      "Create Trade";  
+  
+  }  
+  
+}  
+  
+  
+/* =====================================================  
+   TRADES  
+===================================================== */  
+  
+async function loadTrades(){  
+  
+  const container =  
+    document.getElementById(  
+      "trades"  
+    );  
+  
+  if(!container){  
+  
+    return;  
+  
+  }  
+  
+  container.innerHTML =  
+    `<div class="empty">Loading trades...</div>`;  
+  
+  
+  const {  
+    data,  
+    error  
+  } =  
+  await supabaseClient  
+    .from("p2p_trades")  
+    .select("*")  
+    .or(  
+      "buyer_id.eq." +  
+      currentUser.id +  
+      ",seller_id.eq." +  
+      currentUser.id  
+    )  
+    .order(  
+      "created_at",  
+      {  
+        ascending:false  
+      }  
+    );  
+  
+  
+  if(error){  
+  
+    console.error(  
+      "TRADES ERROR:",  
+      error  
+    );  
+  
+    container.innerHTML =  
+      emptyHtml(  
+        "🤝",  
+        "Could not load trades.",  
+        getErrorMessage(error)  
+      );  
+  
+    document.getElementById(  
+      "tradeCount"  
+    ).textContent =  
+      "0";  
+  
+    return;  
+  
+  }  
+  
+  
+  myTrades =  
+    data || [];  
+  
+  
+  document.getElementById(  
+    "tradeCount"  
+  ).textContent =  
+    myTrades.length;  
+  
+  
+  renderTrades();  
+  
+}  
+  
+  
+/* =====================================================  
+   RENDER TRADES  
+===================================================== */  
+  
+function renderTrades(){  
+  
+  const container =  
+    document.getElementById(  
+      "trades"  
+    );  
+  
+  if(!container){  
+  
+    return;  
+  
+  }  
+  
+  
+  if(!myTrades.length){  
+  
+    container.innerHTML =  
+      emptyHtml(  
+        "🤝",  
+        "No trades yet."  
+      );  
+  
+    return;  
+  
+  }  
+  
+  
+  container.innerHTML = "";  
+  
+  
+  myTrades.forEach(  
+    trade => {  
+  
+      const card =  
+        document.createElement(  
+          "div"  
+        );  
+  
+      card.className =  
+        "trade-card";  
+  
+  
+      const status =  
+        normalizeStatus(  
+          trade.status  
+        );  
+  
+  
+      const isBuyer =  
+        String(  
+          trade.buyer_id  
+        ) ===  
+        String(  
+          currentUser.id  
+        );  
+  
+  
+      const isSeller =  
+        String(  
+          trade.seller_id  
+        ) ===  
+        String(  
+          currentUser.id  
+        );  
+  
+  
+      const paid =  
+        Boolean(  
+          trade.buyer_paid ||  
+          trade.payment_confirmed ||  
+          trade.payment_status === "paid"  
+        );  
+  
+  
+      const expired =  
+        Boolean(  
+          trade.expires_at &&  
+          new Date(  
+            trade.expires_at  
+          ).getTime() < Date.now()  
+        );  
+  
+  
+      card.innerHTML = `  
+  
+        <div class="trade-main">  
+  
+          <div class="row">  
+  
+            <div>  
+  
+              <strong>  
+                🤝 P2P Trade  
+              </strong>  
+  
+              <div class="trade-number">  
+                Trade #${escapeHtml(  
+                  String(  
+                    trade.trade_number ||  
+                    trade.id ||  
+                    "—"  
+                  )  
+                )}  
+              </div>  
+  
+            </div>  
+  
+            <span class="status ${  
+              statusClass(  
+                expired  
+                  ? "expired"  
+                  : status  
+              )  
+            }">  
+  
+              ${  
+                expired  
+                  ? "Expired"  
+                  : escapeHtml(status)  
+              }  
+  
+            </span>  
+  
+          </div>  
+  
+  
+          <div class="trade-info">  
+  
+            ${detail(  
+              "Amount",  
+              formatTradeAmount(trade)  
+            )}  
+  
+            ${detail(  
+              "Price",  
+              money(  
+                trade.price ||  
+                trade.unit_price ||  
+                0  
+              ) + " ETB"  
+            )}  
+  
+            ${  
+              trade.trade_value != null  
+              ?  
+              detail(  
+                "Trade value",  
+                money(  
+                  trade.trade_value  
+                ) + " ETB"  
+              )  
+              :  
+              ""  
+            }  
+  
+            ${  
+              trade.platform_fee != null  
+              ?  
+              detail(  
+                "Platform fee",  
+                money(  
+                  trade.platform_fee  
+                ) + " ETB"  
+              )  
+              :  
+              ""  
+            }  
+  
+            ${  
+              trade.total_amount != null  
+              ?  
+              detail(  
+                "Total",  
+                money(  
+                  trade.total_amount  
+                ) + " ETB"  
+              )  
+              :  
+              ""  
+            }  
+  
+            ${detail(  
+              "Buyer",  
+              isBuyer  
+                ? "You"  
+                : "Trader"  
+            )}  
+  
+            ${detail(  
+              "Seller",  
+              isSeller  
+                ? "You"  
+                : "Trader"  
+            )}  
+  
+            ${  
+              trade.trader_commission != null  
+              ?  
+              detail(  
+                "Trader commission",  
+                money(  
+                  trade.trader_commission  
+                ) + " ETB"  
+              )  
+              :  
+              ""  
+            }  
+  
+            ${  
+              trade.expires_at  
+              ?  
+              `<div class="trade-expiry">  
+                ⏱️ Expires:  
+                ${escapeHtml(  
+                  formatDate(  
+                    trade.expires_at  
+                  )  
+                )}  
+              </div>`  
+              :  
+              ""  
+            }  
+  
+          </div>  
+  
+  
+          ${renderTradeActions(  
+            trade,  
+            isBuyer,  
+            isSeller,  
+            paid,  
+            expired  
+          )}  
+  
+        </div>  
+  
+      `;  
+  
+  
+      container.appendChild(  
+        card  
+      );  
+  
+    }  
+  );  
+  
+}  
+  
+  
+/* =====================================================  
+   TRADE ACTIONS  
+===================================================== */  
+  
+function renderTradeActions(  
+  trade,  
+  isBuyer,  
+  isSeller,  
+  paid,  
+  expired  
+){  
+  
+  const status =  
+    normalizeStatus(  
+      trade.status  
+    );  
+  
+  
+  if(  
+    expired ||  
+    [  
+      "released",  
+      "completed",  
+      "cancelled",  
+      "expired"  
+    ].includes(status)  
+  ){  
+  
+    return "";  
+  
+  }  
+  
+  
+  let html = "";  
+  
+  
+  if(  
+    isBuyer &&  
+    !paid  
+  ){  
+  
+    html += `  
+  
+      <button  
+        type="button"  
+        class="payment-btn"  
+        onclick="confirmBuyerPayment('${escapeJs(trade.id)}')">  
+  
+        💰 I Have Paid  
+  
+      </button>  
+  
+      <button  
+        type="button"  
+        class="dispute-btn"  
+        onclick="openDispute('${escapeJs(trade.id)}')">  
+  
+        ⚠️ Open Dispute  
+  
+      </button>  
+  
+      <button  
+        type="button"  
+        class="cancel-btn"  
+        style="width:100%;margin-top:8px;padding:10px;border-radius:9px;"  
+        onclick="cancelTrade('${escapeJs(trade.id)}')">  
+  
+        ❌ Cancel Trade  
+  
+      </button>  
+  
+    `;  
+  
+  }  
+  
+  
+  if(  
+    isSeller &&  
+    paid  
+  ){  
+  
+    html += `  
+  
+      <button  
+        type="button"  
+        class="release-btn"  
+        onclick="releaseTrade('${escapeJs(trade.id)}')">  
+  
+        💵 Release Trade  
+  
+      </button>  
+  
+      <button  
+        type="button"  
+        class="dispute-btn"  
+        onclick="openDispute('${escapeJs(trade.id)}')">  
+  
+        ⚠️ Open Dispute  
+  
+      </button>  
+  
+    `;  
+  
+  }  
+  
+  
+  if(  
+    isBuyer &&  
+    paid  
+  ){  
+  
+    html += `  
+  
+      <button  
+        type="button"  
+        class="dispute-btn"  
+        onclick="openDispute('${escapeJs(trade.id)}')">  
+  
+        ⚠️ Open Dispute  
+  
+      </button>  
+  
+    `;  
+  
+  }  
+  
+  
+  return html;  
+  
+}  
+  
+  
+/* =====================================================  
+   BUYER PAYMENT  
+===================================================== */  
+  
+async function confirmBuyerPayment(  
+  tradeId  
+){  
+  
+  if(!tradeId){  
+  
+    return;  
+  
+  }  
+  
+  
+  if(  
+    !confirm(  
+      "Confirm that you have paid the seller?"  
+    )  
+  ){  
+  
+    return;  
+  
+  }  
+  
+  
+  try{  
+  
+    const {  
+      error  
+    } =  
+    await supabaseClient.rpc(  
+      "buyer_confirm_payment",  
+      {  
+        p_trade_id:  
+          tradeId  
+      }  
+    );  
+  
+  
+    if(error){  
+  
+      console.error(  
+        "BUYER PAYMENT ERROR:",  
+        error  
+      );  
+  
+      toast(  
+        getErrorMessage(error),  
+        "error"  
+      );  
+  
+      return;  
+  
+    }  
+  
+  
+    toast(  
+      "Payment confirmed.",  
+      "success"  
+    );  
+  
+  
+    await loadAll();  
+  
+  }catch(error){  
+  
+    console.error(  
+      "BUYER PAYMENT EXCEPTION:",  
+      error  
+    );  
+  
+    toast(  
+      getErrorMessage(error),  
+      "error"  
+    );  
+  
+  }  
+  
+}  
+  
+  
+/* =====================================================  
+   SELLER RELEASE  
+===================================================== */  
+  
+async function releaseTrade(  
+  tradeId  
+){  
+  
+  if(!tradeId){  
+  
+    return;  
+  
+  }  
+  
+  
+  if(  
+    !confirm(  
+      "Release the trade to the buyer?"  
+    )  
+  ){  
+  
+    return;  
+  
+  }  
+  
+  
+  try{  
+  
+    const {  
+      error  
+    } =  
+    await supabaseClient.rpc(  
+      "seller_release_trade",  
+      {  
+        p_trade_id:  
+          tradeId  
+      }  
+    );  
+  
+  
+    if(error){  
+  
+      console.error(  
+        "RELEASE ERROR:",  
+        error  
+      );  
+  
+      toast(  
+        getErrorMessage(error),  
+        "error"  
+      );  
+  
+      return;  
+  
+    }  
+  
+  
+    toast(  
+      "Trade released successfully.",  
+      "success"  
+    );  
+  
+  
+    await loadAll();  
+  
+  }catch(error){  
+  
+    console.error(  
+      "RELEASE EXCEPTION:",  
+      error  
+    );  
+  
+    toast(  
+      getErrorMessage(error),  
+      "error"  
+    );  
+  
+  }  
+  
+}  
+  
+  
+/* =====================================================  
+   BUYER CANCEL  
+===================================================== */  
+  
+async function cancelTrade(  
+  tradeId  
+){  
+  
+  if(!tradeId){  
+  
+    return;  
+  
+  }  
+  
+  
+  if(  
+    !confirm(  
+      "Cancel this trade?"  
+    )  
+  ){  
+  
+    return;  
+  
+  }  
+  
+  
+  try{  
+  
+    const {  
+      error  
+    } =  
+    await supabaseClient.rpc(  
+      "buyer_cancel_trade",  
+      {  
+        p_trade_id:  
+          tradeId  
+      }  
+    );  
+  
+  
+    if(error){  
+  
+      console.error(  
+        "CANCEL TRADE ERROR:",  
+        error  
+      );  
+  
+      toast(  
+        getErrorMessage(error),  
+        "error"  
+      );  
+  
+      return;  
+  
+    }  
+  
+  
+    toast(  
+      "Trade cancelled.",  
+      "success"  
+    );  
+  
+  
+    await loadAll();  
+  
+  }catch(error){  
+  
+    console.error(  
+      "CANCEL TRADE EXCEPTION:",  
+      error  
+    );  
+  
+    toast(  
+      getErrorMessage(error),  
+      "error"  
+    );  
+  
+  }  
+  
+}  
+  
+  
+/* =====================================================  
+   DISPUTE  
+===================================================== */  
+  
+function openDispute(  
+  tradeId  
+){  
+  
+  if(!tradeId){  
+  
+    return;  
+  
+  }  
+  
+  selectedTradeId =  
+    tradeId;  
+  
+  document.getElementById(  
+    "disputeReason"  
+  ).value = "";  
+  
+  openModal(  
+    "disputeModal"  
+  );  
+  
+}  
+  
+  
+async function submitDispute(){  
+  
+  if(!selectedTradeId){  
+  
+    toast(  
+      "Trade not selected.",  
+      "warning"  
+    );  
+  
+    return;  
+  
+  }  
+  
+  
+  const reason =  
+    document.getElementById(  
+      "disputeReason"  
+    ).value.trim();  
+  
+  
+  if(!reason){  
+  
+    toast(  
+      "Please explain the problem.",  
+      "warning"  
+    );  
+  
+    return;  
+  
+  }  
+  
+  
+  const button =  
+    document.getElementById(  
+      "disputeSubmitButton"  
+    );  
+  
+  button.disabled =  
+    true;  
+  
+  button.textContent =  
+    "Opening...";  
+  
+  
+  try{  
+  
+    const {  
+      error  
+    } =  
+    await supabaseClient.rpc(  
+      "open_p2p_dispute",  
+      {  
+        p_trade_id:  
+          selectedTradeId,  
+  
+        p_reason:  
+          reason  
+      }  
+    );  
+  
+  
+    if(error){  
+  
+      console.error(  
+        "DISPUTE ERROR:",  
+        error  
+      );  
+  
+      toast(  
+        getErrorMessage(error),  
+        "error"  
+      );  
+  
+      return;  
+  
+    }  
+  
+  
+    closeModal(  
+      "disputeModal"  
+    );  
+  
+    selectedTradeId =  
+      null;  
+  
+  
+    toast(  
+      "Dispute opened.",  
+      "success"  
+    );  
+  
+  
+    await loadTrades();  
+  
+  }catch(error){  
+  
+    console.error(  
+      "DISPUTE EXCEPTION:",  
+      error  
+    );  
+  
+    toast(  
+      getErrorMessage(error),  
+      "error"  
+    );  
+  
+  }finally{  
+  
+    button.disabled =  
+      false;  
+  
+    button.textContent =  
+      "Open Dispute";  
+  
+  }  
+  
+}  
+  
+  
+/* =====================================================  
+   DEPOSIT  
+===================================================== */  
+  
+function openDeposit(){  
+  
+  openModal(  
+    "depositModal"  
+  );  
+  
+}  
+  
+  
+async function submitDeposit(){  
+  
+  const amount =  
+    Number(  
+      document.getElementById(  
+        "depositAmount"  
+      ).value  
+    );  
+  
+  const method =  
+    document.getElementById(  
+      "depositMethod"  
+    ).value;  
+  
+  const note =  
+    document.getElementById(  
+      "depositNote"  
+    ).value.trim();  
+  
+  
+  if(  
+    !Number.isFinite(amount) ||  
+    amount <= 0  
+  ){  
+  
+    toast(  
+      "Enter a valid deposit amount.",  
+      "warning"  
+    );  
+  
+    return;  
+  
+  }  
+  
+  
+  if(!method){  
+  
+    toast(  
+      "Select a payment method.",  
+      "warning"  
+    );  
+  
+    return;  
+  
+  }  
+  
+  
+  const button =  
+    document.getElementById(  
+      "depositSubmitButton"  
+    );  
+  
+  button.disabled =  
+    true;  
+  
+  button.textContent =  
+    "Submitting...";  
+  
+  
+  try{  
+  
+    const {  
+      error  
+    } =  
+    await supabaseClient.rpc(  
+      "request_wallet_deposit",  
+      {  
+        p_amount:  
+          amount,  
+  
+        p_method:  
+          method,  
+  
+        p_note:  
+          note || null  
+      }  
+    );  
+  
+  
+    if(error){  
+  
+      console.error(  
+        "DEPOSIT ERROR:",  
+        error  
+      );  
+  
+      toast(  
+        getErrorMessage(error),  
+        "error"  
+      );  
+  
+      return;  
+  
+    }  
+  
+  
+    closeModal(  
+      "depositModal"  
+    );  
+  
+  
+    document.getElementById(  
+      "depositAmount"  
+    ).value = "";  
+  
+    document.getElementById(  
+      "depositMethod"  
+    ).value = "";  
+  
+    document.getElementById(  
+      "depositNote"  
+    ).value = "";  
+  
+  
+    toast(  
+      "Deposit request submitted.",  
+      "success"  
+    );  
+  
+  
+    await loadAll();  
+  
+  }catch(error){  
+  
+    console.error(  
+      "DEPOSIT EXCEPTION:",  
+      error  
+    );  
+  
+    toast(  
+      getErrorMessage(error),  
+      "error"  
+    );  
+  
+  }finally{  
+  
+    button.disabled =  
+      false;  
+  
+    button.textContent =  
+      "Submit Deposit";  
+  
+  }  
+  
+}  
+  
+  
+/* =====================================================  
+   WITHDRAW  
+===================================================== */  
+  
+function openWithdraw(){  
+  
+  openModal(  
+    "withdrawModal"  
+  );  
+  
+}  
+  
+  
+async function submitWithdraw(){  
+  
+  const amount =  
+    Number(  
+      document.getElementById(  
+        "withdrawAmount"  
+      ).value  
+    );  
+  
+  const method =  
+    document.getElementById(  
+      "withdrawMethod"  
+    ).value;  
+  
+  const account =  
+    document.getElementById(  
+      "withdrawAccount"  
+    ).value.trim();  
+  
+  const note =  
+    document.getElementById(  
+      "withdrawNote"  
+    ).value.trim();  
+  
+  
+  if(  
+    !Number.isFinite(amount) ||  
+    amount <= 0  
+  ){  
+  
+    toast(  
+      "Enter a valid withdrawal amount.",  
+      "warning"  
+    );  
+  
+    return;  
+  
+  }  
+  
+  
+  if(!method){  
+  
+    toast(  
+      "Select a withdrawal method.",  
+      "warning"  
+    );  
+  
+    return;  
+  
+  }  
+  
+  
+  if(!account){  
+  
+    toast(  
+      "Enter your account or phone number.",  
+      "warning"  
+    );  
+  
+    return;  
+  
+  }  
+  
+  
+  const button =  
+    document.getElementById(  
+      "withdrawSubmitButton"  
+    );  
+  
+  button.disabled =  
+    true;  
+  
+  button.textContent =  
+    "Submitting...";  
+  
+  
+  try{  
+  
+    const {  
+      error  
+    } =  
+    await supabaseClient.rpc(  
+      "request_wallet_withdrawal",  
+      {  
+        p_amount:  
+          amount,  
+  
+        p_method:  
+          method,  
+  
+        p_account:  
+          account,  
+  
+        p_note:  
+          note || null  
+      }  
+    );  
+  
+  
+    if(error){  
+  
+      console.error(  
+        "WITHDRAW ERROR:",  
+        error  
+      );  
+  
+      toast(  
+        getErrorMessage(error),  
+        "error"  
+      );  
+  
+      return;  
+  
+    }  
+  
+  
+    closeModal(  
+      "withdrawModal"  
+    );  
+  
+  
+    document.getElementById(  
+      "withdrawAmount"  
+    ).value = "";  
+  
+    document.getElementById(  
+      "withdrawMethod"  
+    ).value = "";  
+  
+    document.getElementById(  
+      "withdrawAccount"  
+    ).value = "";  
+  
+    document.getElementById(  
+      "withdrawNote"  
+    ).value = "";  
+  
+  
+    toast(  
+      "Withdrawal request submitted.",  
+      "success"  
+    );  
+  
+  
+    await loadAll();  
+  
+  }catch(error){  
+  
+    console.error(  
+      "WITHDRAW EXCEPTION:",  
+      error  
+    );  
+  
+    toast(  
+      getErrorMessage(error),  
+      "error"  
+    );  
+  
+  }finally{  
+  
+    button.disabled =  
+      false;  
+  
+    button.textContent =  
+      "Request Withdraw";  
+  
+  }  
+  
+}  
+  
+  
+/* =====================================================  
+   ETB TRANSACTIONS  
+===================================================== */  
+  
+async function loadTransactions(){  
+  
+  const container =  
+    document.getElementById(  
+      "transactions"  
+    );  
+  
+  if(!container){  
+  
+    return;  
+  
+  }  
+  
+  container.innerHTML =  
+    `<div class="empty">Loading transactions...</div>`;  
+  
+  
+  const {  
+    data,  
+    error  
+  } =  
+  await supabaseClient  
+    .from("etb_transactions")  
+    .select("*")  
+    .eq(  
+      "user_id",  
+      currentUser.id  
+    )  
+    .order(  
+      "created_at",  
+      {  
+        ascending:false  
+      }  
+    )  
+    .limit(50);  
+  
+  
+  if(error){  
+  
+    console.error(  
+      "TRANSACTIONS ERROR:",  
+      error  
+    );  
+  
+    container.innerHTML =  
+      emptyHtml(  
+        "💳",  
+        "Could not load transactions.",  
+        getErrorMessage(error)  
+      );  
+  
+    return;  
+  
+  }  
+  
+  
+  renderTransactions(  
+    data || []  
+  );  
+  
+}  
+  
+  
+/* =====================================================  
+   RENDER TRANSACTIONS  
+===================================================== */  
+  
+function renderTransactions(  
+  transactions  
+){  
+  
+  const container =  
+    document.getElementById(  
+      "transactions"  
+    );  
+  
+  if(!container){  
+  
+    return;  
+  
+  }  
+  
+  
+  if(!transactions.length){  
+  
+    container.innerHTML =  
+      emptyHtml(  
+        "💳",  
+        "No transactions yet."  
+      );  
+  
+    return;  
+  
+  }  
+  
+  
+  container.innerHTML = "";  
+  
+  
+  transactions.forEach(  
+    transaction => {  
+  
+      const rawAmount =  
+        transaction.amount ??  
+        transaction.etb_amount ??  
+        transaction.value ??  
+        0;  
+  
+      const amount =  
+        Number(  
+          rawAmount  
+        ) || 0;  
+  
+  
+      const type =  
+        String(  
+          transaction.type ||  
+          transaction.transaction_type ||  
+          transaction.kind ||  
+          ""  
+        ).toLowerCase();  
+  
+  
+      const positive =  
+        [  
+          "deposit",  
+          "credit",  
+          "receive",  
+          "received",  
+          "released",  
+          "commission"  
+        ].includes(type)  
+        ||  
+        amount > 0;  
+  
+  
+      const card =  
+        document.createElement(  
+          "div"  
+        );  
+  
+      card.className =  
+        "transaction";  
+  
+  
+      const title =  
+        transaction.description ||  
+        transaction.title ||  
+        transaction.reference ||  
+        type ||  
+        "ETB transaction";  
+  
+  
+      card.innerHTML = `  
+  
+        <div class="transaction-left">  
+  
+          <div class="transaction-icon">  
+  
+            ${  
+              positive  
+                ? "↓"  
+                : "↑"  
+            }  
+  
+          </div>  
+  
+          <div>  
+  
+            <div class="transaction-title">  
+  
+              ${escapeHtml(  
+                title  
+              )}  
+  
+            </div>  
+  
+            <div class="transaction-date">  
+  
+              ${escapeHtml(  
+                formatDate(  
+                  transaction.created_at  
+                )  
+              )}  
+  
+            </div>  
+  
+          </div>  
+  
+        </div>  
+  
+  
+        <div class="transaction-amount ${  
+          positive  
+            ? "positive"  
+            : "negative"  
+        }">  
+  
+          ${  
+            positive  
+              ? "+"  
+              : "-"  
+          }  
+  
+          ${money(  
+            Math.abs(amount)  
+          )}  
+  
+          ETB  
+  
+        </div>  
+  
+      `;  
+  
+  
+      container.appendChild(  
+        card  
+      );  
+  
+    }  
+  );  
+  
+}  
+  
+  
+/* =====================================================  
+   REALTIME  
+===================================================== */  
+  
+function setupRealtime(){  
+  
+  if(  
+    !currentUser  
+  ){  
+  
+    return;  
+  
+  }  
+  
+  
+  if(realtimeChannel){  
+  
+    supabaseClient.removeChannel(  
+      realtimeChannel  
+    );  
+  
+  }  
+  
+  
+  realtimeChannel =  
+    supabaseClient  
+      .channel(  
+        "wallet-p2p-live-" +  
+        currentUser.id  
+      )  
+  
+      .on(  
+        "postgres_changes",  
+        {  
+          event:"*",  
+          schema:"public",  
+          table:"p2p_orders"  
+        },  
+        function(){  
+  
+          loadMyOrders();  
+          loadAvailableOffers();  
+  
+        }  
+      )  
+  
+      .on(  
+        "postgres_changes",  
+        {  
+          event:"*",  
+          schema:"public",  
+          table:"p2p_trades"  
+        },  
+        function(){  
+  
+          loadTrades();  
+          loadProfile();  
+  
+        }  
+      )  
+  
+      .on(  
+        "postgres_changes",  
+        {  
+          event:"*",  
+          schema:"public",  
+          table:"etb_transactions"  
+        },  
+        function(){  
+  
+          loadTransactions();  
+          loadProfile();  
+  
+        }  
+      )  
+  
+      .on(  
+        "postgres_changes",  
+        {  
+          event:"*",  
+          schema:"public",  
+          table:"profiles",  
+          filter:  
+            "id=eq." +  
+            currentUser.id  
+        },  
+        function(){  
+  
+          loadProfile();  
+  
+        }  
+      )  
+  
+      .subscribe(  
+        function(status){  
+  
+          console.log(  
+            "Wallet realtime:",  
+            status  
+          );  
+  
+        }  
+      );  
+  
+}  
+  
+  
+/* =====================================================  
+   MODALS  
+===================================================== */  
+  
+function openModal(id){  
+  
+  const element =  
+    document.getElementById(id);  
+  
+  if(element){  
+  
+    element.classList.add(  
+      "show"  
+    );  
+  
+    setTimeout(  
+      function(){  
+  
+        const input =  
+          element.querySelector(  
+            "input,textarea,select"  
+          );  
+  
+        if(input){  
+  
+          input.focus();  
+  
+        }  
+  
+      },  
+      50  
+    );  
+  
+  }  
+  
+}  
+  
+  
+function closeModal(id){  
+  
+  const element =  
+    document.getElementById(id);  
+  
+  if(element){  
+  
+    element.classList.remove(  
+      "show"  
+    );  
+  
+  }  
+  
+}  
+  
+  
+/* =====================================================  
+   HISTORY  
+===================================================== */  
+  
+function showHistory(){  
+  
+  const section =  
+    document.getElementById(  
+      "historySection"  
+    );  
+  
+  if(section){  
+  
+    section.scrollIntoView({  
+      behavior:"smooth",  
+      block:"start"  
+    });  
+  
+  }  
+  
+}  
+  
+  
+/* =====================================================  
+   HELPERS  
+===================================================== */  
+  
+function formatPair(order){  
+  
+  const pair =  
+    String(  
+      order?.pair ||  
+      order?.trading_pair ||  
+      ""  
+    );  
+  
+  
+  if(pair === "USDT_ETB"){  
+  
+    return "USDT / ETB";  
+  
+  }  
+  
+  
+  if(pair === "ETB_ETB"){  
+  
+    return "ETB / ETB";  
+  
+  }  
+  
+  
+  if(pair.includes("_")){  
+  
+    return pair.replace(  
+      "_",  
+      " / "  
+    );  
+  
+  }  
+  
+  
+  return pair ||  
+    "P2P";  
+  
+}  
+  
+  
+function formatAmount(order){  
+  
+  const amount =  
+    Number(  
+      order?.amount  
+    ) || 0;  
+  
+  const pair =  
+    formatPair(order);  
+  
+  
+  return amount.toLocaleString(  
+    undefined,  
+    {  
+      maximumFractionDigits:6  
+    }  
+  ) +  
+  " " +  
+  (  
+    pair.startsWith("USDT")  
+      ? "USDT"  
+      : "ETB"  
+  );  
+  
+}  
+  
+  
+function formatTradeAmount(  
+  trade  
+){  
+  
+  const amount =  
+    Number(  
+      trade?.amount ??  
+      trade?.trade_amount ??  
+      0  
+    ) || 0;  
+  
+  
+  const pair =  
+    formatPair(  
+      trade  
+    );  
+  
+  
+  return amount.toLocaleString(  
+    undefined,  
+    {  
+      maximumFractionDigits:6  
+    }  
+  ) +  
+  " " +  
+  (  
+    pair.startsWith("USDT")  
+      ? "USDT"  
+      : "ETB"  
+  );  
+  
+}  
+  
+  
+function money(value){  
+  
+  const number =  
+    Number(value);  
+  
+  if(  
+    !Number.isFinite(number)  
+  ){  
+  
+    return "0.00";  
+  
+  }  
+  
+  return number.toLocaleString(  
+    undefined,  
+    {  
+      minimumFractionDigits:2,  
+      maximumFractionDigits:2  
+    }  
+  );  
+  
+}  
+  
+  
+function formatDate(value){  
+  
+  if(!value){  
+  
+    return "—";  
+  
+  }  
+  
+  
+  const date =  
+    new Date(value);  
+  
+  
+  if(  
+    Number.isNaN(  
+      date.getTime()  
+    )  
+  ){  
+  
+    return String(value);  
+  
+  }  
+  
+  
+  return date.toLocaleString();  
+  
+}  
+  
+  
+function normalizeStatus(status){  
+  
+  const value =  
+    String(  
+      status ||  
+      "pending"  
+    )  
+    .trim()  
+    .toLowerCase();  
+  
+  return value ||  
+    "pending";  
+  
+}  
+  
+  
+function statusClass(status){  
+  
+  const value =  
+    normalizeStatus(  
+      status  
+    );  
+  
+  
+  if(  
+    [  
+      "active",  
+      "open",  
+      "pending",  
+      "paid"  
+    ].includes(value)  
+  ){  
+  
+    return value;  
+  
+  }  
+  
+  
+  if(  
+    [  
+      "expired",  
+      "cancelled"  
+    ].includes(value)  
+  ){  
+  
+    return value;  
+  
+  }  
+  
+  
+  if(  
+    value === "disputed"  
+  ){  
+  
+    return "disputed";  
+  
+  }  
+  
+  
+  if(  
+    [  
+      "completed",  
+      "released"  
+    ].includes(value)  
+  ){  
+  
+    return value;  
+  
+  }  
+  
+  
+  return "";  
+  
+}  
+  
+  
+function detail(  
+  label,  
+  value  
+){  
+  
+  const safeLabel =  
+    escapeHtml(  
+      label  
+    );  
+  
+  /*  
+    Only internally generated status spans  
+    are allowed to remain HTML.  
+  */  
+  
+  const stringValue =  
+    String(  
+      value ?? ""  
+    );  
+  
+  const renderedValue =  
+    stringValue.includes(  
+      'class="status'  
+    )  
+      ? stringValue  
+      : escapeHtml(  
+          stringValue  
+        );  
+  
+  
+  return `  
+  
+    <div class="detail-row">  
+  
+      <span>  
+        ${safeLabel}  
+      </span>  
+  
+      <strong>  
+        ${renderedValue}  
+      </strong>  
+  
+    </div>  
+  
+  `;  
+  
+}  
+  
+  
+function emptyHtml(  
+  icon,  
+  title,  
+  message  
+){  
+  
+  return `  
+  
+    <div class="empty">  
+  
+      <div class="empty-icon">  
+        ${escapeHtml(  
+          icon || "ℹ️"  
+        )}  
+      </div>  
+  
+      <strong>  
+        ${escapeHtml(  
+          title || ""  
+        )}  
+      </strong>  
+  
+      ${  
+        message  
+        ?  
+        `<div style="margin-top:7px;">  
+          ${escapeHtml(message)}  
+        </div>`  
+        :  
+        ""  
+      }  
+  
+    </div>  
+  
+  `;  
+  
+}  
+  
+  
+function escapeHtml(  
+  value  
+){  
+  
+  return String(  
+    value ?? ""  
+  )  
+  .replace(  
+    /&/g,  
+    "&amp;"  
+  )  
+  .replace(  
+    /</g,  
+    "&lt;"  
+  )  
+  .replace(  
+    />/g,  
+    "&gt;"  
+  )  
+  .replace(  
+    /"/g,  
+    "&quot;"  
+  )  
+  .replace(  
+    /'/g,  
+    "&#039;"  
+  );  
+  
+}  
+  
+  
+function escapeJs(  
+  value  
+){  
+  
+  return String(  
+    value ?? ""  
+  )  
+  .replace(  
+    /\\/g,  
+    "\\\\"  
+  )  
+  .replace(  
+    /'/g,  
+    "\\'"  
+  )  
+  .replace(  
+    /"/g,  
+    '\\"'  
+  )  
+  .replace(  
+    /\r/g,  
+    "\\r"  
+  )  
+  .replace(  
+    /\n/g,  
+    "\\n"  
+  );  
+  
+}  
+  
+  
+function getErrorMessage(  
+  error  
+){  
+  
+  if(!error){  
+  
+    return "Something went wrong.";  
+  
+  }  
+  
+  return (  
+    error.message ||  
+    error.details ||  
+    error.hint ||  
+    "Something went wrong."  
+  );  
+  
+}  
+  
+  
+/* =====================================================  
+   TOAST  
+===================================================== */  
+  
+function toast(  
+  message,  
+  type = "normal"  
+){  
+  
+  const element =  
+    document.getElementById(  
+      "toast"  
+    );  
+  
+  if(!element){  
+  
+    return;  
+  
+  }  
+  
+  
+  clearTimeout(  
+    toastTimer  
+  );  
+  
+  
+  element.textContent =  
+    String(  
+      message || ""  
+    );  
+  
+  
+  element.classList.remove(  
+    "success",  
+    "error",  
+    "warning"  
+  );  
+  
+  
+  if(  
+    [  
+      "success",  
+      "error",  
+      "warning"  
+    ].includes(type)  
+  ){  
+  
+    element.classList.add(  
+      type  
+    );  
+  
+  }  
+  
+  
+  element.classList.add(  
+    "show"  
+  );  
+  
+  
+  toastTimer =  
+    setTimeout(  
+      function(){  
+  
+        element.classList.remove(  
+          "show"  
+        );  
+  
+      },  
+      3500  
+    );  
+  
+}  
+  
+  
+/* =====================================================  
+   CLOSE MODAL BY OUTSIDE CLICK  
+===================================================== */  
+  
+document.addEventListener(  
+  "click",  
+  function(event){  
+  
+    if(  
+      event.target.classList.contains(  
+        "modal"  
+      )  
+    ){  
+  
+      event.target.classList.remove(  
+        "show"  
+      );  
+  
+    }  
+  
+  }  
+);  
+  
+  
+/* =====================================================  
+   ESCAPE KEY CLOSES MODAL  
+===================================================== */  
+  
+document.addEventListener(  
+  "keydown",  
+  function(event){  
+  
+    if(  
+      event.key !== "Escape"  
+    ){  
+  
+      return;  
+  
+    }  
+  
+  
+    document  
+      .querySelectorAll(  
+        ".modal.show"  
+      )  
+      .forEach(  
+        modal => {  
+  
+          modal.classList.remove(  
+            "show"  
+          );  
+  
+        }  
+      );  
+  
+  }  
+);  
+  
+  
+/* =====================================================  
+   AUTO REFRESH  
+===================================================== */  
+  
+setInterval(  
+  async function(){  
+  
+    if(  
+      currentUser &&  
+      document.visibilityState ===  
+      "visible"  
+    ){  
+  
+      try{  
+  
+        await loadProfile();  
+  
+      }catch(error){  
+  
+        console.error(  
+          "AUTO REFRESH ERROR:",  
+          error  
+        );  
+  
+      }  
+  
+    }  
+  
+  },  
+  30000  
+);  
+  
+  
+/* =====================================================  
+   CLEANUP  
+===================================================== */  
+  
+window.addEventListener(  
+  "beforeunload",  
+  function(){  
+  
+    if(realtimeChannel){  
+  
+      supabaseClient.removeChannel(  
+        realtimeChannel  
+      );  
+  
+    }  
+  
+  }  
+);  
+  
+</script>  </body>  
 </html>

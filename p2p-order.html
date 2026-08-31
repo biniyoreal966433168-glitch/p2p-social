@@ -9,7 +9,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-
 *{
   box-sizing:border-box;
   margin:0;
@@ -262,22 +261,6 @@ header{
   border-radius:13px;
   padding:14px;
   margin-top:14px;
-}
-
-.fee-title{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:10px;
-}
-
-.fee-badge{
-  background:#e2f5ef;
-  color:#087f73;
-  border-radius:7px;
-  padding:5px 8px;
-  font-size:11px;
-  font-weight:bold;
 }
 
 .fee-row{
@@ -559,7 +542,6 @@ header{
   }
 
 }
-
 </style>
 </head>
 
@@ -622,7 +604,6 @@ header{
 
 
   <div id="tradeContent" style="display:none;">
-
 
     <!-- STATUS -->
 
@@ -720,10 +701,10 @@ header{
         class="info"
         style="margin-top:10px;">
 
-        💡 The platform fee shown here comes from the
-        secure trade record when available. Final fee,
-        wallet balances, treasury and settlement are
-        controlled by the Supabase database functions.
+        💡 The database is the authority for
+        platform-fee calculation and settlement.
+        The frontend does not directly change
+        wallet balances or treasury balances.
 
       </div>
 
@@ -792,7 +773,6 @@ header{
       </div>
 
     </section>
-
 
   </div>
 
@@ -944,11 +924,11 @@ let actionBusy = false;
 
 
 /*
-  This is only a display fallback.
+  Frontend fallback only.
 
   IMPORTANT:
-  The frontend NEVER writes the platform fee directly.
-  The database/RPC function must remain the authority.
+  This value is NOT used to move money.
+  The database/RPC remains the authority.
 */
 const PLATFORM_FEE_RATE = 0.01;
 
@@ -1199,7 +1179,6 @@ function renderTrade(){
 
   const tradeNumber =
     currentTrade.trade_number ||
-    currentTrade.order_number ||
     currentTrade.id;
 
 
@@ -1429,36 +1408,65 @@ function renderFee(){
 
 
   /*
-    Prefer the value calculated/stored by the backend.
+    Your confirmed p2p_trades schema contains:
 
-    The frontend fallback exists only so the page does
-    not display blank values if an older trade does not
-    contain platform_fee/total_amount.
+    platform_fee_percent
+    platform_fee_amount
+
+    Therefore prefer platform_fee_amount.
   */
 
   const backendFee =
     toFiniteNumber(
-      trade.platform_fee
+      trade.platform_fee_amount
     );
 
 
-  const fee =
-    backendFee !== null
-      ? backendFee
-      : tradeValue *
+  let fee = 0;
+
+
+  if(backendFee !== null){
+
+    fee =
+      backendFee;
+
+  }else{
+
+    const percent =
+      toFiniteNumber(
+        trade.platform_fee_percent
+      );
+
+
+    if(percent !== null){
+
+      fee =
+        tradeValue *
+        percent /
+        100;
+
+    }else{
+
+      fee =
+        tradeValue *
         PLATFORM_FEE_RATE;
 
+    }
 
-  const backendTotal =
-    toFiniteNumber(
-      trade.total_amount
-    );
+  }
 
+
+  /*
+    There is no total_amount column
+    in the schema you supplied.
+
+    So calculate display total only.
+    This does NOT move money.
+  */
 
   const total =
-    backendTotal !== null
-      ? backendTotal
-      : tradeValue + fee;
+    tradeValue +
+    fee;
 
 
   document.getElementById(
@@ -1714,7 +1722,7 @@ function renderActions(){
 
 
   /*
-    Terminal states.
+    TERMINAL STATES
   */
 
   if(
@@ -1736,8 +1744,7 @@ function renderActions(){
 
 
   /*
-    DISPUTED:
-    Do not show normal payment/release actions.
+    DISPUTED
   */
 
   if(
@@ -1752,8 +1759,8 @@ function renderActions(){
         style="margin-top:9px;">
 
         ⚠️ This trade is under dispute.
-        Normal payment and release actions are
-        temporarily unavailable.
+        Normal payment and release actions
+        are temporarily unavailable.
 
       </div>
 
@@ -1768,7 +1775,7 @@ function renderActions(){
 
 
   /*
-    BUYER HAS NOT CONFIRMED PAYMENT
+    BUYER HAS NOT PAID
   */
 
   if(
@@ -1811,7 +1818,7 @@ function renderActions(){
 
 
   /*
-    SELLER AFTER BUYER PAYMENT
+    SELLER AFTER PAYMENT
   */
 
   if(
@@ -1886,6 +1893,8 @@ function renderActions(){
 
 /* =====================================================
    BUYER PAYMENT
+   ACTUAL FUNCTION:
+   p2p_buyer_payment(bigint, uuid)
 ===================================================== */
 
 async function confirmBuyerPayment(){
@@ -1943,13 +1952,17 @@ async function confirmBuyerPayment(){
   try{
 
     const {
+      data,
       error
     } =
     await supabaseClient.rpc(
-      "buyer_confirm_payment",
+      "p2p_buyer_payment",
       {
         p_trade_id:
-          currentTrade.id
+          currentTrade.id,
+
+        p_user_id:
+          currentUser.id
       }
     );
 
@@ -1973,6 +1986,12 @@ async function confirmBuyerPayment(){
     }
 
 
+    console.log(
+      "BUYER PAYMENT RESULT:",
+      data
+    );
+
+
     toast(
       "Payment confirmed."
     );
@@ -1992,6 +2011,8 @@ async function confirmBuyerPayment(){
 
 /* =====================================================
    SELLER RELEASE
+   ACTUAL FUNCTION:
+   p2p_release_trade(bigint, uuid)
 ===================================================== */
 
 async function releaseTrade(){
@@ -2047,13 +2068,17 @@ async function releaseTrade(){
   try{
 
     const {
+      data,
       error
     } =
     await supabaseClient.rpc(
-      "seller_release_trade",
+      "p2p_release_trade",
       {
         p_trade_id:
-          currentTrade.id
+          currentTrade.id,
+
+        p_user_id:
+          currentUser.id
       }
     );
 
@@ -2077,6 +2102,12 @@ async function releaseTrade(){
     }
 
 
+    console.log(
+      "RELEASE RESULT:",
+      data
+    );
+
+
     toast(
       "Trade released successfully."
     );
@@ -2096,6 +2127,8 @@ async function releaseTrade(){
 
 /* =====================================================
    CANCEL TRADE
+   ACTUAL FUNCTION:
+   p2p_cancel_trade(bigint, uuid, text)
 ===================================================== */
 
 async function cancelTrade(){
@@ -2145,13 +2178,20 @@ async function cancelTrade(){
   try{
 
     const {
+      data,
       error
     } =
     await supabaseClient.rpc(
-      "buyer_cancel_trade",
+      "p2p_cancel_trade",
       {
         p_trade_id:
-          currentTrade.id
+          currentTrade.id,
+
+        p_user_id:
+          currentUser.id,
+
+        p_reason:
+          "Cancelled by buyer"
       }
     );
 
@@ -2175,6 +2215,12 @@ async function cancelTrade(){
     }
 
 
+    console.log(
+      "CANCEL RESULT:",
+      data
+    );
+
+
     toast(
       "Trade cancelled."
     );
@@ -2194,6 +2240,8 @@ async function cancelTrade(){
 
 /* =====================================================
    DISPUTE
+   ACTUAL FUNCTION:
+   p2p_open_dispute(bigint, uuid, text)
 ===================================================== */
 
 function openDispute(){
@@ -2313,13 +2361,17 @@ async function submitDispute(){
   try{
 
     const {
+      data,
       error
     } =
     await supabaseClient.rpc(
-      "open_p2p_dispute",
+      "p2p_open_dispute",
       {
         p_trade_id:
           selectedTradeId,
+
+        p_user_id:
+          currentUser.id,
 
         p_reason:
           reason
@@ -2344,6 +2396,12 @@ async function submitDispute(){
       return;
 
     }
+
+
+    console.log(
+      "DISPUTE RESULT:",
+      data
+    );
 
 
     closeModal(
@@ -2581,10 +2639,6 @@ async function reloadTrade(){
   renderTrade();
 
 
-  /*
-    Re-create realtime subscription if necessary.
-  */
-
   if(!realtimeChannel){
 
     setupRealtime();
@@ -2730,7 +2784,9 @@ function showError(message){
 
     <div
       style="font-size:32px;margin-bottom:10px;">
+
       ⚠️
+
     </div>
 
     <strong>
@@ -3117,12 +3173,11 @@ function calculateTradeValue(
 
 
   /*
-    USDT/ETB:
+    USDT_ETB:
     amount × price
 
-    Other pairs:
-    use amount as ETB value unless the database
-    already supplied trade_value.
+    ETB_ETB:
+    amount
   */
 
   if(
@@ -3164,16 +3219,6 @@ function formatPair(
   ){
 
     return "USDT / ETB";
-
-  }
-
-
-  if(
-    raw ===
-    "ETB_USDT"
-  ){
-
-    return "ETB / USDT";
 
   }
 

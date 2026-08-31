@@ -460,7 +460,7 @@ section{
 }
 
 /* =========================
-   REAL P2P OFFERS
+   REAL P2P AVAILABLE OFFERS
 ========================= */
 
 .p2p-offers{
@@ -476,98 +476,133 @@ section{
   box-shadow:0 3px 12px rgba(0,0,0,.06);
 }
 
-.p2p-top{
+.p2p-card-header{
   display:flex;
   justify-content:space-between;
-  align-items:flex-start;
-  gap:12px;
+  align-items:center;
+  gap:10px;
 }
 
-.p2p-type{
-  display:inline-block;
-  font-size:11px;
+.seller{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  min-width:0;
+}
+
+.avatar{
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  background:#dfeeea;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   font-weight:bold;
-  padding:5px 8px;
-  border-radius:7px;
-  background:#eaf7f4;
   color:#087f73;
-  margin-bottom:8px;
+  flex-shrink:0;
+  overflow:hidden;
 }
 
-.p2p-rate{
+.avatar img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.username{
+  font-weight:bold;
+  font-size:14px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.online{
+  color:#16a085;
+  font-size:11px;
+  margin-top:3px;
+}
+
+.rate{
   text-align:right;
+  flex-shrink:0;
 }
 
-.p2p-rate strong{
+.rate strong{
   display:block;
-  font-size:18px;
+  font-size:17px;
 }
 
-.p2p-rate small{
+.rate small{
   color:#777;
 }
 
-.p2p-details{
-  display:grid;
-  grid-template-columns:1fr 1fr;
+.trade-info{
+  display:flex;
+  justify-content:space-between;
   gap:10px;
-  margin-top:14px;
-  padding-top:12px;
-  border-top:1px solid #edf0f4;
-}
-
-.p2p-detail{
-  font-size:12px;
-  color:#687386;
-}
-
-.p2p-detail strong{
-  display:block;
-  color:#172033;
-  margin-top:3px;
+  margin:15px 0;
   font-size:13px;
 }
 
-.p2p-action{
+.trade-info span{
+  min-width:0;
+}
+
+.buy-btn,
+.sell-btn{
   width:100%;
   border:none;
   padding:12px;
   border-radius:10px;
   font-weight:bold;
   cursor:pointer;
-  margin-top:14px;
 }
 
-.p2p-buy{
+.buy-btn{
   background:#087f73;
   color:white;
 }
 
-.p2p-sell{
+.sell-btn{
   background:#eaf7f4;
   color:#087f73;
+}
+
+.offer-type{
+  display:inline-block;
+  margin-bottom:8px;
+  padding:4px 7px;
+  border-radius:6px;
+  background:#eaf7f4;
+  color:#087f73;
+  font-size:10px;
+  font-weight:bold;
 }
 
 .no-offers{
   background:white;
   border-radius:16px;
-  padding:28px 18px;
+  padding:25px 18px;
   text-align:center;
   color:#7b8492;
   box-shadow:0 3px 12px rgba(0,0,0,.05);
 }
 
 .no-offers-icon{
-  font-size:35px;
+  font-size:32px;
   margin-bottom:8px;
 }
 
-.offers-loading{
-  background:white;
-  border-radius:16px;
-  padding:25px;
-  text-align:center;
-  color:#7b8492;
+.no-offers strong{
+  display:block;
+  color:#172033;
+  margin-bottom:5px;
+}
+
+.no-offers small{
+  font-size:12px;
 }
 
 /* =========================
@@ -949,6 +984,10 @@ button:active{
   transform:scale(.97);
 }
 
+/* =========================
+   MOBILE
+========================= */
+
 @media(max-width:450px){
 
   header{
@@ -965,6 +1004,14 @@ button:active{
   .logo .p-right{
     top:9px;
     height:24px;
+  }
+
+  .logo .p-left{
+    left:8px;
+  }
+
+  .logo .p-right{
+    right:8px;
   }
 
   .brand{
@@ -996,9 +1043,15 @@ button:active{
     font-size:12px;
   }
 
-  .p2p-details{
-    grid-template-columns:1fr;
+  .trade-info{
+    flex-direction:column;
+    gap:7px;
   }
+
+  .p2p-card-header{
+    align-items:flex-start;
+  }
+
 }
 
 </style>
@@ -1017,12 +1070,14 @@ button:active{
     <div class="logo-area">
 
       <div class="logo" aria-label="P2P Social Logo">
+
         <div class="p-left"></div>
         <div class="p-right"></div>
 
         <div class="center">
           <div class="dot"></div>
         </div>
+
       </div>
 
       <div class="brand">
@@ -1109,8 +1164,10 @@ button:active{
   </div>
 
   <div id="userInfo" class="user-info">
+
     Logged in as:
     <strong id="usernameDisplay"></strong>
+
   </div>
 
   <div class="search">
@@ -1299,11 +1356,23 @@ button:active{
   </div>
 
   <div
-    id="p2pOffers"
+    id="p2pOffersContainer"
     class="p2p-offers">
 
-    <div class="offers-loading">
-      Loading available offers...
+    <div class="no-offers">
+
+      <div class="no-offers-icon">
+        🔄
+      </div>
+
+      <strong>
+        Loading available offers...
+      </strong>
+
+      <small>
+        Please wait.
+      </small>
+
     </div>
 
   </div>
@@ -1629,142 +1698,227 @@ async function updateAuthUI(){
 }
 
 /* ================================
-   REAL AVAILABLE P2P OFFERS
-================================ */
+   AVAILABLE P2P OFFERS
+=============================== */
 
-async function loadP2POffers(){
+/*
+  This function tries the common P2P offer table names.
+
+  Expected offer fields can include:
+
+  id
+  user_id
+  type / trade_type
+  side
+  rate / price
+  amount / available_amount
+  min_amount
+  max_amount
+  status
+  is_active
+
+  If your wallet/P2P SQL uses different names,
+  this function will safely show no offers rather
+  than displaying fake users.
+*/
+
+async function loadAvailableOffers(){
 
   const container =
     document.getElementById(
-      "p2pOffers"
+      "p2pOffersContainer"
     );
 
   if(!container)return;
 
   container.innerHTML=`
-    <div class="offers-loading">
-      Loading available offers...
+    <div class="no-offers">
+      <div class="no-offers-icon">
+        🔄
+      </div>
+      <strong>
+        Loading available offers...
+      </strong>
+      <small>
+        Please wait.
+      </small>
     </div>
   `;
 
   /*
-    Expected table:
-
-    p2p_offers
-
-    id
-    user_id
-    type
-    amount
-    min_amount
-    max_amount
-    price
-    currency
-    status
-    created_at
-
-    The page does NOT create fake offers.
+    First try the table used by the current
+    P2P order system.
   */
 
-  const {
-    data:offers,
-    error
-  } =
+  let result =
     await supabaseClient
       .from("p2p_offers")
-      .select(`
-        id,
-        user_id,
-        type,
-        amount,
-        min_amount,
-        max_amount,
-        price,
-        currency,
-        status,
-        created_at
-      `)
-      .eq(
-        "status",
-        "available"
-      )
-      .order(
-        "created_at",
-        {
-          ascending:false
-        }
-      )
-      .limit(20);
+      .select("*")
+      .limit(50);
 
-  if(error){
+  /*
+    If p2p_offers does not exist, try offers.
+  */
 
-    console.error(
-      "P2P offers loading error:",
-      error
-    );
+  if(result.error){
 
-    /*
-      Do not show fake users.
-      If the table/schema is not ready,
-      show an empty-state message.
-    */
-
-    container.innerHTML=`
-      <div class="no-offers">
-
-        <div class="no-offers-icon">
-          🔄
-        </div>
-
-        <strong>
-          No available offers
-        </strong>
-
-        <div style="margin-top:6px;font-size:12px;">
-          Available P2P offers will appear here.
-        </div>
-
-      </div>
-    `;
-
-    return;
-
-  }
-
-  if(!offers || !offers.length){
-
-    container.innerHTML=`
-      <div class="no-offers">
-
-        <div class="no-offers-icon">
-          🔄
-        </div>
-
-        <strong>
-          No available offers
-        </strong>
-
-        <div style="margin-top:6px;font-size:12px;">
-          There are currently no P2P offers available.
-        </div>
-
-      </div>
-    `;
-
-    return;
+    result =
+      await supabaseClient
+        .from("offers")
+        .select("*")
+        .limit(50);
 
   }
 
   /*
-    Load seller profiles.
+    If neither table can be read, do not create
+    fake offers. Show an empty state.
   */
+
+  if(result.error){
+
+    console.log(
+      "Available P2P offers are not available:",
+      result.error.message
+    );
+
+    renderNoOffers();
+
+    return;
+
+  }
+
+  const offers =
+    (result.data||[])
+      .filter(
+        offer =>
+          isOfferAvailable(offer)
+      );
+
+  if(!offers.length){
+
+    renderNoOffers();
+
+    return;
+
+  }
+
+  await renderAvailableOffers(
+    offers
+  );
+
+}
+
+function isOfferAvailable(offer){
+
+  if(!offer){
+    return false;
+  }
+
+  /*
+    Status checks.
+  */
+
+  const status =
+    String(
+      offer.status ??
+      ""
+    )
+      .toLowerCase()
+      .trim();
+
+  if(
+    status &&
+    [
+      "closed",
+      "cancelled",
+      "canceled",
+      "completed",
+      "inactive",
+      "disabled",
+      "sold"
+    ].includes(status)
+  ){
+
+    return false;
+
+  }
+
+  if(
+    offer.is_active === false ||
+    offer.active === false
+  ){
+
+    return false;
+
+  }
+
+  /*
+    Amount checks.
+
+    If the database has an available amount,
+    it must be greater than zero.
+
+    If no amount field exists, we do not reject
+    the offer only because the field is missing.
+  */
+
+  const amountValue =
+    getFirstValue(
+      offer,
+      [
+        "available_amount",
+        "available",
+        "remaining_amount",
+        "amount"
+      ]
+    );
+
+  if(
+    amountValue !== null &&
+    amountValue !== undefined &&
+    amountValue !== ""
+  ){
+
+    const amount =
+      Number(amountValue);
+
+    if(
+      !Number.isNaN(amount) &&
+      amount <= 0
+    ){
+
+      return false;
+
+    }
+
+  }
+
+  return true;
+
+}
+
+async function renderAvailableOffers(
+  offers
+){
+
+  const container =
+    document.getElementById(
+      "p2pOffersContainer"
+    );
+
+  if(!container)return;
 
   const userIds =
     [
       ...new Set(
         offers
           .map(
-            offer=>offer.user_id
+            offer =>
+              offer.user_id ||
+              offer.seller_id ||
+              offer.owner_id ||
+              offer.created_by
           )
           .filter(Boolean)
       )
@@ -1808,235 +1962,321 @@ async function loadP2POffers(){
 
   container.innerHTML="";
 
-  offers.forEach(
-    offer=>{
+  offers
+    .slice(0,5)
+    .forEach(
+      offer=>{
 
-      const profile =
-        profileMap[
-          offer.user_id
-        ];
+        const card =
+          createOfferCard(
+            offer,
+            profileMap
+          );
 
-      /*
-        If an offer has no valid profile,
-        don't invent a user name.
-        We can still show the offer itself.
-      */
-
-      const username =
-        profile?.username ||
-        "Available seller";
-
-      const avatar =
-        profile?.avatar_url ||
-        "";
-
-      const initial =
-        username
-          .charAt(0)
-          .toUpperCase();
-
-      const type =
-        String(
-          offer.type||"buy"
-        ).toLowerCase();
-
-      const isBuy =
-        type==="buy" ||
-        type==="sell_usdt" ||
-        type==="buy_usdt";
-
-      const actionText =
-        isBuy
-        ? "Buy USDT"
-        : "Sell USDT";
-
-      const actionClass =
-        isBuy
-        ? "p2p-buy"
-        : "p2p-sell";
-
-      const card =
-        document.createElement(
-          "div"
+        container.appendChild(
+          card
         );
 
-      card.className =
-        "p2p-card";
-
-      card.innerHTML=`
-
-        <div class="p2p-top">
-
-          <div>
-
-            <div class="p2p-type">
-              ${isBuy ? "BUY USDT" : "SELL USDT"}
-            </div>
-
-            <div style="
-              display:flex;
-              align-items:center;
-              gap:8px;
-            ">
-
-              ${
-                avatar
-                ?
-                `
-                <img
-                  src="${escapeHtml(avatar)}"
-                  alt="Profile"
-                  style="
-                    width:38px;
-                    height:38px;
-                    border-radius:50%;
-                    object-fit:cover;
-                  ">
-                `
-                :
-                `
-                <div style="
-                  width:38px;
-                  height:38px;
-                  border-radius:50%;
-                  background:#dfeeea;
-                  color:#087f73;
-                  display:flex;
-                  align-items:center;
-                  justify-content:center;
-                  font-weight:bold;
-                ">
-                  ${escapeHtml(initial)}
-                </div>
-                `
-              }
-
-              <div>
-
-                <strong style="font-size:13px;">
-                  ${escapeHtml(username)}
-                </strong>
-
-                <div style="
-                  color:#16a085;
-                  font-size:10px;
-                  margin-top:3px;
-                ">
-                  ● Available
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
-          <div class="p2p-rate">
-
-            <strong>
-              ${formatNumber(offer.price)}
-              ETB
-            </strong>
-
-            <small>
-              1 USDT
-            </small>
-
-          </div>
-
-        </div>
-
-        <div class="p2p-details">
-
-          <div class="p2p-detail">
-
-            Available
-
-            <strong>
-              ${formatNumber(offer.amount)}
-              USDT
-            </strong>
-
-          </div>
-
-          <div class="p2p-detail">
-
-            Minimum
-
-            <strong>
-              ${formatNumber(
-                offer.min_amount
-              )}
-              ${escapeHtml(
-                offer.currency||"ETB"
-              )}
-            </strong>
-
-          </div>
-
-          ${
-            offer.max_amount != null
-            ?
-            `
-            <div class="p2p-detail">
-
-              Maximum
-
-              <strong>
-                ${formatNumber(
-                  offer.max_amount
-                )}
-                ${escapeHtml(
-                  offer.currency||"ETB"
-                )}
-              </strong>
-
-            </div>
-            `
-            :
-            ""
-          }
-
-          <div class="p2p-detail">
-
-            Currency
-
-            <strong>
-              🇪🇹 ${escapeHtml(
-                offer.currency||"ETB"
-              )}
-            </strong>
-
-          </div>
-
-        </div>
-
-        <button
-          class="p2p-action ${actionClass}"
-          onclick="
-            openP2POffer(
-              '${escapeJs(offer.id)}'
-            )
-          ">
-
-          ${actionText}
-
-        </button>
-
-      `;
-
-      container.appendChild(card);
-
-    }
-  );
+      }
+    );
 
 }
 
-/* ================================
-   P2P OFFER OPEN
-================================ */
+function createOfferCard(
+  offer,
+  profileMap
+){
 
-function openP2POffer(offerId){
+  const card =
+    document.createElement(
+      "div"
+    );
+
+  card.className =
+    "p2p-card";
+
+  const userId =
+    offer.user_id ||
+    offer.seller_id ||
+    offer.owner_id ||
+    offer.created_by ||
+    "";
+
+  const profile =
+    profileMap[userId]||{};
+
+  const username =
+    profile.username ||
+    offer.username ||
+    offer.seller_username ||
+    "Available trader";
+
+  const avatarUrl =
+    profile.avatar_url ||
+    offer.avatar_url ||
+    "";
+
+  const initial =
+    username
+      .charAt(0)
+      .toUpperCase() ||
+    "U";
+
+  const typeRaw =
+    getFirstValue(
+      offer,
+      [
+        "type",
+        "trade_type",
+        "side",
+        "offer_type"
+      ]
+    );
+
+  const type =
+    String(
+      typeRaw ||
+      "buy"
+    )
+      .toLowerCase();
+
+  const rate =
+    getFirstValue(
+      offer,
+      [
+        "rate",
+        "price",
+        "exchange_rate",
+        "price_per_usdt"
+      ]
+    );
+
+  const amount =
+    getFirstValue(
+      offer,
+      [
+        "available_amount",
+        "available",
+        "remaining_amount",
+        "amount"
+      ]
+    );
+
+  const min =
+    getFirstValue(
+      offer,
+      [
+        "min_amount",
+        "minimum_amount",
+        "min"
+      ]
+    );
+
+  const max =
+    getFirstValue(
+      offer,
+      [
+        "max_amount",
+        "maximum_amount",
+        "max"
+      ]
+    );
+
+  const normalizedType =
+    type.includes("sell")
+    ? "sell"
+    : "buy";
+
+  const buttonText =
+    normalizedType==="sell"
+    ? "Buy USDT"
+    : "Buy USDT";
+
+  const offerLabel =
+    normalizedType==="sell"
+    ? "SELL USDT"
+    : "BUY USDT";
+
+  card.innerHTML=`
+
+    <div class="offer-type">
+      ${escapeHtml(offerLabel)}
+    </div>
+
+    <div class="p2p-card-header">
+
+      <div class="seller">
+
+        ${
+          avatarUrl
+          ?
+          `
+          <div class="avatar">
+            <img
+              src="${escapeHtml(avatarUrl)}"
+              alt="Profile">
+          </div>
+          `
+          :
+          `
+          <div class="avatar">
+            ${escapeHtml(initial)}
+          </div>
+          `
+        }
+
+        <div>
+
+          <div class="username">
+            ${escapeHtml(username)}
+          </div>
+
+          <div class="online">
+            ● Available
+          </div>
+
+        </div>
+
+      </div>
+
+      ${
+        rate !== null &&
+        rate !== undefined &&
+        rate !== ""
+        ?
+        `
+        <div class="rate">
+
+          <strong>
+            ${escapeHtml(
+              formatNumber(rate)
+            )} ETB
+          </strong>
+
+          <small>
+            1 USDT
+          </small>
+
+        </div>
+        `
+        :
+        ""
+      }
+
+    </div>
+
+    <div class="trade-info">
+
+      ${
+        amount !== null &&
+        amount !== undefined &&
+        amount !== ""
+        ?
+        `
+        <span>
+          Available:
+          <strong>
+            ${escapeHtml(
+              formatNumber(amount)
+            )} USDT
+          </strong>
+        </span>
+        `
+        :
+        `
+        <span>
+          Available offer
+        </span>
+        `
+      }
+
+      ${
+        min !== null &&
+        min !== undefined &&
+        min !== ""
+        ?
+        `
+        <span>
+          Min:
+          ${escapeHtml(
+            formatNumber(min)
+          )} ETB
+        </span>
+        `
+        :
+        ""
+      }
+
+      ${
+        max !== null &&
+        max !== undefined &&
+        max !== ""
+        ?
+        `
+        <span>
+          Max:
+          ${escapeHtml(
+            formatNumber(max)
+          )} ETB
+        </span>
+        `
+        :
+        ""
+      }
+
+    </div>
+
+    <button
+      class="buy-btn"
+      onclick="openP2POffer(
+        '${escapeJs(offer.id)}'
+      )">
+
+      ${buttonText}
+
+    </button>
+
+  `;
+
+  return card;
+
+}
+
+function renderNoOffers(){
+
+  const container =
+    document.getElementById(
+      "p2pOffersContainer"
+    );
+
+  if(!container)return;
+
+  container.innerHTML=`
+
+    <div class="no-offers">
+
+      <div class="no-offers-icon">
+        🔄
+      </div>
+
+      <strong>
+        No available offers yet.
+      </strong>
+
+      <small>
+        Available P2P offers will appear here
+        when traders create them.
+      </small>
+
+    </div>
+
+  `;
+
+}
+
+function openP2POffer(
+  offerId
+){
 
   if(!currentSession){
 
@@ -2045,16 +2285,12 @@ function openP2POffer(offerId){
     );
 
     openLogin();
-
     return;
 
   }
 
-  if(!offerId)return;
-
   /*
-    Send the selected offer to the
-    dedicated P2P order page.
+    Send the user to the P2P wallet/order page.
   */
 
   window.location.href =
@@ -2062,6 +2298,66 @@ function openP2POffer(offerId){
     encodeURIComponent(
       offerId
     );
+
+}
+
+function getFirstValue(
+  object,
+  keys
+){
+
+  for(
+    const key of keys
+  ){
+
+    if(
+      Object.prototype.hasOwnProperty.call(
+        object,
+        key
+      )
+    ){
+
+      if(
+        object[key] !== null &&
+        object[key] !== undefined &&
+        object[key] !== ""
+      ){
+
+        return object[key];
+
+      }
+
+    }
+
+  }
+
+  return null;
+
+}
+
+function formatNumber(
+  value
+){
+
+  const number =
+    Number(value);
+
+  if(
+    Number.isNaN(number)
+  ){
+
+    return String(
+      value
+    );
+
+  }
+
+  return number.toLocaleString(
+    undefined,
+    {
+      maximumFractionDigits:8
+    }
+  );
 
 }
 
@@ -2101,9 +2397,7 @@ async function loadNotifications(){
       )
       .order(
         "created_at",
-        {
-          ascending:false
-        }
+        {ascending:false}
       )
       .limit(50);
 
@@ -2292,7 +2586,9 @@ function notificationIcon(type){
 
 }
 
-async function markNotificationRead(id){
+async function markNotificationRead(
+  id
+){
 
   if(!currentSession)return;
 
@@ -2363,7 +2659,9 @@ function resetNotifications(){
 
 }
 
-function toggleNotificationPanel(event){
+function toggleNotificationPanel(
+  event
+){
 
   if(event){
     event.stopPropagation();
@@ -2386,10 +2684,14 @@ function toggleNotificationPanel(event){
       "notificationPanel"
     );
 
-  panel.classList.toggle("open");
+  panel.classList.toggle(
+    "open"
+  );
 
   if(
-    panel.classList.contains("open")
+    panel.classList.contains(
+      "open"
+    )
   ){
 
     loadNotifications();
@@ -2561,9 +2863,7 @@ async function loadPosts(
       )
       .order(
         "created_at",
-        {
-          ascending:false
-        }
+        {ascending:false}
       )
       .limit(100);
 
@@ -2668,13 +2968,11 @@ async function renderPosts(){
     );
 
   const userIds =
-    [
-      ...new Set(
-        visiblePosts.map(
-          p=>p.user_id
-        )
+    [...new Set(
+      visiblePosts.map(
+        p=>p.user_id
       )
-    ];
+    )];
 
   let profiles=[];
 
@@ -2805,13 +3103,11 @@ async function renderPosts(){
   }
 
   const commentUserIds =
-    [
-      ...new Set(
-        comments.map(
-          c=>c.user_id
-        )
+    [...new Set(
+      comments.map(
+        c=>c.user_id
       )
-    ];
+    )];
 
   if(commentUserIds.length){
 
@@ -2956,9 +3252,11 @@ async function renderPosts(){
         </div>
 
         <div class="post-content">
+
           ${escapeHtml(
             post.content||""
           )}
+
         </div>
 
         <div class="post-actions">
@@ -3063,7 +3361,9 @@ async function renderPosts(){
    COMMENTS OPEN / CLOSE
 ================================ */
 
-function toggleComments(postId){
+function toggleComments(
+  postId
+){
 
   commentsOpen[postId]=
     !commentsOpen[postId];
@@ -3082,7 +3382,9 @@ function toggleComments(postId){
 
   }
 
-  if(commentsOpen[postId]){
+  if(
+    commentsOpen[postId]
+  ){
 
     refreshSinglePostComments(
       postId
@@ -3132,13 +3434,11 @@ async function refreshSinglePostComments(
   }
 
   const userIds =
-    [
-      ...new Set(
-        (comments||[]).map(
-          c=>c.user_id
-        )
+    [...new Set(
+      (comments||[]).map(
+        c=>c.user_id
       )
-    ];
+    )];
 
   let profiles=[];
 
@@ -3320,7 +3620,9 @@ function renderComments(
 
   }
 
-  if(commentsOpen[postId]){
+  if(
+    commentsOpen[postId]
+  ){
 
     html+=`
 
@@ -3379,11 +3681,12 @@ function renderComments(
 
     html+=`
 
-      <div style="
-        font-size:12px;
-        color:#777;
-        margin-top:8px;
-      ">
+      <div
+        style="
+          font-size:12px;
+          color:#777;
+          margin-top:8px;
+        ">
 
         Login to comment.
 
@@ -3401,7 +3704,9 @@ function renderComments(
    SEND COMMENT
 ================================ */
 
-async function sendComment(postId){
+async function sendComment(
+  postId
+){
 
   if(!currentSession){
 
@@ -3522,7 +3827,9 @@ async function deleteComment(
    LIKE / UNLIKE
 ================================ */
 
-async function likePost(postId){
+async function likePost(
+  postId
+){
 
   if(!currentSession){
 
@@ -3627,7 +3934,9 @@ async function likePost(postId){
    DELETE POST
 ================================ */
 
-async function deletePost(postId){
+async function deletePost(
+  postId
+){
 
   if(!currentSession){
 
@@ -3837,7 +4146,9 @@ function openUserProfile(
    SHARE
 ================================ */
 
-async function sharePost(postId){
+async function sharePost(
+  postId
+){
 
   const url =
     window.location.origin+
@@ -3960,34 +4271,6 @@ function formatPostTime(
   }
 
   return date.toLocaleDateString();
-
-}
-
-/* ================================
-   NUMBER FORMAT
-================================ */
-
-function formatNumber(
-  value
-){
-
-  const number =
-    Number(value);
-
-  if(
-    !Number.isFinite(number)
-  ){
-
-    return "0";
-
-  }
-
-  return number.toLocaleString(
-    undefined,
-    {
-      maximumFractionDigits:2
-    }
-  );
 
 }
 
@@ -4191,7 +4474,9 @@ document
    ESCAPE HTML
 ================================ */
 
-function escapeHtml(text){
+function escapeHtml(
+  text
+){
 
   const div =
     document.createElement(
@@ -4211,7 +4496,9 @@ function escapeHtml(text){
    ESCAPE JS
 ================================ */
 
-function escapeJs(text){
+function escapeJs(
+  text
+){
 
   return String(
     text||""
@@ -4279,7 +4566,7 @@ supabaseClient.auth.onAuthStateChange(
 
         await loadPosts();
 
-        await loadP2POffers();
+        await loadAvailableOffers();
 
         if(currentSession){
 
@@ -4348,7 +4635,7 @@ async function startApp(){
 
   await loadPosts();
 
-  await loadP2POffers();
+  await loadAvailableOffers();
 
   if(currentSession){
 

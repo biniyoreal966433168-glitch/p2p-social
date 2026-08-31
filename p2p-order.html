@@ -175,6 +175,7 @@ header{
   font-size:13px;
   font-weight:bold;
   margin-top:5px;
+  word-break:break-word;
 }
 
 .status{
@@ -249,6 +250,8 @@ header{
 
 .detail-row strong{
   text-align:right;
+  max-width:65%;
+  word-break:break-word;
 }
 
 /* ================= FEE ================= */
@@ -280,12 +283,17 @@ header{
 .fee-row{
   display:flex;
   justify-content:space-between;
+  gap:10px;
   padding:6px 0;
   font-size:13px;
 }
 
 .fee-row span{
   color:#71808a;
+}
+
+.fee-row strong{
+  text-align:right;
 }
 
 .fee-total{
@@ -421,6 +429,10 @@ header{
   outline:none;
 }
 
+.modal-box textarea:focus{
+  border-color:#087f73;
+}
+
 .modal-actions{
   display:flex;
   gap:8px;
@@ -536,6 +548,14 @@ header{
 
   .page-title h1{
     font-size:21px;
+  }
+
+  .detail-row{
+    font-size:13px;
+  }
+
+  .detail-row strong{
+    max-width:58%;
   }
 
 }
@@ -700,8 +720,10 @@ header{
         class="info"
         style="margin-top:10px;">
 
-        💡 The platform fee is calculated and enforced
-        by the secure Supabase database transaction.
+        💡 The platform fee shown here comes from the
+        secure trade record when available. Final fee,
+        wallet balances, treasury and settlement are
+        controlled by the Supabase database functions.
 
       </div>
 
@@ -728,7 +750,6 @@ header{
       <div class="card-title">
         ⚡ Trade Actions
       </div>
-
 
       <div id="actions"></div>
 
@@ -806,6 +827,7 @@ header{
       </button>
 
       <button
+        id="submitDisputeBtn"
         class="confirm-btn"
         onclick="submitDispute()">
 
@@ -913,11 +935,21 @@ const supabaseClient =
 ===================================================== */
 
 let currentUser = null;
-
 let currentTrade = null;
-
 let selectedTradeId = null;
+let realtimeChannel = null;
+let expiryTimer = null;
+let toastTimer = null;
+let actionBusy = false;
 
+
+/*
+  This is only a display fallback.
+
+  IMPORTANT:
+  The frontend NEVER writes the platform fee directly.
+  The database/RPC function must remain the authority.
+*/
 const PLATFORM_FEE_RATE = 0.01;
 
 
@@ -944,7 +976,10 @@ async function startApp(){
 
     if(error){
 
-      console.error(error);
+      console.error(
+        "SESSION ERROR:",
+        error
+      );
 
       showLogin();
 
@@ -953,7 +988,11 @@ async function startApp(){
     }
 
 
-    if(!data.session){
+    if(
+      !data ||
+      !data.session ||
+      !data.session.user
+    ){
 
       showLogin();
 
@@ -969,7 +1008,11 @@ async function startApp(){
     await loadTrade();
 
 
-    setupRealtime();
+    if(currentTrade){
+
+      setupRealtime();
+
+    }
 
 
   }catch(error){
@@ -980,7 +1023,8 @@ async function startApp(){
     );
 
     showError(
-      error.message
+      error.message ||
+      "Could not start the trade page."
     );
 
   }
@@ -1016,10 +1060,19 @@ function getTradeId(){
     );
 
 
-  return (
+  const tradeId =
     params.get("trade_id") ||
-    params.get("id")
-  );
+    params.get("id");
+
+
+  if(!tradeId){
+
+    return null;
+
+  }
+
+
+  return tradeId.trim();
 
 }
 
@@ -1062,7 +1115,7 @@ async function loadTrade(){
   if(error){
 
     console.error(
-      "Load trade:",
+      "LOAD TRADE:",
       error
     );
 
@@ -1075,12 +1128,25 @@ async function loadTrade(){
   }
 
 
-  if(
-    String(data.buyer_id) !==
-      String(currentUser.id) &&
-    String(data.seller_id) !==
-      String(currentUser.id)
-  ){
+  if(!data){
+
+    showError(
+      "Trade was not found."
+    );
+
+    return;
+
+  }
+
+
+  const isParticipant =
+    String(data.buyer_id) ===
+      String(currentUser.id) ||
+    String(data.seller_id) ===
+      String(currentUser.id);
+
+
+  if(!isParticipant){
 
     showError(
       "You are not a participant in this trade."
@@ -1126,14 +1192,14 @@ function renderTrade(){
 
 
   const status =
-    String(
-      currentTrade.status ||
-      "pending"
-    ).toLowerCase();
+    getTradeStatus(
+      currentTrade
+    );
 
 
   const tradeNumber =
     currentTrade.trade_number ||
+    currentTrade.order_number ||
     currentTrade.id;
 
 
@@ -1151,7 +1217,7 @@ function renderTrade(){
 
 
   statusElement.textContent =
-    status;
+    formatStatus(status);
 
 
   statusElement.className =
@@ -1181,19 +1247,17 @@ function renderDetails(){
 
 
   const amount =
-    Number(
-      trade.amount ||
-      trade.trade_amount ||
-      0
-    ) || 0;
+    getNumber(
+      trade.amount,
+      trade.trade_amount
+    );
 
 
   const price =
-    Number(
-      trade.price ||
-      trade.unit_price ||
-      0
-    ) || 0;
+    getNumber(
+      trade.price,
+      trade.unit_price
+    );
 
 
   const pair =
@@ -1221,31 +1285,13 @@ function renderDetails(){
       : "seller";
 
 
-  let tradeValue =
-    Number(
-      trade.trade_value
+  const tradeValue =
+    calculateTradeValue(
+      trade,
+      amount,
+      price,
+      pair
     );
-
-
-  if(
-    !Number.isFinite(tradeValue)
-  ){
-
-    if(
-      pair.startsWith("USDT")
-    ){
-
-      tradeValue =
-        amount * price;
-
-    }else{
-
-      tradeValue =
-        amount;
-
-    }
-
-  }
 
 
   document.getElementById(
@@ -1289,9 +1335,9 @@ function renderDetails(){
       <strong>
         ${money(amount)}
         ${
-          pair.startsWith("USDT")
-            ? "USDT"
-            : "ETB"
+          pairStartsWithUSDT(pair)
+            ? " USDT"
+            : " ETB"
         }
       </strong>
 
@@ -1305,8 +1351,7 @@ function renderDetails(){
       </span>
 
       <strong>
-        ${money(price)}
-        ETB
+        ${money(price)} ETB
       </strong>
 
     </div>
@@ -1336,8 +1381,7 @@ function renderDetails(){
       </span>
 
       <strong>
-        ${money(tradeValue)}
-        ETB
+        ${money(tradeValue)} ETB
       </strong>
 
     </div>
@@ -1358,77 +1402,61 @@ function renderFee(){
 
 
   const amount =
-    Number(
-      trade.amount ||
-      trade.trade_amount ||
-      0
-    ) || 0;
+    getNumber(
+      trade.amount,
+      trade.trade_amount
+    );
 
 
   const price =
-    Number(
-      trade.price ||
-      trade.unit_price ||
-      0
-    ) || 0;
+    getNumber(
+      trade.price,
+      trade.unit_price
+    );
 
 
   const pair =
     formatPair(trade);
 
 
-  let tradeValue =
-    Number(
-      trade.trade_value
+  const tradeValue =
+    calculateTradeValue(
+      trade,
+      amount,
+      price,
+      pair
     );
 
 
-  if(
-    !Number.isFinite(tradeValue)
-  ){
+  /*
+    Prefer the value calculated/stored by the backend.
 
-    if(
-      pair.startsWith("USDT")
-    ){
-
-      tradeValue =
-        amount * price;
-
-    }else{
-
-      tradeValue =
-        amount;
-
-    }
-
-  }
-
+    The frontend fallback exists only so the page does
+    not display blank values if an older trade does not
+    contain platform_fee/total_amount.
+  */
 
   const backendFee =
-    Number(
+    toFiniteNumber(
       trade.platform_fee
     );
 
 
   const fee =
-    Number.isFinite(
-      backendFee
-    )
+    backendFee !== null
       ? backendFee
       : tradeValue *
         PLATFORM_FEE_RATE;
 
 
   const backendTotal =
-    Number(
+    toFiniteNumber(
       trade.total_amount
     );
 
 
   const total =
-    Number.isFinite(
-      backendTotal
-    )
+    backendTotal !== null
       ? backendTotal
       : tradeValue + fee;
 
@@ -1468,6 +1496,18 @@ function renderExpiry(){
     );
 
 
+  if(expiryTimer){
+
+    clearInterval(
+      expiryTimer
+    );
+
+    expiryTimer =
+      null;
+
+  }
+
+
   if(!currentTrade.expires_at){
 
     box.style.display =
@@ -1485,16 +1525,7 @@ function renderExpiry(){
   updateExpiry();
 
 
-  if(window.expiryTimer){
-
-    clearInterval(
-      window.expiryTimer
-    );
-
-  }
-
-
-  window.expiryTimer =
+  expiryTimer =
     setInterval(
       updateExpiry,
       1000
@@ -1540,6 +1571,20 @@ function updateExpiry(){
     document.getElementById(
       "expiryText"
     );
+
+
+  if(
+    !Number.isFinite(
+      difference
+    )
+  ){
+
+    box.style.display =
+      "none";
+
+    return;
+
+  }
 
 
   if(difference <= 0){
@@ -1606,15 +1651,22 @@ function renderActions(){
     );
 
 
+  if(!currentTrade || !currentUser){
+
+    container.innerHTML =
+      "";
+
+    return;
+
+  }
+
+
   const trade =
     currentTrade;
 
 
   const status =
-    String(
-      trade.status ||
-      "pending"
-    ).toLowerCase();
+    getTradeStatus(trade);
 
 
   const isBuyer =
@@ -1636,19 +1688,11 @@ function renderActions(){
 
 
   const paid =
-    Boolean(
-      trade.buyer_paid ||
-      trade.payment_confirmed ||
-      trade.payment_status ===
-        "paid"
-    );
+    isBuyerPaid(trade);
 
 
   const expired =
-    trade.expires_at &&
-    new Date(
-      trade.expires_at
-    ) < new Date();
+    isTradeExpired(trade);
 
 
   let html = "";
@@ -1669,7 +1713,9 @@ function renderActions(){
   `;
 
 
-  /* FINISHED */
+  /*
+    Terminal states.
+  */
 
   if(
     expired ||
@@ -1689,7 +1735,41 @@ function renderActions(){
   }
 
 
-  /* BUYER NOT PAID */
+  /*
+    DISPUTED:
+    Do not show normal payment/release actions.
+  */
+
+  if(
+    status ===
+    "disputed"
+  ){
+
+    html += `
+
+      <div
+        class="info"
+        style="margin-top:9px;">
+
+        ⚠️ This trade is under dispute.
+        Normal payment and release actions are
+        temporarily unavailable.
+
+      </div>
+
+    `;
+
+    container.innerHTML =
+      html;
+
+    return;
+
+  }
+
+
+  /*
+    BUYER HAS NOT CONFIRMED PAYMENT
+  */
 
   if(
     isBuyer &&
@@ -1699,12 +1779,14 @@ function renderActions(){
     html += `
 
       <button
+        id="paymentBtn"
         class="action payment-btn"
         onclick="confirmBuyerPayment()">
 
         💰 I Have Paid
 
       </button>
+
 
       <button
         class="action dispute-btn"
@@ -1713,6 +1795,7 @@ function renderActions(){
         ⚠️ Open Dispute
 
       </button>
+
 
       <button
         class="action cancel-btn"
@@ -1727,7 +1810,9 @@ function renderActions(){
   }
 
 
-  /* SELLER AFTER PAYMENT */
+  /*
+    SELLER AFTER BUYER PAYMENT
+  */
 
   if(
     isSeller &&
@@ -1737,12 +1822,14 @@ function renderActions(){
     html += `
 
       <button
+        id="releaseBtn"
         class="action release-btn"
         onclick="releaseTrade()">
 
         💵 Release Trade
 
       </button>
+
 
       <button
         class="action dispute-btn"
@@ -1757,7 +1844,9 @@ function renderActions(){
   }
 
 
-  /* BUYER AFTER PAYMENT */
+  /*
+    BUYER AFTER PAYMENT
+  */
 
   if(
     isBuyer &&
@@ -1765,6 +1854,16 @@ function renderActions(){
   ){
 
     html += `
+
+      <div
+        class="info"
+        style="margin-top:9px;">
+
+        ✅ Payment has been confirmed.
+        Waiting for the seller to release the trade.
+
+      </div>
+
 
       <button
         class="action dispute-btn"
@@ -1791,17 +1890,9 @@ function renderActions(){
 
 async function confirmBuyerPayment(){
 
-  if(!currentTrade){
-
-    return;
-
-  }
-
-
   if(
-    !confirm(
-      "Confirm that you have paid the seller?"
-    )
+    !currentTrade ||
+    actionBusy
   ){
 
     return;
@@ -1809,40 +1900,92 @@ async function confirmBuyerPayment(){
   }
 
 
-  const {
-    error
-  } =
-  await supabaseClient.rpc(
-    "buyer_confirm_payment",
-    {
-      p_trade_id:
-        currentTrade.id
-    }
-  );
-
-
-  if(error){
-
-    console.error(
-      "Payment:",
-      error
-    );
+  if(
+    isTradeExpired(
+      currentTrade
+    )
+  ){
 
     toast(
-      error.message
+      "This trade has expired."
     );
+
+    await reloadTrade();
 
     return;
 
   }
 
 
-  toast(
-    "Payment confirmed."
+  const confirmed =
+    confirm(
+      "Confirm that you have paid the seller?"
+    );
+
+
+  if(!confirmed){
+
+    return;
+
+  }
+
+
+  actionBusy =
+    true;
+
+
+  setButtonBusy(
+    "paymentBtn",
+    "Confirming..."
   );
 
 
-  await reloadTrade();
+  try{
+
+    const {
+      error
+    } =
+    await supabaseClient.rpc(
+      "buyer_confirm_payment",
+      {
+        p_trade_id:
+          currentTrade.id
+      }
+    );
+
+
+    if(error){
+
+      console.error(
+        "BUYER PAYMENT:",
+        error
+      );
+
+      toast(
+        friendlyError(
+          error,
+          "Payment confirmation failed."
+        )
+      );
+
+      return;
+
+    }
+
+
+    toast(
+      "Payment confirmed."
+    );
+
+
+    await reloadTrade();
+
+  }finally{
+
+    actionBusy =
+      false;
+
+  }
 
 }
 
@@ -1853,7 +1996,27 @@ async function confirmBuyerPayment(){
 
 async function releaseTrade(){
 
-  if(!currentTrade){
+  if(
+    !currentTrade ||
+    actionBusy
+  ){
+
+    return;
+
+  }
+
+
+  if(
+    isTradeExpired(
+      currentTrade
+    )
+  ){
+
+    toast(
+      "This trade has expired."
+    );
+
+    await reloadTrade();
 
     return;
 
@@ -1871,40 +2034,62 @@ async function releaseTrade(){
   }
 
 
-  const {
-    error
-  } =
-  await supabaseClient.rpc(
-    "seller_release_trade",
-    {
-      p_trade_id:
-        currentTrade.id
-    }
+  actionBusy =
+    true;
+
+
+  setButtonBusy(
+    "releaseBtn",
+    "Releasing..."
   );
 
 
-  if(error){
+  try{
 
-    console.error(
-      "Release:",
+    const {
       error
+    } =
+    await supabaseClient.rpc(
+      "seller_release_trade",
+      {
+        p_trade_id:
+          currentTrade.id
+      }
     );
+
+
+    if(error){
+
+      console.error(
+        "SELLER RELEASE:",
+        error
+      );
+
+      toast(
+        friendlyError(
+          error,
+          "Trade release failed."
+        )
+      );
+
+      return;
+
+    }
+
 
     toast(
-      error.message
+      "Trade released successfully."
     );
 
-    return;
+
+    await reloadTrade();
+
+  }finally{
+
+    actionBusy =
+      false;
 
   }
-
-
-  toast(
-    "Trade released successfully."
-  );
-
-
-  await reloadTrade();
 
 }
 
@@ -1915,7 +2100,27 @@ async function releaseTrade(){
 
 async function cancelTrade(){
 
-  if(!currentTrade){
+  if(
+    !currentTrade ||
+    actionBusy
+  ){
+
+    return;
+
+  }
+
+
+  if(
+    isTradeExpired(
+      currentTrade
+    )
+  ){
+
+    toast(
+      "This trade has expired."
+    );
+
+    await reloadTrade();
 
     return;
 
@@ -1933,45 +2138,56 @@ async function cancelTrade(){
   }
 
 
-  /*
-    The database function decides whether
-    the current user is authorized to cancel.
-  */
-
-  const {
-    error
-  } =
-  await supabaseClient.rpc(
-    "buyer_cancel_trade",
-    {
-      p_trade_id:
-        currentTrade.id
-    }
-  );
+  actionBusy =
+    true;
 
 
-  if(error){
+  try{
 
-    console.error(
-      "Cancel:",
+    const {
       error
+    } =
+    await supabaseClient.rpc(
+      "buyer_cancel_trade",
+      {
+        p_trade_id:
+          currentTrade.id
+      }
     );
+
+
+    if(error){
+
+      console.error(
+        "CANCEL TRADE:",
+        error
+      );
+
+      toast(
+        friendlyError(
+          error,
+          "Trade cancellation failed."
+        )
+      );
+
+      return;
+
+    }
+
 
     toast(
-      error.message
+      "Trade cancelled."
     );
 
-    return;
+
+    await reloadTrade();
+
+  }finally{
+
+    actionBusy =
+      false;
 
   }
-
-
-  toast(
-    "Trade cancelled."
-  );
-
-
-  await reloadTrade();
 
 }
 
@@ -1982,7 +2198,25 @@ async function cancelTrade(){
 
 function openDispute(){
 
-  if(!currentTrade){
+  if(
+    !currentTrade ||
+    actionBusy
+  ){
+
+    return;
+
+  }
+
+
+  if(
+    isTradeExpired(
+      currentTrade
+    )
+  ){
+
+    toast(
+      "This trade has expired."
+    );
 
     return;
 
@@ -1995,11 +2229,24 @@ function openDispute(){
 
   document.getElementById(
     "disputeReason"
-  ).value = "";
+  ).value =
+    "";
 
 
   openModal(
     "disputeModal"
+  );
+
+
+  setTimeout(
+    function(){
+
+      document.getElementById(
+        "disputeReason"
+      ).focus();
+
+    },
+    50
   );
 
 }
@@ -2007,21 +2254,24 @@ function openDispute(){
 
 async function submitDispute(){
 
-  if(!selectedTradeId){
-
-    toast(
-      "Trade not selected."
-    );
+  if(
+    !selectedTradeId ||
+    actionBusy
+  ){
 
     return;
 
   }
 
 
-  const reason =
+  const textarea =
     document.getElementById(
       "disputeReason"
-    ).value.trim();
+    );
+
+
+  const reason =
+    textarea.value.trim();
 
 
   if(!reason){
@@ -2030,57 +2280,99 @@ async function submitDispute(){
       "Please explain the problem."
     );
 
+    textarea.focus();
+
     return;
 
   }
 
 
-  const {
-    error
-  } =
-  await supabaseClient.rpc(
-    "open_p2p_dispute",
-    {
-      p_trade_id:
-        selectedTradeId,
-
-      p_reason:
-        reason
-    }
-  );
-
-
-  if(error){
-
-    console.error(
-      "Dispute:",
-      error
-    );
+  if(reason.length < 5){
 
     toast(
-      error.message
+      "Please provide a little more detail."
     );
+
+    textarea.focus();
 
     return;
 
   }
 
 
-  closeModal(
-    "disputeModal"
+  actionBusy =
+    true;
+
+
+  setButtonBusy(
+    "submitDisputeBtn",
+    "Opening..."
   );
 
 
-  selectedTradeId =
-    null;
+  try{
+
+    const {
+      error
+    } =
+    await supabaseClient.rpc(
+      "open_p2p_dispute",
+      {
+        p_trade_id:
+          selectedTradeId,
+
+        p_reason:
+          reason
+      }
+    );
 
 
-  toast(
-    "Dispute opened."
-  );
+    if(error){
+
+      console.error(
+        "OPEN DISPUTE:",
+        error
+      );
+
+      toast(
+        friendlyError(
+          error,
+          "Could not open the dispute."
+        )
+      );
+
+      return;
+
+    }
 
 
-  await reloadTrade();
+    closeModal(
+      "disputeModal"
+    );
+
+
+    selectedTradeId =
+      null;
+
+
+    toast(
+      "Dispute opened."
+    );
+
+
+    await reloadTrade();
+
+  }finally{
+
+    actionBusy =
+      false;
+
+    resetButton(
+      "submitDisputeBtn",
+      "Open Dispute"
+    );
+
+  }
 
 }
 
@@ -2091,20 +2383,15 @@ async function submitDispute(){
 
 function openMessage(){
 
-  if(!currentTrade){
+  if(
+    !currentTrade ||
+    !currentUser
+  ){
 
     return;
 
   }
 
-
-  /*
-    The trade participant ID is used to open
-    the messaging page.
-
-    Adjust message.html parameter names if your
-    existing messaging page uses another format.
-  */
 
   const isBuyer =
     String(
@@ -2132,15 +2419,23 @@ function openMessage(){
   }
 
 
+  const userParam =
+    encodeURIComponent(
+      String(otherUserId)
+    );
+
+
+  const tradeParam =
+    encodeURIComponent(
+      String(currentTrade.id)
+    );
+
+
   window.location.href =
     "message.html?user_id=" +
-    encodeURIComponent(
-      otherUserId
-    ) +
+    userParam +
     "&trade_id=" +
-    encodeURIComponent(
-      currentTrade.id
-    );
+    tradeParam;
 
 }
 
@@ -2148,9 +2443,6 @@ function openMessage(){
 /* =====================================================
    REALTIME
 ===================================================== */
-
-let realtimeChannel = null;
-
 
 function setupRealtime(){
 
@@ -2167,6 +2459,9 @@ function setupRealtime(){
       realtimeChannel
     );
 
+    realtimeChannel =
+      null;
+
   }
 
 
@@ -2174,7 +2469,7 @@ function setupRealtime(){
     supabaseClient
       .channel(
         "p2p-order-" +
-        currentTrade.id
+        String(currentTrade.id)
       )
 
       .on(
@@ -2185,7 +2480,7 @@ function setupRealtime(){
           table:"p2p_trades",
           filter:
             "id=eq." +
-            currentTrade.id
+            String(currentTrade.id)
         },
         function(){
 
@@ -2194,7 +2489,16 @@ function setupRealtime(){
         }
       )
 
-      .subscribe();
+      .subscribe(
+        function(status){
+
+          console.log(
+            "P2P realtime:",
+            status
+          );
+
+        }
+      );
 
 }
 
@@ -2205,11 +2509,18 @@ function setupRealtime(){
 
 async function reloadTrade(){
 
-  if(!currentTrade){
+  if(
+    !currentTrade ||
+    !currentUser
+  ){
 
     return;
 
   }
+
+
+  const tradeId =
+    currentTrade.id;
 
 
   const {
@@ -2221,7 +2532,7 @@ async function reloadTrade(){
     .select("*")
     .eq(
       "id",
-      currentTrade.id
+      tradeId
     )
     .single();
 
@@ -2229,7 +2540,33 @@ async function reloadTrade(){
   if(error){
 
     console.error(
+      "RELOAD TRADE:",
       error
+    );
+
+    return;
+
+  }
+
+
+  if(!data){
+
+    return;
+
+  }
+
+
+  const isParticipant =
+    String(data.buyer_id) ===
+      String(currentUser.id) ||
+    String(data.seller_id) ===
+      String(currentUser.id);
+
+
+  if(!isParticipant){
+
+    showError(
+      "You are not a participant in this trade."
     );
 
     return;
@@ -2242,6 +2579,17 @@ async function reloadTrade(){
 
 
   renderTrade();
+
+
+  /*
+    Re-create realtime subscription if necessary.
+  */
+
+  if(!realtimeChannel){
+
+    setupRealtime();
+
+  }
 
 }
 
@@ -2317,21 +2665,76 @@ document.addEventListener(
 
 
 /* =====================================================
+   ESC KEY
+===================================================== */
+
+document.addEventListener(
+  "keydown",
+  function(event){
+
+    if(
+      event.key ===
+      "Escape"
+    ){
+
+      closeModal(
+        "disputeModal"
+      );
+
+    }
+
+  }
+);
+
+
+/* =====================================================
    ERROR
 ===================================================== */
 
 function showError(message){
 
+  if(expiryTimer){
+
+    clearInterval(
+      expiryTimer
+    );
+
+    expiryTimer =
+      null;
+
+  }
+
+
+  const safeMessage =
+    escapeHtml(
+      message ||
+      "Something went wrong."
+    );
+
+
+  document.getElementById(
+    "tradeContent"
+  ).style.display =
+    "none";
+
+
+  document.getElementById(
+    "loading"
+  ).style.display =
+    "block";
+
+
   document.getElementById(
     "loading"
   ).innerHTML = `
 
-    <div style="font-size:32px;margin-bottom:10px;">
+    <div
+      style="font-size:32px;margin-bottom:10px;">
       ⚠️
     </div>
 
     <strong>
-      ${escapeHtml(message)}
+      ${safeMessage}
     </strong>
 
     <br><br>
@@ -2353,9 +2756,6 @@ function showError(message){
    TOAST
 ===================================================== */
 
-let toastTimer = null;
-
-
 function toast(message){
 
   const element =
@@ -2364,8 +2764,16 @@ function toast(message){
     );
 
 
+  if(!element){
+
+    return;
+
+  }
+
+
   element.textContent =
-    message;
+    message ||
+    "";
 
 
   element.classList.add(
@@ -2394,74 +2802,119 @@ function toast(message){
 
 
 /* =====================================================
-   HELPERS
+   BUTTON STATE
 ===================================================== */
 
-function formatPair(trade){
+function setButtonBusy(
+  id,
+  text
+){
 
-  const pair =
-    String(
-      trade.pair ||
-      trade.trading_pair ||
-      ""
-    );
-
-
-  if(pair === "USDT_ETB"){
-
-    return "USDT / ETB";
-
-  }
+  const button =
+    document.getElementById(id);
 
 
-  if(pair === "ETB_ETB"){
+  if(!button){
 
-    return "ETB / ETB";
+    return;
 
   }
 
 
-  if(pair.includes("_")){
+  if(
+    !button.dataset.originalText
+  ){
 
-    return pair.replace(
-      "_",
-      " / "
-    );
+    button.dataset.originalText =
+      button.textContent.trim();
 
   }
 
 
-  return pair ||
-    "P2P";
+  button.disabled =
+    true;
+
+
+  button.textContent =
+    text;
 
 }
 
 
-function money(value){
+function resetButton(
+  id,
+  fallbackText
+){
 
-  const number =
-    Number(value);
+  const button =
+    document.getElementById(id);
 
 
-  if(!Number.isFinite(number)){
+  if(!button){
 
-    return "0.00";
+    return;
 
   }
 
 
-  return number.toLocaleString(
-    undefined,
-    {
-      minimumFractionDigits:2,
-      maximumFractionDigits:2
-    }
-  );
+  button.disabled =
+    false;
+
+
+  button.textContent =
+    button.dataset.originalText ||
+    fallbackText;
 
 }
 
 
-function statusClass(status){
+/* =====================================================
+   TRADE STATUS
+===================================================== */
+
+function getTradeStatus(
+  trade
+){
+
+  return String(
+    trade.status ||
+    "pending"
+  )
+  .trim()
+  .toLowerCase();
+
+}
+
+
+function formatStatus(
+  status
+){
+
+  if(!status){
+
+    return "Pending";
+
+  }
+
+
+  return status
+    .replace(
+      /_/g,
+      " "
+    )
+    .replace(
+      /\b\w/g,
+      function(char){
+        return char.toUpperCase();
+      }
+    );
+
+}
+
+
+function statusClass(
+  status
+){
 
   const value =
     String(
@@ -2496,7 +2949,8 @@ function statusClass(status){
 
 
   if(
-    value === "disputed"
+    value ===
+    "disputed"
   ){
 
     return "disputed";
@@ -2521,7 +2975,414 @@ function statusClass(status){
 }
 
 
-function escapeHtml(value){
+/* =====================================================
+   PAYMENT STATUS
+===================================================== */
+
+function isBuyerPaid(
+  trade
+){
+
+  if(
+    trade.buyer_paid ===
+    true
+  ){
+
+    return true;
+
+  }
+
+
+  if(
+    trade.payment_confirmed ===
+    true
+  ){
+
+    return true;
+
+  }
+
+
+  const paymentStatus =
+    String(
+      trade.payment_status ||
+      ""
+    )
+    .trim()
+    .toLowerCase();
+
+
+  return [
+    "paid",
+    "confirmed",
+    "payment_confirmed"
+  ].includes(
+    paymentStatus
+  );
+
+}
+
+
+/* =====================================================
+   EXPIRATION CHECK
+===================================================== */
+
+function isTradeExpired(
+  trade
+){
+
+  if(!trade){
+
+    return false;
+
+  }
+
+
+  const status =
+    getTradeStatus(
+      trade
+    );
+
+
+  if(
+    [
+      "expired",
+      "cancelled",
+      "completed",
+      "released"
+    ].includes(status)
+  ){
+
+    return status ===
+      "expired";
+
+  }
+
+
+  if(!trade.expires_at){
+
+    return false;
+
+  }
+
+
+  const expiry =
+    new Date(
+      trade.expires_at
+    );
+
+
+  if(
+    !Number.isFinite(
+      expiry.getTime()
+    )
+  ){
+
+    return false;
+
+  }
+
+
+  return expiry.getTime() <=
+    Date.now();
+
+}
+
+
+/* =====================================================
+   TRADE VALUE
+===================================================== */
+
+function calculateTradeValue(
+  trade,
+  amount,
+  price,
+  pair
+){
+
+  const stored =
+    toFiniteNumber(
+      trade.trade_value
+    );
+
+
+  if(
+    stored !== null &&
+    stored >= 0
+  ){
+
+    return stored;
+
+  }
+
+
+  /*
+    USDT/ETB:
+    amount × price
+
+    Other pairs:
+    use amount as ETB value unless the database
+    already supplied trade_value.
+  */
+
+  if(
+    pairStartsWithUSDT(
+      pair
+    )
+  ){
+
+    return amount * price;
+
+  }
+
+
+  return amount;
+
+}
+
+
+/* =====================================================
+   PAIR
+===================================================== */
+
+function formatPair(
+  trade
+){
+
+  const raw =
+    String(
+      trade.pair ||
+      trade.trading_pair ||
+      ""
+    )
+    .trim();
+
+
+  if(
+    raw ===
+    "USDT_ETB"
+  ){
+
+    return "USDT / ETB";
+
+  }
+
+
+  if(
+    raw ===
+    "ETB_USDT"
+  ){
+
+    return "ETB / USDT";
+
+  }
+
+
+  if(
+    raw ===
+    "ETB_ETB"
+  ){
+
+    return "ETB / ETB";
+
+  }
+
+
+  if(
+    raw.includes("_")
+  ){
+
+    return raw
+      .split("_")
+      .join(" / ");
+
+  }
+
+
+  if(
+    raw.includes("/")
+  ){
+
+    return raw
+      .replace(
+        /\s*\/\s*/g,
+        " / "
+      );
+
+  }
+
+
+  return raw ||
+    "P2P";
+
+}
+
+
+function pairStartsWithUSDT(
+  pair
+){
+
+  return String(
+    pair || ""
+  )
+  .trim()
+  .toUpperCase()
+  .startsWith(
+    "USDT"
+  );
+
+}
+
+
+/* =====================================================
+   NUMBER HELPERS
+===================================================== */
+
+function getNumber(
+  first,
+  second
+){
+
+  const firstNumber =
+    toFiniteNumber(
+      first
+    );
+
+
+  if(
+    firstNumber !== null
+  ){
+
+    return firstNumber;
+
+  }
+
+
+  const secondNumber =
+    toFiniteNumber(
+      second
+    );
+
+
+  if(
+    secondNumber !== null
+  ){
+
+    return secondNumber;
+
+  }
+
+
+  return 0;
+
+}
+
+
+function toFiniteNumber(
+  value
+){
+
+  if(
+    value === null ||
+    value === undefined ||
+    value === ""
+  ){
+
+    return null;
+
+  }
+
+
+  const number =
+    Number(value);
+
+
+  if(
+    !Number.isFinite(
+      number
+    )
+  ){
+
+    return null;
+
+  }
+
+
+  return number;
+
+}
+
+
+function money(
+  value
+){
+
+  const number =
+    toFiniteNumber(
+      value
+    );
+
+
+  if(
+    number === null
+  ){
+
+    return "0.00";
+
+  }
+
+
+  return number.toLocaleString(
+    undefined,
+    {
+      minimumFractionDigits:2,
+      maximumFractionDigits:2
+    }
+  );
+
+}
+
+
+/* =====================================================
+   ERROR MESSAGE
+===================================================== */
+
+function friendlyError(
+  error,
+  fallback
+){
+
+  if(
+    !error
+  ){
+
+    return fallback;
+
+  }
+
+
+  const message =
+    String(
+      error.message ||
+      error.details ||
+      error.hint ||
+      ""
+    ).trim();
+
+
+  return message ||
+    fallback;
+
+}
+
+
+/* =====================================================
+   HTML SECURITY
+===================================================== */
+
+function escapeHtml(
+  value
+){
 
   return String(
     value ?? ""
@@ -2548,6 +3409,35 @@ function escapeHtml(value){
   );
 
 }
+
+
+/* =====================================================
+   PAGE CLEANUP
+===================================================== */
+
+window.addEventListener(
+  "beforeunload",
+  function(){
+
+    if(expiryTimer){
+
+      clearInterval(
+        expiryTimer
+      );
+
+    }
+
+
+    if(realtimeChannel){
+
+      supabaseClient.removeChannel(
+        realtimeChannel
+      );
+
+    }
+
+  }
+);
 
 </script>
 

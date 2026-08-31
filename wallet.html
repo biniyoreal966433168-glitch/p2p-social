@@ -287,6 +287,10 @@ header{
   background:linear-gradient(135deg,#a91f3d,#d72c50);
 }
 
+/* =====================================================
+   PLATFORM FEE
+===================================================== */
+
 .fee-card{
   margin-top:14px;
   background:#f7fbfa;
@@ -855,10 +859,6 @@ header{
 </div>
 
 
-<!-- =====================================================
-     P2P TRADE NAVIGATION
-===================================================== -->
-
 <section class="card">
 
   <div class="order-tabs">
@@ -866,21 +866,15 @@ header{
     <button
       id="buyOrderTab"
       class="order-tab active buy"
-      type="button"
-      onclick="openP2PTrade('buy')">
-
+      onclick="setOrderType('buy')">
       🟢 Buy
-
     </button>
 
     <button
       id="sellOrderTab"
       class="order-tab"
-      type="button"
-      onclick="openP2PTrade('sell')">
-
+      onclick="setOrderType('sell')">
       🔴 Sell
-
     </button>
 
   </div>
@@ -892,7 +886,8 @@ header{
 
     <select
       id="pair"
-      class="select-box">
+      class="select-box"
+      onchange="updateCurrency(); updateFeePreview();">
 
       <option value="USDT_ETB">
         USDT / ETB
@@ -907,50 +902,152 @@ header{
   </div>
 
 
-  <div
-    style="
-      background:#f7fbfa;
-      border:1px solid #d7ebe7;
-      border-radius:13px;
-      padding:16px;
-      margin-bottom:14px;
-    ">
+  <div class="field">
 
-    <strong style="display:block;margin-bottom:7px;">
-      🤝 P2P Trading
-    </strong>
+    <label>Amount</label>
 
-    <div
-      style="
-        color:#71808a;
-        font-size:13px;
-        line-height:1.5;
-      ">
+    <div class="input-box">
 
-      Choose Buy or Sell to continue to the P2P trade page.
+      <input
+        id="orderAmount"
+        type="number"
+        min="0"
+        step="0.000001"
+        placeholder="0.00"
+        oninput="updateFeePreview()">
+
+      <span
+        id="amountCurrency"
+        class="currency">
+        USDT
+      </span>
 
     </div>
 
   </div>
 
 
+  <div class="field">
+
+    <label>Price</label>
+
+    <div class="input-box">
+
+      <input
+        id="orderPrice"
+        type="number"
+        min="0"
+        step="0.01"
+        placeholder="0.00"
+        oninput="updateFeePreview()">
+
+      <span class="currency">
+        ETB
+      </span>
+
+    </div>
+
+  </div>
+
+
+  <div class="field">
+
+    <label>Payment method</label>
+
+    <select
+      id="paymentMethod"
+      class="select-box">
+
+      <option value="">
+        Select payment method
+      </option>
+
+      <option value="Telebirr">
+        Telebirr
+      </option>
+
+      <option value="CBE">
+        CBE
+      </option>
+
+      <option value="Bank">
+        Bank Transfer
+      </option>
+
+    </select>
+
+  </div>
+
+
+  <!-- PLATFORM FEE -->
+
+  <div class="fee-card">
+
+    <div class="fee-title">
+
+      <strong>
+        💸 Platform Fee
+      </strong>
+
+      <span class="fee-badge">
+        <span id="feeRateText">1%</span>
+      </span>
+
+    </div>
+
+
+    <div class="fee-row">
+
+      <span>
+        Trade value
+      </span>
+
+      <strong id="feeTradeValue">
+        0.00 ETB
+      </strong>
+
+    </div>
+
+
+    <div class="fee-row">
+
+      <span>
+        Platform fee
+      </span>
+
+      <strong id="feeAmount">
+        0.00 ETB
+      </strong>
+
+    </div>
+
+
+    <div class="fee-row fee-total">
+
+      <span>
+        Total
+      </span>
+
+      <strong id="feeTotal">
+        0.00 ETB
+      </strong>
+
+    </div>
+
+
+    <div class="fee-note">
+      Estimated platform fee. The final fee is calculated and enforced by the secure database transaction.
+    </div>
+
+  </div>
+
+
   <button
-    type="button"
+    id="createOrderButton"
     class="create-btn"
-    onclick="openP2PTrade('buy')">
+    onclick="createOrder()">
 
-    🟢 Create Buy Order
-
-  </button>
-
-
-  <button
-    type="button"
-    class="create-btn sell"
-    style="margin-top:10px;"
-    onclick="openP2PTrade('sell')">
-
-    🔴 Create Sell Order
+    Create Buy Order
 
   </button>
 
@@ -982,9 +1079,7 @@ header{
   <button
     class="refresh-btn"
     onclick="loadAll()">
-
     🔄 Refresh
-
   </button>
 
 </div>
@@ -1092,17 +1187,13 @@ header{
       <button
         class="close-btn"
         onclick="closeModal('depositModal')">
-
         Cancel
-
       </button>
 
       <button
         class="confirm-btn"
         onclick="submitDeposit()">
-
         Submit Deposit
-
       </button>
 
     </div>
@@ -1166,17 +1257,13 @@ header{
       <button
         class="close-btn"
         onclick="closeModal('withdrawModal')">
-
         Cancel
-
       </button>
 
       <button
         class="confirm-btn"
         onclick="submitWithdraw()">
-
         Request Withdraw
-
       </button>
 
     </div>
@@ -1206,8 +1293,10 @@ header{
       min="0"
       step="0.000001"
       placeholder="Trade amount"
-      oninput="updateTradeFeePreview">
+      oninput="updateTradeFeePreview()">
 
+
+    <!-- TRADE PLATFORM FEE -->
 
     <div
       id="tradeFeePreview"
@@ -1272,17 +1361,13 @@ header{
       <button
         class="close-btn"
         onclick="closeModal('tradeModal')">
-
         Cancel
-
       </button>
 
       <button
         class="confirm-btn"
         onclick="submitTrade()">
-
         Create Trade
-
       </button>
 
     </div>
@@ -1314,17 +1399,13 @@ header{
       <button
         class="close-btn"
         onclick="closeModal('disputeModal')">
-
         Cancel
-
       </button>
 
       <button
         class="confirm-btn"
         onclick="submitDispute()">
-
         Open Dispute
-
       </button>
 
     </div>
@@ -1343,42 +1424,32 @@ header{
 <nav class="bottom-nav">
 
   <a href="index.html">
-
     <span class="nav-icon">🏠</span>
     Home
-
   </a>
 
   <a
     href="live.html"
     class="live-nav">
-
     <span class="nav-icon">🔴</span>
     Live
-
   </a>
 
   <a
     href="wallet.html"
     class="active">
-
     <span class="nav-icon">🔄</span>
     P2P
-
   </a>
 
   <a href="message.html">
-
     <span class="nav-icon">💬</span>
     Messages
-
   </a>
 
   <a href="profile.html">
-
     <span class="nav-icon">👤</span>
     Profile
-
   </a>
 
 </nav>
@@ -1404,8 +1475,18 @@ const supabaseClient =
 
 
 /* =====================================================
-   PLATFORM FEE
+   PLATFORM FEE SETTINGS
 ===================================================== */
+
+/*
+  CHANGE THIS VALUE ONLY IF YOUR DATABASE USES
+  A DIFFERENT PLATFORM FEE RATE.
+
+  Example:
+  0.01 = 1%
+  0.02 = 2%
+  0.005 = 0.5%
+*/
 
 const PLATFORM_FEE_RATE = 0.01;
 
@@ -1417,6 +1498,8 @@ const PLATFORM_FEE_RATE = 0.01;
 let currentSession = null;
 let currentUser = null;
 let currentProfile = null;
+
+let orderType = "buy";
 
 let myOrders = [];
 let availableOrders = [];
@@ -1451,7 +1534,9 @@ async function startApp(){
     if(error){
 
       console.error(error);
+
       showLogin();
+
       return;
 
     }
@@ -1462,12 +1547,17 @@ async function startApp(){
     if(!currentSession){
 
       showLogin();
+
       return;
 
     }
 
     currentUser =
       currentSession.user;
+
+    updateFeeRateText();
+
+    updateFeePreview();
 
     await loadAll();
 
@@ -1495,50 +1585,10 @@ async function startApp(){
 
 function showLogin(){
 
-  alert(
-    "Please login first."
-  );
+  alert("Please login first.");
 
   window.location.href =
     "login.html";
-
-}
-
-
-/* =====================================================
-   OPEN P2P TRADE PAGE
-===================================================== */
-
-function openP2PTrade(type){
-
-  if(
-    type !== "buy" &&
-    type !== "sell"
-  ){
-
-    type = "buy";
-
-  }
-
-  const pairElement =
-    document.getElementById(
-      "pair"
-    );
-
-  const pair =
-    pairElement
-      ? pairElement.value
-      : "USDT_ETB";
-
-  const url =
-    "p2p-trade.html" +
-    "?type=" +
-    encodeURIComponent(type) +
-    "&pair=" +
-    encodeURIComponent(pair);
-
-  window.location.href =
-    url;
 
 }
 
@@ -1550,7 +1600,9 @@ function openP2PTrade(type){
 async function loadProfile(){
 
   if(!currentUser){
+
     return;
+
   }
 
   const {
@@ -1590,7 +1642,9 @@ async function loadProfile(){
 function getProfileBalance(){
 
   if(!currentProfile){
+
     return 0;
+
   }
 
   const possibleValues = [
@@ -1605,10 +1659,7 @@ function getProfileBalance(){
 
   ];
 
-  for(
-    const value
-    of possibleValues
-  ){
+  for(const value of possibleValues){
 
     if(
       value !== null &&
@@ -1619,9 +1670,7 @@ function getProfileBalance(){
       const number =
         Number(value);
 
-      if(
-        Number.isFinite(number)
-      ){
+      if(Number.isFinite(number)){
 
         return number;
 
@@ -1647,7 +1696,9 @@ function updateBalance(){
     );
 
   if(!element){
+
     return;
+
   }
 
   element.textContent =
@@ -1670,7 +1721,9 @@ function updateBalance(){
 async function loadAll(){
 
   if(!currentUser){
+
     return;
+
   }
 
   await loadProfile();
@@ -1691,6 +1744,468 @@ async function loadAll(){
 
 
 /* =====================================================
+   ORDER TYPE
+===================================================== */
+
+function setOrderType(type){
+
+  orderType =
+    type;
+
+  const buy =
+    document.getElementById(
+      "buyOrderTab"
+    );
+
+  const sell =
+    document.getElementById(
+      "sellOrderTab"
+    );
+
+  const button =
+    document.getElementById(
+      "createOrderButton"
+    );
+
+  buy.classList.remove(
+    "active",
+    "buy"
+  );
+
+  sell.classList.remove(
+    "active",
+    "sell"
+  );
+
+  if(type === "buy"){
+
+    buy.classList.add(
+      "active",
+      "buy"
+    );
+
+    button.classList.remove(
+      "sell"
+    );
+
+    button.textContent =
+      "Create Buy Order";
+
+  }else{
+
+    sell.classList.add(
+      "active",
+      "sell"
+    );
+
+    button.classList.add(
+      "sell"
+    );
+
+    button.textContent =
+      "Create Sell Order";
+
+  }
+
+  updateFeePreview();
+
+}
+
+
+/* =====================================================
+   PAIR
+===================================================== */
+
+function updateCurrency(){
+
+  const pair =
+    document.getElementById(
+      "pair"
+    ).value;
+
+  document.getElementById(
+    "amountCurrency"
+  ).textContent =
+    pair === "USDT_ETB"
+      ? "USDT"
+      : "ETB";
+
+}
+
+
+/* =====================================================
+   PLATFORM FEE CALCULATION
+===================================================== */
+
+function calculatePlatformFee(
+  tradeValue
+){
+
+  const value =
+    Number(tradeValue) || 0;
+
+  if(value <= 0){
+
+    return 0;
+
+  }
+
+  return value *
+    PLATFORM_FEE_RATE;
+
+}
+
+
+function calculateTotalWithFee(
+  tradeValue
+){
+
+  const value =
+    Number(tradeValue) || 0;
+
+  const fee =
+    calculatePlatformFee(
+      value
+    );
+
+  return value + fee;
+
+}
+
+
+function updateFeeRateText(){
+
+  const percentage =
+    PLATFORM_FEE_RATE * 100;
+
+  const text =
+    percentage
+      .toLocaleString(
+        undefined,
+        {
+          maximumFractionDigits:4
+        }
+      ) +
+    "%";
+
+  const elements = [
+
+    document.getElementById(
+      "feeRateText"
+    ),
+
+    document.getElementById(
+      "tradeFeeRateText"
+    )
+
+  ];
+
+  elements.forEach(
+    element => {
+
+      if(element){
+
+        element.textContent =
+          text;
+
+      }
+
+    }
+  );
+
+}
+
+
+/* =====================================================
+   ORDER FEE PREVIEW
+===================================================== */
+
+function updateFeePreview(){
+
+  const amountElement =
+    document.getElementById(
+      "orderAmount"
+    );
+
+  const priceElement =
+    document.getElementById(
+      "orderPrice"
+    );
+
+  if(!amountElement ||
+     !priceElement){
+
+    return;
+
+  }
+
+  const amount =
+    Number(
+      amountElement.value
+    ) || 0;
+
+  const price =
+    Number(
+      priceElement.value
+    ) || 0;
+
+  /*
+    For USDT/ETB:
+    trade value = USDT amount × ETB price
+
+    For ETB/ETB:
+    trade value = ETB amount
+  */
+
+  const pair =
+    document.getElementById(
+      "pair"
+    ).value;
+
+  let tradeValue = 0;
+
+  if(pair === "USDT_ETB"){
+
+    tradeValue =
+      amount * price;
+
+  }else{
+
+    tradeValue =
+      amount;
+
+  }
+
+  const fee =
+    calculatePlatformFee(
+      tradeValue
+    );
+
+  const total =
+    calculateTotalWithFee(
+      tradeValue
+    );
+
+
+  const valueElement =
+    document.getElementById(
+      "feeTradeValue"
+    );
+
+  const feeElement =
+    document.getElementById(
+      "feeAmount"
+    );
+
+  const totalElement =
+    document.getElementById(
+      "feeTotal"
+    );
+
+
+  if(valueElement){
+
+    valueElement.textContent =
+      money(tradeValue) +
+      " ETB";
+
+  }
+
+  if(feeElement){
+
+    feeElement.textContent =
+      money(fee) +
+      " ETB";
+
+  }
+
+  if(totalElement){
+
+    totalElement.textContent =
+      money(total) +
+      " ETB";
+
+  }
+
+}
+
+
+/* =====================================================
+   CREATE ORDER
+===================================================== */
+
+async function createOrder(){
+
+  if(!currentUser){
+
+    showLogin();
+
+    return;
+
+  }
+
+  const pair =
+    document.getElementById(
+      "pair"
+    ).value;
+
+  const amount =
+    Number(
+      document.getElementById(
+        "orderAmount"
+      ).value
+    );
+
+  const price =
+    Number(
+      document.getElementById(
+        "orderPrice"
+      ).value
+    );
+
+  const payment =
+    document.getElementById(
+      "paymentMethod"
+    ).value;
+
+
+  if(
+    !Number.isFinite(amount) ||
+    amount <= 0
+  ){
+
+    toast(
+      "Enter a valid amount."
+    );
+
+    return;
+
+  }
+
+
+  if(
+    !Number.isFinite(price) ||
+    price <= 0
+  ){
+
+    toast(
+      "Enter a valid price."
+    );
+
+    return;
+
+  }
+
+
+  if(!payment){
+
+    toast(
+      "Select a payment method."
+    );
+
+    return;
+
+  }
+
+
+  const button =
+    document.getElementById(
+      "createOrderButton"
+    );
+
+  button.disabled =
+    true;
+
+  button.textContent =
+    "Creating...";
+
+
+  try{
+
+    /*
+      The database RPC remains responsible for
+      the actual secure transaction and fee enforcement.
+    */
+
+    const {
+      data,
+      error
+    } =
+    await supabaseClient.rpc(
+      "create_p2p_order",
+      {
+        p_order_type:
+          orderType,
+
+        p_pair:
+          pair,
+
+        p_amount:
+          amount,
+
+        p_price:
+          price,
+
+        p_payment_method:
+          payment
+      }
+    );
+
+
+    if(error){
+
+      console.error(
+        "Create order:",
+        error
+      );
+
+      toast(
+        error.message
+      );
+
+      return;
+
+    }
+
+
+    document.getElementById(
+      "orderAmount"
+    ).value = "";
+
+    document.getElementById(
+      "orderPrice"
+    ).value = "";
+
+    document.getElementById(
+      "paymentMethod"
+    ).value = "";
+
+
+    updateFeePreview();
+
+
+    toast(
+      "Order created successfully."
+    );
+
+
+    await loadAll();
+
+  }finally{
+
+    button.disabled =
+      false;
+
+    setOrderType(
+      orderType
+    );
+
+  }
+
+}
+
+
+/* =====================================================
    MY ORDERS
 ===================================================== */
 
@@ -1702,9 +2217,8 @@ async function loadMyOrders(){
     );
 
   container.innerHTML =
-    `<div class="empty">
-      Loading orders...
-    </div>`;
+    `<div class="empty">Loading orders...</div>`;
+
 
   const {
     data,
@@ -1724,6 +2238,7 @@ async function loadMyOrders(){
       }
     );
 
+
   if(error){
 
     console.error(
@@ -1742,13 +2257,16 @@ async function loadMyOrders(){
 
   }
 
+
   myOrders =
     data || [];
+
 
   document.getElementById(
     "orderCount"
   ).textContent =
     myOrders.length;
+
 
   renderMyOrders();
 
@@ -1778,8 +2296,9 @@ function renderMyOrders(){
 
   }
 
-  container.innerHTML =
-    "";
+
+  container.innerHTML = "";
+
 
   myOrders.forEach(
     order => {
@@ -1800,6 +2319,7 @@ function renderMyOrders(){
           "active"
         ).toLowerCase();
 
+
       const card =
         document.createElement(
           "div"
@@ -1808,12 +2328,14 @@ function renderMyOrders(){
       card.className =
         "market-order";
 
+
       const canCancel =
         [
           "active",
           "open",
           "pending"
         ].includes(status);
+
 
       card.innerHTML = `
 
@@ -1851,9 +2373,8 @@ function renderMyOrders(){
 
           </div>
 
-          <div
-            class="details"
-            style="margin:12px -16px -16px;">
+          <div class="details"
+               style="margin:12px -16px -16px;">
 
             ${detail(
               "Amount",
@@ -1862,8 +2383,7 @@ function renderMyOrders(){
 
             ${detail(
               "Price",
-              money(order.price) +
-              " ETB"
+              money(order.price) + " ETB"
             )}
 
             ${detail(
@@ -1890,9 +2410,7 @@ function renderMyOrders(){
               "Status",
               `<span class="status ${
                 statusClass(status)
-              }">${
-                escapeHtml(status)
-              }</span>`
+              }">${escapeHtml(status)}</span>`
             )}
 
             ${
@@ -1902,9 +2420,7 @@ function renderMyOrders(){
                 class="small-btn cancel-btn"
                 style="width:100%;margin-top:8px;"
                 onclick="cancelOrder('${escapeJs(order.id)}')">
-
                 ❌ Cancel Order
-
               </button>`
               :
               ""
@@ -1915,6 +2431,7 @@ function renderMyOrders(){
         </div>
 
       `;
+
 
       container.appendChild(
         card
@@ -1930,9 +2447,7 @@ function renderMyOrders(){
    CANCEL ORDER
 ===================================================== */
 
-async function cancelOrder(
-  orderId
-){
+async function cancelOrder(orderId){
 
   if(
     !confirm(
@@ -1944,6 +2459,7 @@ async function cancelOrder(
 
   }
 
+
   const {
     error
   } =
@@ -1954,6 +2470,7 @@ async function cancelOrder(
         orderId
     }
   );
+
 
   if(error){
 
@@ -1970,9 +2487,11 @@ async function cancelOrder(
 
   }
 
+
   toast(
     "Order cancelled."
   );
+
 
   await loadAll();
 
@@ -1991,9 +2510,8 @@ async function loadAvailableOffers(){
     );
 
   container.innerHTML =
-    `<div class="empty">
-      Loading offers...
-    </div>`;
+    `<div class="empty">Loading offers...</div>`;
+
 
   const {
     data,
@@ -2021,6 +2539,7 @@ async function loadAvailableOffers(){
       }
     );
 
+
   if(error){
 
     console.error(
@@ -2039,8 +2558,10 @@ async function loadAvailableOffers(){
 
   }
 
+
   availableOrders =
     data || [];
+
 
   renderOffers();
 
@@ -2058,6 +2579,7 @@ function renderOffers(){
       "offers"
     );
 
+
   if(!availableOrders.length){
 
     container.innerHTML =
@@ -2071,8 +2593,9 @@ function renderOffers(){
 
   }
 
-  container.innerHTML =
-    "";
+
+  container.innerHTML = "";
+
 
   availableOrders.forEach(
     order => {
@@ -2087,6 +2610,7 @@ function renderOffers(){
       const pair =
         formatPair(order);
 
+
       const card =
         document.createElement(
           "div"
@@ -2094,6 +2618,7 @@ function renderOffers(){
 
       card.className =
         "offer-card";
+
 
       card.innerHTML = `
 
@@ -2132,6 +2657,7 @@ function renderOffers(){
 
           </div>
 
+
           <div class="offer-amount">
 
             Available:
@@ -2142,6 +2668,7 @@ function renderOffers(){
             </strong>
 
           </div>
+
 
           <button
             class="offer-trade"
@@ -2154,6 +2681,7 @@ function renderOffers(){
         </div>
 
       `;
+
 
       container.appendChild(
         card
@@ -2178,6 +2706,7 @@ function openTrade(orderId){
         String(orderId)
     );
 
+
   if(!selectedOffer){
 
     toast(
@@ -2188,10 +2717,12 @@ function openTrade(orderId){
 
   }
 
+
   const amount =
     Number(
       selectedOffer.amount
     ) || 0;
+
 
   const input =
     document.getElementById(
@@ -2204,13 +2735,13 @@ function openTrade(orderId){
   input.max =
     amount;
 
+
   document.getElementById(
     "tradeSummary"
   ).innerHTML = `
 
-    <div
-      class="details"
-      style="margin-bottom:12px;">
+    <div class="details"
+         style="margin-bottom:12px;">
 
       ${detail(
         "Pair",
@@ -2219,8 +2750,7 @@ function openTrade(orderId){
 
       ${detail(
         "Price",
-        money(selectedOffer.price) +
-        " ETB"
+        money(selectedOffer.price) + " ETB"
       )}
 
       ${detail(
@@ -2239,6 +2769,7 @@ function openTrade(orderId){
 
   `;
 
+
   updateTradeFeePreview();
 
   openModal(
@@ -2249,13 +2780,15 @@ function openTrade(orderId){
 
 
 /* =====================================================
-   TRADE FEE
+   TRADE FEE PREVIEW
 ===================================================== */
 
 function updateTradeFeePreview(){
 
   if(!selectedOffer){
+
     return;
+
   }
 
   const amount =
@@ -2275,8 +2808,7 @@ function updateTradeFeePreview(){
       selectedOffer
     );
 
-  let tradeValue =
-    0;
+  let tradeValue = 0;
 
   if(pair.startsWith("USDT")){
 
@@ -2300,23 +2832,46 @@ function updateTradeFeePreview(){
       tradeValue
     );
 
-  document.getElementById(
-    "tradeValuePreview"
-  ).textContent =
-    money(tradeValue) +
-    " ETB";
 
-  document.getElementById(
-    "tradeFeePreviewAmount"
-  ).textContent =
-    money(fee) +
-    " ETB";
+  const valueElement =
+    document.getElementById(
+      "tradeValuePreview"
+    );
 
-  document.getElementById(
-    "tradeTotalPreview"
-  ).textContent =
-    money(total) +
-    " ETB";
+  const feeElement =
+    document.getElementById(
+      "tradeFeePreviewAmount"
+    );
+
+  const totalElement =
+    document.getElementById(
+      "tradeTotalPreview"
+    );
+
+
+  if(valueElement){
+
+    valueElement.textContent =
+      money(tradeValue) +
+      " ETB";
+
+  }
+
+  if(feeElement){
+
+    feeElement.textContent =
+      money(fee) +
+      " ETB";
+
+  }
+
+  if(totalElement){
+
+    totalElement.textContent =
+      money(total) +
+      " ETB";
+
+  }
 
 }
 
@@ -2337,12 +2892,14 @@ async function submitTrade(){
 
   }
 
+
   const amount =
     Number(
       document.getElementById(
         "tradeAmount"
       ).value
     );
+
 
   if(
     !Number.isFinite(amount) ||
@@ -2357,10 +2914,12 @@ async function submitTrade(){
 
   }
 
+
   const max =
     Number(
       selectedOffer.amount
     );
+
 
   if(amount > max){
 
@@ -2372,6 +2931,11 @@ async function submitTrade(){
 
   }
 
+
+  /*
+    Show the estimated fee before submitting.
+  */
+
   const price =
     Number(
       selectedOffer.price
@@ -2382,8 +2946,7 @@ async function submitTrade(){
       selectedOffer
     );
 
-  let tradeValue =
-    0;
+  let tradeValue = 0;
 
   if(pair.startsWith("USDT")){
 
@@ -2402,17 +2965,24 @@ async function submitTrade(){
       tradeValue
     );
 
+
+  const confirmMessage =
+    "Trade value: " +
+    money(tradeValue) +
+    " ETB\n\n" +
+
+    "Platform fee (" +
+    (PLATFORM_FEE_RATE * 100) +
+    "%): " +
+    money(fee) +
+    " ETB\n\n" +
+
+    "Continue creating this trade?";
+
+
   if(
     !confirm(
-      "Trade value: " +
-      money(tradeValue) +
-      " ETB\n\n" +
-      "Platform fee (" +
-      (PLATFORM_FEE_RATE * 100) +
-      "%): " +
-      money(fee) +
-      " ETB\n\n" +
-      "Continue creating this trade?"
+      confirmMessage
     )
   ){
 
@@ -2420,7 +2990,9 @@ async function submitTrade(){
 
   }
 
+
   const {
+    data,
     error
   } =
   await supabaseClient.rpc(
@@ -2433,6 +3005,7 @@ async function submitTrade(){
         amount
     }
   );
+
 
   if(error){
 
@@ -2449,16 +3022,20 @@ async function submitTrade(){
 
   }
 
+
   closeModal(
     "tradeModal"
   );
 
+
   selectedOffer =
     null;
+
 
   toast(
     "Trade created successfully."
   );
+
 
   await loadAll();
 
@@ -2477,9 +3054,8 @@ async function loadTrades(){
     );
 
   container.innerHTML =
-    `<div class="empty">
-      Loading trades...
-    </div>`;
+    `<div class="empty">Loading trades...</div>`;
+
 
   const {
     data,
@@ -2500,6 +3076,7 @@ async function loadTrades(){
         ascending:false
       }
     );
+
 
   if(error){
 
@@ -2524,13 +3101,16 @@ async function loadTrades(){
 
   }
 
+
   myTrades =
     data || [];
+
 
   document.getElementById(
     "tradeCount"
   ).textContent =
     myTrades.length;
+
 
   renderTrades();
 
@@ -2548,6 +3128,7 @@ function renderTrades(){
       "trades"
     );
 
+
   if(!myTrades.length){
 
     container.innerHTML =
@@ -2560,8 +3141,9 @@ function renderTrades(){
 
   }
 
-  container.innerHTML =
-    "";
+
+  container.innerHTML = "";
+
 
   myTrades.forEach(
     trade => {
@@ -2574,11 +3156,13 @@ function renderTrades(){
       card.className =
         "trade-card";
 
+
       const status =
         String(
           trade.status ||
           "pending"
         ).toLowerCase();
+
 
       const isBuyer =
         String(
@@ -2588,6 +3172,7 @@ function renderTrades(){
           currentUser.id
         );
 
+
       const isSeller =
         String(
           trade.seller_id
@@ -2596,6 +3181,7 @@ function renderTrades(){
           currentUser.id
         );
 
+
       const paid =
         Boolean(
           trade.buyer_paid ||
@@ -2603,11 +3189,13 @@ function renderTrades(){
           trade.payment_status === "paid"
         );
 
+
       const expired =
         trade.expires_at &&
         new Date(
           trade.expires_at
         ) < new Date();
+
 
       card.innerHTML = `
 
@@ -2622,14 +3210,12 @@ function renderTrades(){
               </strong>
 
               <div class="trade-number">
-
                 Trade #${escapeHtml(
                   String(
                     trade.trade_number ||
                     trade.id
                   )
                 )}
-
               </div>
 
             </div>
@@ -2652,6 +3238,7 @@ function renderTrades(){
 
           </div>
 
+
           <div class="trade-info">
 
             ${detail(
@@ -2665,8 +3252,7 @@ function renderTrades(){
                 trade.price ||
                 trade.unit_price ||
                 0
-              ) +
-              " ETB"
+              ) + " ETB"
             )}
 
             ${
@@ -2676,8 +3262,7 @@ function renderTrades(){
                 "Trade value",
                 money(
                   trade.trade_value
-                ) +
-                " ETB"
+                ) + " ETB"
               )
               :
               ""
@@ -2690,8 +3275,7 @@ function renderTrades(){
                 "Platform fee",
                 money(
                   trade.platform_fee
-                ) +
-                " ETB"
+                ) + " ETB"
               )
               :
               ""
@@ -2704,8 +3288,7 @@ function renderTrades(){
                 "Total",
                 money(
                   trade.total_amount
-                ) +
-                " ETB"
+                ) + " ETB"
               )
               :
               ""
@@ -2726,6 +3309,19 @@ function renderTrades(){
             )}
 
             ${
+              trade.trader_commission != null
+              ?
+              detail(
+                "Trader commission",
+                money(
+                  trade.trader_commission
+                ) + " ETB"
+              )
+              :
+              ""
+            }
+
+            ${
               trade.expires_at
               ?
               `<div class="trade-expiry">
@@ -2742,6 +3338,7 @@ function renderTrades(){
 
           </div>
 
+
           ${renderTradeActions(
             trade,
             isBuyer,
@@ -2753,6 +3350,7 @@ function renderTrades(){
         </div>
 
       `;
+
 
       container.appendChild(
         card
@@ -2782,6 +3380,7 @@ function renderTradeActions(
       "pending"
     ).toLowerCase();
 
+
   if(
     expired ||
     [
@@ -2796,8 +3395,9 @@ function renderTradeActions(
 
   }
 
-  let html =
-    "";
+
+  let html = "";
+
 
   if(isBuyer && !paid){
 
@@ -2821,12 +3421,7 @@ function renderTradeActions(
 
       <button
         class="cancel-btn"
-        style="
-          width:100%;
-          margin-top:8px;
-          padding:10px;
-          border-radius:9px;
-        "
+        style="width:100%;margin-top:8px;padding:10px;border-radius:9px;"
         onclick="cancelTrade('${escapeJs(trade.id)}')">
 
         ❌ Cancel Trade
@@ -2836,6 +3431,7 @@ function renderTradeActions(
     `;
 
   }
+
 
   if(isSeller && paid){
 
@@ -2861,6 +3457,7 @@ function renderTradeActions(
 
   }
 
+
   if(isBuyer && paid){
 
     html += `
@@ -2877,6 +3474,7 @@ function renderTradeActions(
 
   }
 
+
   return html;
 
 }
@@ -2886,9 +3484,7 @@ function renderTradeActions(
    BUYER PAYMENT
 ===================================================== */
 
-async function confirmBuyerPayment(
-  tradeId
-){
+async function confirmBuyerPayment(tradeId){
 
   if(
     !confirm(
@@ -2900,6 +3496,7 @@ async function confirmBuyerPayment(
 
   }
 
+
   const {
     error
   } =
@@ -2910,6 +3507,7 @@ async function confirmBuyerPayment(
         tradeId
     }
   );
+
 
   if(error){
 
@@ -2926,9 +3524,11 @@ async function confirmBuyerPayment(
 
   }
 
+
   toast(
     "Payment confirmed."
   );
+
 
   await loadAll();
 
@@ -2939,9 +3539,7 @@ async function confirmBuyerPayment(
    SELLER RELEASE
 ===================================================== */
 
-async function releaseTrade(
-  tradeId
-){
+async function releaseTrade(tradeId){
 
   if(
     !confirm(
@@ -2953,6 +3551,7 @@ async function releaseTrade(
 
   }
 
+
   const {
     error
   } =
@@ -2963,6 +3562,7 @@ async function releaseTrade(
         tradeId
     }
   );
+
 
   if(error){
 
@@ -2979,9 +3579,11 @@ async function releaseTrade(
 
   }
 
+
   toast(
     "Trade released successfully."
   );
+
 
   await loadAll();
 
@@ -2992,9 +3594,7 @@ async function releaseTrade(
    BUYER CANCEL
 ===================================================== */
 
-async function cancelTrade(
-  tradeId
-){
+async function cancelTrade(tradeId){
 
   if(
     !confirm(
@@ -3006,6 +3606,7 @@ async function cancelTrade(
 
   }
 
+
   const {
     error
   } =
@@ -3016,6 +3617,7 @@ async function cancelTrade(
         tradeId
     }
   );
+
 
   if(error){
 
@@ -3032,9 +3634,11 @@ async function cancelTrade(
 
   }
 
+
   toast(
     "Trade cancelled."
   );
+
 
   await loadAll();
 
@@ -3045,17 +3649,14 @@ async function cancelTrade(
    DISPUTE
 ===================================================== */
 
-function openDispute(
-  tradeId
-){
+function openDispute(tradeId){
 
   selectedTradeId =
     tradeId;
 
   document.getElementById(
     "disputeReason"
-  ).value =
-    "";
+  ).value = "";
 
   openModal(
     "disputeModal"
@@ -3076,10 +3677,12 @@ async function submitDispute(){
 
   }
 
+
   const reason =
     document.getElementById(
       "disputeReason"
     ).value.trim();
+
 
   if(!reason){
 
@@ -3090,6 +3693,7 @@ async function submitDispute(){
     return;
 
   }
+
 
   const {
     error
@@ -3104,6 +3708,7 @@ async function submitDispute(){
         reason
     }
   );
+
 
   if(error){
 
@@ -3120,6 +3725,7 @@ async function submitDispute(){
 
   }
 
+
   closeModal(
     "disputeModal"
   );
@@ -3127,9 +3733,11 @@ async function submitDispute(){
   selectedTradeId =
     null;
 
+
   toast(
     "Dispute opened."
   );
+
 
   await loadTrades();
 
@@ -3168,6 +3776,7 @@ async function submitDeposit(){
       "depositNote"
     ).value.trim();
 
+
   if(
     !Number.isFinite(amount) ||
     amount <= 0
@@ -3181,6 +3790,7 @@ async function submitDeposit(){
 
   }
 
+
   if(!method){
 
     toast(
@@ -3190,6 +3800,7 @@ async function submitDeposit(){
     return;
 
   }
+
 
   const {
     error
@@ -3208,6 +3819,7 @@ async function submitDeposit(){
     }
   );
 
+
   if(error){
 
     console.error(
@@ -3223,28 +3835,29 @@ async function submitDeposit(){
 
   }
 
+
   closeModal(
     "depositModal"
   );
 
+
   document.getElementById(
     "depositAmount"
-  ).value =
-    "";
+  ).value = "";
 
   document.getElementById(
     "depositMethod"
-  ).value =
-    "";
+  ).value = "";
 
   document.getElementById(
     "depositNote"
-  ).value =
-    "";
+  ).value = "";
+
 
   toast(
     "Deposit request submitted."
   );
+
 
   await loadAll();
 
@@ -3288,6 +3901,7 @@ async function submitWithdraw(){
       "withdrawNote"
     ).value.trim();
 
+
   if(
     !Number.isFinite(amount) ||
     amount <= 0
@@ -3301,6 +3915,7 @@ async function submitWithdraw(){
 
   }
 
+
   if(!method){
 
     toast(
@@ -3311,6 +3926,7 @@ async function submitWithdraw(){
 
   }
 
+
   if(!account){
 
     toast(
@@ -3320,6 +3936,7 @@ async function submitWithdraw(){
     return;
 
   }
+
 
   const {
     error
@@ -3341,6 +3958,7 @@ async function submitWithdraw(){
     }
   );
 
+
   if(error){
 
     console.error(
@@ -3356,33 +3974,33 @@ async function submitWithdraw(){
 
   }
 
+
   closeModal(
     "withdrawModal"
   );
 
+
   document.getElementById(
     "withdrawAmount"
-  ).value =
-    "";
+  ).value = "";
 
   document.getElementById(
     "withdrawMethod"
-  ).value =
-    "";
+  ).value = "";
 
   document.getElementById(
     "withdrawAccount"
-  ).value =
-    "";
+  ).value = "";
 
   document.getElementById(
     "withdrawNote"
-  ).value =
-    "";
+  ).value = "";
+
 
   toast(
     "Withdrawal request submitted."
   );
+
 
   await loadAll();
 
@@ -3390,7 +4008,7 @@ async function submitWithdraw(){
 
 
 /* =====================================================
-   TRANSACTIONS
+   ETB TRANSACTIONS
 ===================================================== */
 
 async function loadTransactions(){
@@ -3401,9 +4019,8 @@ async function loadTransactions(){
     );
 
   container.innerHTML =
-    `<div class="empty">
-      Loading transactions...
-    </div>`;
+    `<div class="empty">Loading transactions...</div>`;
+
 
   const {
     data,
@@ -3424,6 +4041,7 @@ async function loadTransactions(){
     )
     .limit(50);
 
+
   if(error){
 
     console.error(
@@ -3441,6 +4059,7 @@ async function loadTransactions(){
     return;
 
   }
+
 
   renderTransactions(
     data || []
@@ -3462,6 +4081,7 @@ function renderTransactions(
       "transactions"
     );
 
+
   if(!transactions.length){
 
     container.innerHTML =
@@ -3474,8 +4094,9 @@ function renderTransactions(
 
   }
 
-  container.innerHTML =
-    "";
+
+  container.innerHTML = "";
+
 
   transactions.forEach(
     transaction => {
@@ -3488,6 +4109,7 @@ function renderTransactions(
           0
         ) || 0;
 
+
       const type =
         String(
           transaction.type ||
@@ -3495,6 +4117,7 @@ function renderTransactions(
           transaction.kind ||
           ""
         ).toLowerCase();
+
 
       const positive =
         [
@@ -3507,6 +4130,7 @@ function renderTransactions(
         ].includes(type) ||
         amount > 0;
 
+
       const card =
         document.createElement(
           "div"
@@ -3515,12 +4139,14 @@ function renderTransactions(
       card.className =
         "transaction";
 
+
       const title =
         transaction.description ||
         transaction.title ||
         transaction.reference ||
         type ||
         "ETB transaction";
+
 
       card.innerHTML = `
 
@@ -3560,6 +4186,7 @@ function renderTransactions(
 
         </div>
 
+
         <div class="transaction-amount ${
           positive
             ? "positive"
@@ -3581,6 +4208,7 @@ function renderTransactions(
         </div>
 
       `;
+
 
       container.appendChild(
         card
@@ -3605,6 +4233,7 @@ function setupRealtime(){
     );
 
   }
+
 
   realtimeChannel =
     supabaseClient
@@ -3745,17 +4374,20 @@ function formatPair(order){
       ""
     );
 
+
   if(pair === "USDT_ETB"){
 
     return "USDT / ETB";
 
   }
 
+
   if(pair === "ETB_ETB"){
 
     return "ETB / ETB";
 
   }
+
 
   if(pair.includes("_")){
 
@@ -3765,6 +4397,7 @@ function formatPair(order){
     );
 
   }
+
 
   return pair ||
     "P2P";
@@ -3781,6 +4414,7 @@ function formatAmount(order){
 
   const pair =
     formatPair(order);
+
 
   return amount.toLocaleString(
     undefined,
@@ -3806,10 +4440,12 @@ function formatTradeAmount(trade){
       trade.trade_amount
     ) || 0;
 
+
   const pair =
     formatPair(
       trade
     );
+
 
   return amount.toLocaleString(
     undefined,
@@ -3827,48 +4463,12 @@ function formatTradeAmount(trade){
 }
 
 
-function calculatePlatformFee(
-  tradeValue
-){
-
-  const value =
-    Number(tradeValue) || 0;
-
-  if(value <= 0){
-
-    return 0;
-
-  }
-
-  return value *
-    PLATFORM_FEE_RATE;
-
-}
-
-
-function calculateTotalWithFee(
-  tradeValue
-){
-
-  const value =
-    Number(tradeValue) || 0;
-
-  return value +
-    calculatePlatformFee(
-      value
-    );
-
-}
-
-
 function money(value){
 
   const number =
     Number(value);
 
-  if(
-    !Number.isFinite(number)
-  ){
+  if(!Number.isFinite(number)){
 
     return "0.00";
 
@@ -3893,8 +4493,10 @@ function formatDate(value){
 
   }
 
+
   const date =
     new Date(value);
+
 
   if(
     Number.isNaN(
@@ -3905,6 +4507,7 @@ function formatDate(value){
     return String(value);
 
   }
+
 
   return date.toLocaleString();
 
@@ -3917,6 +4520,7 @@ function statusClass(status){
     String(
       status || ""
     ).toLowerCase();
+
 
   if(
     [
@@ -3931,6 +4535,7 @@ function statusClass(status){
 
   }
 
+
   if(
     [
       "expired",
@@ -3942,6 +4547,7 @@ function statusClass(status){
 
   }
 
+
   if(
     value === "disputed"
   ){
@@ -3950,15 +4556,13 @@ function statusClass(status){
 
   }
 
+
   return "";
 
 }
 
 
-function detail(
-  label,
-  value
-){
+function detail(label,value){
 
   return `
 
@@ -3969,7 +4573,6 @@ function detail(
       </span>
 
       <strong>
-
         ${
           String(value).includes("<span")
             ? value
@@ -3977,7 +4580,6 @@ function detail(
                 String(value)
               )
         }
-
       </strong>
 
     </div>
@@ -3993,20 +4595,32 @@ function emptyHtml(
   message
 ){
 
+  if(
+    arguments.length === 1
+  ){
+
+    message =
+      "";
+
+    title =
+      icon;
+
+    icon =
+      "ℹ️";
+
+  }
+
+
   return `
 
     <div class="empty">
 
       <div class="empty-icon">
-        ${escapeHtml(
-          icon || "ℹ️"
-        )}
+        ${escapeHtml(icon || "ℹ️")}
       </div>
 
       <strong>
-        ${escapeHtml(
-          title || ""
-        )}
+        ${escapeHtml(title || "")}
       </strong>
 
       ${
@@ -4047,4 +4661,77 @@ function escapeHtml(value){
     /"/g,
     "&quot;"
   )
-  .
+  .replace(
+    /'/g,
+    "&#039;"
+  );
+
+}
+
+
+function escapeJs(value){
+
+  return String(
+    value ?? ""
+  )
+  .replace(
+    /\\/g,
+    "\\\\"
+  )
+  .replace(
+    /'/g,
+    "\\'"
+  )
+  .replace(
+    /"/g,
+    '\\"'
+  );
+
+}
+
+
+/* =====================================================
+   CLOSE MODAL WHEN CLICKING OUTSIDE
+===================================================== */
+
+document.addEventListener(
+  "click",
+  function(event){
+
+    if(
+      event.target.classList.contains(
+        "modal"
+      )
+    ){
+
+      event.target.classList.remove(
+        "show"
+      );
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   AUTO REFRESH
+===================================================== */
+
+setInterval(
+  function(){
+
+    if(currentUser){
+
+      loadProfile();
+
+    }
+
+  },
+  30000
+);
+
+</script>
+
+</body>
+</html>

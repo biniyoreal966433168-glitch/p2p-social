@@ -291,7 +291,7 @@ header{
 ========================= */
 
 .user-info{
-  display:none;
+  display:block;
   margin-top:12px;
   font-size:13px;
 }
@@ -460,7 +460,7 @@ section{
 }
 
 /* =========================
-   REAL P2P AVAILABLE OFFERS
+   P2P
 ========================= */
 
 .p2p-offers{
@@ -866,7 +866,7 @@ section{
 }
 
 /* =========================
-   CREATE POST MODAL
+   MODAL
 ========================= */
 
 .modal{
@@ -1059,10 +1059,6 @@ button:active{
 
 <body>
 
-<!-- =========================
-     HEADER
-========================= -->
-
 <header>
 
   <div class="top">
@@ -1070,14 +1066,12 @@ button:active{
     <div class="logo-area">
 
       <div class="logo" aria-label="P2P Social Logo">
-
         <div class="p-left"></div>
         <div class="p-right"></div>
 
         <div class="center">
           <div class="dot"></div>
         </div>
-
       </div>
 
       <div class="brand">
@@ -1133,9 +1127,7 @@ button:active{
 
           <div class="notification-header">
 
-            <strong>
-              Notifications
-            </strong>
+            <strong>Notifications</strong>
 
             <button
               class="mark-all"
@@ -1164,28 +1156,21 @@ button:active{
   </div>
 
   <div id="userInfo" class="user-info">
-
     Logged in as:
     <strong id="usernameDisplay"></strong>
-
   </div>
 
   <div class="search">
-
     🔎
-
     <input
       type="text"
       id="searchInput"
       placeholder="Search users, live rooms...">
-
   </div>
 
 </header>
 
-<!-- =========================
-     WALLET
-========================= -->
+<!-- WALLET -->
 
 <div class="wallet">
 
@@ -1200,23 +1185,13 @@ button:active{
   </div>
 
   <div class="wallet-row">
-
     <span>🇪🇹 ETB</span>
-
-    <strong id="etbDisplay">
-      0.00
-    </strong>
-
+    <strong id="etbDisplay">0.00</strong>
   </div>
 
   <div class="wallet-row">
-
     <span>💵 USDT</span>
-
-    <strong id="usdtDisplay">
-      0.00
-    </strong>
-
+    <strong id="usdtDisplay">0.00</strong>
   </div>
 
   <div class="wallet-buttons">
@@ -1237,17 +1212,13 @@ button:active{
 
 </div>
 
-<!-- =========================
-     LIVE
-========================= -->
+<!-- LIVE -->
 
 <section>
 
   <div class="section-title">
 
-    <h2>
-      🔴 Live Now
-    </h2>
+    <h2>🔴 Live Now</h2>
 
     <span
       class="see-all"
@@ -1335,17 +1306,13 @@ button:active{
 
 </section>
 
-<!-- =========================
-     AVAILABLE P2P OFFERS
-========================= -->
+<!-- P2P -->
 
 <section>
 
   <div class="section-title">
 
-    <h2>
-      🔄 Available Offers
-    </h2>
+    <h2>🔄 Available Offers</h2>
 
     <span
       class="see-all"
@@ -1379,17 +1346,13 @@ button:active{
 
 </section>
 
-<!-- =========================
-     POSTS
-========================= -->
+<!-- POSTS -->
 
 <section class="posts-section">
 
   <div class="posts-title">
 
-    <h2>
-      📝 Public Posts
-    </h2>
+    <h2>📝 Public Posts</h2>
 
     <div
       style="display:flex;gap:7px;align-items:center;">
@@ -1432,9 +1395,7 @@ button:active{
 
 </section>
 
-<!-- =========================
-     CREATE POST MODAL
-========================= -->
+<!-- CREATE POST -->
 
 <div
   id="createPostModal"
@@ -1444,9 +1405,7 @@ button:active{
 
     <div class="modal-header">
 
-      <h3>
-        Create Post
-      </h3>
+      <h3>Create Post</h3>
 
       <button
         class="close-modal"
@@ -1493,9 +1452,7 @@ button:active{
 
 </div>
 
-<!-- =========================
-     BOTTOM NAVIGATION
-========================= -->
+<!-- BOTTOM NAV -->
 
 <nav class="bottom-nav">
 
@@ -1546,9 +1503,7 @@ button:active{
 
 </nav>
 
-<!-- =========================
-     SUPABASE
-========================= -->
+<!-- SUPABASE -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -1573,72 +1528,74 @@ let commentsOpen = {};
 let notificationChannel = null;
 
 /* ================================
-   AUTH
+   AUTH — LOGIN REQUIRED
 ================================ */
 
 async function checkLogin(){
 
-  const {data,error} =
-    await supabaseClient.auth.getSession();
+  const {
+    data,
+    error
+  } =
+  await supabaseClient.auth.getSession();
 
   if(error){
-    console.error(error);
-    return;
+
+    console.error(
+      "Session check error:",
+      error
+    );
+
+    window.location.replace(
+      "login.html"
+    );
+
+    return false;
+  }
+
+  if(!data.session){
+
+    window.location.replace(
+      "login.html"
+    );
+
+    return false;
   }
 
   currentSession =
     data.session;
 
-  await updateAuthUI();
+  return true;
 
 }
 
 async function updateAuthUI(){
 
-  const loginBtn =
-    document.getElementById("loginBtn");
-
-  const registerBtn =
-    document.getElementById("registerBtn");
-
-  const logoutBtn =
-    document.getElementById("logoutBtn");
-
-  const userInfo =
-    document.getElementById("userInfo");
-
-  const usernameDisplay =
-    document.getElementById("usernameDisplay");
-
   if(!currentSession){
 
-    loginBtn.style.display="block";
-    registerBtn.style.display="block";
-    logoutBtn.style.display="none";
-    userInfo.style.display="none";
-
-    document.getElementById(
-      "balanceDisplay"
-    ).textContent="0 ETB";
-
-    document.getElementById(
-      "etbDisplay"
-    ).textContent="0.00";
-
-    document.getElementById(
-      "usdtDisplay"
-    ).textContent="0.00";
-
-    resetNotifications();
+    window.location.replace(
+      "login.html"
+    );
 
     return;
 
   }
 
-  loginBtn.style.display="none";
-  registerBtn.style.display="none";
-  logoutBtn.style.display="block";
-  userInfo.style.display="block";
+  document.getElementById(
+    "loginBtn"
+  ).style.display="none";
+
+  document.getElementById(
+    "registerBtn"
+  ).style.display="none";
+
+  document.getElementById(
+    "logoutBtn"
+  ).style.display="block";
+
+  document.getElementById(
+    "userInfo"
+  ).style.display="block";
 
   const user =
     currentSession.user;
@@ -1648,30 +1605,44 @@ async function updateAuthUI(){
     user.email?.split("@")[0] ||
     "User";
 
-  usernameDisplay.textContent =
+  document.getElementById(
+    "usernameDisplay"
+  ).textContent =
     username;
 
   const {
     data:profile,
     error:profileError
   } =
-    await supabaseClient
-      .from("profiles")
-      .select(
-        "username,balance,avatar_url"
-      )
-      .eq("id",user.id)
-      .maybeSingle();
+  await supabaseClient
+    .from("profiles")
+    .select(
+      "username,balance,avatar_url"
+    )
+    .eq(
+      "id",
+      user.id
+    )
+    .maybeSingle();
 
   if(profileError){
-    console.error(profileError);
+
+    console.error(
+      "Profile error:",
+      profileError
+    );
+
   }
 
   if(profile){
 
     if(profile.username){
-      usernameDisplay.textContent =
+
+      document.getElementById(
+        "usernameDisplay"
+      ).textContent =
         profile.username;
+
     }
 
     const balance =
@@ -1680,7 +1651,8 @@ async function updateAuthUI(){
     document.getElementById(
       "balanceDisplay"
     ).textContent =
-      balance.toLocaleString()+" ETB";
+      balance.toLocaleString()+
+      " ETB";
 
     document.getElementById(
       "etbDisplay"
@@ -1698,29 +1670,8 @@ async function updateAuthUI(){
 }
 
 /* ================================
-   AVAILABLE P2P OFFERS
-=============================== */
-
-/*
-  This function tries the common P2P offer table names.
-
-  Expected offer fields can include:
-
-  id
-  user_id
-  type / trade_type
-  side
-  rate / price
-  amount / available_amount
-  min_amount
-  max_amount
-  status
-  is_active
-
-  If your wallet/P2P SQL uses different names,
-  this function will safely show no offers rather
-  than displaying fake users.
-*/
+   P2P OFFERS
+================================ */
 
 async function loadAvailableOffers(){
 
@@ -1729,36 +1680,19 @@ async function loadAvailableOffers(){
       "p2pOffersContainer"
     );
 
-  if(!container)return;
-
   container.innerHTML=`
     <div class="no-offers">
-      <div class="no-offers-icon">
-        🔄
-      </div>
-      <strong>
-        Loading available offers...
-      </strong>
-      <small>
-        Please wait.
-      </small>
+      <div class="no-offers-icon">🔄</div>
+      <strong>Loading available offers...</strong>
+      <small>Please wait.</small>
     </div>
   `;
-
-  /*
-    First try the table used by the current
-    P2P order system.
-  */
 
   let result =
     await supabaseClient
       .from("p2p_offers")
       .select("*")
       .limit(50);
-
-  /*
-    If p2p_offers does not exist, try offers.
-  */
 
   if(result.error){
 
@@ -1770,15 +1704,10 @@ async function loadAvailableOffers(){
 
   }
 
-  /*
-    If neither table can be read, do not create
-    fake offers. Show an empty state.
-  */
-
   if(result.error){
 
     console.log(
-      "Available P2P offers are not available:",
+      "P2P offers unavailable:",
       result.error.message
     );
 
@@ -1811,24 +1740,16 @@ async function loadAvailableOffers(){
 
 function isOfferAvailable(offer){
 
-  if(!offer){
-    return false;
-  }
-
-  /*
-    Status checks.
-  */
+  if(!offer)return false;
 
   const status =
     String(
-      offer.status ??
-      ""
+      offer.status ?? ""
     )
       .toLowerCase()
       .trim();
 
   if(
-    status &&
     [
       "closed",
       "cancelled",
@@ -1845,23 +1766,13 @@ function isOfferAvailable(offer){
   }
 
   if(
-    offer.is_active === false ||
-    offer.active === false
+    offer.is_active===false ||
+    offer.active===false
   ){
 
     return false;
 
   }
-
-  /*
-    Amount checks.
-
-    If the database has an available amount,
-    it must be greater than zero.
-
-    If no amount field exists, we do not reject
-    the offer only because the field is missing.
-  */
 
   const amountValue =
     getFirstValue(
@@ -1875,9 +1786,9 @@ function isOfferAvailable(offer){
     );
 
   if(
-    amountValue !== null &&
-    amountValue !== undefined &&
-    amountValue !== ""
+    amountValue!==null &&
+    amountValue!==undefined &&
+    amountValue!==""
   ){
 
     const amount =
@@ -1885,7 +1796,7 @@ function isOfferAvailable(offer){
 
     if(
       !Number.isNaN(amount) &&
-      amount <= 0
+      amount<=0
     ){
 
       return false;
@@ -1906,8 +1817,6 @@ async function renderAvailableOffers(
     document.getElementById(
       "p2pOffersContainer"
     );
-
-  if(!container)return;
 
   const userIds =
     [
@@ -1967,14 +1876,11 @@ async function renderAvailableOffers(
     .forEach(
       offer=>{
 
-        const card =
+        container.appendChild(
           createOfferCard(
             offer,
             profileMap
-          );
-
-        container.appendChild(
-          card
+          )
         );
 
       }
@@ -2017,8 +1923,7 @@ function createOfferCard(
     "";
 
   const initial =
-    username
-      .charAt(0)
+    username.charAt(0)
       .toUpperCase() ||
     "U";
 
@@ -2035,10 +1940,8 @@ function createOfferCard(
 
   const type =
     String(
-      typeRaw ||
-      "buy"
-    )
-      .toLowerCase();
+      typeRaw||"buy"
+    ).toLowerCase();
 
   const rate =
     getFirstValue(
@@ -2084,18 +1987,13 @@ function createOfferCard(
 
   const normalizedType =
     type.includes("sell")
-    ? "sell"
-    : "buy";
-
-  const buttonText =
-    normalizedType==="sell"
-    ? "Buy USDT"
-    : "Buy USDT";
+      ? "sell"
+      : "buy";
 
   const offerLabel =
     normalizedType==="sell"
-    ? "SELL USDT"
-    : "BUY USDT";
+      ? "SELL USDT"
+      : "BUY USDT";
 
   card.innerHTML=`
 
@@ -2140,9 +2038,9 @@ function createOfferCard(
       </div>
 
       ${
-        rate !== null &&
-        rate !== undefined &&
-        rate !== ""
+        rate!==null &&
+        rate!==undefined &&
+        rate!==""
         ?
         `
         <div class="rate">
@@ -2168,9 +2066,9 @@ function createOfferCard(
     <div class="trade-info">
 
       ${
-        amount !== null &&
-        amount !== undefined &&
-        amount !== ""
+        amount!==null &&
+        amount!==undefined &&
+        amount!==""
         ?
         `
         <span>
@@ -2191,9 +2089,9 @@ function createOfferCard(
       }
 
       ${
-        min !== null &&
-        min !== undefined &&
-        min !== ""
+        min!==null &&
+        min!==undefined &&
+        min!==""
         ?
         `
         <span>
@@ -2208,9 +2106,9 @@ function createOfferCard(
       }
 
       ${
-        max !== null &&
-        max !== undefined &&
-        max !== ""
+        max!==null &&
+        max!==undefined &&
+        max!==""
         ?
         `
         <span>
@@ -2232,7 +2130,7 @@ function createOfferCard(
         '${escapeJs(offer.id)}'
       )">
 
-      ${buttonText}
+      Buy USDT
 
     </button>
 
@@ -2248,8 +2146,6 @@ function renderNoOffers(){
     document.getElementById(
       "p2pOffersContainer"
     );
-
-  if(!container)return;
 
   container.innerHTML=`
 
@@ -2280,18 +2176,13 @@ function openP2POffer(
 
   if(!currentSession){
 
-    alert(
-      "Please login first."
+    window.location.replace(
+      "login.html"
     );
 
-    openLogin();
     return;
 
   }
-
-  /*
-    Send the user to the P2P wallet/order page.
-  */
 
   window.location.href =
     "p2p-order.html?offer="+
@@ -2318,9 +2209,9 @@ function getFirstValue(
     ){
 
       if(
-        object[key] !== null &&
-        object[key] !== undefined &&
-        object[key] !== ""
+        object[key]!==null &&
+        object[key]!==undefined &&
+        object[key]!==""
       ){
 
         return object[key];
@@ -2335,20 +2226,14 @@ function getFirstValue(
 
 }
 
-function formatNumber(
-  value
-){
+function formatNumber(value){
 
   const number =
     Number(value);
 
-  if(
-    Number.isNaN(number)
-  ){
+  if(Number.isNaN(number)){
 
-    return String(
-      value
-    );
+    return String(value);
 
   }
 
@@ -2379,32 +2264,32 @@ async function loadNotifications(){
     data,
     error
   } =
-    await supabaseClient
-      .from("notifications")
-      .select(`
-        id,
-        user_id,
-        type,
-        title,
-        body,
-        link,
-        is_read,
-        created_at
-      `)
-      .eq(
-        "user_id",
-        currentSession.user.id
-      )
-      .order(
-        "created_at",
-        {ascending:false}
-      )
-      .limit(50);
+  await supabaseClient
+    .from("notifications")
+    .select(`
+      id,
+      user_id,
+      type,
+      title,
+      body,
+      link,
+      is_read,
+      created_at
+    `)
+    .eq(
+      "user_id",
+      currentSession.user.id
+    )
+    .order(
+      "created_at",
+      {ascending:false}
+    )
+    .limit(50);
 
   if(error){
 
     console.error(
-      "Notification loading error:",
+      "Notification error:",
       error
     );
 
@@ -2455,8 +2340,8 @@ function renderNotifications(
 
     badge.textContent =
       unreadCount>99
-      ? "99+"
-      : unreadCount;
+        ? "99+"
+        : unreadCount;
 
     badge.style.display="flex";
 
@@ -2472,14 +2357,16 @@ function renderNotifications(
     notification=>{
 
       const item =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       item.className =
         "notification-item"+
         (
           notification.is_read
-          ? ""
-          : " unread"
+            ? ""
+            : " unread"
         );
 
       item.innerHTML=`
@@ -2653,7 +2540,7 @@ function resetNotifications(){
     "notificationList"
   ).innerHTML=`
     <div class="no-notifications">
-      🔔 Login to see notifications.
+      Login to see notifications.
     </div>
   `;
 
@@ -2664,16 +2551,16 @@ function toggleNotificationPanel(
 ){
 
   if(event){
+
     event.stopPropagation();
+
   }
 
   if(!currentSession){
 
-    alert(
-      "Please login to view notifications."
+    window.location.replace(
+      "login.html"
     );
-
-    openLogin();
 
     return;
 
@@ -2739,8 +2626,6 @@ function subscribeToNotifications(){
     supabaseClient.removeChannel(
       notificationChannel
     );
-
-    notificationChannel=null;
 
   }
 
@@ -2871,7 +2756,7 @@ async function loadPosts(
     data:posts,
     error
   } =
-    await query;
+  await query;
 
   if(error){
 
@@ -2968,11 +2853,13 @@ async function renderPosts(){
     );
 
   const userIds =
-    [...new Set(
-      visiblePosts.map(
-        p=>p.user_id
+    [
+      ...new Set(
+        visiblePosts.map(
+          p=>p.user_id
+        )
       )
-    )];
+    ];
 
   let profiles=[];
 
@@ -3055,8 +2942,6 @@ async function renderPosts(){
 
   const myLikes =
     new Set(
-      currentSession
-      ?
       likes
         .filter(
           like=>
@@ -3066,8 +2951,6 @@ async function renderPosts(){
         .map(
           like=>like.post_id
         )
-      :
-      []
     );
 
   /* COMMENTS */
@@ -3103,11 +2986,13 @@ async function renderPosts(){
   }
 
   const commentUserIds =
-    [...new Set(
-      comments.map(
-        c=>c.user_id
+    [
+      ...new Set(
+        comments.map(
+          c=>c.user_id
+        )
       )
-    )];
+    ];
 
   if(commentUserIds.length){
 
@@ -3171,7 +3056,6 @@ async function renderPosts(){
         );
 
       const isOwner =
-        currentSession &&
         currentSession.user.id===
         post.user_id;
 
@@ -3221,13 +3105,11 @@ async function renderPosts(){
           </div>
 
           <div class="post-time">
-
             ${escapeHtml(
               formatPostTime(
                 post.created_at
               )
             )}
-
           </div>
 
           ${
@@ -3252,11 +3134,9 @@ async function renderPosts(){
         </div>
 
         <div class="post-content">
-
           ${escapeHtml(
             post.content||""
           )}
-
         </div>
 
         <div class="post-actions">
@@ -3264,8 +3144,8 @@ async function renderPosts(){
           <button
             class="post-action ${
               myLikes.has(post.id)
-              ? "liked"
-              : ""
+                ? "liked"
+                : ""
             }"
             onclick="
               event.stopPropagation();
@@ -3276,8 +3156,8 @@ async function renderPosts(){
 
             ${
               myLikes.has(post.id)
-              ? "♥ Liked"
-              : "♡ Like"
+                ? "♥ Liked"
+                : "♡ Like"
             }
 
             <span>
@@ -3324,8 +3204,8 @@ async function renderPosts(){
           style="
             display:${
               commentsOpen[post.id]
-              ? "block"
-              : "none"
+                ? "block"
+                : "none"
             };
           ">
 
@@ -3352,13 +3232,13 @@ async function renderPosts(){
   loadMoreBtn.style.display =
     displayedPostCount<
     allPosts.length
-    ? "block"
-    : "none";
+      ? "block"
+      : "none";
 
 }
 
 /* ================================
-   COMMENTS OPEN / CLOSE
+   COMMENTS
 ================================ */
 
 function toggleComments(
@@ -3377,8 +3257,8 @@ function toggleComments(
 
     box.style.display =
       commentsOpen[postId]
-      ? "block"
-      : "none";
+        ? "block"
+        : "none";
 
   }
 
@@ -3409,21 +3289,21 @@ async function refreshSinglePostComments(
     data:comments,
     error
   } =
-    await supabaseClient
-      .from("post_comments")
-      .select(
-        "id,post_id,user_id,comment,created_at"
-      )
-      .eq(
-        "post_id",
-        postId
-      )
-      .order(
-        "created_at",
-        {
-          ascending:true
-        }
-      );
+  await supabaseClient
+    .from("post_comments")
+    .select(
+      "id,post_id,user_id,comment,created_at"
+    )
+    .eq(
+      "post_id",
+      postId
+    )
+    .order(
+      "created_at",
+      {
+        ascending:true
+      }
+    );
 
   if(error){
 
@@ -3434,11 +3314,13 @@ async function refreshSinglePostComments(
   }
 
   const userIds =
-    [...new Set(
-      (comments||[]).map(
-        c=>c.user_id
+    [
+      ...new Set(
+        (comments||[]).map(
+          c=>c.user_id
+        )
       )
-    )];
+    ];
 
   let profiles=[];
 
@@ -3502,1156 +3384,5 @@ function renderComments(
 
   const showing =
     commentsOpen[postId]
-    ?
-    postComments
-    :
-    postComments.slice(
-      0,
-      2
-    );
-
-  showing.forEach(
-    comment=>{
-
-      const profile =
-        profileMap[
-          comment.user_id
-        ]||{};
-
-      const username =
-        profile.username||
-        "User";
-
-      const avatar =
-        profile.avatar_url||
-        "";
-
-      const initial =
-        username
-          .charAt(0)
-          .toUpperCase();
-
-      const owner =
-        currentSession &&
-        currentSession.user.id===
-        comment.user_id;
-
-      html+=`
-
-        <div class="comment">
-
-          <div class="comment-avatar">
-
-            ${
-              avatar
-              ?
-              `
-              <img
-                src="${escapeHtml(avatar)}"
-                alt="Profile">
-              `
-              :
-              escapeHtml(initial)
-            }
-
-          </div>
-
-          <div class="comment-body">
-
-            <div class="comment-name">
-              ${escapeHtml(username)}
-            </div>
-
-            <div class="comment-text">
-              ${escapeHtml(
-                comment.comment||""
-              )}
-            </div>
-
-            ${
-              owner
-              ?
-              `
-              <button
-                class="comment-delete"
-                onclick="
-                  deleteComment(
-                    '${escapeJs(comment.id)}'
-                  )
-                ">
-                🗑️
-              </button>
-              `
-              :
-              ""
-            }
-
-          </div>
-
-        </div>
-
-      `;
-
-    }
-  );
-
-  if(
-    postComments.length>2 &&
-    !commentsOpen[postId]
-  ){
-
-    html+=`
-
-      <button
-        class="view-comments"
-        onclick="
-          toggleComments(
-            '${escapeJs(postId)}'
-          )
-        ">
-
-        👀 View all
-        ${postComments.length}
-        comments
-
-      </button>
-
-    `;
-
-  }
-
-  if(
-    commentsOpen[postId]
-  ){
-
-    html+=`
-
-      <button
-        class="view-comments"
-        onclick="
-          toggleComments(
-            '${escapeJs(postId)}'
-          )
-        ">
-
-        Hide comments
-
-      </button>
-
-    `;
-
-  }
-
-  if(currentSession){
-
-    html+=`
-
-      <div class="comment-input-row">
-
-        <input
-          id="comment-input-${escapeHtml(postId)}"
-          class="comment-input"
-          maxlength="500"
-          placeholder="Write a comment..."
-          onkeydown="
-            if(event.key==='Enter'){
-              sendComment(
-                '${escapeJs(postId)}'
-              )
-            }
-          ">
-
-        <button
-          class="comment-send"
-          onclick="
-            sendComment(
-              '${escapeJs(postId)}'
-            )
-          ">
-
-          Send
-
-        </button>
-
-      </div>
-
-    `;
-
-  }else{
-
-    html+=`
-
-      <div
-        style="
-          font-size:12px;
-          color:#777;
-          margin-top:8px;
-        ">
-
-        Login to comment.
-
-      </div>
-
-    `;
-
-  }
-
-  return html;
-
-}
-
-/* ================================
-   SEND COMMENT
-================================ */
-
-async function sendComment(
-  postId
-){
-
-  if(!currentSession){
-
-    alert(
-      "Please login to comment."
-    );
-
-    openLogin();
-
-    return;
-
-  }
-
-  const input =
-    document.getElementById(
-      "comment-input-"+postId
-    );
-
-  if(!input)return;
-
-  const text =
-    String(
-      input.value||""
-    ).trim();
-
-  if(!text)return;
-
-  if(text.length>500){
-
-    alert(
-      "Comment is too long."
-    );
-
-    return;
-
-  }
-
-  const {error} =
-    await supabaseClient
-      .from("post_comments")
-      .insert({
-
-        post_id:postId,
-
-        user_id:
-          currentSession.user.id,
-
-        comment:text
-
-      });
-
-  if(error){
-
-    console.error(error);
-
-    alert(
-      "Comment failed: "+
-      error.message
-    );
-
-    return;
-
-  }
-
-  commentsOpen[postId]=true;
-
-  await renderPosts();
-
-}
-
-/* ================================
-   DELETE COMMENT
-================================ */
-
-async function deleteComment(
-  commentId
-){
-
-  if(!currentSession)return;
-
-  if(!confirm(
-    "Delete your comment?"
-  )){
-
-    return;
-
-  }
-
-  const {error} =
-    await supabaseClient
-      .from("post_comments")
-      .delete()
-      .eq(
-        "id",
-        commentId
-      )
-      .eq(
-        "user_id",
-        currentSession.user.id
-      );
-
-  if(error){
-
-    alert(
-      "Could not delete comment: "+
-      error.message
-    );
-
-    return;
-
-  }
-
-  await renderPosts();
-
-}
-
-/* ================================
-   LIKE / UNLIKE
-================================ */
-
-async function likePost(
-  postId
-){
-
-  if(!currentSession){
-
-    alert(
-      "Please login to like posts."
-    );
-
-    openLogin();
-
-    return;
-
-  }
-
-  const userId =
-    currentSession.user.id;
-
-  const {
-    data:existing,
-    error:checkError
-  } =
-    await supabaseClient
-      .from("post_likes")
-      .select(
-        "post_id"
-      )
-      .eq(
-        "post_id",
-        postId
-      )
-      .eq(
-        "user_id",
-        userId
-      )
-      .maybeSingle();
-
-  if(checkError){
-
-    alert(
-      "Could not update like: "+
-      checkError.message
-    );
-
-    return;
-
-  }
-
-  if(existing){
-
-    const {error} =
-      await supabaseClient
-        .from("post_likes")
-        .delete()
-        .eq(
-          "post_id",
-          postId
-        )
-        .eq(
-          "user_id",
-          userId
-        );
-
-    if(error){
-
-      alert(
-        "Could not unlike post."
-      );
-
-      return;
-
-    }
-
-  }else{
-
-    const {error} =
-      await supabaseClient
-        .from("post_likes")
-        .insert({
-
-          post_id:postId,
-
-          user_id:userId
-
-        });
-
-    if(error){
-
-      alert(
-        "Could not like post."
-      );
-
-      return;
-
-    }
-
-  }
-
-  await renderPosts();
-
-}
-
-/* ================================
-   DELETE POST
-================================ */
-
-async function deletePost(
-  postId
-){
-
-  if(!currentSession){
-
-    openLogin();
-
-    return;
-
-  }
-
-  if(!confirm(
-    "Delete your post?"
-  )){
-
-    return;
-
-  }
-
-  const {error} =
-    await supabaseClient
-      .from("posts")
-      .delete()
-      .eq(
-        "id",
-        postId
-      )
-      .eq(
-        "user_id",
-        currentSession.user.id
-      );
-
-  if(error){
-
-    console.error(error);
-
-    alert(
-      "Could not delete post: "+
-      error.message
-    );
-
-    return;
-
-  }
-
-  allPosts =
-    allPosts.filter(
-      post =>
-        String(post.id)!==
-        String(postId)
-    );
-
-  await renderPosts();
-
-}
-
-/* ================================
-   CREATE POST
-================================ */
-
-function openCreatePost(){
-
-  if(!currentSession){
-
-    alert(
-      "Please login to create a post."
-    );
-
-    openLogin();
-
-    return;
-
-  }
-
-  document.getElementById(
-    "postContentInput"
-  ).value="";
-
-  document.getElementById(
-    "postVisibility"
-  ).value="public";
-
-  document.getElementById(
-    "createPostModal"
-  ).style.display="flex";
-
-}
-
-function closeCreatePost(){
-
-  document.getElementById(
-    "createPostModal"
-  ).style.display="none";
-
-}
-
-async function createPost(){
-
-  if(!currentSession){
-
-    openLogin();
-
-    return;
-
-  }
-
-  const input =
-    document.getElementById(
-      "postContentInput"
-    );
-
-  const visibility =
-    document.getElementById(
-      "postVisibility"
-    ).value;
-
-  const content =
-    String(
-      input.value||""
-    ).trim();
-
-  if(!content){
-
-    alert(
-      "Write something first."
-    );
-
-    return;
-
-  }
-
-  if(content.length>5000){
-
-    alert(
-      "Post is too long."
-    );
-
-    return;
-
-  }
-
-  const button =
-    document.getElementById(
-      "publishPostBtn"
-    );
-
-  button.disabled=true;
-
-  button.textContent=
-    "Publishing...";
-
-  const {error} =
-    await supabaseClient
-      .from("posts")
-      .insert({
-
-        user_id:
-          currentSession.user.id,
-
-        content:content,
-
-        visibility:visibility
-
-      });
-
-  button.disabled=false;
-
-  button.textContent=
-    "Publish Post";
-
-  if(error){
-
-    console.error(error);
-
-    alert(
-      "Could not create post: "+
-      error.message
-    );
-
-    return;
-
-  }
-
-  closeCreatePost();
-
-  await loadPosts(true);
-
-}
-
-/* ================================
-   PROFILE
-================================ */
-
-function openUserProfile(
-  userId
-){
-
-  if(!userId)return;
-
-  window.location.href =
-    "profile.html?user="+
-    encodeURIComponent(
-      userId
-    );
-
-}
-
-/* ================================
-   SHARE
-================================ */
-
-async function sharePost(
-  postId
-){
-
-  const url =
-    window.location.origin+
-    window.location.pathname+
-    "?post="+
-    encodeURIComponent(
-      postId
-    );
-
-  if(navigator.share){
-
-    try{
-
-      await navigator.share({
-
-        title:
-          "P2P Social Post",
-
-        text:
-          "Check out this post on P2P Social.",
-
-        url:url
-
-      });
-
-    }catch(error){
-
-      console.log(error);
-
-    }
-
-    return;
-
-  }
-
-  try{
-
-    await navigator.clipboard.writeText(
-      url
-    );
-
-    alert(
-      "Post link copied."
-    );
-
-  }catch(error){
-
-    alert(
-      "Post link: "+url
-    );
-
-  }
-
-}
-
-/* ================================
-   TIME
-================================ */
-
-function formatPostTime(
-  dateString
-){
-
-  if(!dateString)return"";
-
-  const date =
-    new Date(dateString);
-
-  if(
-    isNaN(
-      date.getTime()
-    )
-  ){
-
-    return"";
-
-  }
-
-  const now =
-    new Date();
-
-  const seconds =
-    Math.floor(
-      (now-date)/1000
-    );
-
-  if(seconds<60)return"now";
-
-  const minutes =
-    Math.floor(
-      seconds/60
-    );
-
-  if(minutes<60){
-
-    return minutes+"m";
-
-  }
-
-  const hours =
-    Math.floor(
-      minutes/60
-    );
-
-  if(hours<24){
-
-    return hours+"h";
-
-  }
-
-  const days =
-    Math.floor(
-      hours/24
-    );
-
-  if(days<7){
-
-    return days+"d";
-
-  }
-
-  return date.toLocaleDateString();
-
-}
-
-/* ================================
-   NAVIGATION
-================================ */
-
-function openLogin(){
-
-  window.location.href=
-    "login.html";
-
-}
-
-function openRegister(){
-
-  window.location.href=
-    "register.html";
-
-}
-
-function openLive(){
-
-  window.location.href=
-    "live.html";
-
-}
-
-function openDeposit(){
-
-  if(!currentSession){
-
-    alert(
-      "Please login to make a deposit."
-    );
-
-    openLogin();
-
-    return;
-
-  }
-
-  window.location.href=
-    "deposit.html";
-
-}
-
-function openWallet(){
-
-  if(!currentSession){
-
-    alert(
-      "Please login to access your wallet."
-    );
-
-    openLogin();
-
-    return;
-
-  }
-
-  window.location.href=
-    "wallet.html";
-
-}
-
-function openMessages(){
-
-  if(!currentSession){
-
-    alert(
-      "Please login to access messages."
-    );
-
-    openLogin();
-
-    return;
-
-  }
-
-  window.location.href=
-    "message.html";
-
-}
-
-function openProfile(){
-
-  if(!currentSession){
-
-    alert(
-      "Please login to access your profile."
-    );
-
-    openLogin();
-
-    return;
-
-  }
-
-  window.location.href=
-    "profile.html";
-
-}
-
-/* ================================
-   LOGOUT
-================================ */
-
-async function logout(){
-
-  if(!confirm(
-    "Do you want to log out?"
-  )){
-
-    return;
-
-  }
-
-  if(notificationChannel){
-
-    await supabaseClient
-      .removeChannel(
-        notificationChannel
-      );
-
-    notificationChannel=null;
-
-  }
-
-  const {error} =
-    await supabaseClient.auth.signOut();
-
-  if(error){
-
-    alert(
-      "Logout failed: "+
-      error.message
-    );
-
-    return;
-
-  }
-
-  currentSession=null;
-
-  window.location.href=
-    "index.html";
-
-}
-
-/* ================================
-   SEARCH
-================================ */
-
-document
-  .getElementById(
-    "searchInput"
-  )
-  .addEventListener(
-    "input",
-    function(){
-
-      const search =
-        this.value
-          .toLowerCase()
-          .trim();
-
-      const cards =
-        document.querySelectorAll(
-          ".post-card"
-        );
-
-      cards.forEach(
-        card=>{
-
-          if(!search){
-
-            card.style.display=
-              "block";
-
-            return;
-
-          }
-
-          const text =
-            card.textContent
-              .toLowerCase();
-
-          card.style.display =
-            text.includes(search)
-            ? "block"
-            : "none";
-
-        }
-      );
-
-    }
-  );
-
-/* ================================
-   ESCAPE HTML
-================================ */
-
-function escapeHtml(
-  text
-){
-
-  const div =
-    document.createElement(
-      "div"
-    );
-
-  div.textContent =
-    text==null
-    ? ""
-    : String(text);
-
-  return div.innerHTML;
-
-}
-
-/* ================================
-   ESCAPE JS
-================================ */
-
-function escapeJs(
-  text
-){
-
-  return String(
-    text||""
-  )
-    .replace(
-      /\\/g,
-      "\\\\"
-    )
-    .replace(
-      /'/g,
-      "\\'"
-    )
-    .replace(
-      /\r/g,
-      "\\r"
-    )
-    .replace(
-      /\n/g,
-      "\\n"
-    );
-
-}
-
-/* ================================
-   CLOSE MODAL
-================================ */
-
-document
-  .getElementById(
-    "createPostModal"
-  )
-  .addEventListener(
-    "click",
-    function(event){
-
-      if(
-        event.target===
-        this
-      ){
-
-        closeCreatePost();
-
-      }
-
-    }
-  );
-
-/* ================================
-   AUTH STATE
-================================ */
-
-supabaseClient.auth.onAuthStateChange(
-  function(
-    event,
-    session
-  ){
-
-    currentSession=
-      session;
-
-    setTimeout(
-      async function(){
-
-        await updateAuthUI();
-
-        await loadPosts();
-
-        await loadAvailableOffers();
-
-        if(currentSession){
-
-          await loadNotifications();
-
-          subscribeToNotifications();
-
-        }
-
-      },
-      0
-    );
-
-  }
-);
-
-/* ================================
-   SERVICE WORKER / PWA
-================================ */
-
-if(
-  "serviceWorker" in navigator
-){
-
-  window.addEventListener(
-    "load",
-    function(){
-
-      navigator.serviceWorker
-        .register(
-          "./service-worker.js"
-        )
-        .then(
-          registration=>{
-
-            console.log(
-              "P2P Social service worker registered:",
-              registration.scope
-            );
-
-          }
-        )
-        .catch(
-          error=>{
-
-            console.error(
-              "Service worker registration failed:",
-              error
-            );
-
-          }
-        );
-
-    }
-  );
-
-}
-
-/* ================================
-   START
-================================ */
-
-async function startApp(){
-
-  await checkLogin();
-
-  await loadPosts();
-
-  await loadAvailableOffers();
-
-  if(currentSession){
-
-    await loadNotifications();
-
-    subscribeToNotifications();
-
-    requestNotificationPermission();
-
-  }
-
-}
-
-startApp();
-
-</script>
-
-</body>
-</html>
+      ? postComments
+     

@@ -1,3445 +1,3900 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>P2P Order • P2P Social</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<style>
-
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-  font-family:Arial,sans-serif;
-}
-
-body{
-  background:#f4f7f8;
-  color:#172033;
-  min-height:100vh;
-  padding-bottom:90px;
-}
-
-button,input,textarea{
-  font-family:Arial,sans-serif;
-}
-
-button{
-  cursor:pointer;
-}
-
-button:disabled{
-  opacity:.6;
-  cursor:not-allowed;
-}
-
-/* ================= HEADER ================= */
-
-header{
-  height:68px;
-  background:white;
-  border-bottom:1px solid #e2e8ea;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 18px;
-  position:sticky;
-  top:0;
-  z-index:100;
-}
-
-.brand{
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-.brand-logo{
-  width:42px;
-  height:42px;
-  border-radius:13px;
-  background:linear-gradient(135deg,#064e46,#10a889);
-  position:relative;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  box-shadow:0 4px 12px rgba(0,0,0,.12);
-}
-
-.p-left{
-  position:absolute;
-  left:8px;
-  top:10px;
-  width:13px;
-  height:23px;
-  border:4px solid white;
-  border-right:0;
-  border-radius:8px 0 0 8px;
-}
-
-.p-right{
-  position:absolute;
-  right:8px;
-  top:10px;
-  width:13px;
-  height:23px;
-  border:4px solid white;
-  border-left:0;
-  border-radius:0 8px 8px 0;
-}
-
-.center-dot{
-  width:10px;
-  height:10px;
-  background:white;
-  border-radius:50%;
-  position:absolute;
-}
-
-.brand-name{
-  font-size:19px;
-  font-weight:800;
-}
-
-.brand-name span{
-  color:#087f73;
-}
-
-.security{
-  color:#087f73;
-  font-size:13px;
-  font-weight:bold;
-}
-
-/* ================= CONTAINER ================= */
-
-.container{
-  width:100%;
-  max-width:850px;
-  margin:auto;
-  padding:18px;
-}
-
-/* ================= BACK ================= */
-
-.back-btn{
-  border:none;
-  background:white;
-  border:1px solid #dfe7e9;
-  border-radius:10px;
-  padding:10px 13px;
-  color:#087f73;
-  font-weight:bold;
-  margin-bottom:14px;
-}
-
-/* ================= TITLE ================= */
-
-.page-title{
-  margin-bottom:15px;
-}
-
-.page-title h1{
-  font-size:24px;
-}
-
-.page-title p{
-  color:#7b8790;
-  font-size:13px;
-  margin-top:5px;
-}
-
-/* ================= STATUS ================= */
-
-.status-card{
-  background:white;
-  border:1px solid #dfe7e9;
-  border-radius:17px;
-  padding:18px;
-  margin-bottom:14px;
-}
-
-.status-top{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-}
-
-.trade-number{
-  color:#087f73;
-  font-size:13px;
-  font-weight:bold;
-  margin-top:5px;
-  word-break:break-word;
-}
-
-.status{
-  display:inline-block;
-  padding:7px 10px;
-  border-radius:8px;
-  font-size:12px;
-  font-weight:bold;
-  background:#edf3f3;
-  color:#596579;
-}
-
-.status.pending,
-.status.open,
-.status.active,
-.status.paid{
-  background:#e2f5ef;
-  color:#087f73;
-}
-
-.status.disputed{
-  background:#fff2d9;
-  color:#a56a00;
-}
-
-.status.cancelled,
-.status.expired{
-  background:#fde8ed;
-  color:#d72c50;
-}
-
-.status.completed,
-.status.released{
-  background:#e2f5ef;
-  color:#159447;
-}
-
-/* ================= MAIN CARD ================= */
-
-.card{
-  background:white;
-  border:1px solid #dfe7e9;
-  border-radius:17px;
-  padding:18px;
-  margin-bottom:14px;
-}
-
-.card-title{
-  font-size:17px;
-  font-weight:bold;
-  margin-bottom:14px;
-}
-
-/* ================= DETAILS ================= */
-
-.detail-row{
-  display:flex;
-  justify-content:space-between;
-  gap:12px;
-  padding:10px 0;
-  border-bottom:1px solid #edf0f1;
-  font-size:14px;
-}
-
-.detail-row:last-child{
-  border-bottom:none;
-}
-
-.detail-row span{
-  color:#7b8790;
-}
-
-.detail-row strong{
-  text-align:right;
-  max-width:65%;
-  word-break:break-word;
-}
-
-/* ================= FEE ================= */
-
-.fee-card{
-  background:#f7fbfa;
-  border:1px solid #d7ebe7;
-  border-radius:13px;
-  padding:14px;
-  margin-top:14px;
-}
-
-.fee-title{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:10px;
-}
-
-.fee-badge{
-  background:#e2f5ef;
-  color:#087f73;
-  border-radius:7px;
-  padding:5px 8px;
-  font-size:11px;
-  font-weight:bold;
-}
-
-.fee-row{
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  padding:6px 0;
-  font-size:13px;
-}
-
-.fee-row span{
-  color:#71808a;
-}
-
-.fee-row strong{
-  text-align:right;
-}
-
-.fee-total{
-  border-top:1px solid #dce9e7;
-  margin-top:5px;
-  padding-top:10px;
-}
-
-/* ================= TIMER ================= */
-
-.expiry{
-  background:#fff5e6;
-  border:1px solid #f0dfc3;
-  color:#a56a00;
-  border-radius:12px;
-  padding:13px;
-  margin-top:14px;
-  font-size:13px;
-  font-weight:bold;
-}
-
-.expiry.expired{
-  background:#fde8ed;
-  border-color:#f0ccd5;
-  color:#d72c50;
-}
-
-/* ================= ACTIONS ================= */
-
-.action{
-  width:100%;
-  padding:13px;
-  border:none;
-  border-radius:10px;
-  font-weight:bold;
-  margin-top:9px;
-}
-
-.payment-btn{
-  background:#087f73;
-  color:white;
-}
-
-.release-btn{
-  background:#159447;
-  color:white;
-}
-
-.dispute-btn{
-  background:#fff5e6;
-  color:#a56a00;
-}
-
-.cancel-btn{
-  background:white;
-  border:1px solid #ead9dc;
-  color:#d72c50;
-}
-
-.message-btn{
-  background:#edf7f5;
-  color:#087f73;
-}
-
-/* ================= ROLE ================= */
-
-.role-badge{
-  display:inline-block;
-  padding:5px 8px;
-  border-radius:7px;
-  font-size:11px;
-  font-weight:bold;
-}
-
-.buyer{
-  background:#e2f5ef;
-  color:#087f73;
-}
-
-.seller{
-  background:#fde8ed;
-  color:#d72c50;
-}
-
-/* ================= INFO ================= */
-
-.info{
-  background:#f8fafb;
-  border:1px solid #e4eaec;
-  border-radius:12px;
-  padding:14px;
-  color:#687681;
-  font-size:12px;
-  line-height:1.5;
-}
-
-/* ================= MODAL ================= */
-
-.modal{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.5);
-  z-index:500;
-  align-items:center;
-  justify-content:center;
-  padding:18px;
-}
-
-.modal.show{
-  display:flex;
-}
-
-.modal-box{
-  width:100%;
-  max-width:430px;
-  background:white;
-  border-radius:18px;
-  padding:20px;
-}
-
-.modal-box h3{
-  margin-bottom:14px;
-}
-
-.modal-box textarea{
-  width:100%;
-  min-height:120px;
-  border:1px solid #dfe4eb;
-  border-radius:10px;
-  padding:12px;
-  resize:vertical;
-  outline:none;
-}
-
-.modal-box textarea:focus{
-  border-color:#087f73;
-}
-
-.modal-actions{
-  display:flex;
-  gap:8px;
-  margin-top:12px;
-}
-
-.modal-actions button{
-  flex:1;
-  padding:11px;
-  border:none;
-  border-radius:10px;
-  font-weight:bold;
-}
-
-.close-btn{
-  background:#edf0f4;
-  color:#172033;
-}
-
-.confirm-btn{
-  background:#087f73;
-  color:white;
-}
-
-/* ================= EMPTY ================= */
-
-.loading{
-  background:white;
-  border:1px solid #dfe7e9;
-  border-radius:17px;
-  padding:35px;
-  text-align:center;
-  color:#7b8790;
-}
-
-/* ================= TOAST ================= */
-
-.toast{
-  position:fixed;
-  left:50%;
-  bottom:90px;
-  transform:translateX(-50%);
-  background:#172033;
-  color:white;
-  padding:12px 16px;
-  border-radius:10px;
-  font-size:13px;
-  z-index:1000;
-  display:none;
-  max-width:90%;
-  text-align:center;
-}
-
-.toast.show{
-  display:block;
-}
-
-/* ================= NAV ================= */
-
-.bottom-nav{
-  position:fixed;
-  left:0;
-  right:0;
-  bottom:0;
-  height:72px;
-  background:white;
-  border-top:1px solid #dfe7e9;
-  display:flex;
-  justify-content:space-around;
-  align-items:center;
-  z-index:300;
-  box-shadow:0 -4px 15px rgba(0,0,0,.05);
-}
-
-.bottom-nav a{
-  color:#7b8790;
-  text-decoration:none;
-  text-align:center;
-  font-size:11px;
-  min-width:55px;
-}
-
-.bottom-nav a.active{
-  color:#087f73;
-  font-weight:bold;
-}
-
-.nav-icon{
-  display:block;
-  font-size:21px;
-  margin-bottom:4px;
-}
-
-.live-nav{
-  color:#ef3155 !important;
-}
-
-/* ================= MOBILE ================= */
-
-@media(max-width:450px){
-
-  .container{
-    padding:14px;
-  }
-
-  .brand-name{
-    font-size:17px;
-  }
-
-  .security{
-    font-size:11px;
-  }
-
-  .page-title h1{
-    font-size:21px;
-  }
-
-  .detail-row{
-    font-size:13px;
-  }
-
-  .detail-row strong{
-    max-width:58%;
-  }
-
-}
-
-</style>
-</head>
-
-<body>
-
-<header>
-
-  <div class="brand">
-
-    <div class="brand-logo">
-      <div class="p-left"></div>
-      <div class="p-right"></div>
-      <div class="center-dot"></div>
-    </div>
-
-    <div class="brand-name">
-      P2P <span>Social</span>
-    </div>
-
-  </div>
-
-  <div class="security">
-    🔒 Secure
-  </div>
-
-</header>
-
-
-<main class="container">
-
-  <button
-    class="back-btn"
-    onclick="goBack()">
-
-    ← Back to P2P
-
-  </button>
-
-
-  <div class="page-title">
-
-    <h1>
-      🤝 P2P Trade
-    </h1>
-
-    <p>
-      Secure buyer and seller transaction
-    </p>
-
-  </div>
-
-
-  <section
-    id="loading"
-    class="loading">
-
-    Loading trade...
-
-  </section>
-
-
-  <div id="tradeContent" style="display:none;">
-
-
-    <!-- STATUS -->
-
-    <section class="status-card">
-
-      <div class="status-top">
-
-        <div>
-
-          <strong>
-            P2P Trade
-          </strong>
-
-          <div
-            id="tradeNumber"
-            class="trade-number">
-          </div>
-
-        </div>
-
-        <span
-          id="tradeStatus"
-          class="status">
-        </span>
-
-      </div>
-
-    </section>
-
-
-    <!-- TRADE DETAILS -->
-
-    <section class="card">
-
-      <div class="card-title">
-        💱 Trade Details
-      </div>
-
-      <div id="tradeDetails"></div>
-
-    </section>
-
-
-    <!-- PLATFORM FEE -->
-
-    <section
-      id="feeSection"
-      class="card">
-
-      <div class="card-title">
-        💸 Platform Fee
-      </div>
-
-      <div class="fee-card">
-
-        <div class="fee-row">
-
-          <span>
-            Trade value
-          </span>
-
-          <strong id="tradeValue">
-            0.00 ETB
-          </strong>
-
-        </div>
-
-        <div class="fee-row">
-
-          <span>
-            Platform fee
-          </span>
-
-          <strong id="platformFee">
-            0.00 ETB
-          </strong>
-
-        </div>
-
-        <div class="fee-row fee-total">
-
-          <span>
-            Total
-          </span>
-
-          <strong id="totalAmount">
-            0.00 ETB
-          </strong>
-
-        </div>
-
-      </div>
-
-      <div
-        class="info"
-        style="margin-top:10px;">
-
-        💡 The platform fee shown here comes from the
-        secure trade record when available. Final fee,
-        wallet balances, treasury and settlement are
-        controlled by the Supabase database functions.
-
-      </div>
-
-    </section>
-
-
-    <!-- EXPIRATION -->
-
-    <section
-      id="expiryBox"
-      class="expiry"
-      style="display:none;">
-
-      ⏱️ Trade expires:
-      <span id="expiryText"></span>
-
-    </section>
-
-
-    <!-- ACTIONS -->
-
-    <section class="card">
-
-      <div class="card-title">
-        ⚡ Trade Actions
-      </div>
-
-      <div id="actions"></div>
-
-    </section>
-
-
-    <!-- SECURITY -->
-
-    <section class="card">
-
-      <div class="card-title">
-        🔒 Secure P2P
-      </div>
-
-      <div class="info">
-
-        Money movement is controlled by protected
-        Supabase database functions.
-
-        <br><br>
-
-        Users cannot directly change:
-
-        <br>
-        • Wallet balances
-        <br>
-        • Platform fees
-        <br>
-        • Trader commissions
-        <br>
-        • Treasury
-        <br>
-        • Another user's orders
-
-        <br><br>
-
-        🏦 Treasury and permissions remain hidden
-        from the user interface.
-
-      </div>
-
-    </section>
-
-
-  </div>
-
-</main>
-
-
-<!-- DISPUTE MODAL -->
-
-<div
-  id="disputeModal"
-  class="modal">
-
-  <div class="modal-box">
-
-    <h3>
-      ⚠️ Open Dispute
-    </h3>
-
-    <textarea
-      id="disputeReason"
-      maxlength="1000"
-      placeholder="Explain the problem with this trade..."></textarea>
-
-    <div class="modal-actions">
-
-      <button
-        class="close-btn"
-        onclick="closeModal('disputeModal')">
-
-        Cancel
-
-      </button>
-
-      <button
-        id="submitDisputeBtn"
-        class="confirm-btn"
-        onclick="submitDispute()">
-
-        Open Dispute
-
-      </button>
-
-    </div>
-
-  </div>
+<!DOCTYPE html>  <html lang="en">  
+<head>  
+<meta charset="UTF-8">  
+<meta name="viewport" content="width=device-width, initial-scale=1.0">  <!-- =========================  
+     PWA  
+========================= -->  <meta name="theme-color" content="#087f73">  
+<meta name="mobile-web-app-capable" content="yes">  
+<meta name="apple-mobile-web-app-capable" content="yes">  
+<meta name="apple-mobile-web-app-status-bar-style" content="default">  
+<meta name="apple-mobile-web-app-title" content="P2P Social">  <link rel="manifest" href="./manifest.json">  
+<link rel="icon" href="./p2p-logo.svg" type="image/svg+xml">  <title>P2P Social</title>  <style>  
+  
+/* =========================  
+   RESET  
+========================= */  
+  
+*{  
+  box-sizing:border-box;  
+  margin:0;  
+  padding:0;  
+  font-family:Arial,sans-serif;  
+}  
+  
+body{  
+  background:#f5f7fb;  
+  color:#172033;  
+  padding-bottom:75px;  
+}  
+  
+/* =========================  
+   HEADER  
+========================= */  
+  
+header{  
+  background:linear-gradient(135deg,#075e54,#087f73);  
+  color:white;  
+  padding:18px;  
+  border-radius:0 0 22px 22px;  
+}  
+  
+.top{  
+  display:flex;  
+  align-items:center;  
+  justify-content:space-between;  
+  gap:10px;  
+}  
+  
+.logo-area{  
+  display:flex;  
+  align-items:center;  
+  gap:10px;  
+  min-width:0;  
+}  
+  
+/* =========================  
+   BUILT-IN P2P SOCIAL LOGO  
+========================= */  
+  
+.logo{  
+  width:45px;  
+  height:45px;  
+  border-radius:14px;  
+  
+  background:  
+    linear-gradient(  
+      135deg,  
+      #064e46,  
+      #10a889  
+    );  
+  
+  position:relative;  
+  
+  display:flex;  
+  justify-content:center;  
+  align-items:center;  
+  
+  flex-shrink:0;  
+  
+  box-shadow:  
+    0 6px 15px  
+    rgba(0,0,0,.18);  
+}  
+  
+.logo .p-left{  
+  position:absolute;  
+  left:8px;  
+  top:10px;  
+  width:13px;  
+  height:25px;  
+  border:4px solid white;  
+  border-right:0;  
+  border-radius:8px 0 0 8px;  
+}  
+  
+.logo .p-right{  
+  position:absolute;  
+  right:8px;  
+  top:10px;  
+  width:13px;  
+  height:25px;  
+  border:4px solid white;  
+  border-left:0;  
+  border-radius:0 8px 8px 0;  
+}  
+  
+.logo .center{  
+  width:12px;  
+  height:12px;  
+  background:white;  
+  border-radius:50%;  
+  position:absolute;  
+  display:flex;  
+  justify-content:center;  
+  align-items:center;  
+  z-index:5;  
+}  
+  
+.logo .dot{  
+  width:4px;  
+  height:4px;  
+  background:#087f73;  
+  border-radius:50%;  
+}  
+  
+.brand{  
+  font-size:21px;  
+  font-weight:bold;  
+  white-space:nowrap;  
+}  
+  
+.brand span{  
+  color:#b9fff1;  
+}  
+  
+.top-actions{  
+  display:flex;  
+  align-items:center;  
+  gap:6px;  
+}  
+  
+.auth-btn{  
+  border:none;  
+  border-radius:9px;  
+  padding:8px 10px;  
+  font-size:12px;  
+  font-weight:bold;  
+  cursor:pointer;  
+}  
+  
+.login-btn{  
+  background:white;  
+  color:#087f73;  
+}  
+  
+.register-btn{  
+  background:#16a085;  
+  color:white;  
+  border:1px solid rgba(255,255,255,.7);  
+}  
+  
+.logout-btn{  
+  background:#e74c3c;  
+  color:white;  
+  display:none;  
+}  
+  
+/* =========================  
+   NOTIFICATIONS  
+========================= */  
+  
+.notification-wrap{  
+  position:relative;  
+}  
+  
+.notification{  
+  width:38px;  
+  height:38px;  
+  border:none;  
+  background:transparent;  
+  color:white;  
+  font-size:23px;  
+  cursor:pointer;  
+  display:flex;  
+  align-items:center;  
+  justify-content:center;  
+  position:relative;  
+}  
+  
+.notification-badge{  
+  position:absolute;  
+  top:-2px;  
+  right:-2px;  
+  min-width:18px;  
+  height:18px;  
+  padding:0 5px;  
+  border-radius:20px;  
+  background:#e74c3c;  
+  color:white;  
+  font-size:10px;  
+  font-weight:bold;  
+  display:none;  
+  align-items:center;  
+  justify-content:center;  
+  border:2px solid #087f73;  
+}  
+  
+.notification-panel{  
+  display:none;  
+  position:absolute;  
+  right:0;  
+  top:45px;  
+  width:330px;  
+  max-width:calc(100vw - 24px);  
+  background:white;  
+  color:#172033;  
+  border-radius:16px;  
+  box-shadow:0 10px 35px rgba(0,0,0,.2);  
+  overflow:hidden;  
+  z-index:3000;  
+}  
+  
+.notification-panel.open{  
+  display:block;  
+}  
+  
+.notification-header{  
+  display:flex;  
+  align-items:center;  
+  justify-content:space-between;  
+  padding:14px;  
+  border-bottom:1px solid #edf0f4;  
+}  
+  
+.mark-all{  
+  border:none;  
+  background:none;  
+  color:#087f73;  
+  font-size:11px;  
+  font-weight:bold;  
+  cursor:pointer;  
+}  
+  
+.notification-list{  
+  max-height:380px;  
+  overflow-y:auto;  
+}  
+  
+.notification-item{  
+  display:flex;  
+  gap:10px;  
+  padding:12px 14px;  
+  border-bottom:1px solid #f0f2f5;  
+  cursor:pointer;  
+}  
+  
+.notification-item.unread{  
+  background:#edf9f6;  
+}  
+  
+.notification-icon{  
+  width:38px;  
+  height:38px;  
+  border-radius:50%;  
+  background:#dff3ee;  
+  display:flex;  
+  align-items:center;  
+  justify-content:center;  
+  flex-shrink:0;  
+  font-size:18px;  
+}  
+  
+.notification-content{  
+  min-width:0;  
+  flex:1;  
+}  
+  
+.notification-title{  
+  font-weight:bold;  
+  font-size:13px;  
+}  
+  
+.notification-body{  
+  font-size:12px;  
+  color:#687386;  
+  margin-top:3px;  
+  line-height:1.4;  
+}  
+  
+.notification-time{  
+  font-size:10px;  
+  color:#9299a5;  
+  margin-top:5px;  
+}  
+  
+.no-notifications{  
+  padding:30px 15px;  
+  text-align:center;  
+  color:#858d99;  
+  font-size:13px;  
+}  
+  
+/* =========================  
+   USER  
+========================= */  
+  
+.user-info{  
+  display:none;  
+  margin-top:12px;  
+  font-size:13px;  
+}  
+  
+/* =========================  
+   SEARCH  
+========================= */  
+  
+.search{  
+  margin-top:18px;  
+  background:white;  
+  color:#172033;  
+  border-radius:14px;  
+  padding:12px 15px;  
+  display:flex;  
+  align-items:center;  
+  gap:10px;  
+}  
+  
+.search input{  
+  border:none;  
+  outline:none;  
+  width:100%;  
+  font-size:15px;  
+}  
+  
+/* =========================  
+   WALLET  
+========================= */  
+  
+.wallet{  
+  margin:18px;  
+  background:linear-gradient(135deg,#172033,#29364f);  
+  color:white;  
+  border-radius:20px;  
+  padding:20px;  
+  box-shadow:0 8px 25px rgba(0,0,0,.12);  
+}  
+  
+.wallet-title{  
+  font-size:14px;  
+  opacity:.8;  
+}  
+  
+.wallet-balance{  
+  font-size:28px;  
+  font-weight:bold;  
+  margin:8px 0;  
+}  
+  
+.wallet-row{  
+  display:flex;  
+  justify-content:space-between;  
+  margin-top:15px;  
+  font-size:14px;  
+}  
+  
+.wallet-buttons{  
+  display:flex;  
+  gap:10px;  
+  margin-top:18px;  
+}  
+  
+.wallet-buttons button{  
+  flex:1;  
+  border:none;  
+  padding:11px;  
+  border-radius:10px;  
+  cursor:pointer;  
+  font-weight:bold;  
+}  
+  
+.deposit{  
+  background:#16a085;  
+  color:white;  
+}  
+  
+.withdraw{  
+  background:white;  
+  color:#172033;  
+}  
+  
+/* =========================  
+   SECTIONS  
+========================= */  
+  
+section{  
+  padding:5px 18px 18px;  
+}  
+  
+.section-title{  
+  display:flex;  
+  justify-content:space-between;  
+  align-items:center;  
+  margin-bottom:12px;  
+}  
+  
+.section-title h2{  
+  font-size:19px;  
+}  
+  
+.see-all{  
+  color:#087f73;  
+  font-size:13px;  
+  font-weight:bold;  
+  cursor:pointer;  
+}  
+  
+/* =========================  
+   LIVE  
+========================= */  
+  
+.live-container{  
+  display:flex;  
+  gap:14px;  
+  overflow-x:auto;  
+  padding-bottom:5px;  
+}  
+  
+.live-card{  
+  min-width:125px;  
+  background:white;  
+  border-radius:15px;  
+  overflow:hidden;  
+  box-shadow:0 3px 12px rgba(0,0,0,.07);  
+  cursor:pointer;  
+}  
+  
+.live-image{  
+  height:125px;  
+  background:linear-gradient(135deg,#ff6b6b,#6c5ce7);  
+  position:relative;  
+  display:flex;  
+  justify-content:center;  
+  align-items:center;  
+  font-size:45px;  
+}  
+  
+.live-badge{  
+  position:absolute;  
+  top:8px;  
+  left:8px;  
+  background:#e74c3c;  
+  color:white;  
+  padding:4px 7px;  
+  border-radius:6px;  
+  font-size:10px;  
+  font-weight:bold;  
+}  
+  
+.viewers{  
+  position:absolute;  
+  bottom:7px;  
+  right:7px;  
+  background:rgba(0,0,0,.6);  
+  color:white;  
+  padding:4px 7px;  
+  border-radius:8px;  
+  font-size:10px;  
+}  
+  
+.live-name{  
+  padding:10px;  
+  font-size:13px;  
+  font-weight:bold;  
+}  
+  
+/* =========================  
+   P2P  
+========================= */  
+  
+.p2p-card{  
+  background:white;  
+  border-radius:16px;  
+  padding:16px;  
+  margin-bottom:12px;  
+  box-shadow:0 3px 12px rgba(0,0,0,.06);  
+}  
+  
+.seller{  
+  display:flex;  
+  justify-content:space-between;  
+  align-items:center;  
+}  
+  
+.user{  
+  display:flex;  
+  align-items:center;  
+  gap:9px;  
+}  
+  
+.avatar{  
+  width:40px;  
+  height:40px;  
+  border-radius:50%;  
+  background:#dfeeea;  
+  display:flex;  
+  align-items:center;  
+  justify-content:center;  
+  font-weight:bold;  
+  color:#087f73;  
+}  
+  
+.username{  
+  font-weight:bold;  
+  font-size:14px;  
+}  
+  
+.online{  
+  color:#16a085;  
+  font-size:11px;  
+  margin-top:3px;  
+}  
+  
+.rate{  
+  text-align:right;  
+}  
+  
+.rate strong{  
+  display:block;  
+  font-size:17px;  
+}  
+  
+.rate small{  
+  color:#777;  
+}  
+  
+.trade-info{  
+  display:flex;  
+  justify-content:space-between;  
+  margin:15px 0;  
+  font-size:13px;  
+}  
+  
+.buy-btn,  
+.sell-btn{  
+  width:100%;  
+  border:none;  
+  padding:12px;  
+  border-radius:10px;  
+  font-weight:bold;  
+  cursor:pointer;  
+}  
+  
+.buy-btn{  
+  background:#087f73;  
+  color:white;  
+}  
+  
+.sell-btn{  
+  background:#eaf7f4;  
+  color:#087f73;  
+  margin-top:8px;  
+}  
+  
+/* =========================  
+   POSTS  
+========================= */  
+  
+.posts-section{  
+  padding-top:0;  
+}  
+  
+.posts-title{  
+  display:flex;  
+  justify-content:space-between;  
+  align-items:center;  
+  margin-bottom:12px;  
+}  
+  
+.posts-title h2{  
+  font-size:19px;  
+}  
+  
+.create-post-btn{  
+  border:none;  
+  background:#087f73;  
+  color:white;  
+  padding:9px 12px;  
+  border-radius:10px;  
+  font-weight:bold;  
+  cursor:pointer;  
+}  
+  
+.posts-feed{  
+  display:flex;  
+  flex-direction:column;  
+  gap:12px;  
+}  
+  
+.post-card{  
+  background:white;  
+  border-radius:16px;  
+  padding:16px;  
+  box-shadow:0 3px 12px rgba(0,0,0,.06);  
+}  
+  
+.post-header{  
+  display:flex;  
+  align-items:center;  
+  gap:10px;  
+  cursor:pointer;  
+}  
+  
+.post-avatar{  
+  width:42px;  
+  height:42px;  
+  border-radius:50%;  
+  object-fit:cover;  
+  background:#dfeeea;  
+  display:flex;  
+  align-items:center;  
+  justify-content:center;  
+  color:#087f73;  
+  font-weight:bold;  
+  flex-shrink:0;  
+}  
+  
+.post-user-info{  
+  flex:1;  
+  min-width:0;  
+}  
+  
+.post-name{  
+  font-weight:bold;  
+  font-size:14px;  
+  overflow:hidden;  
+  text-overflow:ellipsis;  
+}  
+  
+.post-handle{  
+  color:#7a8494;  
+  font-size:12px;  
+  margin-top:3px;  
+}  
+  
+.post-time{  
+  color:#8a93a1;  
+  font-size:11px;  
+  white-space:nowrap;  
+}  
+  
+.post-menu{  
+  border:none;  
+  background:none;  
+  font-size:18px;  
+  cursor:pointer;  
+}  
+  
+.post-content{  
+  margin-top:13px;  
+  color:#303b4d;  
+  font-size:14px;  
+  line-height:1.55;  
+  white-space:pre-wrap;  
+  word-break:break-word;  
+}  
+  
+.post-actions{  
+  display:flex;  
+  gap:18px;  
+  margin-top:15px;  
+  padding-top:12px;  
+  border-top:1px solid #edf0f4;  
+}  
+  
+.post-action{  
+  border:none;  
+  background:transparent;  
+  color:#687386;  
+  cursor:pointer;  
+  font-size:13px;  
+}  
+  
+.post-action.liked{  
+  color:#e74c3c;  
+  font-weight:bold;  
+}  
+  
+/* =========================  
+   COMMENTS  
+========================= */  
+  
+.comments-box{  
+  margin-top:12px;  
+  border-top:1px solid #edf0f4;  
+  padding-top:10px;  
+}  
+  
+.comment{  
+  display:flex;  
+  gap:8px;  
+  margin-bottom:9px;  
+}  
+  
+.comment-avatar{  
+  width:32px;  
+  height:32px;  
+  border-radius:50%;  
+  background:#dfeeea;  
+  display:flex;  
+  justify-content:center;  
+  align-items:center;  
+  color:#087f73;  
+  font-weight:bold;  
+  flex-shrink:0;  
+  overflow:hidden;  
+}  
+  
+.comment-avatar img{  
+  width:100%;  
+  height:100%;  
+  object-fit:cover;  
+}  
+  
+.comment-body{  
+  background:#f5f7fb;  
+  border-radius:12px;  
+  padding:8px 10px;  
+  flex:1;  
+  position:relative;  
+}  
+  
+.comment-name{  
+  font-size:12px;  
+  font-weight:bold;  
+  padding-right:20px;  
+}  
+  
+.comment-text{  
+  font-size:13px;  
+  color:#303b4d;  
+  margin-top:3px;  
+  white-space:pre-wrap;  
+  word-break:break-word;  
+}  
+  
+.comment-delete{  
+  position:absolute;  
+  top:6px;  
+  right:7px;  
+  border:none;  
+  background:none;  
+  color:#e74c3c;  
+  font-size:11px;  
+  cursor:pointer;  
+}  
+  
+.comment-input-row{  
+  display:flex;  
+  gap:7px;  
+  margin-top:10px;  
+}  
+  
+.comment-input{  
+  flex:1;  
+  border:1px solid #dfe4eb;  
+  border-radius:10px;  
+  padding:9px 11px;  
+  outline:none;  
+  font-size:13px;  
+}  
+  
+.comment-send{  
+  border:none;  
+  background:#087f73;  
+  color:white;  
+  border-radius:10px;  
+  padding:0 13px;  
+  cursor:pointer;  
+  font-weight:bold;  
+}  
+  
+.view-comments{  
+  border:none;  
+  background:none;  
+  color:#087f73;  
+  font-size:12px;  
+  font-weight:bold;  
+  cursor:pointer;  
+  margin-bottom:5px;  
+}  
+  
+.no-posts,  
+.loading-posts{  
+  background:white;  
+  border-radius:16px;  
+  padding:25px;  
+  text-align:center;  
+  color:#7b8492;  
+  box-shadow:0 3px 12px rgba(0,0,0,.05);  
+}  
+  
+/* =========================  
+   LOAD MORE  
+========================= */  
+  
+.load-more{  
+  width:100%;  
+  margin-top:5px;  
+  border:none;  
+  background:white;  
+  color:#087f73;  
+  padding:13px;  
+  border-radius:12px;  
+  font-weight:bold;  
+  cursor:pointer;  
+  box-shadow:0 3px 12px rgba(0,0,0,.05);  
+}  
+  
+.load-more:disabled{  
+  color:#999;  
+  cursor:not-allowed;  
+}  
+  
+/* =========================  
+   CREATE POST MODAL  
+========================= */  
+  
+.modal{  
+  display:none;  
+  position:fixed;  
+  inset:0;  
+  background:rgba(0,0,0,.55);  
+  z-index:2000;  
+  align-items:center;  
+  justify-content:center;  
+  padding:20px;  
+}  
+  
+.modal-content{  
+  width:100%;  
+  max-width:450px;  
+  background:white;  
+  border-radius:18px;  
+  padding:20px;  
+}  
+  
+.modal-header{  
+  display:flex;  
+  justify-content:space-between;  
+  align-items:center;  
+  margin-bottom:15px;  
+}  
+  
+.modal-header h3{  
+  font-size:19px;  
+}  
+  
+.close-modal{  
+  border:none;  
+  background:none;  
+  font-size:25px;  
+  cursor:pointer;  
+}  
+  
+.post-textarea{  
+  width:100%;  
+  min-height:130px;  
+  resize:vertical;  
+  border:1px solid #dfe4eb;  
+  border-radius:12px;  
+  padding:12px;  
+  outline:none;  
+  font-size:14px;  
+}  
+  
+.visibility-label{  
+  display:block;  
+  margin:12px 0 6px;  
+  font-size:13px;  
+  font-weight:bold;  
+}  
+  
+.visibility-select{  
+  width:100%;  
+  border:1px solid #dfe4eb;  
+  border-radius:10px;  
+  padding:11px;  
+  background:white;  
+}  
+  
+.publish-btn{  
+  width:100%;  
+  margin-top:14px;  
+  border:none;  
+  background:#087f73;  
+  color:white;  
+  padding:12px;  
+  border-radius:10px;  
+  font-weight:bold;  
+  cursor:pointer;  
+}  
+  
+/* =========================  
+   BOTTOM NAV  
+========================= */  
+  
+.bottom-nav{  
+  position:fixed;  
+  bottom:0;  
+  left:0;  
+  right:0;  
+  height:68px;  
+  background:white;  
+  border-top:1px solid #ddd;  
+  display:flex;  
+  justify-content:space-around;  
+  align-items:center;  
+  z-index:1000;  
+}  
+  
+.nav-item{  
+  text-align:center;  
+  color:#777;  
+  font-size:11px;  
+  cursor:pointer;  
+}  
+  
+.nav-item span{  
+  display:block;  
+  font-size:22px;  
+  margin-bottom:3px;  
+}  
+  
+.nav-item.active{  
+  color:#087f73;  
+  font-weight:bold;  
+}  
+  
+button:active{  
+  transform:scale(.97);  
+}  
+  
+/* =========================  
+   MOBILE  
+========================= */  
+  
+@media(max-width:450px){  
+  
+  header{  
+    padding:16px 12px;  
+  }  
+  
+  .logo{  
+    width:43px;  
+    height:43px;  
+    border-radius:13px;  
+  }  
+  
+  .logo .p-left,  
+  .logo .p-right{  
+    top:9px;  
+    height:24px;  
+  }  
+  
+  .logo .p-left{  
+    left:8px;  
+  }  
+  
+  .logo .p-right{  
+    right:8px;  
+  }  
+  
+  .brand{  
+    font-size:19px;  
+  }  
+  
+  .auth-btn{  
+    padding:7px 8px;  
+    font-size:11px;  
+  }  
+  
+  .notification{  
+    font-size:21px;  
+  }  
+  
+  .wallet{  
+    margin:16px 12px;  
+  }  
+  
+  .wallet-balance{  
+    font-size:27px;  
+  }  
+  
+  .post-actions{  
+    gap:12px;  
+  }  
+  
+  .post-action{  
+    font-size:12px;  
+  }  
+}  
+  
+</style>  </head>  <body>  <!-- =========================  
+     HEADER  
+========================= -->  <header>    <div class="top">  <div class="logo-area">  
+
+  <div class="logo" aria-label="P2P Social Logo">  
+
+    <div class="p-left"></div>  
+    <div class="p-right"></div>  
+
+    <div class="center">  
+      <div class="dot"></div>  
+    </div>  
+
+  </div>  
+
+  <div class="brand">  
+    P2P <span>Social</span>  
+  </div>  
+
+</div>  
+
+<div class="top-actions">  
+
+  <button  
+    id="loginBtn"  
+    class="auth-btn login-btn"  
+    onclick="openLogin()">  
+    Login  
+  </button>  
+
+  <button  
+    id="registerBtn"  
+    class="auth-btn register-btn"  
+    onclick="openRegister()">  
+    Register  
+  </button>  
+
+  <button  
+    id="logoutBtn"  
+    class="auth-btn logout-btn"  
+    onclick="logout()">  
+    Logout  
+  </button>  
+
+  <div class="notification-wrap">  
+
+    <button  
+      id="notificationButton"  
+      class="notification"  
+      onclick="toggleNotificationPanel(event)"  
+      aria-label="Notifications">  
+
+      🔔  
+
+      <span  
+        id="notificationBadge"  
+        class="notification-badge">  
+        0  
+      </span>  
+
+    </button>  
+
+    <div  
+      id="notificationPanel"  
+      class="notification-panel">  
+
+      <div class="notification-header">  
+
+        <strong>  
+          Notifications  
+        </strong>  
+
+        <button  
+          class="mark-all"  
+          onclick="markAllNotificationsRead()">  
+          Mark all read  
+        </button>  
+
+      </div>  
+
+      <div  
+        id="notificationList"  
+        class="notification-list">  
+
+        <div class="no-notifications">  
+          No notifications yet.  
+        </div>  
+
+      </div>  
+
+    </div>  
+
+  </div>  
 
 </div>
 
+  </div>    <div id="userInfo" class="user-info">  Logged in as:  
+<strong id="usernameDisplay"></strong>
 
-<div
-  id="toast"
-  class="toast">
+  </div>    <div class="search">  🔎  
+
+<input  
+  type="text"  
+  id="searchInput"  
+  placeholder="Search users, live rooms...">
+
+  </div>  </header>  <!-- =========================  
+     WALLET  
+========================= -->  <div class="wallet">    <div class="wallet-title">  
+    Total Wallet Balance  
+  </div>    <div  
+    class="wallet-balance"  
+    id="balanceDisplay">  
+    0 ETB  
+  </div>    <div class="wallet-row">  <span>🇪🇹 ETB</span>  
+
+<strong id="etbDisplay">  
+  0.00  
+</strong>
+
+  </div>    <div class="wallet-row">  <span>💵 USDT</span>  
+
+<strong id="usdtDisplay">  
+  0.00  
+</strong>
+
+  </div>    <div class="wallet-buttons">  <button  
+  class="deposit"  
+  onclick="openDeposit()">  
+  Deposit  
+</button>  
+
+<button  
+  class="withdraw"  
+  onclick="openWallet()">  
+  Wallet  
+</button>
+
+  </div>  </div>  <!-- =========================  
+     LIVE  
+========================= -->  <section>    <div class="section-title">  <h2>  
+  🔴 Live Now  
+</h2>  
+
+<span  
+  class="see-all"  
+  onclick="openLive()">  
+  See all  
+</span>
+
+  </div>    <div class="live-container">  <div  
+  class="live-card"  
+  onclick="openLive()">  
+
+  <div class="live-image">  
+
+    👩  
+
+    <span class="live-badge">  
+      LIVE  
+    </span>  
+
+    <span class="viewers">  
+      1.2K  
+    </span>  
+
+  </div>  
+
+  <div class="live-name">  
+    Hana Live  
+  </div>  
+
+</div>  
+
+<div  
+  class="live-card"  
+  onclick="openLive()">  
+
+  <div class="live-image">  
+
+    👨  
+
+    <span class="live-badge">  
+      LIVE  
+    </span>  
+
+    <span class="viewers">  
+      856  
+    </span>  
+
+  </div>  
+
+  <div class="live-name">  
+    Dawit Live  
+  </div>  
+
+</div>  
+
+<div  
+  class="live-card"  
+  onclick="openLive()">  
+
+  <div class="live-image">  
+
+    👩‍🦱  
+
+    <span class="live-badge">  
+      LIVE  
+    </span>  
+
+    <span class="viewers">  
+      543  
+    </span>  
+
+  </div>  
+
+  <div class="live-name">  
+    Meron Live  
+  </div>  
+
 </div>
 
+  </div>  </section>  <!-- =========================  
+     P2P OFFERS  
+========================= -->  <section>    <div class="section-title">  <h2>  
+  🔄 P2P Offers  
+</h2>  
 
-<nav class="bottom-nav">
+<span  
+  class="see-all"  
+  onclick="openWallet()">  
+  See all  
+</span>
 
-  <a href="index.html">
+  </div>    <div class="p2p-card">  <div class="seller">  
 
-    <span class="nav-icon">
-      🏠
-    </span>
+  <div class="user">  
 
-    Home
+    <div class="avatar">  
+      A  
+    </div>  
 
-  </a>
+    <div>  
 
+      <div class="username">  
+        Abebe Trader  
+      </div>  
 
-  <a
-    href="live.html"
-    class="live-nav">
+      <div class="online">  
+        ● Online  
+      </div>  
 
-    <span class="nav-icon">
-      🔴
-    </span>
+    </div>  
 
-    Live
+  </div>  
 
-  </a>
+  <div class="rate">  
 
+    <strong>  
+      198.50 ETB  
+    </strong>  
 
-  <a
-    href="wallet.html"
-    class="active">
+    <small>  
+      1 USDT  
+    </small>  
 
-    <span class="nav-icon">
-      🔄
-    </span>
+  </div>  
 
-    P2P
+</div>  
 
-  </a>
+<div class="trade-info">  
 
+  <span>  
+    Available:  
+    <strong>  
+      500 USDT  
+    </strong>  
+  </span>  
 
-  <a href="message.html">
+  <span>  
+    Min: 500 ETB  
+  </span>  
 
-    <span class="nav-icon">
-      💬
-    </span>
+</div>  
 
-    Messages
+<button  
+  class="buy-btn"  
+  onclick="protectedAction()">  
+  Buy USDT  
+</button>
 
-  </a>
+  </div>    <div class="p2p-card">  <div class="seller">  
 
+  <div class="user">  
 
-  <a href="profile.html">
+    <div class="avatar">  
+      M  
+    </div>  
 
-    <span class="nav-icon">
-      👤
-    </span>
+    <div>  
 
-    Profile
+      <div class="username">  
+        @id0146  
+      </div>  
 
-  </a>
+      <div class="online">  
+        ● Online  
+      </div>  
 
-</nav>
+    </div>  
 
+  </div>  
 
-<script>
+  <div class="rate">  
 
-/* =====================================================
-   SUPABASE
-===================================================== */
+    <strong>  
+      197.80 ETB  
+    </strong>  
 
-const SUPABASE_URL =
-  "https://mbsvuwrgigqfporxwpfr.supabase.co";
+    <small>  
+      1 USDT  
+    </small>  
 
-const SUPABASE_PUBLISHABLE_KEY =
-  "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
+  </div>  
 
-const supabaseClient =
-  window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY
-  );
+</div>  
 
+<div class="trade-info">  
 
-/* =====================================================
-   STATE
-===================================================== */
+  <span>  
+    Available:  
+    <strong>  
+      1,200 USDT  
+    </strong>  
+  </span>  
 
-let currentUser = null;
-let currentTrade = null;
-let selectedTradeId = null;
-let realtimeChannel = null;
-let expiryTimer = null;
-let toastTimer = null;
-let actionBusy = false;
+  <span>  
+    Min: 5,000 ETB  
+  </span>  
 
+</div>  
 
-/*
-  This is only a display fallback.
+<button  
+  class="buy-btn"  
+  onclick="protectedAction()">  
+  Buy USDT  
+</button>
 
-  IMPORTANT:
-  The frontend NEVER writes the platform fee directly.
-  The database/RPC function must remain the authority.
-*/
-const PLATFORM_FEE_RATE = 0.01;
+  </div>    <div class="p2p-card">  <div class="seller">  
 
+  <div class="seller">  
 
-/* =====================================================
-   START
-===================================================== */
+    <div class="user">  
 
-document.addEventListener(
-  "DOMContentLoaded",
-  startApp
-);
+      <div class="avatar">  
+        S  
+      </div>  
 
+      <div>  
 
-async function startApp(){
+        <div class="username">  
+          Sara Exchange  
+        </div>  
 
-  try{
+        <div class="online">  
+          ● Online  
+        </div>  
 
-    const {
-      data,
-      error
-    } =
-    await supabaseClient.auth.getSession();
+      </div>  
 
+    </div>  
 
-    if(error){
+    <div class="rate">  
 
-      console.error(
-        "SESSION ERROR:",
-        error
-      );
+      <strong>  
+        196.90 ETB  
+      </strong>  
 
-      showLogin();
+      <small>  
+        1 USDT  
+      </small>  
 
-      return;
+    </div>  
 
-    }
+  </div>  
 
+</div>  
 
-    if(
-      !data ||
-      !data.session ||
-      !data.session.user
-    ){
+<div class="trade-info">  
 
-      showLogin();
+  <span>  
+    Available:  
+    <strong>  
+      50 USDT  
+    </strong>  
+  </span>  
 
-      return;
+  <span>  
+    Max: 10,000 ETB  
+  </span>  
 
-    }
+</div>  
 
+<button  
+  class="sell-btn"  
+  onclick="protectedAction()">  
+  Sell USDT  
+</button>
 
-    currentUser =
-      data.session.user;
+  </div>  </section>  <!-- =========================  
+     POSTS  
+========================= -->  <section class="posts-section">    <div class="posts-title">  <h2>  
+  📝 Public Posts  
+</h2>  
 
+<div  
+  style="display:flex;gap:7px;align-items:center;">  
 
-    await loadTrade();
+  <span  
+    class="see-all"  
+    onclick="loadPosts(true)">  
+    🔀 Shuffle  
+  </span>  
 
+  <button  
+    class="create-post-btn"  
+    onclick="openCreatePost()">  
+    + Post  
+  </button>  
 
-    if(currentTrade){
+</div>
 
-      setupRealtime();
+  </div>    <div  
+    id="postsFeed"  
+    class="posts-feed">  <div class="loading-posts">  
+  Loading public posts...  
+</div>
 
-    }
-
-
-  }catch(error){
-
-    console.error(
-      "START ERROR:",
-      error
-    );
-
-    showError(
-      error.message ||
-      "Could not start the trade page."
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   LOGIN
-===================================================== */
-
-function showLogin(){
-
-  alert(
-    "Please login first."
-  );
-
-  window.location.href =
-    "login.html";
-
-}
-
-
-/* =====================================================
-   GET TRADE ID
-===================================================== */
-
-function getTradeId(){
-
-  const params =
-    new URLSearchParams(
-      window.location.search
-    );
-
-
-  const tradeId =
-    params.get("trade_id") ||
-    params.get("id");
-
-
-  if(!tradeId){
-
-    return null;
-
-  }
-
-
-  return tradeId.trim();
-
-}
-
-
-/* =====================================================
-   LOAD TRADE
-===================================================== */
-
-async function loadTrade(){
-
-  const tradeId =
-    getTradeId();
-
-
-  if(!tradeId){
-
-    showError(
-      "Trade ID is missing."
-    );
-
-    return;
-
-  }
-
-
-  const {
-    data,
-    error
-  } =
-  await supabaseClient
-    .from("p2p_trades")
-    .select("*")
-    .eq(
-      "id",
-      tradeId
-    )
-    .single();
-
-
-  if(error){
-
-    console.error(
-      "LOAD TRADE:",
-      error
-    );
-
-    showError(
-      "Could not load this trade."
-    );
-
-    return;
-
-  }
-
-
-  if(!data){
-
-    showError(
-      "Trade was not found."
-    );
-
-    return;
-
-  }
-
-
-  const isParticipant =
-    String(data.buyer_id) ===
-      String(currentUser.id) ||
-    String(data.seller_id) ===
-      String(currentUser.id);
-
-
-  if(!isParticipant){
-
-    showError(
-      "You are not a participant in this trade."
-    );
-
-    return;
-
-  }
-
-
-  currentTrade =
-    data;
-
-
-  renderTrade();
-
-}
-
-
-/* =====================================================
-   RENDER
-===================================================== */
-
-function renderTrade(){
-
-  if(!currentTrade){
-
-    return;
-
-  }
-
-
-  document.getElementById(
-    "loading"
-  ).style.display =
-    "none";
-
-
-  document.getElementById(
-    "tradeContent"
-  ).style.display =
-    "block";
-
-
-  const status =
-    getTradeStatus(
-      currentTrade
-    );
-
-
-  const tradeNumber =
-    currentTrade.trade_number ||
-    currentTrade.order_number ||
-    currentTrade.id;
-
-
-  document.getElementById(
-    "tradeNumber"
-  ).textContent =
-    "Trade #" +
-    tradeNumber;
-
-
-  const statusElement =
-    document.getElementById(
-      "tradeStatus"
-    );
-
-
-  statusElement.textContent =
-    formatStatus(status);
-
-
-  statusElement.className =
-    "status " +
-    statusClass(status);
-
-
-  renderDetails();
-
-  renderFee();
-
-  renderExpiry();
-
-  renderActions();
-
-}
-
-
-/* =====================================================
-   DETAILS
-===================================================== */
-
-function renderDetails(){
-
-  const trade =
-    currentTrade;
-
-
-  const amount =
-    getNumber(
-      trade.amount,
-      trade.trade_amount
-    );
-
-
-  const price =
-    getNumber(
-      trade.price,
-      trade.unit_price
-    );
-
-
-  const pair =
-    formatPair(trade);
-
-
-  const isBuyer =
-    String(
-      trade.buyer_id
-    ) ===
-    String(
-      currentUser.id
-    );
-
-
-  const role =
-    isBuyer
-      ? "Buyer"
-      : "Seller";
-
-
-  const roleClass =
-    isBuyer
-      ? "buyer"
-      : "seller";
-
-
-  const tradeValue =
-    calculateTradeValue(
-      trade,
-      amount,
-      price,
-      pair
-    );
-
-
-  document.getElementById(
-    "tradeDetails"
-  ).innerHTML = `
-
-    <div class="detail-row">
-
-      <span>
-        Your role
-      </span>
-
-      <strong>
-        <span class="role-badge ${roleClass}">
-          ${role}
-        </span>
-      </strong>
-
-    </div>
-
-
-    <div class="detail-row">
-
-      <span>
-        Trading pair
-      </span>
-
-      <strong>
-        ${escapeHtml(pair)}
-      </strong>
-
-    </div>
-
-
-    <div class="detail-row">
-
-      <span>
-        Amount
-      </span>
-
-      <strong>
-        ${money(amount)}
-        ${
-          pairStartsWithUSDT(pair)
-            ? " USDT"
-            : " ETB"
-        }
-      </strong>
-
-    </div>
-
-
-    <div class="detail-row">
-
-      <span>
-        Price
-      </span>
-
-      <strong>
-        ${money(price)} ETB
-      </strong>
-
-    </div>
-
-
-    <div class="detail-row">
-
-      <span>
-        Payment method
-      </span>
-
-      <strong>
-        ${escapeHtml(
-          trade.payment_method ||
-          trade.payment ||
-          "—"
-        )}
-      </strong>
-
-    </div>
-
-
-    <div class="detail-row">
-
-      <span>
-        Trade value
-      </span>
-
-      <strong>
-        ${money(tradeValue)} ETB
-      </strong>
-
-    </div>
-
-  `;
-
-}
-
-
-/* =====================================================
-   FEE
-===================================================== */
-
-function renderFee(){
-
-  const trade =
-    currentTrade;
-
-
-  const amount =
-    getNumber(
-      trade.amount,
-      trade.trade_amount
-    );
-
-
-  const price =
-    getNumber(
-      trade.price,
-      trade.unit_price
-    );
-
-
-  const pair =
-    formatPair(trade);
-
-
-  const tradeValue =
-    calculateTradeValue(
-      trade,
-      amount,
-      price,
-      pair
-    );
-
-
-  /*
-    Prefer the value calculated/stored by the backend.
-
-    The frontend fallback exists only so the page does
-    not display blank values if an older trade does not
-    contain platform_fee/total_amount.
-  */
-
-  const backendFee =
-    toFiniteNumber(
-      trade.platform_fee
-    );
-
-
-  const fee =
-    backendFee !== null
-      ? backendFee
-      : tradeValue *
-        PLATFORM_FEE_RATE;
-
-
-  const backendTotal =
-    toFiniteNumber(
-      trade.total_amount
-    );
-
-
-  const total =
-    backendTotal !== null
-      ? backendTotal
-      : tradeValue + fee;
-
-
-  document.getElementById(
-    "tradeValue"
-  ).textContent =
-    money(tradeValue) +
-    " ETB";
-
-
-  document.getElementById(
-    "platformFee"
-  ).textContent =
-    money(fee) +
-    " ETB";
-
-
-  document.getElementById(
-    "totalAmount"
-  ).textContent =
-    money(total) +
-    " ETB";
-
-}
-
-
-/* =====================================================
-   EXPIRATION
-===================================================== */
-
-function renderExpiry(){
-
-  const box =
-    document.getElementById(
-      "expiryBox"
-    );
-
-
-  if(expiryTimer){
-
-    clearInterval(
-      expiryTimer
-    );
-
-    expiryTimer =
-      null;
-
-  }
-
-
-  if(!currentTrade.expires_at){
-
-    box.style.display =
-      "none";
-
-    return;
-
-  }
-
-
-  box.style.display =
-    "block";
-
-
-  updateExpiry();
-
-
-  expiryTimer =
-    setInterval(
-      updateExpiry,
-      1000
-    );
-
-}
-
-
-function updateExpiry(){
-
-  if(
-    !currentTrade ||
-    !currentTrade.expires_at
-  ){
-
-    return;
-
-  }
-
-
-  const expiry =
-    new Date(
-      currentTrade.expires_at
-    );
-
-
-  const now =
-    new Date();
-
-
-  const difference =
-    expiry.getTime() -
-    now.getTime();
-
-
-  const box =
-    document.getElementById(
-      "expiryBox"
-    );
-
-
-  const text =
-    document.getElementById(
-      "expiryText"
-    );
-
-
-  if(
-    !Number.isFinite(
-      difference
-    )
-  ){
-
-    box.style.display =
-      "none";
-
-    return;
-
-  }
-
-
-  if(difference <= 0){
-
-    box.classList.add(
-      "expired"
-    );
-
-    text.textContent =
-      "Expired";
-
-    return;
-
-  }
-
-
-  box.classList.remove(
-    "expired"
-  );
-
-
-  const totalSeconds =
-    Math.floor(
-      difference / 1000
-    );
-
-
-  const hours =
-    Math.floor(
-      totalSeconds / 3600
-    );
-
-
-  const minutes =
-    Math.floor(
-      (totalSeconds % 3600) /
-      60
-    );
-
-
-  const seconds =
-    totalSeconds % 60;
-
-
-  text.textContent =
-    String(hours).padStart(2,"0") +
-    ":" +
-    String(minutes).padStart(2,"0") +
-    ":" +
-    String(seconds).padStart(2,"0");
-
-}
-
-
-/* =====================================================
-   ACTIONS
-===================================================== */
-
-function renderActions(){
-
-  const container =
-    document.getElementById(
-      "actions"
-    );
-
-
-  if(!currentTrade || !currentUser){
-
-    container.innerHTML =
-      "";
-
-    return;
-
-  }
-
-
-  const trade =
-    currentTrade;
-
-
-  const status =
-    getTradeStatus(trade);
-
-
-  const isBuyer =
-    String(
-      trade.buyer_id
-    ) ===
-    String(
-      currentUser.id
-    );
-
-
-  const isSeller =
-    String(
-      trade.seller_id
-    ) ===
-    String(
-      currentUser.id
-    );
-
-
-  const paid =
-    isBuyerPaid(trade);
-
-
-  const expired =
-    isTradeExpired(trade);
-
-
-  let html = "";
-
-
-  /* MESSAGE */
-
-  html += `
-
-    <button
-      class="action message-btn"
-      onclick="openMessage()">
-
-      💬 Message Trader
-
-    </button>
-
-  `;
-
-
-  /*
-    Terminal states.
-  */
-
-  if(
-    expired ||
-    [
-      "released",
-      "completed",
-      "cancelled",
-      "expired"
-    ].includes(status)
-  ){
-
-    container.innerHTML =
-      html;
-
-    return;
-
-  }
-
-
-  /*
-    DISPUTED:
-    Do not show normal payment/release actions.
-  */
-
-  if(
-    status ===
-    "disputed"
-  ){
-
-    html += `
-
-      <div
-        class="info"
-        style="margin-top:9px;">
-
-        ⚠️ This trade is under dispute.
-        Normal payment and release actions are
-        temporarily unavailable.
-
-      </div>
-
-    `;
-
-    container.innerHTML =
-      html;
-
-    return;
-
-  }
-
-
-  /*
-    BUYER HAS NOT CONFIRMED PAYMENT
-  */
-
-  if(
-    isBuyer &&
-    !paid
-  ){
-
-    html += `
-
-      <button
-        id="paymentBtn"
-        class="action payment-btn"
-        onclick="confirmBuyerPayment()">
-
-        💰 I Have Paid
-
-      </button>
-
-
-      <button
-        class="action dispute-btn"
-        onclick="openDispute()">
-
-        ⚠️ Open Dispute
-
-      </button>
-
-
-      <button
-        class="action cancel-btn"
-        onclick="cancelTrade()">
-
-        ❌ Cancel Trade
-
-      </button>
-
-    `;
-
-  }
-
-
-  /*
-    SELLER AFTER BUYER PAYMENT
-  */
-
-  if(
-    isSeller &&
-    paid
-  ){
-
-    html += `
-
-      <button
-        id="releaseBtn"
-        class="action release-btn"
-        onclick="releaseTrade()">
-
-        💵 Release Trade
-
-      </button>
-
-
-      <button
-        class="action dispute-btn"
-        onclick="openDispute()">
-
-        ⚠️ Open Dispute
-
-      </button>
-
-    `;
-
-  }
-
-
-  /*
-    BUYER AFTER PAYMENT
-  */
-
-  if(
-    isBuyer &&
-    paid
-  ){
-
-    html += `
-
-      <div
-        class="info"
-        style="margin-top:9px;">
-
-        ✅ Payment has been confirmed.
-        Waiting for the seller to release the trade.
-
-      </div>
-
-
-      <button
-        class="action dispute-btn"
-        onclick="openDispute()">
-
-        ⚠️ Open Dispute
-
-      </button>
-
-    `;
-
-  }
-
-
-  container.innerHTML =
-    html;
-
-}
-
-
-/* =====================================================
-   BUYER PAYMENT
-===================================================== */
-
-async function confirmBuyerPayment(){
-
-  if(
-    !currentTrade ||
-    actionBusy
-  ){
-
-    return;
-
-  }
-
-
-  if(
-    isTradeExpired(
-      currentTrade
-    )
-  ){
-
-    toast(
-      "This trade has expired."
-    );
-
-    await reloadTrade();
-
-    return;
-
-  }
-
-
-  const confirmed =
-    confirm(
-      "Confirm that you have paid the seller?"
-    );
-
-
-  if(!confirmed){
-
-    return;
-
-  }
-
-
-  actionBusy =
-    true;
-
-
-  setButtonBusy(
-    "paymentBtn",
-    "Confirming..."
-  );
-
-
-  try{
-
-    const {
-      error
-    } =
-    await supabaseClient.rpc(
-      "buyer_confirm_payment",
-      {
-        p_trade_id:
-          currentTrade.id
-      }
-    );
-
-
-    if(error){
-
-      console.error(
-        "BUYER PAYMENT:",
-        error
-      );
-
-      toast(
-        friendlyError(
-          error,
-          "Payment confirmation failed."
-        )
-      );
-
-      return;
-
-    }
-
-
-    toast(
-      "Payment confirmed."
-    );
-
-
-    await reloadTrade();
-
-  }finally{
-
-    actionBusy =
-      false;
-
-  }
-
-}
-
-
-/* =====================================================
-   SELLER RELEASE
-===================================================== */
-
-async function releaseTrade(){
-
-  if(
-    !currentTrade ||
-    actionBusy
-  ){
-
-    return;
-
-  }
-
-
-  if(
-    isTradeExpired(
-      currentTrade
-    )
-  ){
-
-    toast(
-      "This trade has expired."
-    );
-
-    await reloadTrade();
-
-    return;
-
-  }
-
-
-  if(
-    !confirm(
-      "Release the trade to the buyer?"
-    )
-  ){
-
-    return;
-
-  }
-
-
-  actionBusy =
-    true;
-
-
-  setButtonBusy(
-    "releaseBtn",
-    "Releasing..."
-  );
-
-
-  try{
-
-    const {
-      error
-    } =
-    await supabaseClient.rpc(
-      "seller_release_trade",
-      {
-        p_trade_id:
-          currentTrade.id
-      }
-    );
-
-
-    if(error){
-
-      console.error(
-        "SELLER RELEASE:",
-        error
-      );
-
-      toast(
-        friendlyError(
-          error,
-          "Trade release failed."
-        )
-      );
-
-      return;
-
-    }
-
-
-    toast(
-      "Trade released successfully."
-    );
-
-
-    await reloadTrade();
-
-  }finally{
-
-    actionBusy =
-      false;
-
-  }
-
-}
-
-
-/* =====================================================
-   CANCEL TRADE
-===================================================== */
-
-async function cancelTrade(){
-
-  if(
-    !currentTrade ||
-    actionBusy
-  ){
-
-    return;
-
-  }
-
-
-  if(
-    isTradeExpired(
-      currentTrade
-    )
-  ){
-
-    toast(
-      "This trade has expired."
-    );
-
-    await reloadTrade();
-
-    return;
-
-  }
-
-
-  if(
-    !confirm(
-      "Cancel this trade?"
-    )
-  ){
-
-    return;
-
-  }
-
-
-  actionBusy =
-    true;
-
-
-  try{
-
-    const {
-      error
-    } =
-    await supabaseClient.rpc(
-      "buyer_cancel_trade",
-      {
-        p_trade_id:
-          currentTrade.id
-      }
-    );
-
-
-    if(error){
-
-      console.error(
-        "CANCEL TRADE:",
-        error
-      );
-
-      toast(
-        friendlyError(
-          error,
-          "Trade cancellation failed."
-        )
-      );
-
-      return;
-
-    }
-
-
-    toast(
-      "Trade cancelled."
-    );
-
-
-    await reloadTrade();
-
-  }finally{
-
-    actionBusy =
-      false;
-
-  }
-
-}
-
-
-/* =====================================================
-   DISPUTE
-===================================================== */
-
-function openDispute(){
-
-  if(
-    !currentTrade ||
-    actionBusy
-  ){
-
-    return;
-
-  }
-
-
-  if(
-    isTradeExpired(
-      currentTrade
-    )
-  ){
-
-    toast(
-      "This trade has expired."
-    );
-
-    return;
-
-  }
-
-
-  selectedTradeId =
-    currentTrade.id;
-
-
-  document.getElementById(
-    "disputeReason"
-  ).value =
-    "";
-
-
-  openModal(
-    "disputeModal"
-  );
-
-
-  setTimeout(
-    function(){
-
-      document.getElementById(
-        "disputeReason"
-      ).focus();
-
-    },
-    50
-  );
-
-}
-
-
-async function submitDispute(){
-
-  if(
-    !selectedTradeId ||
-    actionBusy
-  ){
-
-    return;
-
-  }
-
-
-  const textarea =
-    document.getElementById(
-      "disputeReason"
-    );
-
-
-  const reason =
-    textarea.value.trim();
-
-
-  if(!reason){
-
-    toast(
-      "Please explain the problem."
-    );
-
-    textarea.focus();
-
-    return;
-
-  }
-
-
-  if(reason.length < 5){
-
-    toast(
-      "Please provide a little more detail."
-    );
-
-    textarea.focus();
-
-    return;
-
-  }
-
-
-  actionBusy =
-    true;
-
-
-  setButtonBusy(
-    "submitDisputeBtn",
-    "Opening..."
-  );
-
-
-  try{
-
-    const {
-      error
-    } =
-    await supabaseClient.rpc(
-      "open_p2p_dispute",
-      {
-        p_trade_id:
-          selectedTradeId,
-
-        p_reason:
-          reason
-      }
-    );
-
-
-    if(error){
-
-      console.error(
-        "OPEN DISPUTE:",
-        error
-      );
-
-      toast(
-        friendlyError(
-          error,
-          "Could not open the dispute."
-        )
-      );
-
-      return;
-
-    }
-
-
-    closeModal(
-      "disputeModal"
-    );
-
-
-    selectedTradeId =
-      null;
-
-
-    toast(
-      "Dispute opened."
-    );
-
-
-    await reloadTrade();
-
-  }finally{
-
-    actionBusy =
-      false;
-
-    resetButton(
-      "submitDisputeBtn",
-      "Open Dispute"
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   MESSAGE
-===================================================== */
-
-function openMessage(){
-
-  if(
-    !currentTrade ||
-    !currentUser
-  ){
-
-    return;
-
-  }
-
-
-  const isBuyer =
-    String(
-      currentTrade.buyer_id
-    ) ===
-    String(
-      currentUser.id
-    );
-
-
-  const otherUserId =
-    isBuyer
-      ? currentTrade.seller_id
-      : currentTrade.buyer_id;
-
-
-  if(!otherUserId){
-
-    toast(
-      "Trader information unavailable."
-    );
-
-    return;
-
-  }
-
-
-  const userParam =
-    encodeURIComponent(
-      String(otherUserId)
-    );
-
-
-  const tradeParam =
-    encodeURIComponent(
-      String(currentTrade.id)
-    );
-
-
-  window.location.href =
-    "message.html?user_id=" +
-    userParam +
-    "&trade_id=" +
-    tradeParam;
-
-}
-
-
-/* =====================================================
-   REALTIME
-===================================================== */
-
-function setupRealtime(){
-
-  if(!currentTrade){
-
-    return;
-
-  }
-
-
-  if(realtimeChannel){
-
-    supabaseClient.removeChannel(
-      realtimeChannel
-    );
-
-    realtimeChannel =
-      null;
-
-  }
-
-
-  realtimeChannel =
-    supabaseClient
-      .channel(
-        "p2p-order-" +
-        String(currentTrade.id)
-      )
-
-      .on(
-        "postgres_changes",
-        {
-          event:"*",
-          schema:"public",
-          table:"p2p_trades",
-          filter:
-            "id=eq." +
-            String(currentTrade.id)
-        },
-        function(){
-
-          reloadTrade();
-
-        }
-      )
-
-      .subscribe(
-        function(status){
-
-          console.log(
-            "P2P realtime:",
-            status
-          );
-
-        }
-      );
-
-}
-
-
-/* =====================================================
-   RELOAD
-===================================================== */
-
-async function reloadTrade(){
-
-  if(
-    !currentTrade ||
-    !currentUser
-  ){
-
-    return;
-
-  }
-
-
-  const tradeId =
-    currentTrade.id;
-
-
-  const {
-    data,
-    error
-  } =
-  await supabaseClient
-    .from("p2p_trades")
-    .select("*")
-    .eq(
-      "id",
-      tradeId
-    )
-    .single();
-
-
-  if(error){
-
-    console.error(
-      "RELOAD TRADE:",
-      error
-    );
-
-    return;
-
-  }
-
-
-  if(!data){
-
-    return;
-
-  }
-
-
-  const isParticipant =
-    String(data.buyer_id) ===
-      String(currentUser.id) ||
-    String(data.seller_id) ===
-      String(currentUser.id);
-
-
-  if(!isParticipant){
-
-    showError(
-      "You are not a participant in this trade."
-    );
-
-    return;
-
-  }
-
-
-  currentTrade =
-    data;
-
-
-  renderTrade();
-
-
-  /*
-    Re-create realtime subscription if necessary.
-  */
-
-  if(!realtimeChannel){
-
-    setupRealtime();
-
-  }
-
-}
-
-
-/* =====================================================
-   NAVIGATION
-===================================================== */
-
-function goBack(){
-
-  window.location.href =
-    "wallet.html";
-
-}
-
-
-/* =====================================================
-   MODALS
-===================================================== */
-
-function openModal(id){
-
-  const element =
-    document.getElementById(id);
-
-
-  if(element){
-
-    element.classList.add(
-      "show"
-    );
-
-  }
-
-}
-
-
-function closeModal(id){
-
-  const element =
-    document.getElementById(id);
-
-
-  if(element){
-
-    element.classList.remove(
-      "show"
-    );
-
-  }
-
-}
-
-
-document.addEventListener(
-  "click",
-  function(event){
-
-    if(
-      event.target.classList.contains(
-        "modal"
-      )
-    ){
-
-      event.target.classList.remove(
-        "show"
-      );
-
-    }
-
-  }
-);
-
-
-/* =====================================================
-   ESC KEY
-===================================================== */
-
-document.addEventListener(
-  "keydown",
-  function(event){
-
-    if(
-      event.key ===
-      "Escape"
-    ){
-
-      closeModal(
-        "disputeModal"
-      );
-
-    }
-
-  }
-);
-
-
-/* =====================================================
-   ERROR
-===================================================== */
-
-function showError(message){
-
-  if(expiryTimer){
-
-    clearInterval(
-      expiryTimer
-    );
-
-    expiryTimer =
-      null;
-
-  }
-
-
-  const safeMessage =
-    escapeHtml(
-      message ||
-      "Something went wrong."
-    );
-
-
-  document.getElementById(
-    "tradeContent"
-  ).style.display =
-    "none";
-
-
-  document.getElementById(
-    "loading"
-  ).style.display =
-    "block";
-
-
-  document.getElementById(
-    "loading"
-  ).innerHTML = `
-
-    <div
-      style="font-size:32px;margin-bottom:10px;">
-      ⚠️
-    </div>
-
-    <strong>
-      ${safeMessage}
-    </strong>
-
-    <br><br>
-
-    <button
-      class="back-btn"
-      onclick="goBack()">
-
-      ← Back to P2P
-
-    </button>
-
-  `;
-
-}
-
-
-/* =====================================================
-   TOAST
-===================================================== */
-
-function toast(message){
-
-  const element =
-    document.getElementById(
-      "toast"
-    );
-
-
-  if(!element){
-
-    return;
-
-  }
-
-
-  element.textContent =
-    message ||
-    "";
-
-
-  element.classList.add(
-    "show"
-  );
-
-
-  clearTimeout(
-    toastTimer
-  );
-
-
-  toastTimer =
-    setTimeout(
-      function(){
-
-        element.classList.remove(
-          "show"
-        );
-
-      },
-      3500
-    );
-
-}
-
-
-/* =====================================================
-   BUTTON STATE
-===================================================== */
-
-function setButtonBusy(
-  id,
-  text
-){
-
-  const button =
-    document.getElementById(id);
-
-
-  if(!button){
-
-    return;
-
-  }
-
-
-  if(
-    !button.dataset.originalText
-  ){
-
-    button.dataset.originalText =
-      button.textContent.trim();
-
-  }
-
-
-  button.disabled =
-    true;
-
-
-  button.textContent =
-    text;
-
-}
-
-
-function resetButton(
-  id,
-  fallbackText
-){
-
-  const button =
-    document.getElementById(id);
-
-
-  if(!button){
-
-    return;
-
-  }
-
-
-  button.disabled =
-    false;
-
-
-  button.textContent =
-    button.dataset.originalText ||
-    fallbackText;
-
-}
-
-
-/* =====================================================
-   TRADE STATUS
-===================================================== */
-
-function getTradeStatus(
-  trade
-){
-
-  return String(
-    trade.status ||
-    "pending"
-  )
-  .trim()
-  .toLowerCase();
-
-}
-
-
-function formatStatus(
-  status
-){
-
-  if(!status){
-
-    return "Pending";
-
-  }
-
-
-  return status
-    .replace(
-      /_/g,
-      " "
-    )
-    .replace(
-      /\b\w/g,
-      function(char){
-        return char.toUpperCase();
-      }
-    );
-
-}
-
-
-function statusClass(
-  status
-){
-
-  const value =
-    String(
-      status || ""
-    ).toLowerCase();
-
-
-  if(
-    [
-      "pending",
-      "open",
-      "active",
-      "paid"
-    ].includes(value)
-  ){
-
-    return value;
-
-  }
-
-
-  if(
-    [
-      "cancelled",
-      "expired"
-    ].includes(value)
-  ){
-
-    return value;
-
-  }
-
-
-  if(
-    value ===
-    "disputed"
-  ){
-
-    return "disputed";
-
-  }
-
-
-  if(
-    [
-      "released",
-      "completed"
-    ].includes(value)
-  ){
-
-    return value;
-
-  }
-
-
-  return "";
-
-}
-
-
-/* =====================================================
-   PAYMENT STATUS
-===================================================== */
-
-function isBuyerPaid(
-  trade
-){
-
-  if(
-    trade.buyer_paid ===
-    true
-  ){
-
-    return true;
-
-  }
-
-
-  if(
-    trade.payment_confirmed ===
-    true
-  ){
-
-    return true;
-
-  }
-
-
-  const paymentStatus =
-    String(
-      trade.payment_status ||
-      ""
-    )
-    .trim()
-    .toLowerCase();
-
-
-  return [
-    "paid",
-    "confirmed",
-    "payment_confirmed"
-  ].includes(
-    paymentStatus
-  );
-
-}
-
-
-/* =====================================================
-   EXPIRATION CHECK
-===================================================== */
-
-function isTradeExpired(
-  trade
-){
-
-  if(!trade){
-
-    return false;
-
-  }
-
-
-  const status =
-    getTradeStatus(
-      trade
-    );
-
-
-  if(
-    [
-      "expired",
-      "cancelled",
-      "completed",
-      "released"
-    ].includes(status)
-  ){
-
-    return status ===
-      "expired";
-
-  }
-
-
-  if(!trade.expires_at){
-
-    return false;
-
-  }
-
-
-  const expiry =
-    new Date(
-      trade.expires_at
-    );
-
-
-  if(
-    !Number.isFinite(
-      expiry.getTime()
-    )
-  ){
-
-    return false;
-
-  }
-
-
-  return expiry.getTime() <=
-    Date.now();
-
-}
-
-
-/* =====================================================
-   TRADE VALUE
-===================================================== */
-
-function calculateTradeValue(
-  trade,
-  amount,
-  price,
-  pair
-){
-
-  const stored =
-    toFiniteNumber(
-      trade.trade_value
-    );
-
-
-  if(
-    stored !== null &&
-    stored >= 0
-  ){
-
-    return stored;
-
-  }
-
-
-  /*
-    USDT/ETB:
-    amount × price
-
-    Other pairs:
-    use amount as ETB value unless the database
-    already supplied trade_value.
-  */
-
-  if(
-    pairStartsWithUSDT(
-      pair
-    )
-  ){
-
-    return amount * price;
-
-  }
-
-
-  return amount;
-
-}
-
-
-/* =====================================================
-   PAIR
-===================================================== */
-
-function formatPair(
-  trade
-){
-
-  const raw =
-    String(
-      trade.pair ||
-      trade.trading_pair ||
-      ""
-    )
-    .trim();
-
-
-  if(
-    raw ===
-    "USDT_ETB"
-  ){
-
-    return "USDT / ETB";
-
-  }
-
-
-  if(
-    raw ===
-    "ETB_USDT"
-  ){
-
-    return "ETB / USDT";
-
-  }
-
-
-  if(
-    raw ===
-    "ETB_ETB"
-  ){
-
-    return "ETB / ETB";
-
-  }
-
-
-  if(
-    raw.includes("_")
-  ){
-
-    return raw
-      .split("_")
-      .join(" / ");
-
-  }
-
-
-  if(
-    raw.includes("/")
-  ){
-
-    return raw
-      .replace(
-        /\s*\/\s*/g,
-        " / "
-      );
-
-  }
-
-
-  return raw ||
-    "P2P";
-
-}
-
-
-function pairStartsWithUSDT(
-  pair
-){
-
-  return String(
-    pair || ""
-  )
-  .trim()
-  .toUpperCase()
-  .startsWith(
-    "USDT"
-  );
-
-}
-
-
-/* =====================================================
-   NUMBER HELPERS
-===================================================== */
-
-function getNumber(
-  first,
-  second
-){
-
-  const firstNumber =
-    toFiniteNumber(
-      first
-    );
-
-
-  if(
-    firstNumber !== null
-  ){
-
-    return firstNumber;
-
-  }
-
-
-  const secondNumber =
-    toFiniteNumber(
-      second
-    );
-
-
-  if(
-    secondNumber !== null
-  ){
-
-    return secondNumber;
-
-  }
-
-
-  return 0;
-
-}
-
-
-function toFiniteNumber(
-  value
-){
-
-  if(
-    value === null ||
-    value === undefined ||
-    value === ""
-  ){
-
-    return null;
-
-  }
-
-
-  const number =
-    Number(value);
-
-
-  if(
-    !Number.isFinite(
-      number
-    )
-  ){
-
-    return null;
-
-  }
-
-
-  return number;
-
-}
-
-
-function money(
-  value
-){
-
-  const number =
-    toFiniteNumber(
-      value
-    );
-
-
-  if(
-    number === null
-  ){
-
-    return "0.00";
-
-  }
-
-
-  return number.toLocaleString(
-    undefined,
-    {
-      minimumFractionDigits:2,
-      maximumFractionDigits:2
-    }
-  );
-
-}
-
-
-/* =====================================================
-   ERROR MESSAGE
-===================================================== */
-
-function friendlyError(
-  error,
-  fallback
-){
-
-  if(
-    !error
-  ){
-
-    return fallback;
-
-  }
-
-
-  const message =
-    String(
-      error.message ||
-      error.details ||
-      error.hint ||
-      ""
-    ).trim();
-
-
-  return message ||
-    fallback;
-
-}
-
-
-/* =====================================================
-   HTML SECURITY
-===================================================== */
-
-function escapeHtml(
-  value
-){
-
-  return String(
-    value ?? ""
-  )
-  .replace(
-    /&/g,
-    "&amp;"
-  )
-  .replace(
-    /</g,
-    "&lt;"
-  )
-  .replace(
-    />/g,
-    "&gt;"
-  )
-  .replace(
-    /"/g,
-    "&quot;"
-  )
-  .replace(
-    /'/g,
-    "&#039;"
-  );
-
-}
-
-
-/* =====================================================
-   PAGE CLEANUP
-===================================================== */
-
-window.addEventListener(
-  "beforeunload",
-  function(){
-
-    if(expiryTimer){
-
-      clearInterval(
-        expiryTimer
-      );
-
-    }
-
-
-    if(realtimeChannel){
-
-      supabaseClient.removeChannel(
-        realtimeChannel
-      );
-
-    }
-
-  }
-);
-
-</script>
-
-</body>
+  </div>  <button  
+id="loadMoreBtn"  
+class="load-more"  
+onclick="loadMorePosts()"  
+style="display:none;">
+
+➕ Load more posts
+
+  </button>  </section>  <!-- =========================  
+     CREATE POST MODAL  
+========================= -->  <div  
+  id="createPostModal"  
+  class="modal">    <div class="modal-content">  <div class="modal-header">  
+
+  <h3>  
+    Create Post  
+  </h3>  
+
+  <button  
+    class="close-modal"  
+    onclick="closeCreatePost()">  
+    ×  
+  </button>  
+
+</div>  
+
+<textarea  
+  id="postContentInput"  
+  class="post-textarea"  
+  maxlength="5000"  
+  placeholder="What's on your mind?"></textarea>  
+
+<label class="visibility-label">  
+  Post visibility  
+</label>  
+
+<select  
+  id="postVisibility"  
+  class="visibility-select">  
+
+  <option value="public">  
+    🌍 Public  
+  </option>  
+
+  <option value="private">  
+    🔒 Private  
+  </option>  
+
+</select>  
+
+<button  
+  id="publishPostBtn"  
+  class="publish-btn"  
+  onclick="createPost()">  
+
+  Publish Post  
+
+</button>
+
+  </div>  </div>  <!-- =========================  
+     BOTTOM NAVIGATION  
+========================= -->  <nav class="bottom-nav">    <div  
+    class="nav-item active"  
+    onclick="window.scrollTo({top:0,behavior:'smooth'})">  <span>🏠</span>  
+Home
+
+  </div>    <div  
+    class="nav-item"  
+    onclick="openLive()">  <span>🔴</span>  
+Live
+
+  </div>    <div  
+    class="nav-item"  
+    onclick="openWallet()">  <span>🔄</span>  
+P2P
+
+  </div>    <div  
+    class="nav-item"  
+    onclick="openMessages()">  <span>💬</span>  
+Messages
+
+  </div>    <div  
+    class="nav-item"  
+    onclick="openProfile()">  <span>👤</span>  
+Profile
+
+  </div>  </nav>  <!-- =========================  
+     SUPABASE  
+========================= -->  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <script>  
+  
+const SUPABASE_URL =  
+"https://mbsvuwrgigqfporxwpfr.supabase.co";  
+  
+const SUPABASE_PUBLISHABLE_KEY =  
+"sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";  
+  
+const supabaseClient =  
+window.supabase.createClient(  
+  SUPABASE_URL,  
+  SUPABASE_PUBLISHABLE_KEY  
+);  
+  
+let currentSession = null;  
+let allPosts = [];  
+let displayedPostCount = 10;  
+let commentsOpen = {};  
+let notificationChannel = null;  
+  
+/* ================================  
+   AUTH  
+================================ */  
+  
+async function checkLogin(){  
+  
+  const {data,error} =  
+    await supabaseClient.auth.getSession();  
+  
+  if(error){  
+    console.error(error);  
+    return;  
+  }  
+  
+  currentSession =  
+    data.session;  
+  
+  await updateAuthUI();  
+  
+}  
+  
+async function updateAuthUI(){  
+  
+  const loginBtn =  
+    document.getElementById("loginBtn");  
+  
+  const registerBtn =  
+    document.getElementById("registerBtn");  
+  
+  const logoutBtn =  
+    document.getElementById("logoutBtn");  
+  
+  const userInfo =  
+    document.getElementById("userInfo");  
+  
+  const usernameDisplay =  
+    document.getElementById("usernameDisplay");  
+  
+  if(!currentSession){  
+  
+    loginBtn.style.display="block";  
+    registerBtn.style.display="block";  
+    logoutBtn.style.display="none";  
+    userInfo.style.display="none";  
+  
+    document.getElementById(  
+      "balanceDisplay"  
+    ).textContent="0 ETB";  
+  
+    document.getElementById(  
+      "etbDisplay"  
+    ).textContent="0.00";  
+  
+    document.getElementById(  
+      "usdtDisplay"  
+    ).textContent="0.00";  
+  
+    resetNotifications();  
+  
+    return;  
+  
+  }  
+  
+  loginBtn.style.display="none";  
+  registerBtn.style.display="none";  
+  logoutBtn.style.display="block";  
+  userInfo.style.display="block";  
+  
+  const user =  
+    currentSession.user;  
+  
+  let username =  
+    user.user_metadata?.username ||  
+    user.email?.split("@")[0] ||  
+    "User";  
+  
+  usernameDisplay.textContent =  
+    username;  
+  
+  const {  
+    data:profile,  
+    error:profileError  
+  } =  
+    await supabaseClient  
+      .from("profiles")  
+      .select(  
+        "username,balance,avatar_url"  
+      )  
+      .eq("id",user.id)  
+      .maybeSingle();  
+  
+  if(profileError){  
+    console.error(profileError);  
+  }  
+  
+  if(profile){  
+  
+    if(profile.username){  
+      usernameDisplay.textContent =  
+        profile.username;  
+    }  
+  
+    const balance =  
+      Number(profile.balance)||0;  
+  
+    document.getElementById(  
+      "balanceDisplay"  
+    ).textContent =  
+      balance.toLocaleString()+" ETB";  
+  
+    document.getElementById(  
+      "etbDisplay"  
+    ).textContent =  
+      balance.toLocaleString(  
+        undefined,  
+        {  
+          minimumFractionDigits:2,  
+          maximumFractionDigits:2  
+        }  
+      );  
+  
+  }  
+  
+}  
+  
+/* ================================  
+   NOTIFICATIONS  
+================================ */  
+  
+async function loadNotifications(){  
+  
+  if(!currentSession){  
+    resetNotifications();  
+    return;  
+  }  
+  
+  const {  
+    data,  
+    error  
+  } =  
+    await supabaseClient  
+      .from("notifications")  
+      .select(`  
+        id,  
+        user_id,  
+        type,  
+        title,  
+        body,  
+        link,  
+        is_read,  
+        created_at  
+      `)  
+      .eq(  
+        "user_id",  
+        currentSession.user.id  
+      )  
+      .order(  
+        "created_at",  
+        {ascending:false}  
+      )  
+      .limit(50);  
+  
+  if(error){  
+  
+    console.error(  
+      "Notification loading error:",  
+      error  
+    );  
+  
+    return;  
+  
+  }  
+  
+  renderNotifications(  
+    data||[]  
+  );  
+  
+}  
+  
+function renderNotifications(  
+  notifications  
+){  
+  
+  const list =  
+    document.getElementById(  
+      "notificationList"  
+    );  
+  
+  const badge =  
+    document.getElementById(  
+      "notificationBadge"  
+    );  
+  
+  if(!notifications.length){  
+  
+    list.innerHTML=`  
+      <div class="no-notifications">  
+        🔔 No notifications yet.  
+      </div>  
+    `;  
+  
+    badge.style.display="none";  
+  
+    return;  
+  
+  }  
+  
+  const unreadCount =  
+    notifications.filter(  
+      n=>!n.is_read  
+    ).length;  
+  
+  if(unreadCount>0){  
+  
+    badge.textContent =  
+      unreadCount>99  
+      ? "99+"  
+      : unreadCount;  
+  
+    badge.style.display="flex";  
+  
+  }else{  
+  
+    badge.style.display="none";  
+  
+  }  
+  
+  list.innerHTML="";  
+  
+  notifications.forEach(  
+    notification=>{  
+  
+      const item =  
+        document.createElement("div");  
+  
+      item.className =  
+        "notification-item"+  
+        (  
+          notification.is_read  
+          ? ""  
+          : " unread"  
+        );  
+  
+      item.innerHTML=`  
+  
+        <div class="notification-icon">  
+          ${notificationIcon(  
+            notification.type  
+          )}  
+        </div>  
+  
+        <div class="notification-content">  
+  
+          <div class="notification-title">  
+            ${escapeHtml(  
+              notification.title||  
+              "Notification"  
+            )}  
+          </div>  
+  
+          <div class="notification-body">  
+            ${escapeHtml(  
+              notification.body||""  
+            )}  
+          </div>  
+  
+          <div class="notification-time">  
+            ${escapeHtml(  
+              formatPostTime(  
+                notification.created_at  
+              )  
+            )}  
+          </div>  
+  
+        </div>  
+  
+      `;  
+  
+      item.addEventListener(  
+        "click",  
+        async()=>{  
+  
+          if(!notification.is_read){  
+  
+            await markNotificationRead(  
+              notification.id  
+            );  
+  
+          }  
+  
+          if(notification.link){  
+  
+            window.location.href =  
+              notification.link;  
+  
+          }else{  
+  
+            window.location.href =  
+              "message.html";  
+  
+          }  
+  
+        }  
+      );  
+  
+      list.appendChild(item);  
+  
+    }  
+  );  
+  
+}  
+  
+function notificationIcon(type){  
+  
+  switch(type){  
+  
+    case "message":  
+      return "💬";  
+  
+    case "like":  
+      return "❤️";  
+  
+    case "comment":  
+      return "💬";  
+  
+    case "follow":  
+      return "👤";  
+  
+    case "wallet":  
+      return "💰";  
+  
+    case "deposit":  
+      return "💵";  
+  
+    case "withdraw":  
+      return "🏦";  
+  
+    case "trade":  
+      return "🔄";  
+  
+    default:  
+      return "🔔";  
+  
+  }  
+  
+}  
+  
+async function markNotificationRead(id){  
+  
+  if(!currentSession)return;  
+  
+  await supabaseClient  
+    .from("notifications")  
+    .update({  
+      is_read:true  
+    })  
+    .eq("id",id)  
+    .eq(  
+      "user_id",  
+      currentSession.user.id  
+    );  
+  
+  await loadNotifications();  
+  
+}  
+  
+async function markAllNotificationsRead(){  
+  
+  if(!currentSession)return;  
+  
+  const {error} =  
+    await supabaseClient  
+      .from("notifications")  
+      .update({  
+        is_read:true  
+      })  
+      .eq(  
+        "user_id",  
+        currentSession.user.id  
+      )  
+      .eq(  
+        "is_read",  
+        false  
+      );  
+  
+  if(error){  
+  
+    alert(  
+      "Could not mark notifications as read."  
+    );  
+  
+    return;  
+  
+  }  
+  
+  await loadNotifications();  
+  
+}  
+  
+function resetNotifications(){  
+  
+  document.getElementById(  
+    "notificationBadge"  
+  ).style.display="none";  
+  
+  document.getElementById(  
+    "notificationList"  
+  ).innerHTML=`  
+    <div class="no-notifications">  
+      🔔 Login to see notifications.  
+    </div>  
+  `;  
+  
+}  
+  
+function toggleNotificationPanel(event){  
+  
+  if(event){  
+    event.stopPropagation();  
+  }  
+  
+  if(!currentSession){  
+  
+    alert(  
+      "Please login to view notifications."  
+    );  
+  
+    openLogin();  
+    return;  
+  
+  }  
+  
+  const panel =  
+    document.getElementById(  
+      "notificationPanel"  
+    );  
+  
+  panel.classList.toggle("open");  
+  
+  if(panel.classList.contains("open")){  
+    loadNotifications();  
+  }  
+  
+}  
+  
+document.addEventListener(  
+  "click",  
+  event=>{  
+  
+    const panel =  
+      document.getElementById(  
+        "notificationPanel"  
+      );  
+  
+    const button =  
+      document.getElementById(  
+        "notificationButton"  
+      );  
+  
+    if(  
+      panel &&  
+      !panel.contains(event.target) &&  
+      button &&  
+      !button.contains(event.target)  
+    ){  
+  
+      panel.classList.remove("open");  
+  
+    }  
+  
+  }  
+);  
+  
+function subscribeToNotifications(){  
+  
+  if(!currentSession)return;  
+  
+  if(notificationChannel){  
+  
+    supabaseClient.removeChannel(  
+      notificationChannel  
+    );  
+  
+    notificationChannel=null;  
+  
+  }  
+  
+  const userId =  
+    currentSession.user.id;  
+  
+  notificationChannel =  
+    supabaseClient  
+      .channel(  
+        "notifications-"+userId  
+      )  
+      .on(  
+        "postgres_changes",  
+        {  
+          event:"INSERT",  
+          schema:"public",  
+          table:"notifications",  
+          filter:  
+            "user_id=eq."+userId  
+        },  
+        payload=>{  
+  
+          showNewNotificationPopup(  
+            payload.new  
+          );  
+  
+          loadNotifications();  
+  
+        }  
+      )  
+      .subscribe();  
+  
+}  
+  
+function showNewNotificationPopup(notification){  
+  
+  if(document.hidden)return;  
+  
+  if(  
+    "Notification" in window &&  
+    Notification.permission==="granted"  
+  ){  
+  
+    try{  
+  
+      new Notification(  
+        notification.title||  
+        "New notification",  
+        {  
+          body:  
+            notification.body||""  
+        }  
+      );  
+  
+    }catch(error){  
+  
+      console.log(error);  
+  
+    }  
+  
+  }  
+  
+}  
+  
+async function requestNotificationPermission(){  
+  
+  if(!("Notification" in window))return;  
+  
+  if(Notification.permission==="default"){  
+  
+    try{  
+  
+      await Notification.requestPermission();  
+  
+    }catch(error){  
+  
+      console.log(error);  
+  
+    }  
+  
+  }  
+  
+}  
+  
+/* ================================  
+   POSTS  
+================================ */  
+  
+async function loadPosts(shuffle=false){  
+  
+  const feed =  
+    document.getElementById(  
+      "postsFeed"  
+    );  
+  
+  feed.innerHTML=`  
+    <div class="loading-posts">  
+      Loading public posts...  
+    </div>  
+  `;  
+  
+  let query =  
+    supabaseClient  
+      .from("posts")  
+      .select(`  
+        id,  
+        user_id,  
+        content,  
+        created_at,  
+        visibility  
+      `)  
+      .or(  
+        "visibility.eq.public,visibility.is.null"  
+      )  
+      .order(  
+        "created_at",  
+        {ascending:false}  
+      )  
+      .limit(100);  
+  
+  const {  
+    data:posts,  
+    error  
+  } =  
+    await query;  
+  
+  if(error){  
+  
+    console.error(  
+      "Posts loading error:",  
+      error  
+    );  
+  
+    feed.innerHTML=`  
+      <div class="no-posts">  
+        Could not load posts.<br>  
+        <small>  
+          ${escapeHtml(  
+            error.message  
+          )}  
+        </small>  
+      </div>  
+    `;  
+  
+    return;  
+  
+  }  
+  
+  allPosts =  
+    posts||[];  
+  
+  if(shuffle){  
+  
+    allPosts.sort(  
+      ()=>Math.random()-.5  
+    );  
+  
+  }  
+  
+  displayedPostCount=10;  
+  
+  await renderPosts();  
+  
+}  
+  
+async function loadMorePosts(){  
+  
+  if(  
+    displayedPostCount>=  
+    allPosts.length  
+  ){  
+    return;  
+  }  
+  
+  displayedPostCount+=10;  
+  
+  await renderPosts();  
+  
+}  
+  
+/* ================================  
+   RENDER POSTS  
+================================ */  
+  
+async function renderPosts(){  
+  
+  const feed =  
+    document.getElementById(  
+      "postsFeed"  
+    );  
+  
+  const visiblePosts =  
+    allPosts.slice(  
+      0,  
+      displayedPostCount  
+    );  
+  
+  if(!visiblePosts.length){  
+  
+    feed.innerHTML=`  
+      <div class="no-posts">  
+        No public posts yet.  
+      </div>  
+    `;  
+  
+    document.getElementById(  
+      "loadMoreBtn"  
+    ).style.display="none";  
+  
+    return;  
+  
+  }  
+  
+  const postIds =  
+    visiblePosts.map(  
+      p=>p.id  
+    );  
+  
+  const userIds =  
+    [...new Set(  
+      visiblePosts.map(  
+        p=>p.user_id  
+      )  
+    )];  
+  
+  let profiles=[];  
+  
+  if(userIds.length){  
+  
+    const result =  
+      await supabaseClient  
+        .from("profiles")  
+        .select(  
+          "id,username,avatar_url"  
+        )  
+        .in(  
+          "id",  
+          userIds  
+        );  
+  
+    if(!result.error){  
+  
+      profiles =  
+        result.data||[];  
+  
+    }  
+  
+  }  
+  
+  const profileMap={};  
+  
+  profiles.forEach(  
+    profile=>{  
+  
+      profileMap[  
+        profile.id  
+      ]=profile;  
+  
+    }  
+  );  
+  
+  /* LIKES */  
+  
+  let likes=[];  
+  
+  if(postIds.length){  
+  
+    const result =  
+      await supabaseClient  
+        .from("post_likes")  
+        .select(  
+          "post_id,user_id"  
+        )  
+        .in(  
+          "post_id",  
+          postIds  
+        );  
+  
+    if(!result.error){  
+  
+      likes =  
+        result.data||[];  
+  
+    }  
+  
+  }  
+  
+  const likeCount={};  
+  
+  likes.forEach(  
+    like=>{  
+  
+      likeCount[  
+        like.post_id  
+      ]=  
+        (  
+          likeCount[  
+            like.post_id  
+          ]||0  
+        )+1;  
+  
+    }  
+  );  
+  
+  const myLikes =  
+    new Set(  
+      currentSession  
+      ?  
+      likes  
+        .filter(  
+          like=>  
+            like.user_id===  
+            currentSession.user.id  
+        )  
+        .map(  
+          like=>like.post_id  
+        )  
+      :  
+      []  
+    );  
+  
+  /* COMMENTS */  
+  
+  let comments=[];  
+  
+  if(postIds.length){  
+  
+    const result =  
+      await supabaseClient  
+        .from("post_comments")  
+        .select(  
+          "id,post_id,user_id,comment,created_at"  
+        )  
+        .in(  
+          "post_id",  
+          postIds  
+        )  
+        .order(  
+          "created_at",  
+          {  
+            ascending:true  
+          }  
+        );  
+  
+    if(!result.error){  
+  
+      comments =  
+        result.data||[];  
+  
+    }  
+  
+  }  
+  
+  const commentUserIds =  
+    [...new Set(  
+      comments.map(  
+        c=>c.user_id  
+      )  
+    )];  
+  
+  if(commentUserIds.length){  
+  
+    const result =  
+      await supabaseClient  
+        .from("profiles")  
+        .select(  
+          "id,username,avatar_url"  
+        )  
+        .in(  
+          "id",  
+          commentUserIds  
+        );  
+  
+    if(!result.error){  
+  
+      (  
+        result.data||[]  
+      ).forEach(  
+        profile=>{  
+  
+          profileMap[  
+            profile.id  
+          ]=profile;  
+  
+        }  
+      );  
+  
+    }  
+  
+  }  
+  
+  feed.innerHTML="";  
+  
+  visiblePosts.forEach(  
+    post=>{  
+  
+      const profile =  
+        profileMap[  
+          post.user_id  
+        ]||{};  
+  
+      const username =  
+        profile.username||  
+        "User";  
+  
+      const avatar =  
+        profile.avatar_url||  
+        "";  
+  
+      const initial =  
+        username  
+          .charAt(0)  
+          .toUpperCase();  
+  
+      const postComments =  
+        comments.filter(  
+          c=>  
+            String(c.post_id)===  
+            String(post.id)  
+        );  
+  
+      const isOwner =  
+        currentSession &&  
+        currentSession.user.id===  
+        post.user_id;  
+  
+      const card =  
+        document.createElement(  
+          "article"  
+        );  
+  
+      card.className =  
+        "post-card";  
+  
+      card.innerHTML=`  
+  
+        <div  
+          class="post-header"  
+          onclick="openUserProfile(  
+            '${escapeJs(post.user_id)}'  
+          )">  
+  
+          ${  
+            avatar  
+            ?  
+            `  
+            <img  
+              class="post-avatar"  
+              src="${escapeHtml(avatar)}"  
+              alt="Profile">  
+            `  
+            :  
+            `  
+            <div class="post-avatar">  
+              ${escapeHtml(initial)}  
+            </div>  
+            `  
+          }  
+  
+          <div class="post-user-info">  
+  
+            <div class="post-name">  
+              ${escapeHtml(username)}  
+            </div>  
+  
+            <div class="post-handle">  
+              @${escapeHtml(username)}  
+            </div>  
+  
+          </div>  
+  
+          <div class="post-time">  
+  
+            ${escapeHtml(  
+              formatPostTime(  
+                post.created_at  
+              )  
+            )}  
+  
+          </div>  
+  
+          ${  
+            isOwner  
+            ?  
+            `  
+            <button  
+              class="post-menu"  
+              onclick="  
+                event.stopPropagation();  
+                deletePost(  
+                  '${escapeJs(post.id)}'  
+                )  
+              ">  
+              🗑️  
+            </button>  
+            `  
+            :  
+            ""  
+          }  
+  
+        </div>  
+  
+        <div class="post-content">  
+  
+          ${escapeHtml(  
+            post.content||""  
+          )}  
+  
+        </div>  
+  
+        <div class="post-actions">  
+  
+          <button  
+            class="post-action ${  
+              myLikes.has(post.id)  
+              ? "liked"  
+              : ""  
+            }"  
+            onclick="  
+              event.stopPropagation();  
+              likePost(  
+                '${escapeJs(post.id)}'  
+              )  
+            ">  
+  
+            ${  
+              myLikes.has(post.id)  
+              ? "♥ Liked"  
+              : "♡ Like"  
+            }  
+  
+            <span>  
+              ${likeCount[post.id]||0}  
+            </span>  
+  
+          </button>  
+  
+          <button  
+            class="post-action"  
+            onclick="  
+              event.stopPropagation();  
+              toggleComments(  
+                '${escapeJs(post.id)}'  
+              )  
+            ">  
+  
+            💬 Comments  
+  
+            <span>  
+              ${postComments.length}  
+            </span>  
+  
+          </button>  
+  
+          <button  
+            class="post-action"  
+            onclick="  
+              event.stopPropagation();  
+              sharePost(  
+                '${escapeJs(post.id)}'  
+              )  
+            ">  
+  
+            ↗ Share  
+  
+          </button>  
+  
+        </div>  
+  
+        <div  
+          id="comments-${escapeHtml(post.id)}"  
+          class="comments-box"  
+          style="  
+            display:${  
+              commentsOpen[post.id]  
+              ? "block"  
+              : "none"  
+            };  
+          ">  
+  
+          ${renderComments(  
+            post.id,  
+            comments,  
+            profileMap  
+          )}  
+  
+        </div>  
+  
+      `;  
+  
+      feed.appendChild(card);  
+  
+    }  
+  );  
+  
+  const loadMoreBtn =  
+    document.getElementById(  
+      "loadMoreBtn"  
+    );  
+  
+  loadMoreBtn.style.display =  
+    displayedPostCount<  
+    allPosts.length  
+    ? "block"  
+    : "none";  
+  
+}  
+  
+/* ================================  
+   COMMENTS OPEN / CLOSE  
+================================ */  
+  
+function toggleComments(postId){  
+  
+  commentsOpen[postId]=  
+    !commentsOpen[postId];  
+  
+  const box =  
+    document.getElementById(  
+      "comments-"+postId  
+    );  
+  
+  if(box){  
+  
+    box.style.display =  
+      commentsOpen[postId]  
+      ? "block"  
+      : "none";  
+  
+  }  
+  
+  if(commentsOpen[postId]){  
+  
+    refreshSinglePostComments(  
+      postId  
+    );  
+  
+  }  
+  
+}  
+  
+async function refreshSinglePostComments(postId){  
+  
+  const box =  
+    document.getElementById(  
+      "comments-"+postId  
+    );  
+  
+  if(!box)return;  
+  
+  const {  
+    data:comments,  
+    error  
+  } =  
+    await supabaseClient  
+      .from("post_comments")  
+      .select(  
+        "id,post_id,user_id,comment,created_at"  
+      )  
+      .eq(  
+        "post_id",  
+        postId  
+      )  
+      .order(  
+        "created_at",  
+        {  
+          ascending:true  
+        }  
+      );  
+  
+  if(error){  
+  
+    console.error(error);  
+    return;  
+  
+  }  
+  
+  const userIds =  
+    [...new Set(  
+      (comments||[]).map(  
+        c=>c.user_id  
+      )  
+    )];  
+  
+  let profiles=[];  
+  
+  if(userIds.length){  
+  
+    const result =  
+      await supabaseClient  
+        .from("profiles")  
+        .select(  
+          "id,username,avatar_url"  
+        )  
+        .in(  
+          "id",  
+          userIds  
+        );  
+  
+    if(!result.error){  
+  
+      profiles =  
+        result.data||[];  
+  
+    }  
+  
+  }  
+  
+  const profileMap={};  
+  
+  profiles.forEach(  
+    profile=>{  
+  
+      profileMap[  
+        profile.id  
+      ]=profile;  
+  
+    }  
+  );  
+  
+  box.innerHTML =  
+    renderComments(  
+      postId,  
+      comments||[],  
+      profileMap  
+    );  
+  
+}  
+  
+function renderComments(  
+  postId,  
+  comments,  
+  profileMap  
+){  
+  
+  const postComments =  
+    comments.filter(  
+      c=>  
+        String(c.post_id)===  
+        String(postId)  
+    );  
+  
+  let html="";  
+  
+  const showing =  
+    commentsOpen[postId]  
+    ?  
+    postComments  
+    :  
+    postComments.slice(  
+      0,  
+      2  
+    );  
+  
+  showing.forEach(  
+    comment=>{  
+  
+      const profile =  
+        profileMap[  
+          comment.user_id  
+        ]||{};  
+  
+      const username =  
+        profile.username||  
+        "User";  
+  
+      const avatar =  
+        profile.avatar_url||  
+        "";  
+  
+      const initial =  
+        username  
+          .charAt(0)  
+          .toUpperCase();  
+  
+      const owner =  
+        currentSession &&  
+        currentSession.user.id===  
+        comment.user_id;  
+  
+      html+=`  
+  
+        <div class="comment">  
+  
+          <div class="comment-avatar">  
+  
+            ${  
+              avatar  
+              ?  
+              `  
+              <img  
+                src="${escapeHtml(avatar)}"  
+                alt="Profile">  
+              `  
+              :  
+              escapeHtml(initial)  
+            }  
+  
+          </div>  
+  
+          <div class="comment-body">  
+  
+            <div class="comment-name">  
+              ${escapeHtml(username)}  
+            </div>  
+  
+            <div class="comment-text">  
+              ${escapeHtml(  
+                comment.comment||""  
+              )}  
+            </div>  
+  
+            ${  
+              owner  
+              ?  
+              `  
+              <button  
+                class="comment-delete"  
+                onclick="  
+                  deleteComment(  
+                    '${escapeJs(comment.id)}'  
+                  )  
+                ">  
+                🗑️  
+              </button>  
+              `  
+              :  
+              ""  
+            }  
+  
+          </div>  
+  
+        </div>  
+  
+      `;  
+  
+    }  
+  );  
+  
+  if(  
+    postComments.length>2 &&  
+    !commentsOpen[postId]  
+  ){  
+  
+    html+=`  
+  
+      <button  
+        class="view-comments"  
+        onclick="  
+          toggleComments(  
+            '${escapeJs(postId)}'  
+          )  
+        ">  
+  
+        👀 View all  
+        ${postComments.length}  
+        comments  
+  
+      </button>  
+  
+    `;  
+  
+  }  
+  
+  if(commentsOpen[postId]){  
+  
+    html+=`  
+  
+      <button  
+        class="view-comments"  
+        onclick="  
+          toggleComments(  
+            '${escapeJs(postId)}'  
+          )  
+        ">  
+  
+        Hide comments  
+  
+      </button>  
+  
+    `;  
+  
+  }  
+  
+  if(currentSession){  
+  
+    html+=`  
+  
+      <div class="comment-input-row">  
+  
+        <input  
+          id="comment-input-${escapeHtml(postId)}"  
+          class="comment-input"  
+          maxlength="500"  
+          placeholder="Write a comment..."  
+          onkeydown="  
+            if(event.key==='Enter'){  
+              sendComment(  
+                '${escapeJs(postId)}'  
+              )  
+            }  
+          ">  
+  
+        <button  
+          class="comment-send"  
+          onclick="  
+            sendComment(  
+              '${escapeJs(postId)}'  
+            )  
+          ">  
+  
+          Send  
+  
+        </button>  
+  
+      </div>  
+  
+    `;  
+  
+  }else{  
+  
+    html+=`  
+  
+      <div  
+        style="  
+          font-size:12px;  
+          color:#777;  
+          margin-top:8px;  
+        ">  
+  
+        Login to comment.  
+  
+      </div>  
+  
+    `;  
+  
+  }  
+  
+  return html;  
+  
+}  
+  
+/* ================================  
+   SEND COMMENT  
+================================ */  
+  
+async function sendComment(postId){  
+  
+  if(!currentSession){  
+  
+    alert(  
+      "Please login to comment."  
+    );  
+  
+    openLogin();  
+    return;  
+  
+  }  
+  
+  const input =  
+    document.getElementById(  
+      "comment-input-"+postId  
+    );  
+  
+  if(!input)return;  
+  
+  const text =  
+    String(  
+      input.value||""  
+    ).trim();  
+  
+  if(!text)return;  
+  
+  if(text.length>500){  
+  
+    alert(  
+      "Comment is too long."  
+    );  
+  
+    return;  
+  
+  }  
+  
+  const {error} =  
+    await supabaseClient  
+      .from("post_comments")  
+      .insert({  
+  
+        post_id:postId,  
+  
+        user_id:  
+          currentSession.user.id,  
+  
+        comment:text  
+  
+      });  
+  
+  if(error){  
+  
+    console.error(error);  
+  
+    alert(  
+      "Comment failed: "+  
+      error.message  
+    );  
+  
+    return;  
+  
+  }  
+  
+  commentsOpen[postId]=true;  
+  
+  await renderPosts();  
+  
+}  
+  
+/* ================================  
+   DELETE COMMENT  
+================================ */  
+  
+async function deleteComment(commentId){  
+  
+  if(!currentSession)return;  
+  
+  if(!confirm(  
+    "Delete your comment?"  
+  )){  
+  
+    return;  
+  
+  }  
+  
+  const {error} =  
+    await supabaseClient  
+      .from("post_comments")  
+      .delete()  
+      .eq(  
+        "id",  
+        commentId  
+      )  
+      .eq(  
+        "user_id",  
+        currentSession.user.id  
+      );  
+  
+  if(error){  
+  
+    alert(  
+      "Could not delete comment: "+  
+      error.message  
+    );  
+  
+    return;  
+  
+  }  
+  
+  await renderPosts();  
+  
+}  
+  
+/* ================================  
+   LIKE / UNLIKE  
+================================ */  
+  
+async function likePost(postId){  
+  
+  if(!currentSession){  
+  
+    alert(  
+      "Please login to like posts."  
+    );  
+  
+    openLogin();  
+    return;  
+  
+  }  
+  
+  const userId =  
+    currentSession.user.id;  
+  
+  const {  
+    data:existing,  
+    error:checkError  
+  } =  
+    await supabaseClient  
+      .from("post_likes")  
+      .select(  
+        "post_id"  
+      )  
+      .eq(  
+        "post_id",  
+        postId  
+      )  
+      .eq(  
+        "user_id",  
+        userId  
+      )  
+      .maybeSingle();  
+  
+  if(checkError){  
+  
+    alert(  
+      "Could not update like: "+  
+      checkError.message  
+    );  
+  
+    return;  
+  
+  }  
+  
+  if(existing){  
+  
+    const {error} =  
+      await supabaseClient  
+        .from("post_likes")  
+        .delete()  
+        .eq(  
+          "post_id",  
+          postId  
+        )  
+        .eq(  
+          "user_id",  
+          userId  
+        );  
+  
+    if(error){  
+  
+      alert(  
+        "Could not unlike post."  
+      );  
+  
+      return;  
+  
+    }  
+  
+  }else{  
+  
+    const {error} =  
+      await supabaseClient  
+        .from("post_likes")  
+        .insert({  
+  
+          post_id:postId,  
+  
+          user_id:userId  
+  
+        });  
+  
+    if(error){  
+  
+      alert(  
+        "Could not like post."  
+      );  
+  
+      return;  
+  
+    }  
+  
+  }  
+  
+  await renderPosts();  
+  
+}  
+  
+/* ================================  
+   DELETE POST  
+================================ */  
+  
+async function deletePost(postId){  
+  
+  if(!currentSession){  
+  
+    openLogin();  
+    return;  
+  
+  }  
+  
+  if(!confirm(  
+    "Delete your post?"  
+  )){  
+  
+    return;  
+  
+  }  
+  
+  const {error} =  
+    await supabaseClient  
+      .from("posts")  
+      .delete()  
+      .eq(  
+        "id",  
+        postId  
+      )  
+      .eq(  
+        "user_id",  
+        currentSession.user.id  
+      );  
+  
+  if(error){  
+  
+    console.error(error);  
+  
+    alert(  
+      "Could not delete post: "+  
+      error.message  
+    );  
+  
+    return;  
+  
+  }  
+  
+  allPosts =  
+    allPosts.filter(  
+      post =>  
+        String(post.id)!==  
+        String(postId)  
+    );  
+  
+  await renderPosts();  
+  
+}  
+  
+/* ================================  
+   CREATE POST  
+================================ */  
+  
+function openCreatePost(){  
+  
+  if(!currentSession){  
+  
+    alert(  
+      "Please login to create a post."  
+    );  
+  
+    openLogin();  
+    return;  
+  
+  }  
+  
+  document.getElementById(  
+    "postContentInput"  
+  ).value="";  
+  
+  document.getElementById(  
+    "postVisibility"  
+  ).value="public";  
+  
+  document.getElementById(  
+    "createPostModal"  
+  ).style.display="flex";  
+  
+}  
+  
+function closeCreatePost(){  
+  
+  document.getElementById(  
+    "createPostModal"  
+  ).style.display="none";  
+  
+}  
+  
+async function createPost(){  
+  
+  if(!currentSession){  
+  
+    openLogin();  
+    return;  
+  
+  }  
+  
+  const input =  
+    document.getElementById(  
+      "postContentInput"  
+    );  
+  
+  const visibility =  
+    document.getElementById(  
+      "postVisibility"  
+    ).value;  
+  
+  const content =  
+    String(  
+      input.value||""  
+    ).trim();  
+  
+  if(!content){  
+  
+    alert(  
+      "Write something first."  
+    );  
+  
+    return;  
+  
+  }  
+  
+  if(content.length>5000){  
+  
+    alert(  
+      "Post is too long."  
+    );  
+  
+    return;  
+  
+  }  
+  
+  const button =  
+    document.getElementById(  
+      "publishPostBtn"  
+    );  
+  
+  button.disabled=true;  
+  
+  button.textContent=  
+    "Publishing...";  
+  
+  const {error} =  
+    await supabaseClient  
+      .from("posts")  
+      .insert({  
+  
+        user_id:  
+          currentSession.user.id,  
+  
+        content:content,  
+  
+        visibility:visibility  
+  
+      });  
+  
+  button.disabled=false;  
+  
+  button.textContent=  
+    "Publish Post";  
+  
+  if(error){  
+  
+    console.error(error);  
+  
+    alert(  
+      "Could not create post: "+  
+      error.message  
+    );  
+  
+    return;  
+  
+  }  
+  
+  closeCreatePost();  
+  
+  await loadPosts(true);  
+  
+}  
+  
+/* ================================  
+   PROFILE  
+================================ */  
+  
+function openUserProfile(userId){  
+  
+  if(!userId)return;  
+  
+  window.location.href =  
+    "profile.html?user="+  
+    encodeURIComponent(userId);  
+  
+}  
+  
+/* ================================  
+   SHARE  
+================================ */  
+  
+async function sharePost(postId){  
+  
+  const url =  
+    window.location.origin+  
+    window.location.pathname+  
+    "?post="+  
+    encodeURIComponent(postId);  
+  
+  if(navigator.share){  
+  
+    try{  
+  
+      await navigator.share({  
+  
+        title:  
+          "P2P Social Post",  
+  
+        text:  
+          "Check out this post on P2P Social.",  
+  
+        url:url  
+  
+      });  
+  
+    }catch(error){  
+  
+      console.log(error);  
+  
+    }  
+  
+    return;  
+  
+  }  
+  
+  try{  
+  
+    await navigator.clipboard.writeText(  
+      url  
+    );  
+  
+    alert(  
+      "Post link copied."  
+    );  
+  
+  }catch(error){  
+  
+    alert(  
+      "Post link: "+url  
+    );  
+  
+  }  
+  
+}  
+  
+/* ================================  
+   TIME  
+================================ */  
+  
+function formatPostTime(dateString){  
+  
+  if(!dateString)return"";  
+  
+  const date =  
+    new Date(dateString);  
+  
+  if(isNaN(  
+    date.getTime()  
+  ))return"";  
+  
+  const now =  
+    new Date();  
+  
+  const seconds =  
+    Math.floor(  
+      (now-date)/1000  
+    );  
+  
+  if(seconds<60)return"now";  
+  
+  const minutes =  
+    Math.floor(  
+      seconds/60  
+    );  
+  
+  if(minutes<60){  
+    return minutes+"m";  
+  }  
+  
+  const hours =  
+    Math.floor(  
+      minutes/60  
+    );  
+  
+  if(hours<24){  
+    return hours+"h";  
+  }  
+  
+  const days =  
+    Math.floor(  
+      hours/24  
+    );  
+  
+  if(days<7){  
+    return days+"d";  
+  }  
+  
+  return date.toLocaleDateString();  
+  
+}  
+  
+/* ================================  
+   NAVIGATION  
+================================ */  
+  
+function openLogin(){  
+  
+  window.location.href=  
+    "login.html";  
+  
+}  
+  
+function openRegister(){  
+  
+  window.location.href=  
+    "register.html";  
+  
+}  
+  
+function openLive(){  
+  
+  window.location.href=  
+    "live.html";  
+  
+}  
+  
+function openDeposit(){  
+  
+  if(!currentSession){  
+  
+    alert(  
+      "Please login to make a deposit."  
+    );  
+  
+    openLogin();  
+    return;  
+  
+  }  
+  
+  window.location.href=  
+    "deposit.html";  
+  
+}  
+  
+function openWallet(){  
+  
+  if(!currentSession){  
+  
+    alert(  
+      "Please login to access your wallet."  
+    );  
+  
+    openLogin();  
+    return;  
+  
+  }  
+  
+  window.location.href=  
+    "wallet.html";  
+  
+}  
+  
+function openMessages(){  
+  
+  if(!currentSession){  
+  
+    alert(  
+      "Please login to access messages."  
+    );  
+  
+    openLogin();  
+    return;  
+  
+  }  
+  
+  window.location.href=  
+    "message.html";  
+  
+}  
+  
+function openProfile(){  
+  
+  if(!currentSession){  
+  
+    alert(  
+      "Please login to access your profile."  
+    );  
+  
+    openLogin();  
+    return;  
+  
+  }  
+  
+  window.location.href=  
+    "profile.html";  
+  
+}  
+  
+/* ================================  
+   LOGOUT  
+================================ */  
+  
+async function logout(){  
+  
+  if(!confirm(  
+    "Do you want to log out?"  
+  )){  
+  
+    return;  
+  
+  }  
+  
+  if(notificationChannel){  
+  
+    await supabaseClient  
+      .removeChannel(  
+        notificationChannel  
+      );  
+  
+    notificationChannel=null;  
+  
+  }  
+  
+  const {error} =  
+    await supabaseClient.auth.signOut();  
+  
+  if(error){  
+  
+    alert(  
+      "Logout failed: "+  
+      error.message  
+    );  
+  
+    return;  
+  
+  }  
+  
+  currentSession=null;  
+  
+  window.location.href=  
+    "index.html";  
+  
+}  
+  
+/* ================================  
+   P2P PROTECTED  
+================================ */  
+  
+function protectedAction(){  
+  
+  if(!currentSession){  
+  
+    alert(  
+      "Please login first."  
+    );  
+  
+    openLogin();  
+    return;  
+  
+  }  
+  
+  alert(  
+    "This feature is ready for the next step."  
+  );  
+  
+}  
+  
+/* ================================  
+   SEARCH  
+================================ */  
+  
+document  
+  .getElementById(  
+    "searchInput"  
+  )  
+  .addEventListener(  
+    "input",  
+    function(){  
+  
+      const search =  
+        this.value  
+          .toLowerCase()  
+          .trim();  
+  
+      const cards =  
+        document.querySelectorAll(  
+          ".post-card"  
+        );  
+  
+      cards.forEach(  
+        card=>{  
+  
+          if(!search){  
+  
+            card.style.display=  
+              "block";  
+  
+            return;  
+  
+          }  
+  
+          const text =  
+            card.textContent  
+              .toLowerCase();  
+  
+          card.style.display =  
+            text.includes(search)  
+            ? "block"  
+            : "none";  
+  
+        }  
+      );  
+  
+    }  
+  );  
+  
+/* ================================  
+   ESCAPE HTML  
+================================ */  
+  
+function escapeHtml(text){  
+  
+  const div =  
+    document.createElement("div");  
+  
+  div.textContent =  
+    text==null  
+    ? ""  
+    : String(text);  
+  
+  return div.innerHTML;  
+  
+}  
+  
+/* ================================  
+   ESCAPE JS  
+================================ */  
+  
+function escapeJs(text){  
+  
+  return String(  
+    text||""  
+  )  
+    .replace(  
+      /\\/g,  
+      "\\\\"  
+    )  
+    .replace(  
+      /'/g,  
+      "\\'"  
+    )  
+    .replace(  
+      /\r/g,  
+      "\\r"  
+    )  
+    .replace(  
+      /\n/g,  
+      "\\n"  
+    );  
+  
+}  
+  
+/* ================================  
+   CLOSE MODAL BY BACKDROP  
+================================ */  
+  
+document  
+  .getElementById(  
+    "createPostModal"  
+  )  
+  .addEventListener(  
+    "click",  
+    function(event){  
+  
+      if(  
+        event.target===  
+        this  
+      ){  
+  
+        closeCreatePost();  
+  
+      }  
+  
+    }  
+  );  
+  
+/* ================================  
+   AUTH STATE  
+================================ */  
+  
+supabaseClient.auth.onAuthStateChange(  
+  function(  
+    event,  
+    session  
+  ){  
+  
+    currentSession=  
+      session;  
+  
+    setTimeout(  
+      async function(){  
+  
+        await updateAuthUI();  
+  
+        await loadPosts();  
+  
+        if(currentSession){  
+  
+          await loadNotifications();  
+  
+          subscribeToNotifications();  
+  
+        }  
+  
+      },  
+      0  
+    );  
+  
+  }  
+);  
+  
+/* ================================  
+   SERVICE WORKER / PWA  
+================================ */  
+  
+if(  
+  "serviceWorker" in navigator  
+){  
+  
+  window.addEventListener(  
+    "load",  
+    function(){  
+  
+      navigator.serviceWorker  
+        .register(  
+          "./service-worker.js"  
+        )  
+        .then(  
+          registration=>{  
+  
+            console.log(  
+              "P2P Social service worker registered:",  
+              registration.scope  
+            );  
+  
+          }  
+        )  
+        .catch(  
+          error=>{  
+  
+            console.error(  
+              "Service worker registration failed:",  
+              error  
+            );  
+  
+          }  
+        );  
+  
+    }  
+  );  
+  
+}  
+  
+/* ================================  
+   START  
+================================ */  
+  
+async function startApp(){  
+  
+  await checkLogin();  
+  
+  await loadPosts();  
+  
+  if(currentSession){  
+  
+    await loadNotifications();  
+  
+    subscribeToNotifications();  
+  
+    requestNotificationPermission();  
+  
+  }  
+  
+}  
+  
+startApp();  
+  
+</script>  </body>  
 </html>

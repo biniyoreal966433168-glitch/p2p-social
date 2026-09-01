@@ -1550,3 +1550,1582 @@ startApp();
 
 </body>
 </html>
+
+/* ===============================
+   PROFILE PRIVACY
+=============================== */
+
+async function toggleProfileLock(){
+
+  const locked =
+    !currentProfile.profile_locked;
+
+  const {
+    error
+  } =
+  await supabaseClient
+    .from("profiles")
+    .update({
+      profile_locked: locked
+    })
+    .eq(
+      "id",
+      currentSession.user.id
+    );
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Could not change profile privacy:\n\n" +
+      error.message
+    );
+
+    return;
+
+  }
+
+  currentProfile.profile_locked =
+    locked;
+
+  updatePrivacyUI();
+
+}
+
+
+/* ===============================
+   PRIVACY UI
+=============================== */
+
+function updatePrivacyUI(){
+
+  const button =
+    document.getElementById(
+      "profileLockButton"
+    );
+
+  if(!button){
+    return;
+  }
+
+  const locked =
+    !!currentProfile.profile_locked;
+
+  button.textContent =
+    locked
+    ? "🔒 Unlock Profile"
+    : "🔓 Lock Profile";
+
+}
+
+
+/* ===============================
+   PREMIUM DETAILS
+=============================== */
+
+function togglePremiumDetails(){
+
+  const box =
+    document.getElementById(
+      "premiumDetails"
+    );
+
+  const button =
+    document.getElementById(
+      "premiumToggle"
+    );
+
+  if(!box || !button){
+    return;
+  }
+
+  const hidden =
+    box.classList.toggle(
+      "hidden"
+    );
+
+  button.textContent =
+    hidden
+    ? "＋ View Premium Details"
+    : "− Minimize Premium Details";
+
+}
+
+
+/* ===============================
+   PREMIUM PLAN
+=============================== */
+
+function selectPremiumPlan(
+  plan,
+  months,
+  price
+){
+
+  const confirmed =
+    confirm(
+      plan +
+      " — " +
+      months +
+      " month" +
+      (months > 1 ? "s" : "") +
+      "\n\nPrice: " +
+      price +
+      " USDT\n\n" +
+      "Continue to purchase?"
+    );
+
+  if(!confirmed){
+    return;
+  }
+
+  /*
+    Payment should be connected to
+    your existing USDT wallet/payment
+    system.
+
+    Diamonds are NOT used as USDT.
+  */
+
+  alert(
+    "Premium purchase selected:\n\n" +
+    plan +
+    "\n" +
+    months +
+    " month" +
+    (months > 1 ? "s" : "") +
+    "\n" +
+    price +
+    " USDT"
+  );
+
+}
+
+
+/* ===============================
+   ADMIN DIAMOND PANEL
+=============================== */
+
+function setupDiamondAdmin(){
+
+  const role =
+    currentProfile?.role;
+
+  const section =
+    document.getElementById(
+      "diamondAdminSection"
+    );
+
+  if(!section){
+    return;
+  }
+
+  if(
+    role !== "owner" &&
+    role !== "admin"
+  ){
+
+    section.style.display =
+      "none";
+
+    return;
+
+  }
+
+  section.style.display =
+    "block";
+
+  loadDiamondUsers();
+
+}
+
+
+/* ===============================
+   LOAD DIAMOND USERS
+=============================== */
+
+async function loadDiamondUsers(){
+
+  const select =
+    document.getElementById(
+      "diamondUser"
+    );
+
+  if(!select){
+    return;
+  }
+
+  select.innerHTML =
+    `<option value="">
+      Loading users...
+    </option>`;
+
+  const {
+    data,
+    error
+  } =
+  await supabaseClient
+    .from("profiles")
+    .select(
+      "id,username,user_number"
+    )
+    .order(
+      "user_number",
+      {
+        ascending:true
+      }
+    );
+
+  if(error){
+
+    console.error(error);
+
+    select.innerHTML =
+      `<option value="">
+        Could not load users
+      </option>`;
+
+    return;
+
+  }
+
+  select.innerHTML =
+    `<option value="">
+      Select user
+    </option>`;
+
+  (data || []).forEach(
+    profile => {
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+      option.value =
+        profile.id;
+
+      const number =
+        profile.user_number != null
+        ? String(
+            profile.user_number
+          ).padStart(2,"0")
+        : "";
+
+      option.textContent =
+        number
+        ? number +
+          " — " +
+          (
+            profile.username ||
+            "User"
+          )
+        :
+        (
+          profile.username ||
+          "User"
+        );
+
+      select.appendChild(
+        option
+      );
+
+    }
+  );
+
+}
+
+
+/* ===============================
+   ADMIN ADD DIAMONDS
+=============================== */
+
+async function adminAddDiamonds(){
+
+  const userId =
+    document.getElementById(
+      "diamondUser"
+    ).value;
+
+  const amount =
+    Number(
+      document.getElementById(
+        "diamondAmount"
+      ).value
+    );
+
+  const description =
+    document.getElementById(
+      "diamondDescription"
+    ).value.trim();
+
+  const button =
+    document.getElementById(
+      "diamondAddButton"
+    );
+
+  const message =
+    document.getElementById(
+      "diamondMessage"
+    );
+
+  message.className =
+    "admin-message";
+
+  message.textContent =
+    "";
+
+  if(!userId){
+
+    showDiamondMessage(
+      "Please select a user.",
+      "error"
+    );
+
+    return;
+
+  }
+
+  if(
+    !Number.isFinite(amount) ||
+    amount <= 0
+  ){
+
+    showDiamondMessage(
+      "Enter a valid Diamond amount.",
+      "error"
+    );
+
+    return;
+
+  }
+
+  if(amount > 1000000000){
+
+    showDiamondMessage(
+      "Amount is too large.",
+      "error"
+    );
+
+    return;
+
+  }
+
+  const confirmed =
+    confirm(
+      "Add " +
+      amount.toLocaleString() +
+      " 💎 to the selected user?"
+    );
+
+  if(!confirmed){
+    return;
+  }
+
+  button.disabled =
+    true;
+
+  button.textContent =
+    "Processing...";
+
+  /*
+    IMPORTANT:
+    This calls a separate Diamond RPC.
+
+    It does NOT modify USDT.
+    It does NOT modify ETB.
+  */
+
+  const {
+    data,
+    error
+  } =
+  await supabaseClient.rpc(
+    "admin_add_diamonds",
+    {
+      p_user_id:userId,
+      p_amount:amount,
+      p_description:
+        description ||
+        "Diamond credit"
+    }
+  );
+
+  button.disabled =
+    false;
+
+  button.textContent =
+    "➕ Add 💎";
+
+  if(error){
+
+    console.error(
+      "Diamond error:",
+      error
+    );
+
+    showDiamondMessage(
+      error.message,
+      "error"
+    );
+
+    return;
+
+  }
+
+  showDiamondMessage(
+    "Success. New Diamond balance: " +
+    Number(
+      data || 0
+    ).toLocaleString() +
+    " 💎",
+    "success"
+  );
+
+  document.getElementById(
+    "diamondAmount"
+  ).value = "";
+
+  document.getElementById(
+    "diamondDescription"
+  ).value = "";
+
+}
+
+
+/* ===============================
+   DIAMOND MESSAGE
+=============================== */
+
+function showDiamondMessage(
+  text,
+  type
+){
+
+  const message =
+    document.getElementById(
+      "diamondMessage"
+    );
+
+  if(!message){
+    return;
+  }
+
+  message.textContent =
+    text;
+
+  message.className =
+    "admin-message " +
+    type;
+
+}
+
+
+/* ===============================
+   WALLET BALANCES
+=============================== */
+
+let balancesVisible = true;
+
+function toggleBalances(){
+
+  balancesVisible =
+    !balancesVisible;
+
+  const usdt =
+    document.getElementById(
+      "usdtBalance"
+    );
+
+  const diamonds =
+    document.getElementById(
+      "diamondBalance"
+    );
+
+  const toggle =
+    document.getElementById(
+      "balanceToggle"
+    );
+
+  if(usdt){
+
+    usdt.textContent =
+      balancesVisible
+      ? formatMoney(
+          currentProfile.usdt_balance
+        ) + " USDT"
+      : "•••••• USDT";
+
+  }
+
+  if(diamonds){
+
+    diamonds.textContent =
+      balancesVisible
+      ? formatNumber(
+          currentProfile.diamond_balance
+        ) + " 💎"
+      : "•••••• 💎";
+
+  }
+
+  if(toggle){
+
+    toggle.textContent =
+      balancesVisible
+      ? "🙈 Hide Balance"
+      : "👁️ Show Balance";
+
+  }
+
+}
+
+
+/* ===============================
+   LOAD WALLET BALANCES
+=============================== */
+
+async function loadWalletBalances(){
+
+  const userId =
+    currentSession.user.id;
+
+  /*
+    USDT and Diamonds are separate.
+
+    USDT:
+      usdt_balance
+
+    Diamonds:
+      diamond_balance
+
+    Neither is converted into the other.
+  */
+
+  const {
+    data,
+    error
+  } =
+  await supabaseClient
+    .from("profiles")
+    .select(
+      "usdt_balance,diamond_balance"
+    )
+    .eq(
+      "id",
+      userId
+    )
+    .maybeSingle();
+
+  if(error){
+
+    console.error(
+      "Wallet balance error:",
+      error
+    );
+
+    return;
+
+  }
+
+  if(data){
+
+    currentProfile.usdt_balance =
+      Number(
+        data.usdt_balance
+      ) || 0;
+
+    currentProfile.diamond_balance =
+      Number(
+        data.diamond_balance
+      ) || 0;
+
+  }
+
+  renderWalletBalances();
+
+}
+
+
+/* ===============================
+   RENDER WALLET
+=============================== */
+
+function renderWalletBalances(){
+
+  const usdt =
+    document.getElementById(
+      "usdtBalance"
+    );
+
+  const diamonds =
+    document.getElementById(
+      "diamondBalance"
+    );
+
+  if(usdt){
+
+    usdt.textContent =
+      balancesVisible
+      ? formatMoney(
+          currentProfile.usdt_balance
+        ) + " USDT"
+      : "•••••• USDT";
+
+  }
+
+  if(diamonds){
+
+    diamonds.textContent =
+      balancesVisible
+      ? formatNumber(
+          currentProfile.diamond_balance
+        ) + " 💎"
+      : "•••••• 💎";
+
+  }
+
+}
+
+
+/* ===============================
+   SEND DIAMOND
+=============================== */
+
+function sendDiamonds(){
+
+  window.location.href =
+    "wallet.html?action=send-diamond";
+
+}
+
+
+/* ===============================
+   BUY
+=============================== */
+
+function buyPremium(){
+
+  const section =
+    document.getElementById(
+      "premiumSection"
+    );
+
+  if(section){
+
+    section.scrollIntoView({
+      behavior:"smooth"
+    });
+
+  }
+
+}
+
+
+/* ===============================
+   TRADE
+=============================== */
+
+function openTrade(){
+
+  window.location.href =
+    "wallet.html?action=trade";
+
+}
+
+
+/* ===============================
+   FORMAT NUMBER
+=============================== */
+
+function formatNumber(
+  value
+){
+
+  return Number(
+    value || 0
+  ).toLocaleString(
+    undefined,
+    {
+      maximumFractionDigits:2
+    }
+  );
+
+}
+
+
+/* ===============================
+   FORMAT MONEY
+=============================== */
+
+function formatMoney(
+  value
+){
+
+  return Number(
+    value || 0
+  ).toLocaleString(
+    undefined,
+    {
+      minimumFractionDigits:2,
+      maximumFractionDigits:2
+    }
+  );
+
+}
+
+
+/* ===============================
+   UPDATE PROFILE UI
+=============================== */
+
+function updatePremiumBadge(){
+
+  const badge =
+    document.getElementById(
+      "premiumBadge"
+    );
+
+  if(!badge){
+    return;
+  }
+
+  const plan =
+    currentProfile?.premium_plan ||
+    "free";
+
+  if(plan === "premium"){
+
+    badge.textContent =
+      "🟢 Premium";
+
+    badge.className =
+      "premium-badge premium";
+
+  }else if(plan === "premium_plus"){
+
+    badge.textContent =
+      "🔵 Premium+";
+
+    badge.className =
+      "premium-badge premium-plus";
+
+  }else if(plan === "premium_max"){
+
+    badge.textContent =
+      "🟣 Premium Max";
+
+    badge.className =
+      "premium-badge premium-max";
+
+  }else{
+
+    badge.textContent =
+      "Free";
+
+    badge.className =
+      "premium-badge free";
+
+  }
+
+}
+
+
+/* ===============================
+   UNIQUE USERNAME CHECK
+=============================== */
+
+async function usernameExists(
+  username,
+  currentUserId
+){
+
+  const {
+    data,
+    error
+  } =
+  await supabaseClient
+    .from("profiles")
+    .select("id")
+    .ilike(
+      "username",
+      username
+    )
+    .neq(
+      "id",
+      currentUserId
+    )
+    .limit(1);
+
+  if(error){
+
+    console.error(error);
+
+    return false;
+
+  }
+
+  return !!(
+    data &&
+    data.length
+  );
+
+}
+
+
+/* ===============================
+   SAFE PROFILE SAVE
+=============================== */
+
+async function saveProfile(){
+
+  const username =
+    document
+      .getElementById(
+        "editUsername"
+      )
+      .value
+      .trim();
+
+  const bio =
+    document
+      .getElementById(
+        "editBio"
+      )
+      .value
+      .trim();
+
+  if(!username){
+
+    alert(
+      "Username is required."
+    );
+
+    return;
+
+  }
+
+  if(username.length < 3){
+
+    alert(
+      "Username must contain at least 3 characters."
+    );
+
+    return;
+
+  }
+
+  if(username.length > 50){
+
+    alert(
+      "Username is too long."
+    );
+
+    return;
+
+  }
+
+  /*
+    Basic username format.
+    Letters, numbers, underscore and dot.
+  */
+
+  if(
+    !/^[A-Za-z0-9_.]+$/.test(
+      username
+    )
+  ){
+
+    alert(
+      "Username can only contain letters, numbers, _ and ."
+    );
+
+    return;
+
+  }
+
+  const button =
+    document.getElementById(
+      "saveProfileButton"
+    );
+
+  button.disabled =
+    true;
+
+  button.textContent =
+    "Saving...";
+
+  const exists =
+    await usernameExists(
+      username,
+      currentSession.user.id
+    );
+
+  if(exists){
+
+    button.disabled =
+      false;
+
+    button.textContent =
+      "Save";
+
+    alert(
+      "That username is already taken."
+    );
+
+    return;
+
+  }
+
+  const {
+    error
+  } =
+  await supabaseClient
+    .from("profiles")
+    .update({
+      username:username,
+      bio:bio
+    })
+    .eq(
+      "id",
+      currentSession.user.id
+    );
+
+  button.disabled =
+    false;
+
+  button.textContent =
+    "Save";
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Could not update profile:\n\n" +
+      error.message
+    );
+
+    return;
+
+  }
+
+  currentProfile.username =
+    username;
+
+  currentProfile.bio =
+    bio;
+
+  closeEditProfile();
+
+  await loadProfile();
+
+  await loadPosts();
+
+}
+
+
+/* ===============================
+   RELOAD COMPLETE PROFILE
+=============================== */
+
+async function refreshProfile(){
+
+  await loadProfile();
+
+  await loadWalletBalances();
+
+  await loadPosts();
+
+  setupDiamondAdmin();
+
+}
+
+
+/* ===============================
+   LOAD PROFILE OVERRIDES
+=============================== */
+
+async function loadProfile(){
+
+  const user =
+    currentSession.user;
+
+  const {
+    data:profile,
+    error
+  } =
+  await supabaseClient
+    .from("profiles")
+    .select("*")
+    .eq(
+      "id",
+      user.id
+    )
+    .maybeSingle();
+
+  if(error){
+
+    console.error(
+      "Profile error:",
+      error
+    );
+
+  }
+
+  currentProfile =
+    profile || {};
+
+  const username =
+    currentProfile.username ||
+    user.user_metadata?.username ||
+    user.email?.split("@")[0] ||
+    "User";
+
+  const bio =
+    currentProfile.bio ||
+    "No bio yet.";
+
+  document.getElementById(
+    "profileName"
+  ).textContent =
+    username;
+
+  document.getElementById(
+    "profileBio"
+  ).textContent =
+    bio;
+
+  await loadUserNumber(
+    user.id
+  );
+
+  setProfilePhoto(
+    currentProfile.avatar_url || "",
+    username
+  );
+
+  document.getElementById(
+    "editUsername"
+  ).value =
+    username;
+
+  document.getElementById(
+    "editBio"
+  ).value =
+    currentProfile.bio || "";
+
+  await loadStats();
+
+  setupAdminPanel();
+
+  setupDiamondAdmin();
+
+  updatePrivacyUI();
+
+  updatePremiumBadge();
+
+  await loadWalletBalances();
+
+}
+
+
+/* ===============================
+   CREATE POST WITH PRIVACY
+=============================== */
+
+async function createPost(){
+
+  const textarea =
+    document.getElementById(
+      "postContent"
+    );
+
+  const visibility =
+    document.getElementById(
+      "postVisibility"
+    ).value;
+
+  const content =
+    textarea.value.trim();
+
+  if(!content){
+
+    alert(
+      "Write something first."
+    );
+
+    return;
+
+  }
+
+  const button =
+    document.getElementById(
+      "createPostButton"
+    );
+
+  button.disabled =
+    true;
+
+  button.textContent =
+    "Posting...";
+
+  const {
+    error
+  } =
+  await supabaseClient
+    .from("posts")
+    .insert({
+      user_id:
+        currentSession.user.id,
+      content:
+        content,
+      visibility:
+        visibility
+    });
+
+  button.disabled =
+    false;
+
+  button.textContent =
+    "Post";
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Could not create post:\n\n" +
+      error.message
+    );
+
+    return;
+
+  }
+
+  textarea.value = "";
+
+  await loadPosts();
+
+  await loadStats();
+
+}
+
+
+/* ===============================
+   POST VISIBILITY
+=============================== */
+
+function canShowOwnPosts(){
+
+  /*
+    Owner can always see own posts.
+
+    Profile locking affects viewers,
+    not the logged-in owner.
+
+    Public/Friend visibility should
+    ultimately also be enforced by
+    Supabase RLS/policies.
+  */
+
+  return true;
+
+}
+
+
+/* ===============================
+   DELETE POST — OWNER ONLY
+=============================== */
+
+async function deletePost(
+  postId
+){
+
+  const confirmed =
+    confirm(
+      "Delete this post?"
+    );
+
+  if(!confirmed){
+    return;
+  }
+
+  const {
+    error
+  } =
+  await supabaseClient
+    .from("posts")
+    .delete()
+    .eq(
+      "id",
+      postId
+    )
+    .eq(
+      "user_id",
+      currentSession.user.id
+    );
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Could not delete post:\n\n" +
+      error.message
+    );
+
+    return;
+
+  }
+
+  await loadPosts();
+
+  await loadStats();
+
+}
+
+
+/* ===============================
+   DELETE COMMENT — OWNER ONLY
+=============================== */
+
+async function deleteComment(
+  commentId
+){
+
+  const confirmed =
+    confirm(
+      "Delete your comment?"
+    );
+
+  if(!confirmed){
+    return;
+  }
+
+  const {
+    error
+  } =
+  await supabaseClient
+    .from("post_comments")
+    .delete()
+    .eq(
+      "id",
+      commentId
+    )
+    .eq(
+      "user_id",
+      currentSession.user.id
+    );
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Could not delete comment:\n\n" +
+      error.message
+    );
+
+    return;
+
+  }
+
+  await loadPosts();
+
+}
+
+
+/* ===============================
+   POST SHARE
+=============================== */
+
+async function sharePost(
+  postId
+){
+
+  const url =
+    window.location.origin +
+    window.location.pathname +
+    "?post=" +
+    encodeURIComponent(
+      postId
+    );
+
+  if(navigator.share){
+
+    try{
+
+      await navigator.share({
+        title:"P2P Social Post",
+        text:"Check out this post.",
+        url:url
+      });
+
+    }catch(error){
+
+      console.log(error);
+
+    }
+
+    return;
+
+  }
+
+  try{
+
+    await navigator.clipboard.writeText(
+      url
+    );
+
+    alert(
+      "Post link copied."
+    );
+
+  }catch(error){
+
+    alert(
+      url
+    );
+
+  }
+
+}
+
+
+/* ===============================
+   NAVIGATION
+=============================== */
+
+function openWallet(){
+
+  window.location.href =
+    "wallet.html";
+
+}
+
+function openMessages(){
+
+  window.location.href =
+    "message.html";
+
+}
+
+function openLive(){
+
+  window.location.href =
+    "live.html";
+
+}
+
+function openTrade(){
+
+  window.location.href =
+    "wallet.html?action=trade";
+
+}
+
+function sendDiamonds(){
+
+  window.location.href =
+    "wallet.html?action=send-diamond";
+
+}
+
+function goHome(){
+
+  window.location.href =
+    "index.html";
+
+}
+
+
+/* ===============================
+   LOGOUT
+=============================== */
+
+async function logout(){
+
+  const confirmed =
+    confirm(
+      "Do you want to log out?"
+    );
+
+  if(!confirmed){
+    return;
+  }
+
+  const {
+    error
+  } =
+  await supabaseClient.auth.signOut();
+
+  if(error){
+
+    alert(
+      "Logout failed:\n\n" +
+      error.message
+    );
+
+    return;
+
+  }
+
+  window.location.href =
+    "login.html";
+
+}
+
+
+/* ===============================
+   FORMAT TIME
+=============================== */
+
+function formatTime(
+  dateString
+){
+
+  const date =
+    new Date(
+      dateString
+    );
+
+  if(
+    isNaN(
+      date.getTime()
+    )
+  ){
+
+    return "";
+
+  }
+
+  const now =
+    new Date();
+
+  const seconds =
+    Math.floor(
+      (now - date) / 1000
+    );
+
+  if(seconds < 60){
+    return "now";
+  }
+
+  const minutes =
+    Math.floor(
+      seconds / 60
+    );
+
+  if(minutes < 60){
+    return minutes + "m";
+  }
+
+  const hours =
+    Math.floor(
+      minutes / 60
+    );
+
+  if(hours < 24){
+    return hours + "h";
+  }
+
+  const days =
+    Math.floor(
+      hours / 24
+    );
+
+  if(days < 7){
+    return days + "d";
+  }
+
+  return date.toLocaleDateString();
+
+}
+
+
+/* ===============================
+   ESCAPE HTML
+=============================== */
+
+function escapeHtml(
+  text
+){
+
+  const div =
+    document.createElement(
+      "div"
+    );
+
+  div.textContent =
+    text == null
+    ? ""
+    : String(text);
+
+  return div.innerHTML;
+
+}
+
+
+/* ===============================
+   ESCAPE JS
+=============================== */
+
+function escapeJs(
+  text
+){
+
+  return String(
+    text || ""
+  )
+  .replace(
+    /\\/g,
+    "\\\\"
+  )
+  .replace(
+    /'/g,
+    "\\'"
+  )
+  .replace(
+    /"/g,
+    '\\"'
+  );
+
+}
+
+
+/* ===============================
+   AUTH LISTENER
+=============================== */
+
+supabaseClient.auth.onAuthStateChange(
+  function(
+    event,
+    session
+  ){
+
+    currentSession =
+      session;
+
+    if(!session){
+
+      window.location.href =
+        "login.html";
+
+    }
+
+  }
+);
+
+
+/* ===============================
+   RUN APP
+=============================== */
+
+startApp();
+
+</script>
+
+</body>
+</html>

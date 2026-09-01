@@ -3451,4 +3451,2574 @@ function createOfferCard(
 
     <div class="p2p-card-header">
 
-      <div class="
+      <div class="seller">
+
+        ${avatarHTML}
+
+        <div>
+
+          <div class="username">
+            ${escapeHtml(username)}
+          </div>
+
+          <div class="online">
+            ● Available
+          </div>
+
+        </div>
+
+      </div>
+
+      ${
+        rate!==null &&
+        rate!==""
+        ?
+        `
+        <div class="rate">
+
+          <strong>
+            ${escapeHtml(
+              formatNumber(rate)
+            )} ETB
+          </strong>
+
+          <small>
+            1 USDT
+          </small>
+
+        </div>
+        `
+        :""
+      }
+
+    </div>
+
+    <div class="trade-info">
+
+      ${
+        amount!==null &&
+        amount!==""
+        ?
+        `
+        <span>
+          Available:
+          <strong>
+            ${escapeHtml(
+              formatNumber(amount)
+            )} USDT
+          </strong>
+        </span>
+        `
+        :
+        `<span>
+          Available offer
+        </span>`
+      }
+
+      ${
+        min!==null &&
+        min!==""
+        ?
+        `
+        <span>
+          Min:
+          ${escapeHtml(
+            formatNumber(min)
+          )} ETB
+        </span>
+        `
+        :""
+      }
+
+      ${
+        max!==null &&
+        max!==""
+        ?
+        `
+        <span>
+          Max:
+          ${escapeHtml(
+            formatNumber(max)
+          )} ETB
+        </span>
+        `
+        :""
+      }
+
+    </div>
+
+    <button
+      class="buy-btn"
+      onclick="
+        openP2POffer(
+          '${escapeJs(offer.id)}'
+        );
+      ">
+
+      ${
+        normalizedType==="sell"
+          ?"Buy USDT"
+          :"View Offer"
+      }
+
+    </button>
+
+  `;
+
+  return card;
+
+}
+
+function renderNoOffers(){
+
+  document.getElementById(
+    "p2pOffersContainer"
+  ).innerHTML=`
+
+    <div class="no-offers">
+
+      <div class="no-offers-icon">
+        🔄
+      </div>
+
+      <strong>
+        No available offers yet.
+      </strong>
+
+      <small>
+        Available P2P offers will appear here
+        when traders create them.
+      </small>
+
+    </div>
+
+  `;
+
+}
+
+/* =====================================================
+   POSTS
+===================================================== */
+
+async function loadPosts(
+  shuffle=false
+){
+
+  if(!requireLogin())return;
+
+  const feed =
+    document.getElementById(
+      "postsFeed"
+    );
+
+  feed.innerHTML=`
+    <div class="loading-posts">
+      Loading public posts...
+    </div>
+  `;
+
+  const {
+    data:posts,
+    error
+  } =
+  await supabaseClient
+    .from("posts")
+    .select("*")
+    .or(
+      "visibility.eq.public,visibility.is.null"
+    )
+    .order(
+      "created_at",
+      {
+        ascending:false
+      }
+    )
+    .limit(100);
+
+  if(error){
+
+    console.error(
+      "Posts:",
+      error
+    );
+
+    feed.innerHTML=`
+      <div class="no-posts">
+
+        Could not load posts.
+
+        <br>
+
+        <small>
+          ${escapeHtml(
+            error.message
+          )}
+        </small>
+
+      </div>
+    `;
+
+    return;
+
+  }
+
+  allPosts =
+    posts||[];
+
+  if(shuffle){
+
+    allPosts.sort(
+      ()=>Math.random()-.5
+    );
+
+  }
+
+  displayedPostCount =
+    INITIAL_POST_LIMIT;
+
+  await renderPosts();
+
+}
+
+async function loadMorePosts(){
+
+  if(
+    displayedPostCount>=
+    allPosts.length
+  ){
+
+    return;
+
+  }
+
+  displayedPostCount+=
+    INITIAL_POST_LIMIT;
+
+  await renderPosts();
+
+}
+
+async function renderPosts(){
+
+  if(!requireLogin())return;
+
+  const feed =
+    document.getElementById(
+      "postsFeed"
+    );
+
+  const visiblePosts =
+    allPosts.slice(
+      0,
+      displayedPostCount
+    );
+
+  if(!visiblePosts.length){
+
+    feed.innerHTML=`
+      <div class="no-posts">
+        No public posts yet.
+      </div>
+    `;
+
+    document.getElementById(
+      "loadMoreBtn"
+    ).style.display="none";
+
+    return;
+
+  }
+
+  const postIds =
+    visiblePosts.map(
+      p=>p.id
+    );
+
+  const userIds=[
+    ...new Set(
+      visiblePosts
+        .map(
+          p=>p.user_id
+        )
+        .filter(Boolean)
+    )
+  ];
+
+  const profileMap={};
+
+  if(userIds.length){
+
+    const {
+      data
+    } =
+    await supabaseClient
+      .from("profiles")
+      .select(
+        "id,username,avatar_url"
+      )
+      .in(
+        "id",
+        userIds
+      );
+
+    (data||[]).forEach(
+      profile=>{
+
+        profileMap[
+          profile.id
+        ]=profile;
+
+      }
+    );
+
+  }
+
+  /* ===================================================
+     LIKES
+  =================================================== */
+
+  let likes=[];
+
+  if(postIds.length){
+
+    const {
+      data
+    } =
+    await supabaseClient
+      .from("post_likes")
+      .select(
+        "post_id,user_id"
+      )
+      .in(
+        "post_id",
+        postIds
+      );
+
+    likes =
+      data||[];
+
+  }
+
+  const likeCount={};
+
+  likes.forEach(
+    like=>{
+
+      likeCount[
+        like.post_id
+      ] =
+        (
+          likeCount[
+            like.post_id
+          ]||0
+        )+1;
+
+    }
+  );
+
+  const myLikes =
+    new Set(
+      likes
+        .filter(
+          like=>
+            like.user_id===
+            currentSession.user.id
+        )
+        .map(
+          like=>
+            like.post_id
+        )
+    );
+
+  /* ===================================================
+     COMMENTS
+  =================================================== */
+
+  let comments=[];
+
+  if(postIds.length){
+
+    const {
+      data
+    } =
+    await supabaseClient
+      .from("post_comments")
+      .select(
+        "id,post_id,user_id,comment,created_at"
+      )
+      .in(
+        "post_id",
+        postIds
+      )
+      .order(
+        "created_at",
+        {
+          ascending:true
+        }
+      );
+
+    comments =
+      data||[];
+
+  }
+
+  const commentUserIds=[
+    ...new Set(
+      comments
+        .map(
+          c=>c.user_id
+        )
+        .filter(Boolean)
+    )
+  ];
+
+  if(commentUserIds.length){
+
+    const {
+      data
+    } =
+    await supabaseClient
+      .from("profiles")
+      .select(
+        "id,username,avatar_url"
+      )
+      .in(
+        "id",
+        commentUserIds
+      );
+
+    (data||[]).forEach(
+      profile=>{
+
+        profileMap[
+          profile.id
+        ]=profile;
+
+      }
+    );
+
+  }
+
+  feed.innerHTML="";
+
+  visiblePosts.forEach(
+    post=>{
+
+      const profile =
+        profileMap[
+          post.user_id
+        ]||{};
+
+      const username =
+        profile.username||
+        "User";
+
+      const avatar =
+        profile.avatar_url||
+        "";
+
+      const initial =
+        username
+          .charAt(0)
+          .toUpperCase()||
+        "U";
+
+      const postComments =
+        comments.filter(
+          c=>
+            String(c.post_id)===
+            String(post.id)
+        );
+
+      const isOwner =
+        currentSession.user.id===
+        post.user_id;
+
+      const card =
+        document.createElement(
+          "article"
+        );
+
+      card.className =
+        "post-card";
+
+      const avatarHTML =
+        avatar
+          ?
+          `<div class="post-avatar">
+
+            <img
+              src="${escapeHtml(avatar)}"
+              alt="Profile">
+
+          </div>`
+          :
+          `<div class="post-avatar">
+
+            ${escapeHtml(initial)}
+
+          </div>`;
+
+      const mediaHTML =
+        renderPostMedia(
+          post
+        );
+
+      const isPinned =
+        Boolean(
+          post.is_pinned||
+          post.pinned
+        );
+
+      card.innerHTML=`
+
+        ${
+          isPinned
+            ?
+            `
+            <div class="post-pin">
+              📌 Pinned
+            </div>
+            `
+            :""
+        }
+
+        <div
+          class="post-header"
+          onclick="
+            openUserProfile(
+              '${escapeJs(post.user_id)}'
+            );
+          ">
+
+          ${avatarHTML}
+
+          <div class="post-user-info">
+
+            <div class="post-name">
+              ${escapeHtml(username)}
+            </div>
+
+            <div class="post-handle">
+              @${escapeHtml(username)}
+            </div>
+
+          </div>
+
+          <div class="post-time">
+            ${escapeHtml(
+              formatPostTime(
+                post.created_at
+              )
+            )}
+          </div>
+
+          ${
+            isOwner
+              ?
+              `
+              <button
+                class="post-menu"
+                onclick="
+                  event.stopPropagation();
+                  deletePost(
+                    '${escapeJs(post.id)}'
+                  );
+                ">
+                🗑️
+              </button>
+              `
+              :""
+          }
+
+        </div>
+
+        <div class="post-content">
+          ${escapeHtml(
+            post.content||""
+          )}
+        </div>
+
+        ${mediaHTML}
+
+        <div class="post-actions">
+
+          <button
+            class="post-action ${
+              myLikes.has(post.id)
+                ?"liked"
+                :""
+            }"
+            onclick="
+              event.stopPropagation();
+              likePost(
+                '${escapeJs(post.id)}'
+              );
+            ">
+
+            ${
+              myLikes.has(post.id)
+                ?"♥ Liked"
+                :"♡ Like"
+            }
+
+            <span>
+              ${likeCount[post.id]||0}
+            </span>
+
+          </button>
+
+          <button
+            class="post-action"
+            onclick="
+              event.stopPropagation();
+              toggleComments(
+                '${escapeJs(post.id)}'
+              );
+            ">
+
+            💬 Comments
+
+            <span>
+              ${postComments.length}
+            </span>
+
+          </button>
+
+          <button
+            class="post-action"
+            onclick="
+              event.stopPropagation();
+              sharePost(
+                '${escapeJs(post.id)}'
+              );
+            ">
+
+            ↗ Share
+
+          </button>
+
+        </div>
+
+        <div
+          id="comments-${escapeHtml(post.id)}"
+          class="comments-box"
+          style="
+            display:${
+              commentsOpen[post.id]
+                ?"block"
+                :"none"
+            };
+          ">
+
+          ${renderComments(
+            post.id,
+            postComments,
+            profileMap
+          )}
+
+        </div>
+
+      `;
+
+      feed.appendChild(
+        card
+      );
+
+    }
+  );
+
+  document.getElementById(
+    "loadMoreBtn"
+  ).style.display =
+    displayedPostCount<
+    allPosts.length
+      ?"block"
+      :"none";
+
+}
+
+/* =====================================================
+   POST MEDIA
+===================================================== */
+
+function renderPostMedia(
+  post
+){
+
+  const mediaUrl =
+    post.media_url||
+    post.image_url||
+    post.video_url||
+    "";
+
+  if(!mediaUrl){
+
+    return "";
+
+  }
+
+  const type =
+    String(
+      post.media_type||
+      post.post_type||
+      ""
+    ).toLowerCase();
+
+  if(
+    type==="video"||
+    post.video_url
+  ){
+
+    return `
+
+      <div class="post-media">
+
+        <video
+          src="${escapeHtml(mediaUrl)}"
+          controls
+          playsinline
+          preload="metadata">
+        </video>
+
+      </div>
+
+      <div class="post-type-label">
+        🎥 Video
+      </div>
+
+    `;
+
+  }
+
+  return `
+
+    <div class="post-media">
+
+      <img
+        src="${escapeHtml(mediaUrl)}"
+        alt="Post image"
+        loading="lazy">
+
+    </div>
+
+    <div class="post-type-label">
+      🖼️ Picture
+    </div>
+
+  `;
+
+}
+
+/* =====================================================
+   LIKE
+===================================================== */
+
+async function likePost(
+  postId
+){
+
+  if(!requireLogin())return;
+
+  const userId =
+    currentSession.user.id;
+
+  const {
+    data:existing,
+    error:checkError
+  } =
+  await supabaseClient
+    .from("post_likes")
+    .select("post_id")
+    .eq(
+      "post_id",
+      postId
+    )
+    .eq(
+      "user_id",
+      userId
+    )
+    .maybeSingle();
+
+  if(checkError){
+
+    alert(
+      "Could not check like."
+    );
+
+    return;
+
+  }
+
+  if(existing){
+
+    const {
+      error
+    } =
+    await supabaseClient
+      .from("post_likes")
+      .delete()
+      .eq(
+        "post_id",
+        postId
+      )
+      .eq(
+        "user_id",
+        userId
+      );
+
+    if(error){
+
+      alert(error.message);
+
+      return;
+
+    }
+
+  }else{
+
+    const {
+      error
+    } =
+    await supabaseClient
+      .from("post_likes")
+      .insert({
+        post_id:postId,
+        user_id:userId
+      });
+
+    if(error){
+
+      alert(error.message);
+
+      return;
+
+    }
+
+  }
+
+  await renderPosts();
+
+}
+
+/* =====================================================
+   COMMENTS
+===================================================== */
+
+function toggleComments(
+  postId
+){
+
+  commentsOpen[postId] =
+    !commentsOpen[postId];
+
+  const box =
+    document.getElementById(
+      "comments-"+postId
+    );
+
+  if(box){
+
+    box.style.display =
+      commentsOpen[postId]
+        ?"block"
+        :"none";
+
+  }
+
+  if(
+    commentsOpen[postId]
+  ){
+
+    refreshSinglePostComments(
+      postId
+    );
+
+  }
+
+}
+
+async function refreshSinglePostComments(
+  postId
+){
+
+  const box =
+    document.getElementById(
+      "comments-"+postId
+    );
+
+  if(!box)return;
+
+  const {
+    data,
+    error
+  } =
+  await supabaseClient
+    .from("post_comments")
+    .select(
+      "id,post_id,user_id,comment,created_at"
+    )
+    .eq(
+      "post_id",
+      postId
+    )
+    .order(
+      "created_at",
+      {
+        ascending:true
+      }
+    );
+
+  if(error){
+
+    console.error(error);
+
+    return;
+
+  }
+
+  const comments =
+    data||[];
+
+  const userIds=[
+    ...new Set(
+      comments
+        .map(
+          c=>c.user_id
+        )
+        .filter(Boolean)
+    )
+  ];
+
+  const profileMap={};
+
+  if(userIds.length){
+
+    const {
+      data:profiles
+    } =
+    await supabaseClient
+      .from("profiles")
+      .select(
+        "id,username,avatar_url"
+      )
+      .in(
+        "id",
+        userIds
+      );
+
+    (profiles||[]).forEach(
+      profile=>{
+
+        profileMap[
+          profile.id
+        ]=profile;
+
+      }
+    );
+
+  }
+
+  box.innerHTML =
+    renderComments(
+      postId,
+      comments,
+      profileMap
+    );
+
+}
+
+function renderComments(
+  postId,
+  comments,
+  profileMap
+){
+
+  let html="";
+
+  comments.forEach(
+    comment=>{
+
+      const profile =
+        profileMap[
+          comment.user_id
+        ]||{};
+
+      const username =
+        profile.username||
+        "User";
+
+      const avatar =
+        profile.avatar_url||
+        "";
+
+      const initial =
+        username
+          .charAt(0)
+          .toUpperCase()||
+        "U";
+
+      const isOwner =
+        currentSession &&
+        currentSession.user.id===
+        comment.user_id;
+
+      const avatarHTML =
+        avatar
+          ?
+          `<div class="comment-avatar">
+
+            <img
+              src="${escapeHtml(avatar)}"
+              alt="Profile">
+
+          </div>`
+          :
+          `<div class="comment-avatar">
+
+            ${escapeHtml(initial)}
+
+          </div>`;
+
+      html+=`
+
+        <div class="comment">
+
+          ${avatarHTML}
+
+          <div class="comment-body">
+
+            <div class="comment-name">
+              ${escapeHtml(username)}
+            </div>
+
+            <div class="comment-text">
+              ${escapeHtml(
+                comment.comment||""
+              )}
+            </div>
+
+            ${
+              isOwner
+                ?
+                `
+                <button
+                  class="comment-delete"
+                  onclick="
+                    deleteComment(
+                      '${escapeJs(comment.id)}',
+                      '${escapeJs(postId)}'
+                    );
+                  ">
+                  Delete
+                </button>
+                `
+                :""
+            }
+
+          </div>
+
+        </div>
+
+      `;
+
+    }
+  );
+
+  html+=`
+
+    <div class="comment-input-row">
+
+      <input
+        id="comment-input-${escapeHtml(postId)}"
+        class="comment-input"
+        maxlength="1000"
+        placeholder="Write a comment...">
+
+      <button
+        class="comment-send"
+        onclick="
+          addComment(
+            '${escapeJs(postId)}'
+          );
+        ">
+        Send
+      </button>
+
+    </div>
+
+  `;
+
+  return html;
+
+}
+
+async function addComment(
+  postId
+){
+
+  if(!requireLogin())return;
+
+  const input =
+    document.getElementById(
+      "comment-input-"+postId
+    );
+
+  if(!input)return;
+
+  const text =
+    input.value.trim();
+
+  if(!text)return;
+
+  const {
+    error
+  } =
+  await supabaseClient
+    .from("post_comments")
+    .insert({
+      post_id:postId,
+      user_id:currentSession.user.id,
+      comment:text
+    });
+
+  if(error){
+
+    alert(
+      "Could not add comment: "+
+      error.message
+    );
+
+    return;
+
+  }
+
+  input.value="";
+
+  await refreshSinglePostComments(
+    postId
+  );
+
+  await renderPosts();
+
+}
+
+async function deleteComment(
+  commentId,
+  postId
+){
+
+  if(!requireLogin())return;
+
+  const {
+    data:comment,
+    error:loadError
+  } =
+  await supabaseClient
+    .from("post_comments")
+    .select("user_id")
+    .eq(
+      "id",
+      commentId
+    )
+    .maybeSingle();
+
+  if(loadError||!comment){
+
+    alert(
+      "Comment not found."
+    );
+
+    return;
+
+  }
+
+  if(
+    comment.user_id!==
+    currentSession.user.id
+  ){
+
+    alert(
+      "You can only delete your own comment."
+    );
+
+    return;
+
+  }
+
+  if(
+    !confirm(
+      "Delete this comment?"
+    )
+  ){
+
+    return;
+
+  }
+
+  const {
+    error
+  } =
+  await supabaseClient
+    .from("post_comments")
+    .delete()
+    .eq(
+      "id",
+      commentId
+    )
+    .eq(
+      "user_id",
+      currentSession.user.id
+    );
+
+  if(error){
+
+    alert(error.message);
+
+    return;
+
+  }
+
+  await refreshSinglePostComments(
+    postId
+  );
+
+  await renderPosts();
+
+}
+
+/* =====================================================
+   CREATE POST UI
+===================================================== */
+
+function openCreatePost(){
+
+  if(!requireLogin())return;
+
+  document.getElementById(
+    "createPostModal"
+  ).style.display="flex";
+
+  document.getElementById(
+    "postContentInput"
+  ).focus();
+
+  document.getElementById(
+    "mediaType"
+  ).value="text";
+
+  updateMediaControls();
+
+}
+
+function closeCreatePost(){
+
+  document.getElementById(
+    "createPostModal"
+  ).style.display="none";
+
+}
+
+function updateMediaControls(){
+
+  const type =
+    document.getElementById(
+      "mediaType"
+    ).value;
+
+  const controls =
+    document.getElementById(
+      "mediaControls"
+    );
+
+  const notice =
+    document.getElementById(
+      "promotionNotice"
+    );
+
+  controls.innerHTML="";
+
+  notice.innerHTML="";
+
+  if(type==="text"){
+
+    notice.innerHTML=`
+
+      <div class="info-box">
+
+        ⚪ Free users can publish text posts.
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+  if(type==="image"){
+
+    if(!canPostImage()){
+
+      controls.innerHTML=`
+
+        <div class="locked-feature">
+
+          🔒 <strong>Picture posts require 🟢 Premium.</strong>
+
+          <br><br>
+
+          Upgrade to Premium, Premium+ or Premium Max
+          to publish picture posts.
+
+        </div>
+
+      `;
+
+      return;
+
+    }
+
+    controls.innerHTML=`
+
+      <label class="media-label">
+        Picture URL
+      </label>
+
+      <input
+        id="mediaUrlInput"
+        class="media-input"
+        type="url"
+        placeholder="https://example.com/image.jpg"
+        oninput="previewMedia()">
+
+      <div class="media-note">
+
+        Your post table needs a media URL field
+        such as media_url or image_url.
+
+      </div>
+
+      <div
+        id="mediaPreview"
+        class="media-preview">
+      </div>
+
+    `;
+
+    notice.innerHTML=`
+
+      <div class="info-box">
+
+        🟢 Premium:
+        picture post + promotion inside photo.
+
+        <br><br>
+
+        Additional paid promotion can be handled
+        by your platform promotion system.
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+  if(type==="video"){
+
+    if(!canPostVideo()){
+
+      controls.innerHTML=`
+
+        <div class="locked-feature">
+
+          🔒 <strong>
+            Video posts require 🔵 Premium+.
+          </strong>
+
+          <br><br>
+
+          Premium+ and Premium Max can publish
+          video posts.
+
+        </div>
+
+      `;
+
+      return;
+
+    }
+
+    controls.innerHTML=`
+
+      <label class="media-label">
+        Video URL
+      </label>
+
+      <input
+        id="mediaUrlInput"
+        class="media-input"
+        type="url"
+        placeholder="https://example.com/video.mp4"
+        oninput="previewMedia()">
+
+      <div class="media-note">
+
+        Use a publicly accessible video URL or
+        connect this field to your Supabase Storage
+        upload system.
+
+      </div>
+
+      <div
+        id="mediaPreview"
+        class="media-preview">
+      </div>
+
+    `;
+
+    notice.innerHTML=`
+
+      <div class="info-box">
+
+        🔵 Premium+:
+        video post + promotion inside video.
+
+        <br><br>
+
+        🟣 Premium Max includes all Premium+
+        video features.
+
+      </div>
+
+    `;
+
+  }
+
+}
+
+function previewMedia(){
+
+  const type =
+    document.getElementById(
+      "mediaType"
+    ).value;
+
+  const input =
+    document.getElementById(
+      "mediaUrlInput"
+    );
+
+  const preview =
+    document.getElementById(
+      "mediaPreview"
+    );
+
+  if(
+    !input||
+    !preview
+  ){
+
+    return;
+
+  }
+
+  const url =
+    input.value.trim();
+
+  if(!url){
+
+    preview.innerHTML="";
+
+    return;
+
+  }
+
+  if(type==="image"){
+
+    preview.innerHTML=`
+
+      <img
+        src="${escapeHtml(url)}"
+        alt="Preview">
+
+    `;
+
+  }
+
+  if(type==="video"){
+
+    preview.innerHTML=`
+
+      <video
+        src="${escapeHtml(url)}"
+        controls
+        playsinline>
+      </video>
+
+    `;
+
+  }
+
+}
+
+/* =====================================================
+   CREATE POST
+===================================================== */
+
+async function createPost(){
+
+  if(!requireLogin())return;
+
+  const content =
+    document.getElementById(
+      "postContentInput"
+    ).value.trim();
+
+  const visibility =
+    document.getElementById(
+      "postVisibility"
+    ).value;
+
+  const mediaType =
+    document.getElementById(
+      "mediaType"
+    ).value;
+
+  if(!content){
+
+    alert(
+      "Write something first."
+    );
+
+    return;
+
+  }
+
+  if(
+    mediaType==="image" &&
+    !canPostImage()
+  ){
+
+    alert(
+      "Picture posts require Premium."
+    );
+
+    return;
+
+  }
+
+  if(
+    mediaType==="video" &&
+    !canPostVideo()
+  ){
+
+    alert(
+      "Video posts require Premium+."
+    );
+
+    return;
+
+  }
+
+  let mediaUrl="";
+
+  if(
+    mediaType==="image"||
+    mediaType==="video"
+  ){
+
+    const input =
+      document.getElementById(
+        "mediaUrlInput"
+      );
+
+    mediaUrl =
+      input?.value.trim()||"";
+
+    if(!mediaUrl){
+
+      alert(
+        "Add a media URL first."
+      );
+
+      return;
+
+    }
+
+  }
+
+  const button =
+    document.getElementById(
+      "publishPostBtn"
+    );
+
+  button.disabled=true;
+
+  button.textContent =
+    "Publishing...";
+
+  /*
+    Insert core fields first.
+    This keeps compatibility with the
+    existing posts table.
+  */
+
+  const payload={
+
+    user_id:
+      currentSession.user.id,
+
+    content:
+      content,
+
+    visibility:
+      visibility
+
+  };
+
+  /*
+    Media fields are added only for
+    media posts. Your Supabase posts table
+    must contain matching columns.
+  */
+
+  if(mediaType!=="text"){
+
+    payload.media_url =
+      mediaUrl;
+
+    payload.media_type =
+      mediaType;
+
+  }
+
+  const {
+    error
+  } =
+  await supabaseClient
+    .from("posts")
+    .insert(payload);
+
+  button.disabled=false;
+
+  button.textContent =
+    "Publish Post";
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Could not publish post: "+
+      error.message+
+      "\n\nIf this is a media post, make sure your posts table has media_url and media_type columns."
+    );
+
+    return;
+
+  }
+
+  document.getElementById(
+    "postContentInput"
+  ).value="";
+
+  document.getElementById(
+    "postVisibility"
+  ).value="public";
+
+  document.getElementById(
+    "mediaType"
+  ).value="text";
+
+  closeCreatePost();
+
+  await loadPosts(false);
+
+}
+
+/* =====================================================
+   DELETE POST
+===================================================== */
+
+async function deletePost(
+  postId
+){
+
+  if(!requireLogin())return;
+
+  const {
+    data:post,
+    error:loadError
+  } =
+  await supabaseClient
+    .from("posts")
+    .select("user_id")
+    .eq(
+      "id",
+      postId
+    )
+    .maybeSingle();
+
+  if(loadError||!post){
+
+    alert(
+      "Post not found."
+    );
+
+    return;
+
+  }
+
+  if(
+    post.user_id!==
+    currentSession.user.id
+  ){
+
+    alert(
+      "You can only delete your own post."
+    );
+
+    return;
+
+  }
+
+  if(
+    !confirm(
+      "Delete this post?"
+    )
+  ){
+
+    return;
+
+  }
+
+  const {
+    error
+  } =
+  await supabaseClient
+    .from("posts")
+    .delete()
+    .eq(
+      "id",
+      postId
+    )
+    .eq(
+      "user_id",
+      currentSession.user.id
+    );
+
+  if(error){
+
+    alert(error.message);
+
+    return;
+
+  }
+
+  await loadPosts(false);
+
+}
+
+/* =====================================================
+   SHARE
+===================================================== */
+
+async function sharePost(
+  postId
+){
+
+  if(!requireLogin())return;
+
+  const shareUrl =
+    window.location.origin+
+    window.location.pathname+
+    "?post="+
+    encodeURIComponent(
+      postId
+    );
+
+  if(
+    navigator.share
+  ){
+
+    try{
+
+      await navigator.share({
+
+        title:
+          "P2P Social",
+
+        text:
+          "Check out this post on P2P Social",
+
+        url:
+          shareUrl
+
+      });
+
+    }catch(error){
+
+      if(
+        error.name!=="AbortError"
+      ){
+
+        console.log(error);
+
+      }
+
+    }
+
+    return;
+
+  }
+
+  try{
+
+    await navigator.clipboard.writeText(
+      shareUrl
+    );
+
+    alert(
+      "Post link copied."
+    );
+
+  }catch(error){
+
+    prompt(
+      "Copy this post link:",
+      shareUrl
+    );
+
+  }
+
+}
+
+/* =====================================================
+   NOTIFICATIONS
+===================================================== */
+
+async function loadNotifications(){
+
+  if(!currentSession){
+
+    resetNotifications();
+
+    return;
+
+  }
+
+  const {
+    data,
+    error
+  } =
+  await supabaseClient
+    .from("notifications")
+    .select(`
+      id,
+      user_id,
+      type,
+      title,
+      body,
+      link,
+      is_read,
+      created_at
+    `)
+    .eq(
+      "user_id",
+      currentSession.user.id
+    )
+    .order(
+      "created_at",
+      {
+        ascending:false
+      }
+    )
+    .limit(50);
+
+  if(error){
+
+    console.log(
+      "Notifications:",
+      error.message
+    );
+
+    return;
+
+  }
+
+  renderNotifications(
+    data||[]
+  );
+
+}
+
+function renderNotifications(
+  notifications
+){
+
+  const list =
+    document.getElementById(
+      "notificationList"
+    );
+
+  const badge =
+    document.getElementById(
+      "notificationBadge"
+    );
+
+  if(!notifications.length){
+
+    list.innerHTML=`
+
+      <div class="no-notifications">
+        🔔 No notifications yet.
+      </div>
+
+    `;
+
+    badge.style.display="none";
+
+    return;
+
+  }
+
+  const unread =
+    notifications.filter(
+      n=>!n.is_read
+    ).length;
+
+  if(unread){
+
+    badge.textContent =
+      unread>99
+        ?"99+"
+        :unread;
+
+    badge.style.display =
+      "flex";
+
+  }else{
+
+    badge.style.display =
+      "none";
+
+  }
+
+  list.innerHTML="";
+
+  notifications.forEach(
+    notification=>{
+
+      const item =
+        document.createElement(
+          "div"
+        );
+
+      item.className =
+        "notification-item"+
+        (
+          notification.is_read
+            ?""
+            :" unread"
+        );
+
+      item.innerHTML=`
+
+        <div class="notification-icon">
+
+          ${notificationIcon(
+            notification.type
+          )}
+
+        </div>
+
+        <div class="notification-content">
+
+          <div class="notification-title">
+            ${escapeHtml(
+              notification.title||
+              "Notification"
+            )}
+          </div>
+
+          <div class="notification-body">
+            ${escapeHtml(
+              notification.body||""
+            )}
+          </div>
+
+          <div class="notification-time">
+            ${escapeHtml(
+              formatPostTime(
+                notification.created_at
+              )
+            )}
+          </div>
+
+        </div>
+
+      `;
+
+      item.addEventListener(
+        "click",
+        async()=>{
+
+          if(
+            !notification.is_read
+          ){
+
+            await markNotificationRead(
+              notification.id
+            );
+
+          }
+
+          if(
+            notification.link
+          ){
+
+            window.location.href =
+              notification.link;
+
+          }else{
+
+            openMessages();
+
+          }
+
+        }
+      );
+
+      list.appendChild(
+        item
+      );
+
+    }
+  );
+
+}
+
+function notificationIcon(
+  type
+){
+
+  switch(type){
+
+    case "message":
+      return "💬";
+
+    case "like":
+      return "❤️";
+
+    case "comment":
+      return "💬";
+
+    case "follow":
+      return "👤";
+
+    case "wallet":
+      return "💰";
+
+    case "deposit":
+      return "💵";
+
+    case "withdraw":
+      return "🏦";
+
+    case "trade":
+      return "🔄";
+
+    case "premium":
+      return "⭐";
+
+    case "live":
+      return "🔴";
+
+    default:
+      return "🔔";
+
+  }
+
+}
+
+async function markNotificationRead(
+  id
+){
+
+  if(!currentSession)return;
+
+  await supabaseClient
+    .from("notifications")
+    .update({
+      is_read:true
+    })
+    .eq(
+      "id",
+      id
+    )
+    .eq(
+      "user_id",
+      currentSession.user.id
+    );
+
+  await loadNotifications();
+
+}
+
+async function markAllNotificationsRead(){
+
+  if(!currentSession)return;
+
+  const {
+    error
+  } =
+  await supabaseClient
+    .from("notifications")
+    .update({
+      is_read:true
+    })
+    .eq(
+      "user_id",
+      currentSession.user.id
+    )
+    .eq(
+      "is_read",
+      false
+    );
+
+  if(error){
+
+    alert(
+      "Could not mark notifications as read."
+    );
+
+    return;
+
+  }
+
+  await loadNotifications();
+
+}
+
+function resetNotifications(){
+
+  document.getElementById(
+    "notificationBadge"
+  ).style.display="none";
+
+  document.getElementById(
+    "notificationList"
+  ).innerHTML=`
+
+    <div class="no-notifications">
+      Login to see notifications.
+    </div>
+
+  `;
+
+}
+
+function toggleNotificationPanel(
+  event
+){
+
+  if(event){
+
+    event.stopPropagation();
+
+  }
+
+  if(!requireLogin())return;
+
+  const panel =
+    document.getElementById(
+      "notificationPanel"
+    );
+
+  panel.classList.toggle(
+    "open"
+  );
+
+  if(
+    panel.classList.contains(
+      "open"
+    )
+  ){
+
+    loadNotifications();
+
+  }
+
+}
+
+document.addEventListener(
+  "click",
+  event=>{
+
+    const panel =
+      document.getElementById(
+        "notificationPanel"
+      );
+
+    const button =
+      document.getElementById(
+        "notificationButton"
+      );
+
+    if(
+      panel &&
+      !panel.contains(
+        event.target
+      ) &&
+      button &&
+      !button.contains(
+        event.target
+      )
+    ){
+
+      panel.classList.remove(
+        "open"
+      );
+
+    }
+
+  }
+);
+
+function subscribeToNotifications(){
+
+  if(!currentSession)return;
+
+  if(notificationChannel){
+
+    supabaseClient.removeChannel(
+      notificationChannel
+    );
+
+  }
+
+  const userId =
+    currentSession.user.id;
+
+  notificationChannel =
+    supabaseClient
+      .channel(
+        "notifications-"+userId
+      )
+      .on(
+        "postgres_changes",
+        {
+          event:"INSERT",
+          schema:"public",
+          table:"notifications",
+          filter:
+            "user_id=eq."+userId
+        },
+        payload=>{
+
+          loadNotifications();
+
+          if(
+            !document.hidden
+          ){
+
+            showNewNotificationPopup(
+              payload.new
+            );
+
+          }
+
+        }
+      )
+      .subscribe();
+
+}
+
+function showNewNotificationPopup(
+  notification
+){
+
+  if(
+    "Notification" in window &&
+    Notification.permission==="granted"
+  ){
+
+    try{
+
+      new Notification(
+        notification.title||
+        "New notification",
+        {
+          body:
+            notification.body||""
+        }
+      );
+
+    }catch(error){
+
+      console.log(error);
+
+    }
+
+  }
+
+}
+
+/* =====================================================
+   HELPERS
+===================================================== */
+
+function getFirstValue(
+  object,
+  keys
+){
+
+  if(!object)return null;
+
+  for(
+    const key of keys
+  ){
+
+    if(
+      Object.prototype.hasOwnProperty.call(
+        object,
+        key
+      )
+    ){
+
+      if(
+        object[key]!==null &&
+        object[key]!==undefined &&
+        object[key]!==""
+      ){
+
+        return object[key];
+
+      }
+
+    }
+
+  }
+
+  return null;
+
+}
+
+function formatNumber(
+  value
+){
+
+  const number =
+    Number(value);
+
+  if(
+    Number.isNaN(number)
+  ){
+
+    return String(value);
+
+  }
+
+  return number.toLocaleString(
+    undefined,
+    {
+      maximumFractionDigits:8
+    }
+  );
+
+}
+
+function formatPostTime(
+  date
+){
+
+  if(!date)return "";
+
+  const d =
+    new Date(date);
+
+  if(
+    Number.isNaN(
+      d.getTime()
+    )
+  ){
+
+    return "";
+
+  }
+
+  const now =
+    new Date();
+
+  const diff =
+    Math.floor(
+      (now-d)/1000
+    );
+
+  if(diff<60){
+
+    return "just now";
+
+  }
+
+  if(diff<3600){
+
+    return Math.floor(
+      diff/60
+    )+"m ago";
+
+  }
+
+  if(diff<86400){
+
+    return Math.floor(
+      diff/3600
+    )+"h ago";
+
+  }
+
+  if(diff<604800){
+
+    return Math.floor(
+      diff/86400
+    )+"d ago";
+
+  }
+
+  return d.toLocaleDateString();
+
+}
+
+function escapeHtml(
+  value
+){
+
+  return String(
+    value??""
+  )
+  .replace(
+    /&/g,
+    "&amp;"
+  )
+  .replace(
+    /</g,
+    "&lt;"
+  )
+  .replace(
+    />/g,
+    "&gt;"
+  )
+  .replace(
+    /"/g,
+    "&quot;"
+  )
+  .replace(
+    /'/g,
+    "&#039;"
+  );
+
+}
+
+function escapeJs(
+  value
+){
+
+  return String(
+    value??""
+  )
+  .replace(
+    /\\/g,
+    "\\\\"
+  )
+  .replace(
+    /'/g,
+    "\\'"
+  )
+  .replace(
+    /"/g,
+    '\\"'
+  )
+  .replace(
+    /\n/g,
+    "\\n"
+  )
+  .replace(
+    /\r/g,
+    "\\r"
+  );
+
+}
+
+/* =====================================================
+   CLOSE MODALS WHEN CLICKING BACKDROP
+===================================================== */
+
+document.addEventListener(
+  "click",
+  event=>{
+
+    const premiumModal =
+      document.getElementById(
+        "premiumModal"
+      );
+
+    const postModal =
+      document.getElementById(
+        "createPostModal"
+      );
+
+    if(
+      event.target===
+      premiumModal
+    ){
+
+      closePremiumDetails();
+
+    }
+
+    if(
+      event.target===
+      postModal
+    ){
+
+      closeCreatePost();
+
+    }
+
+  }
+);
+
+/* =====================================================
+   ESC KEY
+===================================================== */
+
+document.addEventListener(
+  "keydown",
+  event=>{
+
+    if(
+      event.key==="Escape"
+    ){
+
+      closePremiumDetails();
+
+      closeCreatePost();
+
+    }
+
+  }
+);
+
+/* =====================================================
+   START APP
+===================================================== */
+
+startApp();
+
+</script>
+
+</body>
+</html>

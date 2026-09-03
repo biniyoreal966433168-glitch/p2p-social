@@ -211,8 +211,7 @@
         rgba(8,127,115,.08);
     }
 
-    #registerButton,
-    #googleButton{
+    #registerButton{
       width:100%;
 
       padding:13px;
@@ -226,9 +225,7 @@
       cursor:pointer;
 
       transition:.2s;
-    }
 
-    #registerButton{
       background:#087f73;
       color:white;
     }
@@ -237,54 +234,13 @@
       background:#075e54;
     }
 
-    #googleButton{
-      margin-top:12px;
-
-      background:white;
-      color:#172033;
-
-      border:1px solid #d7dce1;
-    }
-
-    #googleButton:hover{
-      background:#f7f9fa;
-    }
-
-    #registerButton:disabled,
-    #googleButton:disabled{
+    #registerButton:disabled{
       opacity:.6;
       cursor:not-allowed;
     }
 
-    #registerButton:active,
-    #googleButton:active{
+    #registerButton:active{
       transform:scale(.98);
-    }
-
-    /* =========================
-       DIVIDER
-    ========================= */
-
-    .divider{
-      display:flex;
-      align-items:center;
-      gap:10px;
-
-      margin:18px 0;
-
-      color:#999;
-      font-size:12px;
-    }
-
-    .divider::before,
-    .divider::after{
-      content:"";
-
-      flex:1;
-
-      height:1px;
-
-      background:#ddd;
     }
 
     /* =========================
@@ -565,24 +521,6 @@
 
 
   <!-- =========================
-       GOOGLE
-  ========================== -->
-
-  <div class="divider">
-    OR
-  </div>
-
-
-  <button
-    type="button"
-    id="googleButton">
-
-    🔵 Continue with Google
-
-  </button>
-
-
-  <!-- =========================
        MESSAGE
   ========================== -->
 
@@ -660,12 +598,6 @@ const registerButton =
   );
 
 
-const googleButton =
-  document.getElementById(
-    "googleButton"
-  );
-
-
 const message =
   document.getElementById(
     "message"
@@ -718,15 +650,9 @@ async function checkExistingSession(){
 
 
     /*
-      IMPORTANT:
-
-      If email confirmation is required,
-      an unconfirmed email/password user
-      should not be allowed to enter the
-      wallet from this page.
-
-      Only an authenticated session is
-      redirected.
+      If a user is already authenticated,
+      allow the normal authenticated
+      application flow.
     */
 
     if(
@@ -884,10 +810,6 @@ registerForm.addEventListener(
       true;
 
 
-    googleButton.disabled =
-      true;
-
-
     registerButton.textContent =
       "Creating account...";
 
@@ -901,7 +823,7 @@ registerForm.addEventListener(
     try{
 
       /* =========================
-         SUPABASE AUTH
+         SUPABASE AUTH SIGN UP
       ========================= */
 
       const {
@@ -917,14 +839,12 @@ registerForm.addEventListener(
         options:{
 
           /*
-            After the user clicks the
-            confirmation email, Supabase
-            returns them to login.html.
+            After the user confirms the
+            email, Supabase sends them to
+            login.html.
 
-            IMPORTANT:
-            Make sure this URL is added to
-            Supabase Authentication URL
-            Configuration / Redirect URLs.
+            Add your actual website/login.html
+            URL to Supabase Redirect URLs.
           */
 
           emailRedirectTo:
@@ -962,23 +882,24 @@ registerForm.addEventListener(
 
 
       /* =========================
-         STRICT EMAIL CONFIRMATION
+         EMAIL CONFIRMATION REQUIRED
       ========================= */
 
       /*
-        With Supabase "Confirm email"
-        enabled, email/password signup
-        should normally return no session.
+        IMPORTANT:
 
-        We DO NOT send the user to
-        wallet.html from registration.
+        Registration NEVER sends the
+        user directly to wallet.html.
 
-        The user must confirm the email
-        and then log in.
+        The user must first click the
+        confirmation email.
+
+        After confirmation, they can
+        log in through login.html.
       */
 
       showMessage(
-        "Account created! Please check your email and click the confirmation link before logging in.",
+        "Account created! Check your email and click the confirmation link before logging in.",
         "green"
       );
 
@@ -988,10 +909,8 @@ registerForm.addEventListener(
 
 
       /*
-        Keep the user on this page briefly
-        so they can read the message.
-
-        Then go to login.html.
+        Give the user time to read the
+        confirmation message.
       */
 
       setTimeout(
@@ -1001,9 +920,8 @@ registerForm.addEventListener(
             "login.html";
 
         },
-        3500
+        4000
       );
-
 
     }
     catch(error){
@@ -1038,14 +956,1019 @@ registerForm.addEventListener(
 
         }
 
-        else if(
+        else{
+
+          errorMessage =
+            error.message;
+
+        }
+
+      }
+
+
+      showMessage(
+        errorMessage,
+        "red"
+      );
+
+
+      registerButton.disabled =
+        false;
+
+
+      registerButton.textContent =
+        "Create Account";
+
+    }
+
+  }
+);
+
+
+/* ===============================
+   AUTH STATE
+================================ */
+
+supabaseClient.auth.onAuthStateChange(
+  function(event,session){
+
+    /*
+      No automatic wallet redirect
+      happens from authentication events.
+
+      Registration must complete the
+      email-confirmation flow first.
+
+      The login page handles normal
+      authenticated access.
+    */
+
+    console.log(
+      "AUTH EVENT:",
+      event
+    );
+
+  }
+);
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <meta name="theme-color"
+        content="#087f73">
+
+  <meta name="mobile-web-app-capable"
+        content="yes">
+
+  <meta name="apple-mobile-web-app-capable"
+        content="yes">
+
+  <title>Register - P2P Social</title>
+
+  <style>
+
+    *{
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+      font-family:Arial,sans-serif;
+    }
+
+    body{
+      min-height:100vh;
+      background:#f4f7f8;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+
+    .container{
+      width:100%;
+      max-width:400px;
+      background:white;
+      padding:28px;
+      border-radius:20px;
+      box-shadow:0 8px 30px rgba(0,0,0,.10);
+    }
+
+    /* =========================
+       P2P SOCIAL LOGO
+       EXISTING LOGO PRESERVED
+    ========================= */
+
+    .brand{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+      margin-bottom:22px;
+    }
+
+    .icon{
+      width:68px;
+      height:68px;
+      border-radius:22px;
+
+      background:
+        linear-gradient(
+          135deg,
+          #064e46,
+          #10a889
+        );
+
+      position:relative;
+
+      display:flex;
+      justify-content:center;
+      align-items:center;
+
+      box-shadow:
+        0 10px 25px
+        rgba(0,0,0,.16);
+
+      flex-shrink:0;
+    }
+
+    .p-left{
+      position:absolute;
+
+      left:12px;
+      top:16px;
+
+      width:21px;
+      height:36px;
+
+      border:6px solid white;
+      border-right:0;
+
+      border-radius:
+        13px 0 0 13px;
+    }
+
+    .p-right{
+      position:absolute;
+
+      right:12px;
+      top:16px;
+
+      width:21px;
+      height:36px;
+
+      border:6px solid white;
+      border-left:0;
+
+      border-radius:
+        0 13px 13px 0;
+    }
+
+    .center{
+      width:18px;
+      height:18px;
+
+      background:white;
+
+      border-radius:50%;
+
+      position:absolute;
+
+      display:flex;
+      justify-content:center;
+      align-items:center;
+
+      z-index:5;
+    }
+
+    .dot{
+      width:6px;
+      height:6px;
+
+      background:#087f73;
+
+      border-radius:50%;
+    }
+
+    .text h1{
+      font-size:22px;
+      font-weight:800;
+      color:#172033;
+    }
+
+    .text h1 span{
+      color:#087f73;
+    }
+
+    .text p{
+      margin-top:4px;
+      font-size:9px;
+      color:#7b8491;
+      letter-spacing:.6px;
+    }
+
+    /* =========================
+       REGISTER TITLE
+    ========================= */
+
+    .register-title{
+      text-align:center;
+      color:#075e54;
+      margin-bottom:7px;
+      font-size:25px;
+    }
+
+    .subtitle{
+      text-align:center;
+      color:#777;
+      margin-bottom:25px;
+      font-size:14px;
+    }
+
+    /* =========================
+       FORM
+    ========================= */
+
+    label{
+      display:block;
+      margin-bottom:7px;
+      font-weight:bold;
+      font-size:14px;
+      color:#172033;
+    }
+
+    input{
+      width:100%;
+      padding:13px;
+
+      border:1px solid #ddd;
+      border-radius:10px;
+
+      margin-bottom:16px;
+
+      font-size:15px;
+      outline:none;
+      background:white;
+    }
+
+    input:focus{
+      border-color:#087f73;
+
+      box-shadow:
+        0 0 0 2px
+        rgba(8,127,115,.08);
+    }
+
+    #registerButton{
+      width:100%;
+
+      padding:13px;
+
+      border:none;
+      border-radius:10px;
+
+      font-size:16px;
+      font-weight:bold;
+
+      cursor:pointer;
+
+      transition:.2s;
+
+      background:#087f73;
+      color:white;
+    }
+
+    #registerButton:hover{
+      background:#075e54;
+    }
+
+    #registerButton:disabled{
+      opacity:.6;
+      cursor:not-allowed;
+    }
+
+    #registerButton:active{
+      transform:scale(.98);
+    }
+
+    /* =========================
+       MESSAGE
+    ========================= */
+
+    #message{
+      text-align:center;
+
+      margin-top:15px;
+
+      min-height:20px;
+
+      font-size:14px;
+
+      line-height:1.4;
+    }
+
+    /* =========================
+       LOGIN
+    ========================= */
+
+    .login-link{
+      text-align:center;
+
+      margin-top:20px;
+
+      font-size:14px;
+
+      color:#555;
+    }
+
+    .login-link a{
+      color:#087f73;
+
+      font-weight:bold;
+
+      text-decoration:none;
+    }
+
+    .login-link a:hover{
+      text-decoration:underline;
+    }
+
+    /* =========================
+       BACK HOME
+    ========================= */
+
+    .back{
+      display:block;
+
+      text-align:center;
+
+      margin-top:15px;
+
+      color:#777;
+
+      text-decoration:none;
+
+      font-size:13px;
+    }
+
+    .back:hover{
+      color:#087f73;
+    }
+
+    /* =========================
+       SECURITY NOTE
+    ========================= */
+
+    .security-note{
+      margin-top:18px;
+
+      text-align:center;
+
+      color:#7b8491;
+
+      font-size:11px;
+
+      line-height:1.5;
+    }
+
+    /* =========================
+       MOBILE
+    ========================= */
+
+    @media(max-width:450px){
+
+      body{
+        padding:15px;
+      }
+
+      .container{
+        padding:24px 20px;
+        border-radius:18px;
+      }
+
+      .brand{
+        gap:10px;
+      }
+
+      .icon{
+        width:62px;
+        height:62px;
+        border-radius:20px;
+      }
+
+      .p-left,
+      .p-right{
+        top:14px;
+        height:34px;
+      }
+
+      .p-left{
+        left:11px;
+      }
+
+      .p-right{
+        right:11px;
+      }
+
+      .center{
+        width:17px;
+        height:17px;
+      }
+
+      .dot{
+        width:6px;
+        height:6px;
+      }
+
+      .text h1{
+        font-size:20px;
+      }
+
+      .text p{
+        font-size:8px;
+      }
+
+      .register-title{
+        font-size:23px;
+      }
+
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+  <!-- =========================
+       P2P SOCIAL LOGO
+       EXISTING LOGO PRESERVED
+  ========================== -->
+
+  <div class="brand">
+
+    <div class="icon">
+
+      <div class="p-left"></div>
+
+      <div class="p-right"></div>
+
+      <div class="center">
+
+        <div class="dot"></div>
+
+      </div>
+
+    </div>
+
+    <div class="text">
+
+      <h1>
+        P2P <span>Social</span>
+      </h1>
+
+      <p>
+        CONNECT • TRADE • SHARE
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       REGISTER
+  ========================== -->
+
+  <h1 class="register-title">
+    Create Account
+  </h1>
+
+  <p class="subtitle">
+    Join P2P Social
+  </p>
+
+
+  <form id="registerForm">
+
+    <!-- USERNAME -->
+
+    <label for="username">
+      Username
+    </label>
+
+    <input
+      type="text"
+      id="username"
+      placeholder="Enter username"
+      autocomplete="username"
+      minlength="3"
+      maxlength="30"
+      required
+    >
+
+
+    <!-- EMAIL -->
+
+    <label for="email">
+      Email
+    </label>
+
+    <input
+      type="email"
+      id="email"
+      placeholder="Enter your email"
+      autocomplete="email"
+      required
+    >
+
+
+    <!-- PASSWORD -->
+
+    <label for="password">
+      Password
+    </label>
+
+    <input
+      type="password"
+      id="password"
+      placeholder="Minimum 8 characters"
+      autocomplete="new-password"
+      minlength="8"
+      required
+    >
+
+
+    <!-- CONFIRM PASSWORD -->
+
+    <label for="confirmPassword">
+      Confirm Password
+    </label>
+
+    <input
+      type="password"
+      id="confirmPassword"
+      placeholder="Confirm your password"
+      autocomplete="new-password"
+      minlength="8"
+      required
+    >
+
+
+    <button
+      type="submit"
+      id="registerButton">
+
+      Create Account
+
+    </button>
+
+  </form>
+
+
+  <!-- =========================
+       MESSAGE
+  ========================== -->
+
+  <p id="message"></p>
+
+
+  <!-- =========================
+       LOGIN
+  ========================== -->
+
+  <div class="login-link">
+
+    Already have an account?
+
+    <a href="login.html">
+      Login
+    </a>
+
+  </div>
+
+
+  <!-- =========================
+       BACK HOME
+  ========================== -->
+
+  <a
+    href="index.html"
+    class="back">
+
+    ← Back to Home
+
+  </a>
+
+
+  <p class="security-note">
+    🔒 Your wallet balances are controlled securely
+    by the P2P Social backend.
+  </p>
+
+</div>
+
+
+<!-- =========================
+     SUPABASE
+========================= -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL =
+  "https://mbsvuwrgigqfporxwpfr.supabase.co";
+
+
+const SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
+
+
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
+
+
+const registerForm =
+  document.getElementById(
+    "registerForm"
+  );
+
+
+const registerButton =
+  document.getElementById(
+    "registerButton"
+  );
+
+
+const message =
+  document.getElementById(
+    "message"
+  );
+
+
+/* ===============================
+   MESSAGE
+================================ */
+
+function showMessage(
+  text,
+  color
+){
+
+  message.textContent =
+    text;
+
+  message.style.color =
+    color;
+
+}
+
+
+/* ===============================
+   CHECK EXISTING SESSION
+================================ */
+
+async function checkExistingSession(){
+
+  try{
+
+    const {
+      data,
+      error
+    } =
+    await supabaseClient.auth.getSession();
+
+
+    if(error){
+
+      console.error(
+        "SESSION CHECK ERROR:",
+        error
+      );
+
+      return;
+
+    }
+
+
+    /*
+      If a user is already authenticated,
+      allow the normal authenticated
+      application flow.
+    */
+
+    if(
+      data &&
+      data.session
+    ){
+
+      window.location.href =
+        "wallet.html";
+
+    }
+
+  }
+  catch(error){
+
+    console.error(
+      "SESSION CHECK ERROR:",
+      error
+    );
+
+  }
+
+}
+
+
+checkExistingSession();
+
+
+/* ===============================
+   REGISTER
+================================ */
+
+registerForm.addEventListener(
+  "submit",
+  async function(event){
+
+    event.preventDefault();
+
+
+    const username =
+      document
+        .getElementById("username")
+        .value
+        .trim();
+
+
+    const email =
+      document
+        .getElementById("email")
+        .value
+        .trim()
+        .toLowerCase();
+
+
+    const password =
+      document
+        .getElementById("password")
+        .value;
+
+
+    const confirmPassword =
+      document
+        .getElementById("confirmPassword")
+        .value;
+
+
+    /* =========================
+       USERNAME VALIDATION
+    ========================= */
+
+    if(
+      username.length < 3 ||
+      username.length > 30
+    ){
+
+      showMessage(
+        "Username must be 3-30 characters.",
+        "red"
+      );
+
+      return;
+
+    }
+
+
+    if(
+      !/^[A-Za-z0-9_]+$/.test(
+        username
+      )
+    ){
+
+      showMessage(
+        "Username can only contain letters, numbers and underscore.",
+        "red"
+      );
+
+      return;
+
+    }
+
+
+    /* =========================
+       EMAIL VALIDATION
+    ========================= */
+
+    if(
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+        email
+      )
+    ){
+
+      showMessage(
+        "Please enter a valid email address.",
+        "red"
+      );
+
+      return;
+
+    }
+
+
+    /* =========================
+       PASSWORD VALIDATION
+    ========================= */
+
+    if(
+      password.length < 8
+    ){
+
+      showMessage(
+        "Password must be at least 8 characters.",
+        "red"
+      );
+
+      return;
+
+    }
+
+
+    if(
+      password !== confirmPassword
+    ){
+
+      showMessage(
+        "Passwords do not match.",
+        "red"
+      );
+
+      return;
+
+    }
+
+
+    registerButton.disabled =
+      true;
+
+
+    registerButton.textContent =
+      "Creating account...";
+
+
+    showMessage(
+      "Creating your account...",
+      "#2563eb"
+    );
+
+
+    try{
+
+      /* =========================
+         SUPABASE AUTH SIGN UP
+      ========================= */
+
+      const {
+        data,
+        error
+      } =
+      await supabaseClient.auth.signUp({
+
+        email:email,
+
+        password:password,
+
+        options:{
+
+          /*
+            After the user confirms the
+            email, Supabase sends them to
+            login.html.
+
+            Add your actual website/login.html
+            URL to Supabase Redirect URLs.
+          */
+
+          emailRedirectTo:
+            window.location.origin +
+            "/login.html",
+
+          data:{
+
+            username:username
+
+          }
+
+        }
+
+      });
+
+
+      if(error){
+
+        throw error;
+
+      }
+
+
+      if(
+        !data ||
+        !data.user
+      ){
+
+        throw new Error(
+          "Account could not be created."
+        );
+
+      }
+
+
+      /* =========================
+         EMAIL CONFIRMATION REQUIRED
+      ========================= */
+
+      /*
+        IMPORTANT:
+
+        Registration NEVER sends the
+        user directly to wallet.html.
+
+        The user must first click the
+        confirmation email.
+
+        After confirmation, they can
+        log in through login.html.
+      */
+
+      showMessage(
+        "Account created! Check your email and click the confirmation link before logging in.",
+        "green"
+      );
+
+
+      registerButton.textContent =
+        "Check Your Email";
+
+
+      /*
+        Give the user time to read the
+        confirmation message.
+      */
+
+      setTimeout(
+        function(){
+
+          window.location.href =
+            "login.html";
+
+        },
+        4000
+      );
+
+    }
+    catch(error){
+
+      console.error(
+        "REGISTER ERROR:",
+        error
+      );
+
+
+      let errorMessage =
+        "Registration failed.";
+
+
+      if(
+        error &&
+        error.message
+      ){
+
+        const msg =
+          error.message.toLowerCase();
+
+
+        if(
           msg.includes(
-            "password"
+            "user already registered"
           )
         ){
 
           errorMessage =
-            error.message;
+            "This email is already registered.";
 
         }
 
@@ -1069,96 +1992,8 @@ registerForm.addEventListener(
         false;
 
 
-      googleButton.disabled =
-        false;
-
-
       registerButton.textContent =
         "Create Account";
-
-    }
-
-  }
-);
-
-
-/* ===============================
-   GOOGLE AUTHENTICATION
-================================ */
-
-googleButton.addEventListener(
-  "click",
-  async function(){
-
-    googleButton.disabled =
-      true;
-
-    registerButton.disabled =
-      true;
-
-    googleButton.textContent =
-      "Opening Google...";
-
-
-    showMessage(
-      "Connecting to Google...",
-      "#2563eb"
-    );
-
-
-    try{
-
-      const {
-        error
-      } =
-      await supabaseClient.auth
-        .signInWithOAuth({
-
-          provider:"google",
-
-          options:{
-
-            redirectTo:
-              window.location.origin +
-              "/wallet.html"
-
-          }
-
-        });
-
-
-      if(error){
-
-        throw error;
-
-      }
-
-    }
-    catch(error){
-
-      console.error(
-        "GOOGLE AUTH ERROR:",
-        error
-      );
-
-
-      showMessage(
-        error.message ||
-        "Google authentication failed.",
-        "red"
-      );
-
-
-      googleButton.disabled =
-        false;
-
-
-      registerButton.disabled =
-        false;
-
-
-      googleButton.textContent =
-        "🔵 Continue with Google";
 
     }
 
@@ -1174,17 +2009,14 @@ supabaseClient.auth.onAuthStateChange(
   function(event,session){
 
     /*
-      IMPORTANT:
+      No automatic wallet redirect
+      happens from authentication events.
 
-      Do NOT redirect from register.html
-      based only on SIGNED_IN.
+      Registration must complete the
+      email-confirmation flow first.
 
-      Email/password users must complete
-      the confirmation flow and use the
-      login page.
-
-      Google OAuth can still redirect
-      through Google's authentication flow.
+      The login page handles normal
+      authenticated access.
     */
 
     console.log(

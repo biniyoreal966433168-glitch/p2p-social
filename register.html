@@ -717,6 +717,18 @@ async function checkExistingSession(){
     }
 
 
+    /*
+      IMPORTANT:
+
+      If email confirmation is required,
+      an unconfirmed email/password user
+      should not be allowed to enter the
+      wallet from this page.
+
+      Only an authenticated session is
+      redirected.
+    */
+
     if(
       data &&
       data.session
@@ -904,6 +916,21 @@ registerForm.addEventListener(
 
         options:{
 
+          /*
+            After the user clicks the
+            confirmation email, Supabase
+            returns them to login.html.
+
+            IMPORTANT:
+            Make sure this URL is added to
+            Supabase Authentication URL
+            Configuration / Redirect URLs.
+          */
+
+          emailRedirectTo:
+            window.location.origin +
+            "/login.html",
+
           data:{
 
             username:username
@@ -935,79 +962,46 @@ registerForm.addEventListener(
 
 
       /* =========================
-         EMAIL VERIFICATION
+         STRICT EMAIL CONFIRMATION
       ========================= */
 
-      if(
-        !data.session
-      ){
+      /*
+        With Supabase "Confirm email"
+        enabled, email/password signup
+        should normally return no session.
 
-        showMessage(
-          "Account created. Please verify your email, then login.",
-          "green"
-        );
+        We DO NOT send the user to
+        wallet.html from registration.
 
-
-        registerButton.textContent =
-          "Account Created";
-
-
-        setTimeout(
-          function(){
-
-            window.location.href =
-              "login.html";
-
-          },
-          1800
-        );
-
-
-        return;
-
-      }
-
-
-      /* =========================
-         ACCOUNT CREATED
-      ========================= */
+        The user must confirm the email
+        and then log in.
+      */
 
       showMessage(
-        "Account created successfully!",
+        "Account created! Please check your email and click the confirmation link before logging in.",
         "green"
       );
 
 
       registerButton.textContent =
-        "Success!";
+        "Check Your Email";
 
 
       /*
-       IMPORTANT SECURITY RULE:
+        Keep the user on this page briefly
+        so they can read the message.
 
-       This page does NOT:
-
-       - set USDT balance
-       - set Diamond balance
-       - transfer USDT
-       - transfer Diamonds
-       - create treasury funds
-       - calculate platform fees
-       - calculate trader commissions
-
-       Those operations belong to protected
-       Supabase backend functions/RPCs.
+        Then go to login.html.
       */
-
 
       setTimeout(
         function(){
 
           window.location.href =
-            "wallet.html";
+            "login.html";
 
         },
-        1000
+        3500
       );
 
 
@@ -1041,6 +1035,17 @@ registerForm.addEventListener(
 
           errorMessage =
             "This email is already registered.";
+
+        }
+
+        else if(
+          msg.includes(
+            "password"
+          )
+        ){
+
+          errorMessage =
+            error.message;
 
         }
 
@@ -1168,26 +1173,24 @@ googleButton.addEventListener(
 supabaseClient.auth.onAuthStateChange(
   function(event,session){
 
-    if(
-      session &&
-      (
-        event === "SIGNED_IN" ||
-        event === "INITIAL_SESSION"
-      )
-    ){
+    /*
+      IMPORTANT:
 
-      /*
-        Supabase has authenticated the user.
+      Do NOT redirect from register.html
+      based only on SIGNED_IN.
 
-        The backend should create/connect the
-        profile and wallet through the configured
-        database trigger/functions.
+      Email/password users must complete
+      the confirmation flow and use the
+      login page.
 
-        No authoritative balance is created
-        by this browser page.
-      */
+      Google OAuth can still redirect
+      through Google's authentication flow.
+    */
 
-    }
+    console.log(
+      "AUTH EVENT:",
+      event
+    );
 
   }
 );

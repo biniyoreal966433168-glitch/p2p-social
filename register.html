@@ -556,8 +556,8 @@
 
 
   <p class="security-note">
-    🔒 Your wallet balances are controlled securely
-    by the P2P Social backend.
+    🔒 Email confirmation is required
+    before accessing your account.
   </p>
 
 </div>
@@ -626,6 +626,21 @@ function showMessage(
    CHECK EXISTING SESSION
 ================================ */
 
+/*
+  IMPORTANT:
+
+  An existing session is NOT enough.
+
+  The email must also be confirmed.
+
+  If an unconfirmed session somehow
+  exists, it is immediately signed out.
+
+  Therefore register.html can NEVER
+  open wallet.html for an unconfirmed
+  account.
+*/
+
 async function checkExistingSession(){
 
   try{
@@ -649,19 +664,46 @@ async function checkExistingSession(){
     }
 
 
-    /*
-      If a user is already authenticated,
-      allow the normal authenticated
-      application flow.
-    */
-
     if(
       data &&
-      data.session
+      data.session &&
+      data.session.user
     ){
 
-      window.location.href =
-        "wallet.html";
+      const user =
+        data.session.user;
+
+
+      /*
+        Check email confirmation.
+      */
+
+      if(
+        user.email_confirmed_at
+      ){
+
+        window.location.replace(
+          "wallet.html"
+        );
+
+        return;
+
+      }
+
+
+      /*
+        Unconfirmed account:
+        remove session and stay on
+        registration page.
+      */
+
+      await supabaseClient.auth.signOut();
+
+
+      showMessage(
+        "Please confirm your email before accessing your account.",
+        "#b45309"
+      );
 
     }
 
@@ -839,12 +881,10 @@ registerForm.addEventListener(
         options:{
 
           /*
-            After the user confirms the
-            email, Supabase sends them to
-            login.html.
+            User must confirm their email.
 
-            Add your actual website/login.html
-            URL to Supabase Redirect URLs.
+            After confirmation, Supabase
+            sends them to login.html.
           */
 
           emailRedirectTo:
@@ -882,21 +922,38 @@ registerForm.addEventListener(
 
 
       /* =========================
-         EMAIL CONFIRMATION REQUIRED
+         NEVER OPEN WALLET HERE
       ========================= */
 
       /*
-        IMPORTANT:
+        DO NOT redirect to wallet.html.
 
-        Registration NEVER sends the
-        user directly to wallet.html.
-
-        The user must first click the
-        confirmation email.
-
-        After confirmation, they can
-        log in through login.html.
+        Even if Supabase happens to return
+        a session, registration is not
+        considered complete until the
+        email is confirmed.
       */
+
+
+      /*
+        If Supabase returned an unconfirmed
+        session, immediately sign it out.
+      */
+
+      if(
+        data.session &&
+        data.user &&
+        !data.user.email_confirmed_at
+      ){
+
+        await supabaseClient.auth.signOut();
+
+      }
+
+
+      /* =========================
+         EMAIL CONFIRMATION MESSAGE
+      ========================= */
 
       showMessage(
         "Account created! Check your email and click the confirmation link before logging in.",
@@ -909,15 +966,19 @@ registerForm.addEventListener(
 
 
       /*
-        Give the user time to read the
-        confirmation message.
+        Go only to login page.
+
+        The login page must perform its own
+        email-confirmation check before
+        allowing access to wallet.html.
       */
 
       setTimeout(
         function(){
 
-          window.location.href =
-            "login.html";
+          window.location.replace(
+            "login.html"
+          );
 
         },
         4000
@@ -993,14 +1054,13 @@ supabaseClient.auth.onAuthStateChange(
   function(event,session){
 
     /*
-      No automatic wallet redirect
-      happens from authentication events.
+      IMPORTANT:
 
-      Registration must complete the
-      email-confirmation flow first.
+      No authentication event is allowed
+      to automatically open wallet.html
+      from this registration page.
 
-      The login page handles normal
-      authenticated access.
+      Email confirmation must happen first.
     */
 
     console.log(

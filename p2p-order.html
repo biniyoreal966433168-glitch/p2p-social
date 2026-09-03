@@ -285,13 +285,6 @@ header{
   padding-top:10px;
 }
 
-.fee-note{
-  margin-top:10px;
-  color:#687681;
-  font-size:12px;
-  line-height:1.5;
-}
-
 /* ================= TIMER ================= */
 
 .expiry{
@@ -669,7 +662,7 @@ header{
         <div class="fee-row">
 
           <span>
-            USDT amount
+            Trade amount
           </span>
 
           <strong id="tradeValue">
@@ -693,7 +686,7 @@ header{
         <div class="fee-row fee-total">
 
           <span>
-            Total fee-inclusive amount
+            Total USDT
           </span>
 
           <strong id="totalAmount">
@@ -704,11 +697,15 @@ header{
 
       </div>
 
-      <div class="fee-note">
+      <div
+        class="info"
+        style="margin-top:10px;">
 
-        💡 Platform fees are displayed in USDT.
-        The database/RPC remains the authority for
-        the actual fee and wallet settlement.
+        💎 Platform fees are displayed in USDT.
+        The frontend only displays the fee.
+        Actual wallet movement and settlement
+        must be performed by protected database
+        functions.
 
       </div>
 
@@ -919,21 +916,28 @@ const supabaseClient =
 ===================================================== */
 
 let currentUser = null;
+
 let currentTrade = null;
+
 let selectedTradeId = null;
+
 let realtimeChannel = null;
+
 let expiryTimer = null;
+
 let toastTimer = null;
+
 let actionBusy = false;
 
 
 /*
-  Frontend fallback only.
+  Frontend display fallback only.
 
-  This does NOT move money.
+  1% fee.
 
-  The database/RPC remains the
-  final authority for actual fees.
+  IMPORTANT:
+  The database/RPC must remain the authority
+  for actual fee calculation and wallet movement.
 */
 const PLATFORM_FEE_RATE = 0.01;
 
@@ -1034,46 +1038,31 @@ function showLogin(){
 
 
 /* =====================================================
-   UUID VALIDATION
+   UUID CHECK
 ===================================================== */
 
-/*
-  Supabase p2p_trades.id and the RPC functions
-  expect UUID.
+function isUUID(value){
 
-  This prevents values such as:
-
-      17
-
-  from being sent to:
-
-      p2p_cancel_trade(uuid)
-
-  A numeric order ID is NOT a trade UUID.
-*/
-
-function isValidUUID(value){
-
-  if(!value){
+  if(
+    value === null ||
+    value === undefined
+  ){
 
     return false;
 
   }
 
 
-  const text =
-    String(value).trim();
-
-
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    text
-  );
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    .test(
+      String(value).trim()
+    );
 
 }
 
 
 /* =====================================================
-   GET TRADE ID
+   GET URL ID
 ===================================================== */
 
 function getTradeId(){
@@ -1085,72 +1074,34 @@ function getTradeId(){
 
 
   /*
-    Primary parameter:
-      ?trade_id=UUID
+    Accept all common names.
 
-    Secondary compatibility:
-      ?tradeId=UUID
-      ?id=UUID
+    Examples:
 
-    IMPORTANT:
-      Numeric IDs such as 17 are rejected.
+    p2p-order.html?trade_id=UUID
+
+    p2p-order.html?id=UUID
+
+    p2p-order.html?order_id=17
   */
 
-  const candidates = [
-
-    params.get("trade_id"),
-
-    params.get("tradeId"),
-
-    params.get("id")
-
-  ];
+  const tradeId =
+    params.get("trade_id") ||
+    params.get("tradeId") ||
+    params.get("id") ||
+    params.get("order_id") ||
+    params.get("orderId");
 
 
-  for(
-    const candidate of candidates
-  ){
+  if(!tradeId){
 
-    if(
-      candidate &&
-      isValidUUID(candidate)
-    ){
-
-      return candidate.trim();
-
-    }
+    return null;
 
   }
 
 
-  /*
-    If there is a numeric ID or some other invalid
-    value, return null rather than sending it to
-    a UUID RPC.
-  */
-
-  return null;
-
-}
-
-
-/* =====================================================
-   GET RAW TRADE PARAMETER
-===================================================== */
-
-function getRawTradeParameter(){
-
-  const params =
-    new URLSearchParams(
-      window.location.search
-    );
-
-
-  return (
-    params.get("trade_id") ||
-    params.get("tradeId") ||
-    params.get("id") ||
-    ""
+  return String(
+    tradeId
   ).trim();
 
 }
@@ -1162,18 +1113,14 @@ function getRawTradeParameter(){
 
 async function loadTrade(){
 
-  const rawTradeId =
-    getRawTradeParameter();
-
-
-  const tradeId =
+  const identifier =
     getTradeId();
 
 
-  if(!rawTradeId){
+  if(!identifier){
 
     showError(
-      "Trade ID is missing."
+      "Trade ID is missing. Open the trade from the P2P order again."
     );
 
     return;
@@ -1181,35 +1128,155 @@ async function loadTrade(){
   }
 
 
-  if(!tradeId){
+  let data = null;
+
+  let error = null;
+
+
+  /*
+    CASE 1:
+    UUID supplied.
+
+    Search p2p_trades.id first.
+  */
+
+  if(
+    isUUID(identifier)
+  ){
+
+    const result =
+      await supabaseClient
+        .from("p2p_trades")
+        .select("*")
+        .eq(
+          "id",
+          identifier
+        )
+        .maybeSingle();
+
+
+    data =
+      result.data;
+
+    error =
+      result.error;
+
+
+    /*
+      Some schemas use trade_id as UUID
+      instead of id.
+    */
+
+    if(
+      !data &&
+      !error
+    ){
+
+      const result2 =
+        await supabaseClient
+          .from("p2p_trades")
+          .select("*")
+          .eq(
+            "trade_id",
+            identifier
+          )
+          .maybeSingle();
+
+
+      data =
+        result2.data;
+
+      error =
+        result2.error;
+
+    }
+
+  }
+
+
+  /*
+    CASE 2:
+    Numeric ID supplied.
+
+    Example:
+    order_id = 17
+
+    Do NOT send 17 to a UUID RPC.
+
+    First try p2p_trades.id.
+  */
+
+  else if(
+    /^\d+$/.test(identifier)
+  ){
+
+    const numericId =
+      Number(identifier);
+
+
+    const result =
+      await supabaseClient
+        .from("p2p_trades")
+        .select("*")
+        .eq(
+          "id",
+          numericId
+        )
+        .maybeSingle();
+
+
+    data =
+      result.data;
+
+    error =
+      result.error;
+
+
+    /*
+      If that did not find a trade,
+      try order_id.
+    */
+
+    if(
+      !data &&
+      !error
+    ){
+
+      const result2 =
+        await supabaseClient
+          .from("p2p_trades")
+          .select("*")
+          .eq(
+            "order_id",
+            numericId
+          )
+          .maybeSingle();
+
+
+      data =
+        result2.data;
+
+      error =
+        result2.error;
+
+    }
+
+  }
+
+
+  /*
+    Unknown identifier.
+  */
+
+  else{
 
     showError(
-      "Invalid Trade ID. Please open the trade using the actual p2p_trades UUID."
+      "Invalid trade identifier."
     );
 
     return;
 
   }
-
-
-  console.log(
-    "Loading trade UUID:",
-    tradeId
-  );
-
-
-  const {
-    data,
-    error
-  } =
-  await supabaseClient
-    .from("p2p_trades")
-    .select("*")
-    .eq(
-      "id",
-      tradeId
-    )
-    .single();
 
 
   if(error){
@@ -1218,21 +1285,6 @@ async function loadTrade(){
       "LOAD TRADE:",
       error
     );
-
-
-    if(
-      error.code ===
-      "22P02"
-    ){
-
-      showError(
-        "Invalid trade UUID."
-      );
-
-      return;
-
-    }
-
 
     showError(
       friendlyError(
@@ -1257,6 +1309,10 @@ async function loadTrade(){
   }
 
 
+  /*
+    Verify participant.
+  */
+
   const isParticipant =
     String(data.buyer_id) ===
       String(currentUser.id) ||
@@ -1279,7 +1335,85 @@ async function loadTrade(){
     data;
 
 
+  /*
+    Save the canonical trade ID.
+
+    This is important because your RPC expects UUID.
+  */
+
+  selectedTradeId =
+    getRpcTradeId(
+      currentTrade
+    );
+
+
   renderTrade();
+
+}
+
+
+/* =====================================================
+   GET REAL TRADE UUID
+===================================================== */
+
+function getRpcTradeId(
+  trade
+){
+
+  if(!trade){
+
+    return null;
+
+  }
+
+
+  /*
+    Prefer explicit UUID fields.
+  */
+
+  const candidates = [
+
+    trade.trade_id,
+
+    trade.trade_uuid,
+
+    trade.uuid,
+
+    trade.order_uuid,
+
+    trade.p2p_trade_id,
+
+    trade.id
+
+  ];
+
+
+  for(
+    const value of candidates
+  ){
+
+    if(
+      isUUID(value)
+    ){
+
+      return String(
+        value
+      );
+
+    }
+
+  }
+
+
+  /*
+    No UUID available.
+
+    This means the current Supabase
+    row/schema still does not expose
+    the UUID required by the RPC.
+  */
+
+  return null;
 
 }
 
@@ -1403,7 +1537,7 @@ function renderDetails(){
       : "seller";
 
 
-  const tradeValueETB =
+  const tradeValue =
     calculateTradeValue(
       trade,
       amount,
@@ -1412,17 +1546,16 @@ function renderDetails(){
     );
 
 
-  const usdtAmount =
-    getUSDTAmount(
-      trade,
-      amount,
+  const amountCurrency =
+    getAmountCurrency(
       pair
     );
 
 
-  document.getElementById(
-    "tradeDetails"
-  ).innerHTML = `
+  let html = "";
+
+
+  html += `
 
     <div class="detail-row">
 
@@ -1431,13 +1564,19 @@ function renderDetails(){
       </span>
 
       <strong>
+
         <span class="role-badge ${roleClass}">
           ${role}
         </span>
+
       </strong>
 
     </div>
 
+  `;
+
+
+  html += `
 
     <div class="detail-row">
 
@@ -1451,6 +1590,10 @@ function renderDetails(){
 
     </div>
 
+  `;
+
+
+  html += `
 
     <div class="detail-row">
 
@@ -1460,24 +1603,40 @@ function renderDetails(){
 
       <strong>
         ${money(amount)}
-        ${getAmountCurrency(trade,pair)}
+        ${amountCurrency}
       </strong>
 
     </div>
 
+  `;
 
-    <div class="detail-row">
 
-      <span>
-        Price
-      </span>
+  /*
+    Show price only when it is meaningful.
+  */
 
-      <strong>
-        ${money(price)} ETB
-      </strong>
+  if(price > 0){
 
-    </div>
+    html += `
 
+      <div class="detail-row">
+
+        <span>
+          Price
+        </span>
+
+        <strong>
+          ${money(price)} ETB / USDT
+        </strong>
+
+      </div>
+
+    `;
+
+  }
+
+
+  html += `
 
     <div class="detail-row">
 
@@ -1495,39 +1654,87 @@ function renderDetails(){
 
     </div>
 
-
-    <div class="detail-row">
-
-      <span>
-        Trade value
-      </span>
-
-      <strong>
-        ${money(tradeValueETB)} ETB
-      </strong>
-
-    </div>
-
-
-    <div class="detail-row">
-
-      <span>
-        Fee currency
-      </span>
-
-      <strong>
-        ${money(usdtAmount)} USDT
-      </strong>
-
-    </div>
-
   `;
+
+
+  /*
+    Trade value is now displayed according
+    to the actual asset.
+
+    For USDT/ETB:
+    amount = USDT
+    trade value = USDT
+
+    The ETB settlement value is also shown.
+  */
+
+  if(
+    pairIsUSDTPair(pair)
+  ){
+
+    const etbValue =
+      amount * price;
+
+
+    html += `
+
+      <div class="detail-row">
+
+        <span>
+          Trade value
+        </span>
+
+        <strong>
+          ${money(amount)} USDT
+        </strong>
+
+      </div>
+
+      <div class="detail-row">
+
+        <span>
+          ETB settlement
+        </span>
+
+        <strong>
+          ${money(etbValue)} ETB
+        </strong>
+
+      </div>
+
+    `;
+
+  }else{
+
+    html += `
+
+      <div class="detail-row">
+
+        <span>
+          Trade value
+        </span>
+
+        <strong>
+          ${money(tradeValue)}
+        </strong>
+
+      </div>
+
+    `;
+
+  }
+
+
+  document.getElementById(
+    "tradeDetails"
+  ).innerHTML =
+    html;
 
 }
 
 
 /* =====================================================
-   PLATFORM FEE
+   FEE
 ===================================================== */
 
 function renderFee(){
@@ -1543,21 +1750,27 @@ function renderFee(){
     );
 
 
+  const price =
+    getNumber(
+      trade.price,
+      trade.unit_price
+    );
+
+
   const pair =
     formatPair(trade);
 
 
   /*
-    The actual USDT amount.
+    IMPORTANT:
 
-    Prefer an explicit USDT amount if your
-    database has one.
+    Platform fee is now USDT.
 
-    Otherwise derive it from amount/pair.
+    We do NOT display it as USD.
   */
 
-  const usdtAmount =
-    getUSDTAmount(
+  let tradeUSDT =
+    getTradeUSDTAmount(
       trade,
       amount,
       pair
@@ -1565,21 +1778,12 @@ function renderFee(){
 
 
   /*
-    Prefer the actual backend fee.
-
-    This is important because the database
-    should be the authority.
+    Backend fee has priority.
   */
 
   const backendFee =
-    firstFiniteNumber(
-
-      trade.platform_fee_usdt,
-
-      trade.platform_fee_amount_usdt,
-
-      trade.fee_usdt
-
+    toFiniteNumber(
+      trade.platform_fee_amount
     );
 
 
@@ -1596,18 +1800,9 @@ function renderFee(){
 
   }else{
 
-    /*
-      If backend fee is unavailable,
-      calculate only a frontend DISPLAY fallback.
-    */
-
     const percent =
-      firstFiniteNumber(
-
-        trade.platform_fee_percent,
-
-        trade.fee_percent
-
+      toFiniteNumber(
+        trade.platform_fee_percent
       );
 
 
@@ -1616,14 +1811,14 @@ function renderFee(){
     ){
 
       feeUSDT =
-        usdtAmount *
+        tradeUSDT *
         percent /
         100;
 
     }else{
 
       feeUSDT =
-        usdtAmount *
+        tradeUSDT *
         PLATFORM_FEE_RATE;
 
     }
@@ -1631,8 +1826,11 @@ function renderFee(){
   }
 
 
+  /*
+    Protect against negative values.
+  */
+
   if(
-    !Number.isFinite(feeUSDT) ||
     feeUSDT < 0
   ){
 
@@ -1642,22 +1840,15 @@ function renderFee(){
   }
 
 
-  /*
-    Display-only total.
-
-    IMPORTANT:
-    This does NOT change balances.
-  */
-
   const totalUSDT =
-    usdtAmount +
+    tradeUSDT +
     feeUSDT;
 
 
   document.getElementById(
     "tradeValue"
   ).textContent =
-    money(usdtAmount) +
+    money(tradeUSDT) +
     " USDT";
 
 
@@ -1681,112 +1872,44 @@ function renderFee(){
    GET USDT AMOUNT
 ===================================================== */
 
-function getUSDTAmount(
+function getTradeUSDTAmount(
   trade,
   amount,
   pair
 ){
 
   /*
-    Prefer explicit database fields.
+    Prefer an explicit USDT amount
+    if your table has one.
   */
 
-  const explicit =
-    firstFiniteNumber(
+  const candidates = [
 
-      trade.usdt_amount,
+    trade.usdt_amount,
 
-      trade.amount_usdt,
+    trade.amount_usdt,
 
-      trade.trade_amount_usdt
+    trade.trade_usdt_amount,
 
-    );
+    trade.crypto_amount
+
+  ];
 
 
-  if(
-    explicit !== null &&
-    explicit >= 0
+  for(
+    const value of candidates
   ){
 
-    return explicit;
-
-  }
-
-
-  const normalizedPair =
-    String(
-      pair || ""
-    )
-    .replace(
-      /\s/g,
-      ""
-    )
-    .toUpperCase();
-
-
-  /*
-    USDT/ETB:
-      amount is normally USDT.
-  */
-
-  if(
-    normalizedPair.startsWith(
-      "USDT/"
-    )
-  ){
-
-    return amount;
-
-  }
-
-
-  if(
-    normalizedPair.startsWith(
-      "USDT_"
-    )
-  ){
-
-    return amount;
-
-  }
-
-
-  /*
-    ETB/USDT:
-      If amount is ETB and price is ETB per USDT,
-      this needs database-specific handling.
-
-    Do NOT guess using price here unless the
-    database schema explicitly means that.
-
-    For the normal P2P Social USDT/ETB flow,
-    amount is treated as USDT.
-  */
-
-  if(
-    normalizedPair.includes(
-      "USDT"
-    ) &&
-    !normalizedPair.startsWith(
-      "USDT"
-    )
-  ){
-
-    const price =
-      getNumber(
-        trade.price,
-        trade.unit_price
-      );
+    const number =
+      toFiniteNumber(value);
 
 
     if(
-      price > 0 &&
-      normalizedPair.startsWith(
-        "ETB/"
-      )
+      number !== null &&
+      number >= 0
     ){
 
-      return amount / price;
+      return number;
 
     }
 
@@ -1794,53 +1917,58 @@ function getUSDTAmount(
 
 
   /*
-    If the trade has a generic amount and
-    the pair does not tell us otherwise,
-    use amount as the fallback.
+    For USDT/ETB:
+    amount itself is USDT.
   */
 
-  return amount;
+  if(
+    pairIsUSDTPair(pair)
+  ){
 
-}
-
-
-/* =====================================================
-   AMOUNT CURRENCY
-===================================================== */
-
-function getAmountCurrency(
-  trade,
-  pair
-){
-
-  const explicit =
-    String(
-      trade.amount_currency ||
-      trade.currency ||
-      ""
-    )
-    .trim()
-    .toUpperCase();
-
-
-  if(explicit){
-
-    return " " +
-      escapeHtml(explicit);
+    return amount;
 
   }
+
+
+  /*
+    USDT/USDT also means amount is USDT.
+  */
+
+  if(
+    pairIsUSDTUSDT(pair)
+  ){
+
+    return amount;
+
+  }
+
+
+  /*
+    If the database stores trade_value
+    explicitly in USDT, use it.
+  */
+
+  const stored =
+    toFiniteNumber(
+      trade.trade_value_usdt
+    );
 
 
   if(
-    pairStartsWithUSDT(pair)
+    stored !== null &&
+    stored >= 0
   ){
 
-    return " USDT";
+    return stored;
 
   }
 
 
-  return " ETB";
+  /*
+    Fallback.
+  */
+
+  return amount;
 
 }
 
@@ -2030,9 +2158,7 @@ function renderActions(){
 
 
   const status =
-    getTradeStatus(
-      trade
-    );
+    getTradeStatus(trade);
 
 
   const isBuyer =
@@ -2064,7 +2190,9 @@ function renderActions(){
   let html = "";
 
 
-  /* MESSAGE */
+  /*
+    MESSAGE
+  */
 
   html += `
 
@@ -2133,7 +2261,7 @@ function renderActions(){
 
 
   /*
-    BUYER HAS NOT PAID
+    BUYER NOT PAID
   */
 
   if(
@@ -2243,30 +2371,6 @@ function renderActions(){
   }
 
 
-  /*
-    Safety fallback.
-  */
-
-  if(
-    isBuyer &&
-    isSeller
-  ){
-
-    html += `
-
-      <div
-        class="info"
-        style="margin-top:9px;">
-
-        ⚠️ Invalid trade participant configuration.
-
-      </div>
-
-    `;
-
-  }
-
-
   container.innerHTML =
     html;
 
@@ -2274,9 +2378,40 @@ function renderActions(){
 
 
 /* =====================================================
+   GET RPC TRADE ID
+===================================================== */
+
+function requireRpcTradeId(){
+
+  const uuid =
+    getRpcTradeId(
+      currentTrade
+    );
+
+
+  if(!uuid){
+
+    toast(
+      "Trade UUID is missing. The Supabase trade row needs its UUID."
+    );
+
+    console.error(
+      "No UUID available for RPC.",
+      currentTrade
+    );
+
+    return null;
+
+  }
+
+
+  return uuid;
+
+}
+
+
+/* =====================================================
    BUYER PAYMENT
-   RPC:
-   p2p_buyer_payment(bigint?, uuid)
 ===================================================== */
 
 async function confirmBuyerPayment(){
@@ -2291,15 +2426,11 @@ async function confirmBuyerPayment(){
   }
 
 
-  if(
-    !isValidUUID(
-      currentTrade.id
-    )
-  ){
+  const rpcTradeId =
+    requireRpcTradeId();
 
-    toast(
-      "Invalid trade UUID. Please reopen the trade."
-    );
+
+  if(!rpcTradeId){
 
     return;
 
@@ -2323,13 +2454,11 @@ async function confirmBuyerPayment(){
   }
 
 
-  const confirmed =
-    confirm(
+  if(
+    !confirm(
       "Confirm that you have paid the seller?"
-    );
-
-
-  if(!confirmed){
+    )
+  ){
 
     return;
 
@@ -2356,7 +2485,7 @@ async function confirmBuyerPayment(){
       "p2p_buyer_payment",
       {
         p_trade_id:
-          currentTrade.id,
+          rpcTradeId,
 
         p_user_id:
           currentUser.id
@@ -2401,6 +2530,11 @@ async function confirmBuyerPayment(){
     actionBusy =
       false;
 
+    resetButton(
+      "paymentBtn",
+      "💰 I Have Paid"
+    );
+
   }
 
 }
@@ -2408,8 +2542,6 @@ async function confirmBuyerPayment(){
 
 /* =====================================================
    SELLER RELEASE
-   RPC:
-   p2p_release_trade(bigint?, uuid)
 ===================================================== */
 
 async function releaseTrade(){
@@ -2424,15 +2556,11 @@ async function releaseTrade(){
   }
 
 
-  if(
-    !isValidUUID(
-      currentTrade.id
-    )
-  ){
+  const rpcTradeId =
+    requireRpcTradeId();
 
-    toast(
-      "Invalid trade UUID. Please reopen the trade."
-    );
+
+  if(!rpcTradeId){
 
     return;
 
@@ -2487,7 +2615,7 @@ async function releaseTrade(){
       "p2p_release_trade",
       {
         p_trade_id:
-          currentTrade.id,
+          rpcTradeId,
 
         p_user_id:
           currentUser.id
@@ -2532,6 +2660,11 @@ async function releaseTrade(){
     actionBusy =
       false;
 
+    resetButton(
+      "releaseBtn",
+      "💵 Release Trade"
+    );
+
   }
 
 }
@@ -2539,8 +2672,6 @@ async function releaseTrade(){
 
 /* =====================================================
    CANCEL TRADE
-   RPC:
-   p2p_cancel_trade(bigint?, uuid, text)
 ===================================================== */
 
 async function cancelTrade(){
@@ -2555,15 +2686,20 @@ async function cancelTrade(){
   }
 
 
-  if(
-    !isValidUUID(
-      currentTrade.id
-    )
-  ){
+  /*
+    THIS FIXES:
 
-    toast(
-      "Invalid trade UUID. Please reopen the trade."
-    );
+    invalid input syntax for type uuid: "17"
+
+    We no longer send the numeric
+    order ID to p_trade_id.
+  */
+
+  const rpcTradeId =
+    requireRpcTradeId();
+
+
+  if(!rpcTradeId){
 
     return;
 
@@ -2587,21 +2723,6 @@ async function cancelTrade(){
   }
 
 
-  const isBuyer =
-    String(
-      currentTrade.buyer_id
-    ) ===
-    String(
-      currentUser.id
-    );
-
-
-  const role =
-    isBuyer
-      ? "buyer"
-      : "seller";
-
-
   if(
     !confirm(
       "Cancel this trade?"
@@ -2617,6 +2738,12 @@ async function cancelTrade(){
     true;
 
 
+  setButtonBusy(
+    "cancelBtn",
+    "Cancelling..."
+  );
+
+
   try{
 
     const {
@@ -2627,14 +2754,13 @@ async function cancelTrade(){
       "p2p_cancel_trade",
       {
         p_trade_id:
-          currentTrade.id,
+          rpcTradeId,
 
         p_user_id:
           currentUser.id,
 
         p_reason:
-          "Cancelled by " +
-          role
+          "Cancelled by buyer"
       }
     );
 
@@ -2676,6 +2802,11 @@ async function cancelTrade(){
     actionBusy =
       false;
 
+    resetButton(
+      "cancelBtn",
+      "❌ Cancel Trade"
+    );
+
   }
 
 }
@@ -2683,8 +2814,6 @@ async function cancelTrade(){
 
 /* =====================================================
    DISPUTE
-   RPC:
-   p2p_open_dispute(bigint?, uuid, text)
 ===================================================== */
 
 function openDispute(){
@@ -2693,21 +2822,6 @@ function openDispute(){
     !currentTrade ||
     actionBusy
   ){
-
-    return;
-
-  }
-
-
-  if(
-    !isValidUUID(
-      currentTrade.id
-    )
-  ){
-
-    toast(
-      "Invalid trade UUID. Please reopen the trade."
-    );
 
     return;
 
@@ -2730,7 +2844,20 @@ function openDispute(){
 
 
   selectedTradeId =
-    currentTrade.id;
+    getRpcTradeId(
+      currentTrade
+    );
+
+
+  if(!selectedTradeId){
+
+    toast(
+      "Trade UUID is missing."
+    );
+
+    return;
+
+  }
 
 
   document.getElementById(
@@ -2771,7 +2898,7 @@ async function submitDispute(){
 
 
   if(
-    !isValidUUID(
+    !isUUID(
       selectedTradeId
     )
   ){
@@ -2956,17 +3083,30 @@ function openMessage(){
     );
 
 
-  const tradeParam =
-    encodeURIComponent(
-      String(currentTrade.id)
+  const tradeUUID =
+    getRpcTradeId(
+      currentTrade
     );
 
 
-  window.location.href =
+  let url =
     "message.html?user_id=" +
-    userParam +
-    "&trade_id=" +
-    tradeParam;
+    userParam;
+
+
+  if(tradeUUID){
+
+    url +=
+      "&trade_id=" +
+      encodeURIComponent(
+        tradeUUID
+      );
+
+  }
+
+
+  window.location.href =
+    url;
 
 }
 
@@ -2977,10 +3117,7 @@ function openMessage(){
 
 function setupRealtime(){
 
-  if(
-    !currentTrade ||
-    !isValidUUID(currentTrade.id)
-  ){
+  if(!currentTrade){
 
     return;
 
@@ -2998,6 +3135,13 @@ function setupRealtime(){
 
   }
 
+
+  /*
+    Realtime filter uses the actual
+    database row ID.
+
+    If id is numeric this remains valid.
+  */
 
   realtimeChannel =
     supabaseClient
@@ -3053,18 +3197,7 @@ async function reloadTrade(){
   }
 
 
-  if(
-    !isValidUUID(
-      currentTrade.id
-    )
-  ){
-
-    return;
-
-  }
-
-
-  const tradeId =
+  const rowId =
     currentTrade.id;
 
 
@@ -3077,9 +3210,9 @@ async function reloadTrade(){
     .select("*")
     .eq(
       "id",
-      tradeId
+      rowId
     )
-    .single();
+    .maybeSingle();
 
 
   if(error){
@@ -3121,6 +3254,12 @@ async function reloadTrade(){
 
   currentTrade =
     data;
+
+
+  selectedTradeId =
+    getRpcTradeId(
+      currentTrade
+    );
 
 
   renderTrade();
@@ -3644,44 +3783,70 @@ function calculateTradeValue(
 ){
 
   const stored =
-    firstFiniteNumber(
-
-      trade.trade_value,
-
-      trade.trade_value_etb,
-
-      trade.total_etb
-
+    toFiniteNumber(
+      trade.trade_value
     );
 
+
+  /*
+    For USDT pairs, trade_value is
+    considered USDT only if explicitly
+    stored as USDT.
+  */
 
   if(
     stored !== null &&
     stored >= 0
   ){
 
-    return stored;
+    if(
+      pairIsUSDTPair(pair) &&
+      trade.trade_value_currency
+    ){
+
+      const currency =
+        String(
+          trade.trade_value_currency
+        )
+        .toUpperCase();
+
+
+      if(
+        currency === "USDT"
+      ){
+
+        return stored;
+
+      }
+
+    }
+
+    /*
+      For non-USDT pair use stored value.
+    */
+
+    if(
+      !pairIsUSDTPair(pair)
+    ){
+
+      return stored;
+
+    }
 
   }
 
 
   /*
     USDT/ETB:
-      amount × price
-
-    ETB/USDT:
-      amount
-
-    This is display only.
+    amount × price is ETB settlement,
+    but the actual crypto amount is USDT.
   */
 
   if(
-    pairStartsWithUSDT(
-      pair
-    )
+    pairIsUSDTPair(pair)
   ){
 
-    return amount * price;
+    return amount;
 
   }
 
@@ -3703,13 +3868,41 @@ function formatPair(
     String(
       trade.pair ||
       trade.trading_pair ||
+      trade.currency_pair ||
       ""
     )
-    .trim();
+    .trim()
+    .toUpperCase();
+
+
+  /*
+    USDT/USD is normalized to USDT / USD.
+
+    1 USDT = 1 USD is valid.
+  */
+
+  if(
+    raw ===
+    "USDT_USD"
+  ){
+
+    return "USDT / USD";
+
+  }
 
 
   if(
-    raw.toUpperCase() ===
+    raw ===
+    "USD_USDT"
+  ){
+
+    return "USD / USDT";
+
+  }
+
+
+  if(
+    raw ===
     "USDT_ETB"
   ){
 
@@ -3719,7 +3912,7 @@ function formatPair(
 
 
   if(
-    raw.toUpperCase() ===
+    raw ===
     "ETB_USDT"
   ){
 
@@ -3729,7 +3922,17 @@ function formatPair(
 
 
   if(
-    raw.toUpperCase() ===
+    raw ===
+    "USDT_USDT"
+  ){
+
+    return "USDT / USDT";
+
+  }
+
+
+  if(
+    raw ===
     "ETB_ETB"
   ){
 
@@ -3768,7 +3971,32 @@ function formatPair(
 }
 
 
-function pairStartsWithUSDT(
+/* =====================================================
+   PAIR HELPERS
+===================================================== */
+
+function pairIsUSDTPair(
+  pair
+){
+
+  const value =
+    String(
+      pair || ""
+    )
+    .trim()
+    .toUpperCase();
+
+
+  return (
+    value.startsWith("USDT /") ||
+    value.startsWith("USDT_") ||
+    value === "USDT"
+  );
+
+}
+
+
+function pairIsUSDTUSDT(
   pair
 ){
 
@@ -3776,10 +4004,69 @@ function pairStartsWithUSDT(
     pair || ""
   )
   .trim()
-  .toUpperCase()
-  .startsWith(
-    "USDT"
+  .toUpperCase() ===
+  "USDT / USDT";
+
+}
+
+
+function pairStartsWithUSDT(
+  pair
+){
+
+  return pairIsUSDTPair(
+    pair
   );
+
+}
+
+
+function getAmountCurrency(
+  pair
+){
+
+  const value =
+    String(
+      pair || ""
+    )
+    .trim()
+    .toUpperCase();
+
+
+  if(
+    value.startsWith(
+      "USDT"
+    )
+  ){
+
+    return " USDT";
+
+  }
+
+
+  if(
+    value.startsWith(
+      "USD"
+    )
+  ){
+
+    return " USD";
+
+  }
+
+
+  if(
+    value.startsWith(
+      "ETB"
+    )
+  ){
+
+    return " ETB";
+
+  }
+
+
+  return "";
 
 }
 
@@ -3824,40 +4111,6 @@ function getNumber(
 
 
   return 0;
-
-}
-
-
-function firstFiniteNumber(){
-
-  const values =
-    arguments;
-
-
-  for(
-    let i = 0;
-    i < values.length;
-    i++
-  ){
-
-    const number =
-      toFiniteNumber(
-        values[i]
-      );
-
-
-    if(
-      number !== null
-    ){
-
-      return number;
-
-    }
-
-  }
-
-
-  return null;
 
 }
 
@@ -3952,21 +4205,6 @@ function friendlyError(
       error.hint ||
       ""
     ).trim();
-
-
-  /*
-    Make UUID errors easier to understand.
-  */
-
-  if(
-    message.toLowerCase().includes(
-      "invalid input syntax for type uuid"
-    )
-  ){
-
-    return "Invalid trade ID. The trade must use the actual UUID from p2p_trades.";
-
-  }
 
 
   return message ||

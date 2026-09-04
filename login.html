@@ -2,727 +2,389 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
   <title>Login - P2P Social</title>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
-
-    *{
-      box-sizing:border-box;
-      margin:0;
-      padding:0;
-      font-family:Arial,sans-serif;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
-    body{
-      min-height:100vh;
-      background:#f4f7f8;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:20px;
-    }
-
-    .container{
-      width:100%;
-      max-width:400px;
-      background:white;
-      padding:28px;
-      border-radius:20px;
-      box-shadow:0 8px 30px rgba(0,0,0,.10);
-    }
-
-    /* =========================
-       P2P SOCIAL LOGO
-    ========================= */
-
-    .brand{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:12px;
-      margin-bottom:22px;
-    }
-
-    .icon{
-      width:68px;
-      height:68px;
-      border-radius:22px;
-
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      font-family: Arial, sans-serif;
       background:
-        linear-gradient(
-          135deg,
-          #064e46,
-          #10a889
-        );
-
-      position:relative;
-
-      display:flex;
-      justify-content:center;
-      align-items:center;
-
-      box-shadow:
-        0 10px 25px
-        rgba(0,0,0,.16);
-
-      flex-shrink:0;
+        radial-gradient(circle at top, #182848, #05070d 60%);
+      color: white;
     }
 
-    .p-left{
-      position:absolute;
-      left:12px;
-      top:16px;
-
-      width:21px;
-      height:36px;
-
-      border:6px solid white;
-      border-right:0;
-
-      border-radius:
-        13px 0 0 13px;
+    .container {
+      width: 100%;
+      max-width: 430px;
+      padding: 35px 25px;
+      border-radius: 22px;
+      background: rgba(15, 18, 28, 0.95);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     }
 
-    .p-right{
-      position:absolute;
-      right:12px;
-      top:16px;
-
-      width:21px;
-      height:36px;
-
-      border:6px solid white;
-      border-left:0;
-
-      border-radius:
-        0 13px 13px 0;
+    .logo {
+      display: block;
+      width: 90px;
+      height: 90px;
+      object-fit: contain;
+      margin: 0 auto 15px;
     }
 
-    .center{
-      width:18px;
-      height:18px;
-
-      background:white;
-      border-radius:50%;
-
-      position:absolute;
-
-      display:flex;
-      justify-content:center;
-      align-items:center;
-
-      z-index:5;
+    h1 {
+      text-align: center;
+      font-size: 30px;
+      margin-bottom: 8px;
     }
 
-    .dot{
-      width:6px;
-      height:6px;
-
-      background:#087f73;
-      border-radius:50%;
+    .subtitle {
+      text-align: center;
+      color: #9da5b4;
+      margin-bottom: 28px;
     }
 
-    .text h1{
-      font-size:22px;
-      font-weight:800;
-      color:#172033;
+    label {
+      display: block;
+      margin-bottom: 7px;
+      color: #dfe4ec;
+      font-size: 14px;
     }
 
-    .text h1 span{
-      color:#087f73;
+    input {
+      width: 100%;
+      padding: 14px;
+      margin-bottom: 17px;
+      border-radius: 12px;
+      border: 1px solid #303747;
+      outline: none;
+      background: #10141d;
+      color: white;
+      font-size: 15px;
     }
 
-    .text p{
-      margin-top:4px;
-      font-size:9px;
-      color:#7b8491;
-      letter-spacing:.6px;
+    input:focus {
+      border-color: #4d8dff;
     }
 
-    /* =========================
-       LOGIN TITLE
-    ========================= */
-
-    .login-title{
-      text-align:center;
-      color:#075e54;
-      margin-bottom:7px;
-      font-size:25px;
+    button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: bold;
+      transition: 0.2s;
     }
 
-    .subtitle{
-      text-align:center;
-      color:#777;
-      margin-bottom:25px;
-      font-size:14px;
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
     }
 
-    /* =========================
-       FORM
-    ========================= */
-
-    label{
-      display:block;
-      margin-bottom:7px;
-      font-weight:bold;
-      font-size:14px;
-      color:#172033;
+    .login-btn {
+      background: linear-gradient(135deg, #1769ff, #6b3df5);
+      color: white;
+      margin-top: 3px;
     }
 
-    input{
-      width:100%;
-      padding:13px;
-
-      border:1px solid #ddd;
-      border-radius:10px;
-
-      margin-bottom:16px;
-
-      font-size:15px;
-      outline:none;
-      background:white;
+    .google-btn {
+      background: white;
+      color: #111;
+      margin-top: 14px;
     }
 
-    input:focus{
-      border-color:#087f73;
-
-      box-shadow:
-        0 0 0 2px
-        rgba(8,127,115,.08);
+    .mfa-btn {
+      background: linear-gradient(135deg, #00a86b, #0084ff);
+      color: white;
+      margin-top: 5px;
     }
 
-    #loginButton,
-    #mfaButton{
-      width:100%;
-      padding:13px;
-
-      border:none;
-      border-radius:10px;
-
-      background:#087f73;
-      color:white;
-
-      font-size:16px;
-      font-weight:bold;
-
-      cursor:pointer;
-      transition:.2s;
+    .back-btn {
+      background: #252b38;
+      color: white;
+      margin-top: 10px;
     }
 
-    #loginButton:hover,
-    #mfaButton:hover{
-      background:#075e54;
+    .message {
+      display: none;
+      padding: 12px;
+      margin-bottom: 18px;
+      border-radius: 10px;
+      text-align: center;
+      font-size: 14px;
+      line-height: 1.4;
     }
 
-    #loginButton:disabled,
-    #mfaButton:disabled{
-      opacity:.6;
-      cursor:not-allowed;
+    .error {
+      display: block;
+      background: rgba(255, 60, 60, 0.12);
+      border: 1px solid rgba(255, 60, 60, 0.3);
+      color: #ff7777;
     }
 
-    #loginButton:active,
-    #mfaButton:active{
-      transform:scale(.98);
+    .success {
+      display: block;
+      background: rgba(0, 200, 120, 0.12);
+      border: 1px solid rgba(0, 200, 120, 0.3);
+      color: #55e6a8;
     }
 
-    /* =========================
-       GOOGLE LOGIN
-    ========================= */
-
-    .divider{
-      display:flex;
-      align-items:center;
-      gap:12px;
-
-      margin:20px 0;
-
-      color:#999;
-      font-size:12px;
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 22px 0;
+      color: #737b89;
+      font-size: 13px;
     }
 
     .divider::before,
-    .divider::after{
-      content:"";
-      flex:1;
-      height:1px;
-      background:#e5e7eb;
+    .divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: #2a303c;
     }
 
-    #googleButton{
-      width:100%;
-      padding:13px;
-
-      border:1px solid #d9dde3;
-      border-radius:10px;
-
-      background:white;
-      color:#172033;
-
-      font-size:15px;
-      font-weight:bold;
-
-      cursor:pointer;
-
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:10px;
-
-      transition:.2s;
+    .register {
+      text-align: center;
+      margin-top: 24px;
+      color: #8992a2;
+      font-size: 14px;
     }
 
-    #googleButton:hover{
-      background:#f8fafc;
+    .register a {
+      color: #5792ff;
+      text-decoration: none;
+      font-weight: bold;
     }
 
-    #googleButton:active{
-      transform:scale(.98);
+    #mfaSection {
+      display: none;
     }
 
-    #googleButton:disabled{
-      opacity:.6;
-      cursor:not-allowed;
+    .mfa-title {
+      text-align: center;
+      margin-bottom: 10px;
     }
 
-    .google-icon{
-      width:20px;
-      height:20px;
-
-      display:flex;
-      align-items:center;
-      justify-content:center;
-
-      font-size:19px;
-      font-weight:bold;
+    .mfa-description {
+      text-align: center;
+      color: #9da5b4;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 20px;
     }
 
-    /* =========================
-       MESSAGE
-    ========================= */
-
-    #message{
-      text-align:center;
-
-      margin-top:15px;
-
-      min-height:20px;
-
-      font-size:14px;
-      line-height:1.4;
+    .loading {
+      text-align: center;
+      color: #9da5b4;
+      font-size: 14px;
+      margin-top: 12px;
+      display: none;
     }
-
-    /* =========================
-       MFA BOX
-    ========================= */
-
-    #mfaSection{
-      display:none;
-    }
-
-    .mfa-info{
-      text-align:center;
-
-      color:#666;
-
-      font-size:13px;
-      line-height:1.5;
-
-      margin-bottom:18px;
-    }
-
-    #mfaCode{
-      text-align:center;
-
-      letter-spacing:6px;
-
-      font-size:22px;
-      font-weight:bold;
-    }
-
-    .back-login{
-      display:block;
-
-      width:100%;
-
-      margin-top:12px;
-
-      padding:10px;
-
-      border:none;
-      background:transparent;
-
-      color:#087f73;
-
-      font-size:14px;
-      cursor:pointer;
-    }
-
-    /* =========================
-       REGISTER
-    ========================= */
-
-    .register-link{
-      text-align:center;
-
-      margin-top:20px;
-
-      font-size:14px;
-      color:#555;
-    }
-
-    .register-link a{
-      color:#087f73;
-
-      font-weight:bold;
-      text-decoration:none;
-    }
-
-    .register-link a:hover{
-      text-decoration:underline;
-    }
-
-    /* =========================
-       BACK HOME
-    ========================= */
-
-    .back{
-      display:block;
-
-      text-align:center;
-
-      margin-top:15px;
-
-      color:#777;
-
-      text-decoration:none;
-
-      font-size:13px;
-    }
-
-    .back:hover{
-      color:#087f73;
-    }
-
-    /* =========================
-       MOBILE
-    ========================= */
-
-    @media(max-width:450px){
-
-      body{
-        padding:15px;
-      }
-
-      .container{
-        padding:24px 20px;
-        border-radius:18px;
-      }
-
-      .brand{
-        gap:10px;
-      }
-
-      .icon{
-        width:62px;
-        height:62px;
-        border-radius:20px;
-      }
-
-      .p-left,
-      .p-right{
-        top:14px;
-        height:34px;
-      }
-
-      .p-left{
-        left:11px;
-      }
-
-      .p-right{
-        right:11px;
-      }
-
-      .center{
-        width:17px;
-        height:17px;
-      }
-
-      .dot{
-        width:6px;
-        height:6px;
-      }
-
-      .text h1{
-        font-size:20px;
-      }
-
-      .text p{
-        font-size:8px;
-      }
-
-      .login-title{
-        font-size:23px;
-      }
-
-    }
-
   </style>
 </head>
 
 <body>
 
-<div class="container">
+  <div class="container">
 
-  <!-- =========================
-       P2P SOCIAL LOGO
-  ========================== -->
+    <!-- LOGIN SECTION -->
+    <div id="loginSection">
 
-  <div class="brand">
+      <img
+        src="images/logo.png"
+        class="logo"
+        alt="P2P Social"
+        onerror="this.style.display='none'"
+      >
 
-    <div class="icon">
+      <h1>P2P Social</h1>
 
-      <div class="p-left"></div>
+      <p class="subtitle">
+        Login to your account
+      </p>
 
-      <div class="p-right"></div>
+      <div id="message" class="message"></div>
 
-      <div class="center">
-        <div class="dot"></div>
+      <form id="loginForm">
+
+        <label for="email">
+          Email
+        </label>
+
+        <input
+          type="email"
+          id="email"
+          placeholder="Enter your email"
+          autocomplete="email"
+          required
+        >
+
+        <label for="password">
+          Password
+        </label>
+
+        <input
+          type="password"
+          id="password"
+          placeholder="Enter your password"
+          autocomplete="current-password"
+          required
+        >
+
+        <button
+          type="submit"
+          class="login-btn"
+          id="loginButton"
+        >
+          Login
+        </button>
+
+      </form>
+
+      <div class="divider">
+        OR
+      </div>
+
+      <button
+        type="button"
+        class="google-btn"
+        id="googleButton"
+      >
+        Continue with Google
+      </button>
+
+      <div
+        id="loading"
+        class="loading"
+      >
+        Please wait...
+      </div>
+
+      <div class="register">
+        Don't have an account?
+        <a href="register.html">
+          Register
+        </a>
       </div>
 
     </div>
 
-    <div class="text">
 
-      <h1>
-        P2P <span>Social</span>
-      </h1>
+    <!-- MFA SECTION -->
+    <div id="mfaSection">
 
-      <p>
-        CONNECT • TRADE • SHARE
+      <img
+        src="images/logo.png"
+        class="logo"
+        alt="P2P Social"
+        onerror="this.style.display='none'"
+      >
+
+      <h2 class="mfa-title">
+        Two-Factor Authentication
+      </h2>
+
+      <p class="mfa-description">
+        Enter the 6-digit code from your authenticator app.
       </p>
 
-    </div>
-
-  </div>
-
-  <!-- =========================
-       LOGIN TITLE
-  ========================== -->
-
-  <h1
-    class="login-title"
-    id="loginTitle"
-  >
-    Login
-  </h1>
-
-  <p
-    class="subtitle"
-    id="loginSubtitle"
-  >
-    Welcome back to P2P Social
-  </p>
-
-  <!-- =========================
-       PASSWORD LOGIN
-  ========================== -->
-
-  <form id="loginForm">
-
-    <label for="email">
-      Email
-    </label>
-
-    <input
-      type="email"
-      id="email"
-      placeholder="Enter your email"
-      autocomplete="email"
-      required
-    >
-
-    <label for="password">
-      Password
-    </label>
-
-    <input
-      type="password"
-      id="password"
-      placeholder="Enter your password"
-      autocomplete="current-password"
-      required
-    >
-
-    <button
-      type="submit"
-      id="loginButton"
-    >
-      Login
-    </button>
-
-  </form>
-
-  <!-- =========================
-       GOOGLE LOGIN
-  ========================== -->
-
-  <div class="divider">
-    OR
-  </div>
-
-  <button
-    type="button"
-    id="googleButton"
-  >
-    <span class="google-icon">
-      G
-    </span>
-
-    Continue with Google
-
-  </button>
-
-  <!-- =========================
-       MFA VERIFICATION
-  ========================== -->
-
-  <div id="mfaSection">
-
-    <p class="mfa-info">
-      🔐 Two-factor authentication<br>
-      Enter the 6-digit code from your
-      authenticator app.
-    </p>
-
-    <form id="mfaForm">
-
-      <label for="mfaCode">
-        MFA Code
-      </label>
+      <div id="mfaMessage" class="message"></div>
 
       <input
         type="text"
         id="mfaCode"
-        placeholder="000000"
+        placeholder="Enter 6-digit code"
         inputmode="numeric"
         autocomplete="one-time-code"
         maxlength="6"
-        pattern="[0-9]{6}"
-        required
       >
 
       <button
-        type="submit"
-        id="mfaButton"
+        type="button"
+        class="mfa-btn"
+        id="verifyMfaButton"
       >
-        Verify MFA
+        Verify Code
       </button>
 
-    </form>
+      <button
+        type="button"
+        class="back-btn"
+        id="cancelMfaButton"
+      >
+        Cancel
+      </button>
 
-    <button
-      type="button"
-      class="back-login"
-      id="backToLogin"
-    >
-      ← Back to login
-    </button>
-
-  </div>
-
-  <!-- =========================
-       MESSAGE
-  ========================== -->
-
-  <p id="message"></p>
-
-  <!-- =========================
-       REGISTER
-  ========================== -->
-
-  <div
-    class="register-link"
-    id="registerArea"
-  >
-    Don't have an account?
-
-    <a href="register.html">
-      Register
-    </a>
+    </div>
 
   </div>
 
-  <!-- =========================
-       BACK HOME
-  ========================== -->
-
-  <a
-    href="index.html"
-    class="back"
-    id="homeLink"
-  >
-    ← Back to Home
-  </a>
-
-</div>
-
-<!-- =========================
-     SUPABASE
-========================= -->
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-
-"use strict";
-
-/* ===============================
-   SUPABASE CONFIG
-================================ */
+/* =========================================================
+   SUPABASE CONFIGURATION
+========================================================= */
 
 const SUPABASE_URL =
   "https://mbsvuwrgigqfporxwpfr.supabase.co";
 
-const SUPABASE_PUBLISHABLE_KEY =
+const SUPABASE_KEY =
   "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
-
-/* ===============================
-   CREATE CLIENT
-================================ */
-
-if(!window.supabase){
-
-  document.body.innerHTML = `
-    <div style="
-      font-family:Arial;
-      padding:40px;
-      text-align:center;
-    ">
-      <h2>Connection error</h2>
-      <p>Supabase could not be loaded.</p>
-      <p>Please check your internet connection.</p>
-    </div>
-  `;
-
-  throw new Error(
-    "Supabase library did not load."
-  );
-}
 
 const supabaseClient =
   window.supabase.createClient(
     SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY
+    SUPABASE_KEY
   );
 
-/* ===============================
+
+/* =========================================================
+   CONFIGURATION
+========================================================= */
+
+const AUTHENTICATED_PAGE = "wallet.html";
+
+
+/* =========================================================
    ELEMENTS
-================================ */
+========================================================= */
+
+const loginSection =
+  document.getElementById("loginSection");
+
+const mfaSection =
+  document.getElementById("mfaSection");
 
 const loginForm =
   document.getElementById("loginForm");
+
+const emailInput =
+  document.getElementById("email");
+
+const passwordInput =
+  document.getElementById("password");
 
 const loginButton =
   document.getElementById("loginButton");
@@ -733,790 +395,770 @@ const googleButton =
 const message =
   document.getElementById("message");
 
-const mfaSection =
-  document.getElementById("mfaSection");
-
-const mfaForm =
-  document.getElementById("mfaForm");
-
-const mfaButton =
-  document.getElementById("mfaButton");
+const loading =
+  document.getElementById("loading");
 
 const mfaCode =
   document.getElementById("mfaCode");
 
-const backToLogin =
-  document.getElementById("backToLogin");
+const verifyMfaButton =
+  document.getElementById("verifyMfaButton");
 
-const loginTitle =
-  document.getElementById("loginTitle");
+const cancelMfaButton =
+  document.getElementById("cancelMfaButton");
 
-const loginSubtitle =
-  document.getElementById("loginSubtitle");
+const mfaMessage =
+  document.getElementById("mfaMessage");
 
-const registerArea =
-  document.getElementById("registerArea");
 
-const homeLink =
-  document.getElementById("homeLink");
-
-/* ===============================
-   MFA VARIABLES
-================================ */
-
-let currentFactorId = null;
-let currentChallengeId = null;
+/* =========================================================
+   STATE
+========================================================= */
 
 let processingAuthentication = false;
 
-/* ===============================
-   MESSAGE
-================================ */
+let mfaFactorId = null;
 
-function showMessage(text,color){
+let mfaChallengeId = null;
+
+
+/* =========================================================
+   MESSAGE HELPERS
+========================================================= */
+
+function showMessage(text, type = "error") {
 
   message.textContent = text;
-  message.style.color = color;
 
+  message.className =
+    "message " + type;
 }
 
-/* ===============================
-   RESET MFA
-================================ */
 
-function resetMFA(){
+function hideMessage() {
 
-  currentFactorId = null;
-  currentChallengeId = null;
+  message.textContent = "";
 
-  mfaCode.value = "";
-
-  mfaButton.disabled = false;
-  mfaButton.textContent = "Verify MFA";
-
+  message.className = "message";
 }
 
-/* ===============================
-   SHOW LOGIN
-================================ */
 
-function showLogin(){
+function showMfaMessage(text, type = "error") {
 
-  loginForm.style.display = "block";
+  mfaMessage.textContent = text;
 
-  googleButton.style.display = "flex";
-
-  mfaSection.style.display = "none";
-
-  registerArea.style.display = "block";
-
-  homeLink.style.display = "block";
-
-  loginTitle.textContent = "Login";
-
-  loginSubtitle.textContent =
-    "Welcome back to P2P Social";
-
-  resetMFA();
-
+  mfaMessage.className =
+    "message " + type;
 }
 
-/* ===============================
+
+function hideMfaMessage() {
+
+  mfaMessage.textContent = "";
+
+  mfaMessage.className = "message";
+}
+
+
+function setLoading(value) {
+
+  loading.style.display =
+    value ? "block" : "none";
+
+  loginButton.disabled = value;
+
+  googleButton.disabled = value;
+}
+
+
+/* =========================================================
+   EMAIL PROVIDER CHECK
+========================================================= */
+
+function isGoogleUser(user) {
+
+  if (!user) {
+    return false;
+  }
+
+  const identities =
+    user.identities || [];
+
+  return identities.some(
+    identity =>
+      identity.provider === "google"
+  );
+}
+
+
+/* =========================================================
+   MFA
+========================================================= */
+
+async function prepareMFAIfRequired(session) {
+
+  try {
+
+    if (!session || !session.user) {
+      return false;
+    }
+
+    const {
+      data: factorsData,
+      error: factorsError
+    } = await supabaseClient.auth.mfa.listFactors();
+
+    if (factorsError) {
+      throw factorsError;
+    }
+
+    const factors =
+      factorsData?.totp || [];
+
+    const verifiedFactors =
+      factors.filter(
+        factor =>
+          factor.status === "verified"
+      );
+
+    /*
+      No MFA configured.
+    */
+    if (verifiedFactors.length === 0) {
+      return false;
+    }
+
+
+    const {
+      data: aalData,
+      error: aalError
+    } =
+      await supabaseClient.auth.mfa
+        .getAuthenticatorAssuranceLevel();
+
+    if (aalError) {
+      throw aalError;
+    }
+
+
+    /*
+      Already authenticated with MFA.
+    */
+    if (
+      aalData.currentLevel === "aal2"
+    ) {
+      return false;
+    }
+
+
+    /*
+      MFA is required.
+    */
+    mfaFactorId =
+      verifiedFactors[0].id;
+
+
+    const {
+      data: challengeData,
+      error: challengeError
+    } =
+      await supabaseClient.auth.mfa
+        .challenge({
+          factorId: mfaFactorId
+        });
+
+    if (challengeError) {
+      throw challengeError;
+    }
+
+
+    mfaChallengeId =
+      challengeData.id;
+
+
+    showMFASection();
+
+    return true;
+
+  } catch (error) {
+
+    console.error(
+      "MFA preparation error:",
+      error
+    );
+
+    showMessage(
+      "Unable to prepare two-factor authentication.",
+      "error"
+    );
+
+    return false;
+  }
+}
+
+
+/* =========================================================
    SHOW MFA
-================================ */
+========================================================= */
 
-function showMFA(){
+function showMFASection() {
 
-  loginForm.style.display = "none";
-
-  googleButton.style.display = "none";
+  loginSection.style.display = "none";
 
   mfaSection.style.display = "block";
 
-  registerArea.style.display = "none";
+  hideMfaMessage();
 
-  homeLink.style.display = "none";
+  mfaCode.value = "";
 
-  loginTitle.textContent =
-    "MFA Verification";
-
-  loginSubtitle.textContent =
-    "Protecting your P2P Social account";
-
-  showMessage(
-    "Enter the 6-digit code from your authenticator app.",
-    "#2563eb"
-  );
-
-  setTimeout(function(){
-
+  setTimeout(() => {
     mfaCode.focus();
-
-  },100);
-
+  }, 100);
 }
 
-/* ===============================
-   PREPARE MFA
-================================ */
 
-async function prepareMFAIfRequired(){
+/* =========================================================
+   HIDE MFA
+========================================================= */
 
-  const {
-    data: sessionData,
-    error: sessionError
-  } =
-  await supabaseClient.auth.getSession();
+function hideMFASection() {
 
-  if(sessionError){
-    throw sessionError;
+  mfaSection.style.display = "none";
+
+  loginSection.style.display = "block";
+
+  mfaCode.value = "";
+
+  mfaFactorId = null;
+
+  mfaChallengeId = null;
+
+  hideMfaMessage();
+
+  processingAuthentication = false;
+}
+
+
+/* =========================================================
+   FINISH AUTHENTICATION
+========================================================= */
+
+async function finishAuthentication(session) {
+
+  if (!session || !session.user) {
+    return;
   }
 
-  if(
-    !sessionData ||
-    !sessionData.session ||
-    !sessionData.session.user
-  ){
+  const user =
+    session.user;
 
-    return false;
-
-  }
-
-  const {
-    data: factorsData,
-    error: factorsError
-  } =
-  await supabaseClient
-    .auth
-    .mfa
-    .listFactors();
-
-  if(factorsError){
-    throw factorsError;
-  }
-
-  const factors =
-    factorsData &&
-    Array.isArray(factorsData.factors)
-      ? factorsData.factors
-      : [];
-
-  const verifiedFactors =
-    factors.filter(function(factor){
-
-      return (
-        factor.status === "verified" &&
-        factor.factor_type === "totp"
-      );
-
-    });
 
   /*
-    Account has no verified MFA factor.
-    Continue normally.
+    Google users do not need a separate
+    email confirmation step because
+    authentication is handled by Google.
   */
+  const googleUser =
+    isGoogleUser(user);
 
-  if(verifiedFactors.length === 0){
-
-    return false;
-
-  }
-
-  const {
-    data: assuranceData,
-    error: assuranceError
-  } =
-  await supabaseClient
-    .auth
-    .mfa
-    .getAuthenticatorAssuranceLevel();
-
-  if(assuranceError){
-    throw assuranceError;
-  }
 
   /*
-    Already authenticated with MFA.
+    Email/password users must confirm
+    their email before entering the app.
   */
+  if (
+    !googleUser &&
+    !user.email_confirmed_at
+  ) {
 
-  if(
-    assuranceData &&
-    assuranceData.currentLevel === "aal2"
-  ){
+    await supabaseClient.auth.signOut();
 
-    return false;
+    processingAuthentication = false;
 
-  }
+    setLoading(false);
 
-  /*
-    MFA required.
-  */
-
-  currentFactorId =
-    verifiedFactors[0].id;
-
-  const {
-    data: challengeData,
-    error: challengeError
-  } =
-  await supabaseClient
-    .auth
-    .mfa
-    .challenge({
-
-      factorId: currentFactorId
-
-    });
-
-  if(challengeError){
-    throw challengeError;
-  }
-
-  if(
-    !challengeData ||
-    !challengeData.id
-  ){
-
-    throw new Error(
-      "Could not create MFA challenge."
+    showMessage(
+      "Please confirm your email before logging in.",
+      "error"
     );
 
+    return;
   }
 
-  currentChallengeId =
-    challengeData.id;
 
-  showMFA();
+  /*
+    Check MFA.
+  */
+  const mfaRequired =
+    await prepareMFAIfRequired(session);
 
-  return true;
 
+  if (mfaRequired) {
+
+    setLoading(false);
+
+    return;
+  }
+
+
+  /*
+    Authentication complete.
+  */
+  showMessage(
+    "Login successful. Redirecting...",
+    "success"
+  );
+
+
+  setTimeout(() => {
+
+    window.location.replace(
+      AUTHENTICATED_PAGE
+    );
+
+  }, 500);
 }
 
-/* ===============================
-   PASSWORD LOGIN
-================================ */
+
+/* =========================================================
+   EMAIL / PASSWORD LOGIN
+========================================================= */
 
 loginForm.addEventListener(
   "submit",
-  async function(event){
+  async function(event) {
 
     event.preventDefault();
 
-    const email =
-      document
-        .getElementById("email")
-        .value
-        .trim()
-        .toLowerCase();
-
-    const password =
-      document
-        .getElementById("password")
-        .value;
-
-    if(!email || !password){
-
-      showMessage(
-        "Please enter your email and password.",
-        "red"
-      );
-
+    if (processingAuthentication) {
       return;
-
     }
 
-    loginButton.disabled = true;
-    googleButton.disabled = true;
+    processingAuthentication = true;
 
-    loginButton.textContent =
-      "Logging in...";
+    hideMessage();
 
-    showMessage(
-      "Checking your account...",
-      "#2563eb"
-    );
+    setLoading(true);
 
-    try{
+
+    const email =
+      emailInput.value.trim();
+
+    const password =
+      passwordInput.value;
+
+
+    try {
 
       const {
         data,
         error
       } =
-      await supabaseClient
-        .auth
-        .signInWithPassword({
+        await supabaseClient.auth
+          .signInWithPassword({
+            email: email,
+            password: password
+          });
 
-          email: email,
-          password: password
 
-        });
-
-      if(error){
+      if (error) {
         throw error;
       }
 
-      if(!data || !data.user){
+
+      if (!data || !data.session) {
 
         throw new Error(
-          "Login failed."
+          "Login failed. No active session was created."
         );
-
       }
 
-      const mfaRequired =
-        await prepareMFAIfRequired();
 
-      if(mfaRequired){
-
-        loginButton.disabled = false;
-        googleButton.disabled = false;
-
-        loginButton.textContent =
-          "Login";
-
-        return;
-
-      }
-
-      showMessage(
-        "Login successful.",
-        "green"
+      await finishAuthentication(
+        data.session
       );
 
-      setTimeout(function(){
 
-        window.location.href =
-          "index.html";
-
-      },700);
-
-    }
-
-    catch(error){
+    } catch (error) {
 
       console.error(
-        "LOGIN ERROR:",
+        "Login error:",
         error
       );
 
-      let errorMessage =
+      processingAuthentication = false;
+
+      setLoading(false);
+
+
+      let errorText =
+        error?.message ||
         "Login failed.";
 
-      if(error && error.message){
 
-        const msg =
-          error.message.toLowerCase();
+      if (
+        errorText
+          .toLowerCase()
+          .includes("email not confirmed")
+      ) {
 
-        if(
-          msg.includes(
-            "invalid login credentials"
-          )
-        ){
+        errorText =
+          "Please confirm your email before logging in.";
 
-          errorMessage =
-            "Incorrect email or password.";
+      } else if (
+        errorText
+          .toLowerCase()
+          .includes("invalid login credentials")
+      ) {
 
-        }
-
-        else if(
-          msg.includes(
-            "email not confirmed"
-          )
-        ){
-
-          errorMessage =
-            "Please verify your email first.";
-
-        }
-
-        else{
-
-          errorMessage =
-            error.message;
-
-        }
+        errorText =
+          "Incorrect email or password.";
 
       }
 
+
       showMessage(
-        errorMessage,
-        "red"
+        errorText,
+        "error"
       );
-
-      loginButton.disabled = false;
-      googleButton.disabled = false;
-
-      loginButton.textContent =
-        "Login";
-
     }
 
   }
 );
 
-/* ===============================
+
+/* =========================================================
    GOOGLE LOGIN
-================================ */
+========================================================= */
 
 googleButton.addEventListener(
   "click",
-  async function(){
+  async function() {
 
-    googleButton.disabled = true;
-    loginButton.disabled = true;
+    if (processingAuthentication) {
+      return;
+    }
 
-    googleButton.innerHTML =
-      '<span class="google-icon">G</span> Connecting to Google...';
+    processingAuthentication = true;
 
-    showMessage(
-      "Connecting to Google...",
-      "#2563eb"
-    );
+    hideMessage();
 
-    try{
+    setLoading(true);
+
+
+    try {
 
       const {
         error
       } =
-      await supabaseClient
-        .auth
-        .signInWithOAuth({
+        await supabaseClient.auth
+          .signInWithOAuth({
 
-          provider: "google",
+            provider: "google",
 
-          options:{
+            options: {
 
-            redirectTo:
-              window.location.origin +
-              "/login.html"
+              redirectTo:
+                window.location.origin +
+                "/login.html"
 
-          }
+            }
 
-        });
+          });
 
-      if(error){
+
+      if (error) {
         throw error;
       }
 
-    }
 
-    catch(error){
+      /*
+        Google will redirect the browser.
+      */
+
+    } catch (error) {
 
       console.error(
-        "GOOGLE LOGIN ERROR:",
+        "Google login error:",
         error
       );
 
+      processingAuthentication = false;
+
+      setLoading(false);
+
       showMessage(
-        error && error.message
-          ? error.message
-          : "Google login failed.",
-        "red"
+        error?.message ||
+        "Google login failed.",
+        "error"
       );
-
-      googleButton.disabled = false;
-      loginButton.disabled = false;
-
-      googleButton.innerHTML =
-        '<span class="google-icon">G</span> Continue with Google';
-
     }
 
   }
 );
 
-/* ===============================
-   VERIFY MFA
-================================ */
 
-mfaForm.addEventListener(
-  "submit",
-  async function(event){
+/* =========================================================
+   MFA VERIFY
+========================================================= */
 
-    event.preventDefault();
+verifyMfaButton.addEventListener(
+  "click",
+  async function() {
 
     const code =
-      mfaCode.value
-        .trim()
-        .replace(/\D/g,"");
+      mfaCode.value.trim();
 
-    if(code.length !== 6){
 
-      showMessage(
-        "Enter the 6-digit MFA code.",
-        "red"
+    if (!/^\d{6}$/.test(code)) {
+
+      showMfaMessage(
+        "Enter a valid 6-digit code.",
+        "error"
       );
 
       return;
-
     }
 
-    if(
-      !currentFactorId ||
-      !currentChallengeId
-    ){
 
-      showMessage(
-        "MFA session expired. Please login again.",
-        "red"
+    if (
+      !mfaFactorId ||
+      !mfaChallengeId
+    ) {
+
+      showMfaMessage(
+        "MFA session expired. Please log in again.",
+        "error"
       );
 
       return;
-
     }
 
-    mfaButton.disabled = true;
 
-    mfaButton.textContent =
-      "Verifying...";
+    verifyMfaButton.disabled = true;
 
-    showMessage(
-      "Verifying MFA...",
-      "#2563eb"
+    showMfaMessage(
+      "Verifying...",
+      "success"
     );
 
-    try{
+
+    try {
 
       const {
-        data,
         error
       } =
-      await supabaseClient
-        .auth
-        .mfa
-        .verify({
+        await supabaseClient.auth.mfa.verify({
 
           factorId:
-            currentFactorId,
+            mfaFactorId,
 
           challengeId:
-            currentChallengeId,
+            mfaChallengeId,
 
           code:
             code
 
         });
 
-      if(error){
+
+      if (error) {
         throw error;
       }
 
-      if(!data){
-
-        throw new Error(
-          "MFA verification failed."
-        );
-
-      }
 
       const {
-        data: assuranceData,
-        error: assuranceError
+        data: aalData,
+        error: aalError
       } =
-      await supabaseClient
-        .auth
-        .mfa
-        .getAuthenticatorAssuranceLevel();
+        await supabaseClient.auth.mfa
+          .getAuthenticatorAssuranceLevel();
 
-      if(assuranceError){
-        throw assuranceError;
+
+      if (aalError) {
+        throw aalError;
       }
 
-      if(
-        !assuranceData ||
-        assuranceData.currentLevel !== "aal2"
-      ){
+
+      if (
+        aalData.currentLevel !== "aal2"
+      ) {
 
         throw new Error(
-          "MFA verification was not completed."
+          "Two-factor authentication was not completed."
         );
-
       }
 
-      showMessage(
-        "MFA verified. Login successful!",
-        "green"
+
+      showMfaMessage(
+        "Verification successful. Redirecting...",
+        "success"
       );
 
-      setTimeout(function(){
 
-        window.location.href =
-          "index.html";
+      setTimeout(() => {
 
-      },700);
+        window.location.replace(
+          AUTHENTICATED_PAGE
+        );
 
-    }
+      }, 500);
 
-    catch(error){
+
+    } catch (error) {
 
       console.error(
-        "MFA ERROR:",
+        "MFA verification error:",
         error
       );
 
-      showMessage(
-        error && error.message
-          ? error.message
-          : "Invalid MFA code.",
-        "red"
+      showMfaMessage(
+        error?.message ||
+        "Invalid authentication code.",
+        "error"
       );
 
-      mfaButton.disabled = false;
-
-      mfaButton.textContent =
-        "Verify MFA";
-
-      mfaCode.value = "";
-
-      mfaCode.focus();
-
+      verifyMfaButton.disabled = false;
     }
 
   }
 );
 
-/* ===============================
-   BACK TO LOGIN
-================================ */
 
-backToLogin.addEventListener(
+/* =========================================================
+   CANCEL MFA
+========================================================= */
+
+cancelMfaButton.addEventListener(
   "click",
-  async function(){
+  async function() {
 
-    try{
+    verifyMfaButton.disabled = false;
 
-      await supabaseClient
-        .auth
-        .signOut();
+    await supabaseClient.auth.signOut();
 
-    }
+    hideMFASection();
 
-    catch(error){
-
-      console.error(
-        "SIGN OUT ERROR:",
-        error
-      );
-
-    }
-
-    showLogin();
+    setLoading(false);
 
     showMessage(
-      "Please enter your email and password.",
-      "#666"
+      "Login cancelled.",
+      "error"
     );
-
   }
 );
 
-/* ===============================
-   PROCESS EXISTING SESSION
-================================ */
 
-async function processExistingSession(){
+/* =========================================================
+   EXISTING SESSION
+========================================================= */
 
-  if(processingAuthentication){
+async function processExistingSession() {
+
+  if (processingAuthentication) {
     return;
   }
 
-  processingAuthentication = true;
 
-  try{
+  try {
 
     const {
       data,
       error
     } =
-    await supabaseClient
-      .auth
-      .getSession();
+      await supabaseClient.auth
+        .getSession();
 
-    if(error){
+
+    if (error) {
       throw error;
     }
 
-    if(
-      !data ||
-      !data.session
-    ){
 
-      processingAuthentication = false;
+    const session =
+      data?.session;
+
+
+    if (!session) {
       return;
-
     }
 
-    const mfaRequired =
-      await prepareMFAIfRequired();
 
-    if(mfaRequired){
+    processingAuthentication = true;
 
-      processingAuthentication = false;
-      return;
+    setLoading(true);
 
-    }
-
-    showMessage(
-      "Login successful.",
-      "green"
+    await finishAuthentication(
+      session
     );
 
-    setTimeout(function(){
 
-      window.location.href =
-        "index.html";
-
-    },500);
-
-  }
-
-  catch(error){
+  } catch (error) {
 
     console.error(
-      "SESSION PROCESSING ERROR:",
+      "Existing session error:",
       error
     );
 
     processingAuthentication = false;
 
-  }
+    setLoading(false);
 
+    showMessage(
+      "Unable to restore your session. Please log in again.",
+      "error"
+    );
+  }
 }
 
-/* ===============================
-   AUTH STATE CHANGE
-================================ */
+
+/* =========================================================
+   AUTH STATE LISTENER
+========================================================= */
 
 supabaseClient.auth.onAuthStateChange(
-  function(event,session){
+  function(event, session) {
 
     console.log(
-      "AUTH EVENT:",
+      "Auth event:",
       event
     );
 
-    if(
-      event === "SIGNED_IN" &&
-      session
-    ){
 
-      setTimeout(function(){
+    /*
+      OAuth can finish after the page loads.
+      Process the session once it becomes available.
+    */
+    if (
+      event === "SIGNED_IN" &&
+      session &&
+      !processingAuthentication
+    ) {
+
+      setTimeout(() => {
 
         processExistingSession();
 
-      },100);
+      }, 100);
 
     }
 
   }
 );
 
-/* ===============================
-   START
-================================ */
 
-processExistingSession();
+/* =========================================================
+   INITIAL PAGE CHECK
+========================================================= */
 
+window.addEventListener(
+  "load",
+  function() {
+
+    processExistingSession();
+
+  }
+);
 </script>
 
 </body>

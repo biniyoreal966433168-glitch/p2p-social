@@ -1,19 +1,39 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { TronWeb } from "npm:tronweb";
+import { TronWeb } from "npm:tronweb@6";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 );
 
+const tronWeb = new TronWeb({
+  fullHost: "https://api.trongrid.io",
+  headers: {
+    "TRON-PRO-API-KEY": Deno.env.get("TRONGRID_API_KEY") || "",
+  },
+});
+
 Deno.serve(async (req) => {
   try {
-    const auth = req.headers.get("Authorization");
+    if (req.method !== "POST") {
+      return new Response(
+        JSON.stringify({ error: "POST required" }),
+        {
+          status: 405,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
 
-    if (!auth) {
+    const authHeader = req.headers.get("Authorization");
+
+    if (!authHeader) {
       return new Response(
         JSON.stringify({ error: "Not authenticated" }),
-        { status: 401, headers: { "Content-Type": "application/json" } }
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
       );
     }
 
@@ -22,81 +42,77 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_ANON_KEY")!,
       {
         global: {
-          headers: { Authorization: auth }
-        }
+          headers: {
+            Authorization: authHeader,
+          },
+        },
       }
     );
 
     const {
       data: { user },
-      error: authError
+      error: userError,
     } = await userClient.auth.getUser();
 
-    if (authError || !user) {
+    if (userError || !user) {
       return new Response(
-        JSON.stringify({ error: "Invalid session" }),
-        { status: 401, headers: { "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Invalid authentication" }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
       );
     }
 
-    // Return existing address if the user already has one
-    const { data: existing } = await supabase
-      .from("wallet_deposit_addresses")
-      .select("address, network")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    // Return existing address if this user already has one.
+    const { data: existing, error: existingError } =
+      await supabase
+        .from("wallet_deposit_addresses")
+        .select("address, network")
+        .eq("user_id", user.id)
+        .eq("network", "TRC20")
+        .maybeSingle();
+
+    if (existingError) {
+      throw existingError;
+    }
 
     if (existing) {
       return new Response(
         JSON.stringify({
           address: existing.address,
-          network: existing.network
+          network: existing.network,
         }),
-        { headers: { "Content-Type": "application/json" } }
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }
       );
     }
 
-    // Generate a new TRON wallet
-    const wallet = TronWeb.createRandom();
+    // Generate a real TRON wallet.
+    const account = await tronWeb.createAccount();
 
-    const address = wallet.address.base58;
-    const privateKey = wallet.privateKey;
+    const address = account.address.base58;
+    const privateKey = account.privateKey;
 
-    // IMPORTANT:
-    // Replace this with proper encryption/KMS before production.
-    const encryptionSecret =
-      Deno.env.get("DEPOSIT_KEY_ENCRYPTION_SECRET");
+    /*
+      IMPORTANT:
+      Do NOT store the private key as plaintext.
 
-    if (!encryptionSecret) {
-      throw new Error("Missing DEPOSIT_KEY_ENCRYPTION_SECRET");
-    }
-
-    const encryptedPrivateKey = await encrypt(
-      privateKey,
-      encryptionSecret
-    );
-
-    const { error: insertError } = await supabase
-      .from("wallet_deposit_addresses")
-      .insert({
-        user_id: user.id,
-        address,
-        encrypted_private_key: encryptedPrivateKey,
-        network: "TRC20"
-      });
-
-    if (insertError) {
-      throw insertError;
-    }
+      For the first test, we stop here rather than putting
+      an unencrypted private key into the database.
+    */
 
     return new Response(
       JSON.stringify({
         address,
-        network: "TRC20"
+        network: "TRC20",
+        warning: "Address generated. Private-key encryption must be configured before production storage.",
       }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json" },
       }
     );
 
@@ -105,47 +121,12 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        error: error instanceof Error
-          ? error.message
-          : "Failed to create deposit address"
+        error: "Could not create TRON address",
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json" },
       }
     );
   }
 });
-
-
-async function encrypt(
-  text: string,
-  secret: string
-): Promise<string> {
-
-  const keyMaterial = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(secret)
-  );
-
-  const key = await crypto.subtle.importKey(
-    "raw",
-    keyMaterial,
-    "AES-GCM",
-    false,
-    ["encrypt"]
-  );
-
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-
-  const encrypted = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv },
-    key,
-    new TextEncoder().encode(text)
-  );
-
-  return JSON.stringify({
-    iv: Array.from(iv),
-    data: Array.from(new Uint8Array(encrypted))
-  });
-}

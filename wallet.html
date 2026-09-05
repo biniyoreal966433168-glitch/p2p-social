@@ -3,6554 +3,1848 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wallet • P2P Social</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<title>P2P Social - Wallet</title>
 
 <style>
 *{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-  font-family:Arial,sans-serif
-}
-
-html{
-  scroll-behavior:smooth
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    font-family:Arial,sans-serif;
 }
 
 body{
-  background:#f4f7f8;
-  color:#172033;
-  min-height:100vh;
-  padding-bottom:90px
-}
-
-button,input,select,textarea{
-  font-family:Arial,sans-serif
+    background:#f5f7fb;
+    color:#172033;
+    min-height:100vh;
 }
 
 button{
-  cursor:pointer
+    border:0;
+    cursor:pointer;
 }
 
-button:disabled{
-  opacity:.6;
-  cursor:not-allowed
+.header{
+    background:#ffffff;
+    padding:16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    border-bottom:1px solid #e7eaf0;
+    position:sticky;
+    top:0;
+    z-index:20;
 }
 
-header{
-  height:68px;
-  background:#fff;
-  border-bottom:1px solid #e2e8ea;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 18px;
-  position:sticky;
-  top:0;
-  z-index:100
+.logo{
+    font-size:21px;
+    font-weight:800;
 }
 
-.brand{
-  display:flex;
-  align-items:center;
-  gap:10px
+.header-right{
+    display:flex;
+    gap:8px;
+    align-items:center;
 }
 
-.brand-logo{
-  width:42px;
-  height:42px;
-  border-radius:13px;
-  background:linear-gradient(135deg,#064e46,#10a889);
-  position:relative;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  box-shadow:0 4px 12px rgba(0,0,0,.12);
-  flex-shrink:0
+.icon-btn{
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    background:#f0f3f8;
+    font-size:19px;
 }
 
-.p-left{
-  position:absolute;
-  left:8px;
-  top:10px;
-  width:13px;
-  height:23px;
-  border:4px solid #fff;
-  border-right:0;
-  border-radius:8px 0 0 8px
-}
-
-.p-right{
-  position:absolute;
-  right:8px;
-  top:10px;
-  width:13px;
-  height:23px;
-  border:4px solid #fff;
-  border-left:0;
-  border-radius:0 8px 8px 0
-}
-
-.center-dot{
-  width:10px;
-  height:10px;
-  background:#fff;
-  border-radius:50%;
-  position:absolute
-}
-
-.brand-name{
-  font-size:19px;
-  font-weight:800
-}
-
-.brand-name span{
-  color:#087f73
-}
-
-.security{
-  color:#087f73;
-  font-size:13px;
-  font-weight:bold
+.logout-btn{
+    background:#ffeded;
+    color:#d83232;
+    padding:10px 13px;
+    border-radius:10px;
+    font-weight:bold;
 }
 
 .container{
-  width:100%;
-  max-width:850px;
-  margin:auto;
-  padding:18px
+    max-width:850px;
+    margin:auto;
+    padding:16px;
+    padding-bottom:100px;
 }
 
-.balance-card{
-  background:linear-gradient(135deg,#064e46,#10a889);
-  color:#fff;
-  border-radius:20px;
-  padding:24px;
-  position:relative;
-  overflow:hidden;
-  box-shadow:0 10px 25px rgba(8,127,115,.18)
+/* WALLET CARD */
+
+.wallet-card{
+    background:linear-gradient(135deg,#172033,#263b68);
+    color:white;
+    border-radius:22px;
+    padding:23px;
+    margin-bottom:16px;
+    box-shadow:0 10px 30px rgba(0,0,0,.12);
 }
 
-.balance-card:after{
-  content:"";
-  position:absolute;
-  width:190px;
-  height:190px;
-  right:-70px;
-  top:-75px;
-  border-radius:50%;
-  background:rgba(255,255,255,.09)
+.wallet-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:22px;
 }
 
-.balance-card:before{
-  content:"";
-  position:absolute;
-  width:110px;
-  height:110px;
-  right:50px;
-  bottom:-80px;
-  border-radius:50%;
-  background:rgba(255,255,255,.06)
+.wallet-title{
+    font-size:18px;
+    font-weight:bold;
 }
 
-.balance-top{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  position:relative;
-  z-index:2
+.visibility{
+    background:rgba(255,255,255,.12);
+    color:white;
+    width:40px;
+    height:40px;
+    border-radius:50%;
 }
 
-.label{
-  font-size:13px;
-  opacity:.8
+.balance-label{
+    opacity:.75;
+    font-size:13px;
+    margin-bottom:7px;
 }
 
-.balance-diamond{
-  font-size:29px;
-  font-weight:bold;
-  margin-top:10px;
-  position:relative;
-  z-index:2
+.balance{
+    font-size:31px;
+    font-weight:800;
+    letter-spacing:.3px;
 }
 
-.balance-usdt-mini{
-  font-size:13px;
-  opacity:.85;
-  margin-top:8px;
-  position:relative;
-  z-index:2
+.wallet-address{
+    margin-top:15px;
+    background:rgba(255,255,255,.08);
+    padding:10px;
+    border-radius:10px;
+    font-size:11px;
+    word-break:break-all;
+    opacity:.85;
 }
 
-.available{
-  font-size:13px;
-  opacity:.8;
-  position:relative;
-  z-index:2;
-  margin-top:10px
+.refresh-row{
+    margin-top:15px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
 }
 
-.balance-toggle{
-  border:1px solid rgba(255,255,255,.3);
-  background:rgba(255,255,255,.12);
-  color:#fff;
-  border-radius:9px;
-  padding:8px 10px;
-  font-weight:bold;
-  position:relative;
-  z-index:3
+.refresh-btn{
+    background:#ffffff;
+    color:#172033;
+    padding:9px 13px;
+    border-radius:10px;
+    font-weight:bold;
 }
 
-.asset-note{
-  margin-top:12px;
-  background:rgba(255,255,255,.10);
-  border:1px solid rgba(255,255,255,.14);
-  border-radius:11px;
-  padding:10px;
-  font-size:12px;
-  line-height:1.4;
-  position:relative;
-  z-index:2
+.status-text{
+    font-size:12px;
+    opacity:.8;
 }
 
-.quick-actions,
-.trade-actions{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-  margin:16px 0
+/* DIAMONDS */
+
+.diamond-card{
+    background:#fff;
+    border-radius:18px;
+    padding:18px;
+    margin-bottom:16px;
+    box-shadow:0 4px 16px rgba(0,0,0,.05);
 }
 
-.quick-actions button{
-  padding:14px 8px;
-  background:#fff;
-  color:#172033;
-  border:1px solid #dce5e7;
-  border-radius:13px;
-  font-weight:bold
+.diamond-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.diamond-title{
+    font-weight:bold;
+    font-size:15px;
+}
+
+.diamond-value{
+    font-size:23px;
+    font-weight:800;
+}
+
+/* ACTIONS */
+
+.actions{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    margin-bottom:18px;
+}
+
+.action{
+    background:white;
+    border-radius:16px;
+    padding:16px 8px;
+    text-align:center;
+    box-shadow:0 4px 14px rgba(0,0,0,.05);
+    font-weight:bold;
 }
 
 .action-icon{
-  display:block;
-  font-size:21px;
-  color:#087f73;
-  margin-bottom:5px
+    font-size:24px;
+    display:block;
+    margin-bottom:7px;
 }
 
-.trade-actions{
-  gap:9px
+.action.send{
+    color:#1976d2;
 }
 
-.trade-actions button{
-  border:none;
-  border-radius:11px;
-  padding:12px 7px;
-  font-weight:bold
+.action.buy{
+    color:#159447;
 }
 
-.send-btn{
-  background:#f3eaff;
-  color:#7546a8
+.action.trade{
+    color:#7545d6;
 }
 
-.buy-btn{
-  background:#e2f5ef;
-  color:#087f73
+/* SECTION */
+
+.section{
+    background:#fff;
+    border-radius:18px;
+    margin-bottom:16px;
+    overflow:hidden;
+    box-shadow:0 4px 14px rgba(0,0,0,.05);
 }
 
-.trade-btn-top{
-  background:#fff2d9;
-  color:#a56a00
+.section-header{
+    padding:16px;
+    border-bottom:1px solid #edf0f5;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
 }
 
 .section-title{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  margin:22px 0 12px
+    font-weight:800;
+    font-size:16px;
 }
 
-.section-title h2{
-  font-size:20px
+.view-all{
+    color:#3974df;
+    font-size:13px;
+    font-weight:bold;
+    cursor:pointer;
 }
 
-.section-title span{
-  color:#087f73;
-  font-size:13px;
-  font-weight:bold
+.offer{
+    padding:15px;
+    border-bottom:1px solid #edf0f5;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
 }
 
-.section-actions{
-  display:flex;
-  align-items:center;
-  gap:7px
-}
-
-.view-btn,
-.refresh-btn{
-  border:none;
-  background:#edf7f5;
-  color:#087f73;
-  padding:7px 10px;
-  border-radius:8px;
-  font-weight:bold
-}
-
-.card,
-.market-order,
-.offer-card,
-.trade-card,
-.message-card{
-  background:#fff;
-  border:1px solid #dfe7e9;
-  border-radius:15px;
-  overflow:hidden
-}
-
-.card{
-  border-radius:17px;
-  padding:18px
-}
-
-.order-tabs{
-  display:flex;
-  gap:8px;
-  margin-bottom:16px
-}
-
-.order-tab{
-  flex:1;
-  padding:12px;
-  border:none;
-  border-radius:10px;
-  background:#edf3f3;
-  color:#71808a;
-  font-weight:bold
-}
-
-.order-tab.active.buy{
-  background:#087f73;
-  color:#fff
-}
-
-.order-tab.active.sell{
-  background:#d72c50;
-  color:#fff
-}
-
-.field{
-  margin-bottom:14px
-}
-
-.field label{
-  display:block;
-  color:#71808a;
-  font-size:13px;
-  margin-bottom:7px
-}
-
-.select-box,
-.input-box{
-  width:100%;
-  background:#f5f8f8;
-  border:1px solid #dce5e7;
-  border-radius:10px;
-  padding:13px;
-  outline:none;
-  font-size:15px
-}
-
-.input-box{
-  display:flex;
-  align-items:center;
-  padding:0
-}
-
-.input-box input{
-  width:100%;
-  padding:13px;
-  background:transparent;
-  border:none;
-  outline:none;
-  font-size:16px;
-  min-width:0
-}
-
-.currency{
-  padding:0 13px;
-  color:#087f73;
-  font-weight:bold;
-  white-space:nowrap
-}
-
-.select-box:focus,
-.input-box:focus-within,
-.modal-box input:focus,
-.modal-box select:focus,
-.modal-box textarea:focus{
-  border-color:#087f73;
-  box-shadow:0 0 0 3px rgba(8,127,115,.08)
-}
-
-.create-btn{
-  width:100%;
-  padding:14px;
-  border:none;
-  border-radius:10px;
-  background:linear-gradient(135deg,#064e46,#10a889);
-  color:#fff;
-  font-size:16px;
-  font-weight:bold
-}
-
-.create-btn.sell{
-  background:linear-gradient(135deg,#a91f3d,#d72c50)
-}
-
-.fee-card{
-  margin-top:14px;
-  background:#f7fbfa;
-  border:1px solid #d7ebe7;
-  border-radius:13px;
-  padding:14px
-}
-
-.fee-title{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:10px
-}
-
-.fee-badge{
-  background:#e2f5ef;
-  color:#087f73;
-  border-radius:7px;
-  padding:5px 8px;
-  font-size:11px;
-  font-weight:bold
-}
-
-.fee-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  padding:6px 0;
-  font-size:13px
-}
-
-.fee-row span:first-child{
-  color:#71808a
-}
-
-.fee-row strong{
-  text-align:right
-}
-
-.fee-total{
-  border-top:1px solid #dce9e7;
-  margin-top:5px;
-  padding-top:10px
-}
-
-.fee-note{
-  margin-top:8px;
-  color:#89949b;
-  font-size:11px;
-  line-height:1.4
-}
-
-.order-list,
-.offer-list,
-.trade-list,
-.transaction-list,
-.message-list{
-  display:flex;
-  flex-direction:column;
-  gap:10px
-}
-
-.order-main,
-.offer-main,
-.trade-main,
-.message-main{
-  padding:16px
-}
-
-.row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px
-}
-
-.order-title{
-  font-weight:bold;
-  font-size:16px
-}
-
-.order-pair{
-  color:#087f73;
-  font-weight:bold;
-  margin-top:4px;
-  font-size:13px
-}
-
-.type{
-  padding:6px 9px;
-  border-radius:8px;
-  font-size:12px;
-  font-weight:bold;
-  white-space:nowrap
-}
-
-.buy-type{
-  background:#e2f5ef;
-  color:#087f73
-}
-
-.sell-type{
-  background:#fde8ed;
-  color:#d72c50
-}
-
-.details{
-  padding:15px 16px;
-  border-top:1px solid #e5ebec;
-  background:#fafcfc
-}
-
-.detail-row{
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  margin-bottom:9px;
-  font-size:13px
-}
-
-.detail-row:last-child{
-  margin-bottom:0
-}
-
-.detail-row span:first-child{
-  color:#7a8790
-}
-
-.detail-row strong{
-  text-align:right;
-  overflow-wrap:anywhere
-}
-
-.action-row{
-  display:flex;
-  gap:8px;
-  margin-top:12px
-}
-
-.small-btn{
-  flex:1;
-  border:none;
-  border-radius:9px;
-  padding:10px;
-  font-weight:bold
-}
-
-.trade-btn{
-  background:#087f73;
-  color:#fff
-}
-
-.cancel-btn{
-  background:#fff;
-  border:1px solid #ead9dc;
-  color:#d72c50
-}
-
-.payment-btn,
-.release-btn,
-.dispute-btn,
-.message-open-btn{
-  width:100%;
-  padding:11px;
-  border:none;
-  border-radius:9px;
-  font-weight:bold;
-  margin-top:8px
-}
-
-.payment-btn{
-  background:#087f73;
-  color:#fff
-}
-
-.release-btn{
-  background:#159447;
-  color:#fff
-}
-
-.dispute-btn{
-  background:#fff5e6;
-  color:#b36b00
-}
-
-.message-open-btn{
-  background:#edf3ff;
-  color:#3159a5
+.offer:last-child{
+    border-bottom:0;
 }
 
 .offer-user{
-  font-weight:bold
+    display:flex;
+    gap:10px;
+    align-items:center;
 }
 
-.offer-meta{
-  color:#7b8790;
-  font-size:12px;
-  margin-top:5px
+.avatar{
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    background:#e8edf7;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:20px;
 }
 
-.offer-price{
-  font-size:18px;
-  font-weight:bold;
-  color:#087f73;
-  text-align:right
+.offer-name{
+    font-weight:bold;
+    font-size:14px;
 }
 
-.offer-amount{
-  margin-top:10px;
-  font-size:13px;
-  color:#596579
+.offer-info{
+    color:#777;
+    font-size:12px;
+    margin-top:3px;
 }
 
-.offer-trade{
-  width:100%;
-  margin-top:12px;
-  border:none;
-  padding:11px;
-  border-radius:9px;
-  background:#087f73;
-  color:#fff;
-  font-weight:bold
+.offer-btn{
+    background:#172033;
+    color:#fff;
+    padding:9px 13px;
+    border-radius:9px;
+    font-size:12px;
+    font-weight:bold;
+}
+
+/* TRADES */
+
+.trade{
+    padding:15px;
+    border-bottom:1px solid #edf0f5;
+}
+
+.trade:last-child{
+    border-bottom:0;
+}
+
+.trade-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.trade-id{
+    font-size:13px;
+    font-weight:bold;
 }
 
 .status{
-  display:inline-block;
-  padding:6px 9px;
-  border-radius:8px;
-  font-size:11px;
-  font-weight:bold;
-  background:#edf3f3;
-  color:#596579;
-  text-transform:capitalize
+    padding:6px 9px;
+    border-radius:8px;
+    font-size:11px;
+    font-weight:bold;
 }
 
-.status.active,
-.status.pending,
-.status.paid,
-.status.open{
-  background:#e2f5ef;
-  color:#087f73
+.pending{
+    background:#fff4d6;
+    color:#a36b00;
 }
 
-.status.expired,
-.status.cancelled,
-.status.closed{
-  background:#fde8ed;
-  color:#d72c50
+.closed{
+    background:#e2f8e9;
+    color:#16823c;
 }
 
-.status.disputed{
-  background:#fff2d9;
-  color:#a56a00
+.dispute{
+    background:#ffe8e8;
+    color:#d52e2e;
 }
 
-.status.completed,
-.status.released{
-  background:#e9f7eb;
-  color:#159447
+.trade-details{
+    margin-top:9px;
+    color:#687080;
+    font-size:13px;
+    line-height:1.6;
 }
 
-.trade-number{
-  color:#087f73;
-  font-size:12px;
-  font-weight:bold;
-  margin-top:4px
+.trade-actions{
+    margin-top:11px;
+    display:flex;
+    gap:8px;
 }
 
-.trade-info{
-  margin-top:12px
+.small-btn{
+    padding:8px 11px;
+    border-radius:8px;
+    background:#eef2f8;
+    font-size:12px;
+    font-weight:bold;
 }
 
-.trade-expiry{
-  margin-top:8px;
-  color:#d72c50;
-  font-size:12px;
-  font-weight:bold
+.dispute-btn{
+    background:#ffe8e8;
+    color:#d52e2e;
 }
 
-.message-card.pending{
-  border-left:4px solid #087f73
-}
-
-.message-card.closed{
-  border-left:4px solid #7b8790
-}
-
-.message-card.dispute{
-  border-left:4px solid #b36b00
-}
-
-.message-title{
-  font-weight:bold;
-  font-size:14px
-}
-
-.message-meta{
-  margin-top:5px;
-  color:#7b8790;
-  font-size:12px
-}
-
-.transaction{
-  background:#fff;
-  border:1px solid #dfe7e9;
-  border-radius:13px;
-  padding:15px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px
-}
-
-.transaction-left{
-  display:flex;
-  gap:11px;
-  align-items:center;
-  min-width:0
-}
-
-.transaction-icon{
-  width:38px;
-  height:38px;
-  min-width:38px;
-  border-radius:50%;
-  background:#e2f5ef;
-  color:#087f73;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  font-weight:bold
-}
-
-.transaction-title{
-  font-weight:bold;
-  font-size:14px;
-  overflow-wrap:anywhere
-}
-
-.transaction-date{
-  color:#89949b;
-  font-size:11px;
-  margin-top:4px
-}
-
-.transaction-amount{
-  font-weight:bold;
-  font-size:14px;
-  white-space:nowrap
-}
-
-.positive{
-  color:#159447
-}
-
-.negative{
-  color:#d72c50
-}
+/* EMPTY */
 
 .empty{
-  background:#fff;
-  border:1px dashed #ccd8da;
-  border-radius:15px;
-  padding:30px 18px;
-  text-align:center;
-  color:#7b8790
+    padding:28px 16px;
+    text-align:center;
+    color:#7a8291;
+    font-size:13px;
 }
 
-.empty-icon{
-  font-size:34px;
-  margin-bottom:10px
+/* MODAL */
+
+.modal-bg{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.55);
+    z-index:100;
+    align-items:flex-end;
+    justify-content:center;
+}
+
+.modal-bg.show{
+    display:flex;
 }
 
 .modal{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.5);
-  z-index:500;
-  align-items:center;
-  justify-content:center;
-  padding:18px
+    background:white;
+    width:100%;
+    max-width:600px;
+    border-radius:22px 22px 0 0;
+    padding:22px;
+    max-height:90vh;
+    overflow:auto;
 }
 
-.modal.show{
-  display:flex
+.modal-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:18px;
 }
 
-.modal-box{
-  width:100%;
-  max-width:430px;
-  max-height:90vh;
-  overflow:auto;
-  background:#fff;
-  border-radius:18px;
-  padding:20px;
-  box-shadow:0 20px 50px rgba(0,0,0,.2)
+.modal-title{
+    font-size:19px;
+    font-weight:800;
 }
 
-.modal-box h3{
-  margin-bottom:15px
+.close{
+    width:36px;
+    height:36px;
+    border-radius:50%;
+    background:#edf0f5;
+    font-size:18px;
 }
 
-.modal-box input,
-.modal-box select,
-.modal-box textarea{
-  width:100%;
-  border:1px solid #dfe4eb;
-  border-radius:10px;
-  padding:11px;
-  margin-bottom:10px;
-  outline:none;
-  font-size:14px
+.input-group{
+    margin-bottom:14px;
 }
 
-.modal-box textarea{
-  min-height:90px;
-  resize:vertical
+.input-group label{
+    display:block;
+    font-size:13px;
+    font-weight:bold;
+    margin-bottom:7px;
 }
 
-.modal-actions{
-  display:flex;
-  gap:8px;
-  margin-top:5px
+.input{
+    width:100%;
+    padding:13px;
+    border:1px solid #dce1ea;
+    border-radius:11px;
+    outline:none;
+    font-size:14px;
 }
 
-.modal-actions button{
-  flex:1;
-  padding:11px;
-  border:none;
-  border-radius:10px;
-  font-weight:bold
+.input:focus{
+    border-color:#3974df;
 }
 
-.close-btn{
-  background:#edf0f4;
-  color:#172033
+.primary{
+    width:100%;
+    background:#172033;
+    color:#fff;
+    padding:14px;
+    border-radius:11px;
+    font-weight:bold;
+    margin-top:5px;
 }
 
-.confirm-btn{
-  background:#087f73;
-  color:#fff
+.note{
+    background:#f3f6fa;
+    padding:12px;
+    border-radius:10px;
+    margin-bottom:14px;
+    font-size:12px;
+    color:#5e6675;
+    line-height:1.5;
 }
 
-.address-info{
-  background:#f7fbfa;
-  border:1px solid #d7ebe7;
-  border-radius:11px;
-  padding:12px;
-  margin-bottom:12px;
-  font-size:12px;
-  line-height:1.45;
-  color:#596579
+.message{
+    display:none;
+    margin-bottom:14px;
+    padding:11px;
+    border-radius:9px;
+    font-size:13px;
 }
 
-.address-info strong{
-  color:#087f73
+.message.show{
+    display:block;
 }
+
+.message.error{
+    background:#ffe8e8;
+    color:#c72e2e;
+}
+
+.message.success{
+    background:#e4f8ea;
+    color:#16823c;
+}
+
+/* NAV */
 
 .bottom-nav{
-  position:fixed;
-  left:0;
-  right:0;
-  bottom:0;
-  height:72px;
-  background:#fff;
-  border-top:1px solid #dfe7e9;
-  display:flex;
-  justify-content:space-around;
-  align-items:center;
-  z-index:300;
-  box-shadow:0 -4px 15px rgba(0,0,0,.05)
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    height:65px;
+    background:#fff;
+    border-top:1px solid #e4e8ef;
+    display:flex;
+    justify-content:center;
+    z-index:50;
 }
 
-.bottom-nav a{
-  color:#7b8790;
-  text-decoration:none;
-  text-align:center;
-  font-size:11px;
-  min-width:55px
+.nav-inner{
+    width:100%;
+    max-width:850px;
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
 }
 
-.bottom-nav a.active{
-  color:#087f73;
-  font-weight:bold
+.nav-item{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    gap:3px;
+    color:#7a8291;
+    text-decoration:none;
+    font-size:10px;
 }
 
-.nav-icon{
-  display:block;
-  font-size:21px;
-  margin-bottom:4px
+.nav-item span:first-child{
+    font-size:20px;
 }
 
-.live-nav{
-  color:#ef3155!important
+.nav-item.active{
+    color:#172033;
+    font-weight:bold;
 }
 
-.toast{
-  position:fixed;
-  left:50%;
-  bottom:90px;
-  transform:translateX(-50%);
-  background:#172033;
-  color:#fff;
-  padding:12px 16px;
-  border-radius:10px;
-  font-size:13px;
-  z-index:1000;
-  display:none;
-  max-width:90%;
-  text-align:center
+/* LOADING */
+
+.loading{
+    opacity:.6;
+    pointer-events:none;
 }
 
-.toast.show{
-  display:block
+.spinner{
+    display:inline-block;
+    width:13px;
+    height:13px;
+    border:2px solid #fff;
+    border-top-color:transparent;
+    border-radius:50%;
+    animation:spin .7s linear infinite;
 }
 
-.toast.success{
-  background:#087f73
+@keyframes spin{
+    to{transform:rotate(360deg);}
 }
 
-.toast.error{
-  background:#b4233f
-}
+@media(max-width:430px){
+    .actions{
+        gap:7px;
+    }
 
-.toast.warning{
-  background:#9a6500
-}
+    .action{
+        padding:13px 5px;
+        font-size:12px;
+    }
 
-@media(max-width:450px){
-
-  .container{
-    padding:14px
-  }
-
-  .brand-name{
-    font-size:17px
-  }
-
-  .security{
-    font-size:11px
-  }
-
-  .balance-diamond{
-    font-size:25px
-  }
-
-  .quick-actions button,
-  .trade-actions button{
-    font-size:11px
-  }
-
-  .action-row{
-    flex-direction:column
-  }
-
-  .offer-price{
-    font-size:16px
-  }
-
-  .transaction{
-    align-items:flex-start
-  }
-
-  .transaction-amount{
-    font-size:13px
-  }
-
-  .bottom-nav{
-    height:70px
-  }
-
-  .section-title h2{
-    font-size:17px
-  }
-
-  .view-btn,
-  .refresh-btn{
-    padding:6px 7px;
-    font-size:11px
-  }
-
+    .balance{
+        font-size:27px;
+    }
 }
 </style>
 </head>
 
 <body>
 
-<header>
+<header class="header">
 
-  <div class="brand">
-
-    <div class="brand-logo" aria-label="P2P Social logo">
-      <div class="p-left"></div>
-      <div class="p-right"></div>
-      <div class="center-dot"></div>
+    <div class="logo">
+        P2P Social
     </div>
 
-    <div class="brand-name">
-      P2P <span>Social</span>
+    <div class="header-right">
+
+        <button
+            class="icon-btn"
+            onclick="refreshWallet()"
+            title="Refresh">
+            🔄
+        </button>
+
+        <button
+            class="logout-btn"
+            onclick="logout()">
+            Logout
+        </button>
+
     </div>
-
-  </div>
-
-  <div class="security">
-    🔒 Secure
-  </div>
 
 </header>
 
+
 <main class="container">
 
-<!-- =====================================================
-WALLET BALANCE
-===================================================== -->
+    <!-- WALLET -->
 
-<section class="balance-card">
+    <section class="wallet-card">
 
-  <div class="balance-top">
+        <div class="wallet-top">
 
-    <div class="label">
-      WALLET BALANCE
-    </div>
+            <div class="wallet-title">
+                💰 Wallet
+            </div>
 
-    <button
-      type="button"
-      id="balanceToggle"
-      class="balance-toggle"
-      onclick="toggleBalance()">
-      👁️ Hide
-    </button>
+            <button
+                class="visibility"
+                onclick="toggleBalance()"
+                id="visibilityBtn">
+                👁️
+            </button>
 
-  </div>
+        </div>
 
-  <div
-    id="balanceDiamond"
-    class="balance-diamond">
-    0 💎
-  </div>
 
-  <div
-    id="balanceUsdtMini"
-    class="balance-usdt-mini">
-    USDT: 0.00
-  </div>
+        <div class="balance-label">
+            USDT Balance
+        </div>
 
-  <div class="available">
-    Available for P2P trading
-  </div>
+        <div
+            class="balance"
+            id="usdtBalance">
+            0.00 USDT
+        </div>
 
-  <div class="asset-note">
-    💎 Diamonds and USDT are separate assets.
-    Diamonds are not displayed or converted as USDT.
-  </div>
 
-</section>
+        <div
+            class="wallet-address"
+            id="walletAddress">
+            Wallet address loading...
+        </div>
 
-<!-- =====================================================
-QUICK ACTIONS
-===================================================== -->
 
-<div class="quick-actions">
+        <div class="refresh-row">
 
-  <button
-    type="button"
-    onclick="openDeposit()">
+            <div
+                class="status-text"
+                id="balanceStatus">
+                Checking balance...
+            </div>
 
-    <span class="action-icon">＋</span>
-    Deposit USDT
+            <button
+                class="refresh-btn"
+                onclick="refreshWallet()"
+                id="refreshBtn">
+                🔃 Refresh
+            </button>
 
-  </button>
+        </div>
 
-  <button
-    type="button"
-    onclick="openWithdraw()">
+    </section>
 
-    <span class="action-icon">↗</span>
-    Withdraw USDT
 
-  </button>
+    <!-- DIAMONDS -->
 
-  <button
-    type="button"
-    onclick="showHistory()">
+    <section class="diamond-card">
 
-    <span class="action-icon">◷</span>
-    History
+        <div class="diamond-row">
 
-  </button>
+            <div>
+                <div class="diamond-title">
+                    💎 Diamonds
+                </div>
 
-</div>
+                <div class="offer-info">
+                    Diamonds are separate from USDT
+                </div>
+            </div>
 
-<!-- =====================================================
-TRADE ACTIONS
-===================================================== -->
+            <div
+                class="diamond-value"
+                id="diamondBalance">
+                0 💎
+            </div>
 
-<div class="trade-actions">
+        </div>
 
-  <button
-    type="button"
-    class="send-btn"
-    onclick="openSend()">
+    </section>
 
-    💎 Send
 
-  </button>
+    <!-- ACTIONS -->
 
-  <button
-    type="button"
-    class="buy-btn"
-    onclick="scrollToCreateOrder('buy')">
+    <section class="actions">
 
-    🟢 Buy
+        <button
+            class="action send"
+            onclick="openSend()">
 
-  </button>
+            <span class="action-icon">
+                💎
+            </span>
 
-  <button
-    type="button"
-    class="trade-btn-top"
-    onclick="scrollToOffers()">
+            Send
 
-    🤝 Trade
+        </button>
 
-  </button>
 
-</div>
+        <button
+            class="action buy"
+            onclick="openBuy()">
 
-<!-- =====================================================
-MESSAGES
-===================================================== -->
+            <span class="action-icon">
+                🟢
+            </span>
 
-<div class="section-title">
+            Buy
 
-  <h2>💬 Messages</h2>
+        </button>
 
-  <div class="section-actions">
 
-    <button
-      type="button"
-      class="view-btn"
-      onclick="openMessages()">
+        <button
+            class="action trade"
+            onclick="openTrade()">
 
-      Open
+            <span class="action-icon">
+                🤝
+            </span>
 
-    </button>
+            Trade
 
-  </div>
+        </button>
 
-</div>
+    </section>
 
-<section
-  id="messages"
-  class="message-list">
 
-  <div class="empty">
+    <!-- TRADE STATUS -->
 
-    <div class="empty-icon">
-      💬
-    </div>
+    <section class="section">
 
-    <strong>
-      No pending messages
-    </strong>
+        <div class="section-header">
 
-    <div style="margin-top:7px;">
-      Pending orders, closed orders and disputes
-      will appear here.
-    </div>
+            <div class="section-title">
+                💬 Trade Status
+            </div>
 
-  </div>
+            <div
+                class="view-all"
+                onclick="loadMyOrders()">
+                🔃 Refresh
+            </div>
 
-</section>
+        </div>
 
-<!-- =====================================================
-CREATE ORDER
-===================================================== -->
 
-<div
-  id="createOrderSection"
-  class="section-title">
+        <div id="myOrders">
 
-  <h2>Create Order</h2>
+            <div class="empty">
+                Loading orders...
+            </div>
 
-  <span>
-    P2P Market
-  </span>
+        </div>
 
-</div>
+    </section>
 
-<section class="card">
 
-  <div class="order-tabs">
+    <!-- AVAILABLE OFFERS -->
 
-    <button
-      type="button"
-      id="buyOrderTab"
-      class="order-tab active buy"
-      onclick="setOrderType('buy')">
+    <section class="section">
 
-      🟢 Buy
+        <div class="section-header">
 
-    </button>
+            <div class="section-title">
+                👥 Available Offers
+            </div>
 
-    <button
-      type="button"
-      id="sellOrderTab"
-      class="order-tab"
-      onclick="setOrderType('sell')">
+            <div
+                class="view-all"
+                onclick="viewAllOffers()">
+                View all 20
+            </div>
 
-      🔴 Sell
+        </div>
 
-    </button>
 
-  </div>
+        <div id="availableOffers">
 
-  <!-- TRADING PAIR -->
+            <div class="offer">
 
-  <div class="field">
+                <div class="offer-user">
 
-    <label for="pair">
-      Trading pair
-    </label>
+                    <div class="avatar">
+                        👤
+                    </div>
 
-    <select
-      id="pair"
-      class="select-box"
-      onchange="updateCurrency();updateFeePreview();">
+                    <div>
 
-      <option value="USDT_USD">
-        USDT / USD
-      </option>
+                        <div class="offer-name">
+                            P2P Seller
+                        </div>
 
-      <option value="USDT_EUR">
-        USDT / EUR
-      </option>
+                        <div class="offer-info">
+                            USDT • Available
+                        </div>
 
-      <option value="USDT_AED">
-        USDT / AED
-      </option>
+                    </div>
 
-      <option value="USDT_GBP">
-        USDT / GBP
-      </option>
+                </div>
 
-      <option value="USDT_USDT">
-        USDT / USDT
-      </option>
+                <button
+                    class="offer-btn"
+                    onclick="openTrade()">
+                    Trade
+                </button>
 
-      <option value="USDT_ETB">
-        USDT / ETB
-      </option>
+            </div>
 
-      <option value="USDT_NGN">
-        USDT / NGN
-      </option>
 
-      <option value="USDT_KES">
-        USDT / KES
-      </option>
+            <div class="offer">
 
-      <option value="USDT_BRL">
-        USDT / BRL
-      </option>
+                <div class="offer-user">
 
-      <option value="USDT_ARS">
-        USDT / ARS
-      </option>
+                    <div class="avatar">
+                        👤
+                    </div>
 
-      <option value="USDT_MXN">
-        USDT / MXN
-      </option>
+                    <div>
 
-      <option value="USDT_TRY">
-        USDT / TRY
-      </option>
+                        <div class="offer-name">
+                            P2P Trader
+                        </div>
 
-      <option value="USDT_PHP">
-        USDT / PHP
-      </option>
+                        <div class="offer-info">
+                            USDT • Available
+                        </div>
 
-      <option value="USDT_AUD">
-        USDT / AUD
-      </option>
+                    </div>
 
-      <option value="USDT_CAD">
-        USDT / CAD
-      </option>
+                </div>
 
-      <option value="USDT_CHF">
-        USDT / CHF
-      </option>
+                <button
+                    class="offer-btn"
+                    onclick="openTrade()">
+                    Trade
+                </button>
 
-      <option value="USDT_SGD">
-        USDT / SGD
-      </option>
+            </div>
 
-      <option value="USDT_HKD">
-        USDT / HKD
-      </option>
 
-      <option value="USDT_JPY">
-        USDT / JPY
-      </option>
+            <div class="offer">
 
-      <option value="USDT_KRY">
-        USDT / KRY
-      </option>
+                <div class="offer-user">
 
-      <option value="USDT_ZAR">
-        USDT / ZAR
-      </option>
+                    <div class="avatar">
+                        👤
+                    </div>
 
-      <option value="USDT_INR">
-        USDT / INR
-      </option>
+                    <div>
 
-    </select>
+                        <div class="offer-name">
+                            P2P Merchant
+                        </div>
 
-  </div>
+                        <div class="offer-info">
+                            USDT • Available
+                        </div>
 
-  <!-- AMOUNT -->
+                    </div>
 
-  <div class="field">
+                </div>
 
-    <label for="orderAmount">
-      Amount
-    </label>
+                <button
+                    class="offer-btn"
+                    onclick="openTrade()">
+                    Trade
+                </button>
 
-    <div class="input-box">
+            </div>
 
-      <input
-        id="orderAmount"
-        type="number"
-        min="0"
-        step="0.000001"
-        placeholder="0.00"
-        inputmode="decimal"
-        oninput="updateFeePreview()">
+        </div>
 
-      <span
-        id="amountCurrency"
-        class="currency">
-        USDT
-      </span>
-
-    </div>
-
-  </div>
-
-  <!-- PRICE -->
-
-  <div class="field">
-
-    <label for="orderPrice">
-      Price
-    </label>
-
-    <div class="input-box">
-
-      <input
-        id="orderPrice"
-        type="number"
-        min="0"
-        step="0.000001"
-        placeholder="0.00"
-        inputmode="decimal"
-        oninput="updateFeePreview()">
-
-      <span
-        id="priceCurrency"
-        class="currency">
-        USDT
-      </span>
-
-    </div>
-
-  </div>
-
-  <!-- PAYMENT -->
-
-  <div class="field">
-
-    <label for="paymentMethod">
-      Payment method
-    </label>
-
-    <select
-      id="paymentMethod"
-      class="select-box">
-
-      <option value="">
-        Select payment method
-      </option>
-
-      <option value="Telebirr">
-        🟦 PayPal
-      </option>
-
-      <option value="CBE">
-        🟪 Payoneer
-      </option>
-
-      <option value="Bank">
-        🏦 Bank Transfer
-      </option>
-
-    </select>
-
-  </div>
-
-  <!-- FEE -->
-
-  <div class="fee-card">
-
-    <div class="fee-title">
-
-      <strong>
-        💸 Platform Fee
-      </strong>
-
-      <span class="fee-badge">
-        <span id="feeRateText">
-          1%
-        </span>
-      </span>
-
-    </div>
-
-    <div class="fee-row">
-
-      <span>
-        Trade value
-      </span>
-
-      <strong id="feeTradeValue">
-        0.00 USDT
-      </strong>
-
-    </div>
-
-    <div class="fee-row">
-
-      <span>
-        Platform fee
-      </span>
-
-      <strong id="feeAmount">
-        0.00 USDT
-      </strong>
-
-    </div>
-
-    <div class="fee-row fee-total">
-
-      <span>
-        Total
-      </span>
-
-      <strong id="feeTotal">
-        0.00 USDT
-      </strong>
-
-    </div>
-
-    <div class="fee-note">
-      Frontend preview only.
-      The protected Supabase function is authoritative.
-    </div>
-
-  </div>
-
-  <button
-    type="button"
-    id="createOrderButton"
-    class="create-btn"
-    onclick="createOrder()">
-
-    Create Buy Order
-
-  </button>
-
-</section>
-
-<!-- =====================================================
-MY ORDERS
-===================================================== -->
-
-<div class="section-title">
-
-  <h2>
-    📋 My Orders
-  </h2>
-
-  <div class="section-actions">
-
-    <span id="orderCount">
-      0
-    </span>
-
-    <button
-      type="button"
-      class="view-btn"
-      onclick="showAllOrders()">
-
-      View All
-
-    </button>
-
-  </div>
-
-</div>
-
-<section
-  id="myOrders"
-  class="order-list">
-
-  <div class="empty">
-    Loading orders...
-  </div>
-
-</section>
-
-<!-- =====================================================
-AVAILABLE OFFERS
-===================================================== -->
-
-<div class="section-title">
-
-  <h2>
-    👥 Available Offers
-    (<span id="offerCount">0</span>)
-  </h2>
-
-  <div class="section-actions">
-
-    <button
-      type="button"
-      id="offerViewButton"
-      class="view-btn"
-      onclick="toggleOffers()">
-
-      View All
-
-    </button>
-
-    <button
-      type="button"
-      class="refresh-btn"
-      onclick="loadAll()">
-
-      🔃 Refresh
-
-    </button>
-
-  </div>
-
-</div>
-
-<section
-  id="offers"
-  class="offer-list">
-
-  <div class="empty">
-    Loading offers...
-  </div>
-
-</section>
-
-<!-- =====================================================
-MY TRADES
-===================================================== -->
-
-<div class="section-title">
-
-  <h2>
-    🤝 My Trades
-    (<span id="tradeCount">0</span>)
-  </h2>
-
-  <button
-    type="button"
-    id="tradeViewButton"
-    class="view-btn"
-    onclick="toggleTrades()">
-
-    View All
-
-  </button>
-
-</div>
-
-<section
-  id="trades"
-  class="trade-list">
-
-  <div class="empty">
-    Loading trades...
-  </div>
-
-</section>
-
-<!-- =====================================================
-TRANSACTION HISTORY
-===================================================== -->
-
-<div
-  id="historySection"
-  class="section-title">
-
-  <h2>
-    💳 Transaction History
-  </h2>
-
-  <button
-    type="button"
-    id="transactionViewButton"
-    class="view-btn"
-    onclick="toggleTransactions()">
-
-    View All
-
-  </button>
-
-</div>
-
-<section
-  id="transactions"
-  class="transaction-list">
-
-  <div class="empty">
-    Loading transactions...
-  </div>
-
-</section>
+    </section>
 
 </main>
 
-<!-- =====================================================
-DEPOSIT USDT
-===================================================== -->
+
+<!-- SEND MODAL -->
 
 <div
-  id="depositModal"
-  class="modal"
-  role="dialog"
-  aria-modal="true">
+    class="modal-bg"
+    id="sendModal">
 
-  <div class="modal-box">
+    <div class="modal">
 
-    <h3>
-      ➕ Deposit USDT
-    </h3>
+        <div class="modal-header">
 
-    <div class="address-info">
-      Send <strong>USDT</strong> to your
-      registered USDT deposit address.
-      The backend must verify the transaction
-      before crediting the wallet.
-    </div>
+            <div class="modal-title">
+                💎 Send USDT
+            </div>
 
-    <input
-      id="depositAmount"
-      type="number"
-      min="0.000001"
-      step="0.000001"
-      placeholder="Amount in USDT">
+            <button
+                class="close"
+                onclick="closeModal('sendModal')">
+                ×
+            </button>
 
-    <input
-      id="depositAddress"
-      maxlength="200"
-      placeholder="USDT deposit address">
+        </div>
 
-    <select id="depositNetwork">
 
-      <option value="">
-        Select USDT network
-      </option>
+        <div class="note">
+            Real blockchain transfers require a properly configured
+            secure wallet/signing system. This button does not expose
+            private keys in this page.
+        </div>
 
-      <option value="TRC20">
-        TRC20
-      </option>
 
-      <option value="ERC20">
-        ERC20
-      </option>
+        <div
+            class="message"
+            id="sendMessage">
+        </div>
 
-      <option value="BEP20">
-        BEP20
-      </option>
 
-    </select>
+        <div class="input-group">
 
-    <textarea
-      id="depositNote"
-      maxlength="300"
-      placeholder="Transaction hash / payment reference"></textarea>
+            <label>
+                Receiver TRON Address
+            </label>
 
-    <div class="modal-actions">
+            <input
+                class="input"
+                id="receiverAddress"
+                placeholder="T..."
+                autocomplete="off">
 
-      <button
-        type="button"
-        class="close-btn"
-        onclick="closeModal('depositModal')">
+        </div>
 
-        Cancel
 
-      </button>
+        <div class="input-group">
 
-      <button
-        type="button"
-        class="confirm-btn"
-        id="depositSubmitButton"
-        onclick="submitDeposit()">
+            <label>
+                Amount USDT
+            </label>
 
-        Submit Deposit
+            <input
+                class="input"
+                id="sendAmount"
+                type="number"
+                min="0"
+                step="0.000001"
+                placeholder="0.00">
 
-      </button>
+        </div>
+
+
+        <button
+            class="primary"
+            onclick="prepareSend()">
+            Send USDT
+        </button>
 
     </div>
-
-  </div>
 
 </div>
 
-<!-- =====================================================
-WITHDRAW USDT
-===================================================== -->
+
+<!-- BUY MODAL -->
 
 <div
-  id="withdrawModal"
-  class="modal"
-  role="dialog"
-  aria-modal="true">
+    class="modal-bg"
+    id="buyModal">
 
-  <div class="modal-box">
+    <div class="modal">
 
-    <h3>
-      ↗ Withdraw USDT
-    </h3>
+        <div class="modal-header">
 
-    <div class="address-info">
-      Withdraw <strong>USDT</strong> to a
-      USDT wallet address.
-      The backend must validate balance,
-      network and authorization.
-    </div>
+            <div class="modal-title">
+                🟢 Buy USDT
+            </div>
 
-    <input
-      id="withdrawAmount"
-      type="number"
-      min="0.000001"
-      step="0.000001"
-      placeholder="Amount in USDT">
+            <button
+                class="close"
+                onclick="closeModal('buyModal')">
+                ×
+            </button>
 
-    <input
-      id="withdrawAddress"
-      maxlength="200"
-      placeholder="USDT withdrawal address">
+        </div>
 
-    <select id="withdrawNetwork">
 
-      <option value="">
-        Select USDT network
-      </option>
+        <div class="note">
+            Choose a P2P offer to buy USDT.
+        </div>
 
-      <option value="TRC20">
-        TRC20
-      </option>
 
-      <option value="ERC20">
-        ERC20
-      </option>
-
-      <option value="BEP20">
-        BEP20
-      </option>
-
-    </select>
-
-    <textarea
-      id="withdrawNote"
-      maxlength="300"
-      placeholder="Optional note"></textarea>
-
-    <div class="modal-actions">
-
-      <button
-        type="button"
-        class="close-btn"
-        onclick="closeModal('withdrawModal')">
-
-        Cancel
-
-      </button>
-
-      <button
-        type="button"
-        class="confirm-btn"
-        id="withdrawSubmitButton"
-        onclick="submitWithdraw()">
-
-        Request Withdraw
-
-      </button>
+        <button
+            class="primary"
+            onclick="closeModal('buyModal');openTrade();">
+            View Available Offers
+        </button>
 
     </div>
-
-  </div>
 
 </div>
 
-<!-- =====================================================
-DIAMOND SEND
-===================================================== -->
+
+<!-- TRADE MODAL -->
 
 <div
-  id="sendModal"
-  class="modal"
-  role="dialog"
-  aria-modal="true">
+    class="modal-bg"
+    id="tradeModal">
 
-  <div class="modal-box">
+    <div class="modal">
 
-    <h3>
-      💎 Send Diamonds
-    </h3>
+        <div class="modal-header">
 
-    <div class="address-info">
-      This transfers <strong>💎 Diamonds</strong>
-      only. It does not transfer USDT.
+            <div class="modal-title">
+                🤝 P2P Trade
+            </div>
+
+            <button
+                class="close"
+                onclick="closeModal('tradeModal')">
+                ×
+            </button>
+
+        </div>
+
+
+        <div
+            class="message"
+            id="tradeMessage">
+        </div>
+
+
+        <div class="input-group">
+
+            <label>
+                USDT Amount
+            </label>
+
+            <input
+                class="input"
+                id="tradeAmount"
+                type="number"
+                min="0"
+                step="0.000001"
+                placeholder="0.00">
+
+        </div>
+
+
+        <div class="input-group">
+
+            <label>
+                Trade Type
+            </label>
+
+            <select
+                class="input"
+                id="tradeType">
+
+                <option value="buy">
+                    Buy USDT
+                </option>
+
+                <option value="sell">
+                    Sell USDT
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <button
+            class="primary"
+            onclick="createTrade()">
+            Create Trade
+        </button>
+
     </div>
-
-    <input
-      id="sendRecipient"
-      maxlength="150"
-      placeholder="Recipient user ID / username">
-
-    <input
-      id="sendAmount"
-      type="number"
-      min="1"
-      step="1"
-      placeholder="Amount in 💎">
-
-    <textarea
-      id="sendNote"
-      maxlength="300"
-      placeholder="Optional message"></textarea>
-
-    <div class="modal-actions">
-
-      <button
-        type="button"
-        class="close-btn"
-        onclick="closeModal('sendModal')">
-
-        Cancel
-
-      </button>
-
-      <button
-        type="button"
-        class="confirm-btn"
-        id="sendSubmitButton"
-        onclick="submitSend()">
-
-        Send 💎
-
-      </button>
-
-    </div>
-
-  </div>
 
 </div>
 
-<!-- =====================================================
-TRADE
-===================================================== -->
 
-<div
-  id="tradeModal"
-  class="modal"
-  role="dialog"
-  aria-modal="true">
-
-  <div class="modal-box">
-
-    <h3>
-      🤝 Create Trade
-    </h3>
-
-    <div id="tradeSummary"></div>
-
-    <input
-      id="tradeAmount"
-      type="number"
-      min="0"
-      step="0.000001"
-      placeholder="Trade amount"
-      oninput="updateTradeFeePreview()">
-
-    <div
-      class="fee-card"
-      style="margin-top:4px;margin-bottom:12px;">
-
-      <div class="fee-title">
-
-        <strong>
-          💸 Platform Fee
-        </strong>
-
-        <span class="fee-badge">
-          <span id="tradeFeeRateText">
-            1%
-          </span>
-        </span>
-
-      </div>
-
-      <div class="fee-row">
-
-        <span>
-          Trade value
-        </span>
-
-        <strong id="tradeValuePreview">
-          0.00 USDT
-        </strong>
-
-      </div>
-
-      <div class="fee-row">
-
-        <span>
-          Platform fee
-        </span>
-
-        <strong id="tradeFeePreviewAmount">
-          0.00 USDT
-        </strong>
-
-      </div>
-
-      <div class="fee-row fee-total">
-
-        <span>
-          Total
-        </span>
-
-        <strong id="tradeTotalPreview">
-          0.00 USDT
-        </strong>
-
-      </div>
-
-    </div>
-
-    <div class="modal-actions">
-
-      <button
-        type="button"
-        class="close-btn"
-        onclick="closeModal('tradeModal')">
-
-        Cancel
-
-      </button>
-
-      <button
-        type="button"
-        class="confirm-btn"
-        id="tradeSubmitButton"
-        onclick="submitTrade()">
-
-        Create Trade
-
-      </button>
-
-    </div>
-
-  </div>
-
-</div>
-
-<!-- =====================================================
-DISPUTE
-===================================================== -->
-
-<div
-  id="disputeModal"
-  class="modal"
-  role="dialog"
-  aria-modal="true">
-
-  <div class="modal-box">
-
-    <h3>
-      ⚠️ Open Dispute
-    </h3>
-
-    <textarea
-      id="disputeReason"
-      maxlength="1000"
-      placeholder="Explain the problem"></textarea>
-
-    <div class="modal-actions">
-
-      <button
-        type="button"
-        class="close-btn"
-        onclick="closeModal('disputeModal')">
-
-        Cancel
-
-      </button>
-
-      <button
-        type="button"
-        class="confirm-btn"
-        id="disputeSubmitButton"
-        onclick="submitDispute()">
-
-        Open Dispute
-
-      </button>
-
-    </div>
-
-  </div>
-
-</div>
-
-<div
-  id="toast"
-  class="toast"
-  role="status"
-  aria-live="polite">
-</div>
-
-<!-- =====================================================
-BOTTOM NAVIGATION
-===================================================== -->
+<!-- BOTTOM NAV -->
 
 <nav class="bottom-nav">
 
-  <a href="index.html">
-    <span class="nav-icon">🏠</span>
-    Home
-  </a>
+    <div class="nav-inner">
 
-  <a href="live.html" class="live-nav">
-    <span class="nav-icon">🔴</span>
-    Live
-  </a>
+        <a
+            class="nav-item"
+            href="index.html">
 
-  <a href="wallet.html" class="active">
-    <span class="nav-icon">🔄</span>
-    P2P
-  </a>
+            <span>🏠</span>
+            <span>Home</span>
 
-  <a href="message.html">
-    <span class="nav-icon">💬</span>
-    Messages
-  </a>
+        </a>
 
-  <a href="profile.html">
-    <span class="nav-icon">👤</span>
-    Profile
-  </a>
+
+        <a
+            class="nav-item"
+            href="live.html">
+
+            <span>🔴</span>
+            <span>Live</span>
+
+        </a>
+
+
+        <a
+            class="nav-item"
+            href="p2p.html">
+
+            <span>🤝</span>
+            <span>P2P</span>
+
+        </a>
+
+
+        <a
+            class="nav-item"
+            href="message.html">
+
+            <span>💬</span>
+            <span>Messages</span>
+
+        </a>
+
+
+        <a
+            class="nav-item"
+            href="profile.html">
+
+            <span>👤</span>
+            <span>Profile</span>
+
+        </a>
+
+    </div>
 
 </nav>
 
+
 <script>
 
-/* =====================================================
-SUPABASE
-===================================================== */
-
-const SUPABASE_URL =
-"https://mbsvuwrgigqfporxwpfr.supabase.co";
-
-const SUPABASE_PUBLISHABLE_KEY =
-"sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
-
-const supabaseClient =
-window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY
-);
-
-/* =====================================================
-CONFIG
-===================================================== */
-
-const PLATFORM_FEE_RATE = 0.01;
-
-/* =====================================================
-STATE
-===================================================== */
-
-let currentSession = null;
-let currentUser = null;
-let currentProfile = null;
-
-let orderType = "buy";
-
-let myOrders = [];
-let availableOrders = [];
-let myTrades = [];
-let myTransactions = [];
-
-let selectedOffer = null;
-let selectedTradeId = null;
-
-let realtimeChannel = null;
-let toastTimer = null;
-let isLoading = false;
-
-let balanceVisible = true;
-let offersExpanded = false;
-let tradesExpanded = false;
-let transactionsExpanded = false;
-let ordersExpanded = false;
-
-/* =====================================================
-START
-===================================================== */
-
-document.addEventListener(
-  "DOMContentLoaded",
-  startApp
-);
-
-async function startApp(){
-
-  try{
-
-    const {
-      data,
-      error
-    } =
-    await supabaseClient.auth.getSession();
-
-    if(error){
-
-      console.error(
-        "SESSION ERROR:",
-        error
-      );
-
-      showLogin();
-      return;
-
-    }
-
-    currentSession =
-      data.session;
-
-    if(!currentSession){
-
-      showLogin();
-      return;
-
-    }
-
-    currentUser =
-      currentSession.user;
-
-    updateFeeRateText();
-    updateCurrency();
-    updateFeePreview();
-
-    await loadAll();
-
-    setupRealtime();
-
-  }catch(error){
-
-    console.error(
-      "START ERROR:",
-      error
-    );
-
-    toast(
-      getErrorMessage(error),
-      "error"
-    );
-
-  }
-
-}
-
-/* =====================================================
-AUTH
-===================================================== */
-
-function showLogin(){
-
-  alert(
-    "Please login first."
-  );
-
-  window.location.href =
-    "login.html";
-
-}
-
-supabaseClient.auth.onAuthStateChange(
-  function(event,session){
-
-    currentSession =
-      session;
-
-    currentUser =
-      session?.user || null;
-
-    if(event === "SIGNED_OUT"){
-
-      if(realtimeChannel){
-
-        supabaseClient.removeChannel(
-          realtimeChannel
-        );
-
-        realtimeChannel = null;
-
-      }
-
-      window.location.href =
-        "login.html";
-
-    }
-
-  }
-);
-
-/* =====================================================
-PROFILE
-===================================================== */
-
-async function loadProfile(){
-
-  if(!currentUser){
-    return;
-  }
-
-  const {
-    data,
-    error
-  } =
-  await supabaseClient
-    .from("profiles")
-    .select("*")
-    .eq(
-      "id",
-      currentUser.id
-    )
-    .maybeSingle();
-
-  if(error){
-
-    console.error(
-      "PROFILE ERROR:",
-      error
-    );
-
-  }
-
-  currentProfile =
-    data || {};
-
-  updateBalance();
-
-}
-
-/* =====================================================
-USDT BALANCE
-===================================================== */
-
-function getProfileBalance(){
-
-  if(!currentProfile){
-    return 0;
-  }
-
-  const values = [
-
-    currentProfile.usdt_balance,
-    currentProfile.available_usdt,
-    currentProfile.balance,
-    currentProfile.wallet_balance,
-    currentProfile.available_balance,
-    currentProfile.total_balance
-
-  ];
-
-  for(const value of values){
-
-    if(
-      value !== null &&
-      value !== undefined &&
-      value !== ""
-    ){
-
-      const number =
-        Number(value);
-
-      if(Number.isFinite(number)){
-        return number;
-      }
-
-    }
-
-  }
-
-  return 0;
-
-}
-
-/* =====================================================
-DIAMOND BALANCE
-===================================================== */
-
-function getProfileDiamondBalance(){
-
-  if(!currentProfile){
-    return 0;
-  }
-
-  const values = [
-
-    currentProfile.diamond_balance,
-    currentProfile.diamonds,
-    currentProfile.gift_balance,
-    currentProfile.gift_diamonds
-
-  ];
-
-  for(const value of values){
-
-    if(
-      value !== null &&
-      value !== undefined &&
-      value !== ""
-    ){
-
-      const number =
-        Number(value);
-
-      if(Number.isFinite(number)){
-        return number;
-      }
-
-    }
-
-  }
-
-  return 0;
-
-}
-
-/* =====================================================
-BALANCE DISPLAY
-===================================================== */
-
-function updateBalance(){
-
-  const usdt =
-    getProfileBalance();
-
-  const diamonds =
-    getProfileDiamondBalance();
-
-  const diamondElement =
-    document.getElementById(
-      "balanceDiamond"
-    );
-
-  const usdtElement =
-    document.getElementById(
-      "balanceUsdtMini"
-    );
-
-  if(diamondElement){
-
-    diamondElement.textContent =
-      balanceVisible
-        ? moneyNoDecimals(diamonds) +
-          " 💎"
-        : "•••••• 💎";
-
-  }
-
-  if(usdtElement){
-
-    usdtElement.textContent =
-      balanceVisible
-        ? "USDT: " + money(usdt)
-        : "USDT: ••••••";
-
-  }
-
-}
-
-/* =====================================================
-TOGGLE
-===================================================== */
-
-function toggleBalance(){
-
-  balanceVisible =
-    !balanceVisible;
-
-  const button =
-    document.getElementById(
-      "balanceToggle"
-    );
-
-  if(button){
-
-    button.textContent =
-      balanceVisible
-        ? "👁️ Hide"
-        : "🙈 Show";
-
-  }
-
-  updateBalance();
-
-}
-
-/* =====================================================
-LOAD ALL
-===================================================== */
-
-async function loadAll(){
-
-  if(!currentUser){
-
-    showLogin();
-    return;
-
-  }
-
-  if(isLoading){
-    return;
-  }
-
-  isLoading = true;
-
-  try{
-
-    await loadProfile();
-
-    await Promise.allSettled([
-
-      loadMyOrders(),
-      loadAvailableOffers(),
-      loadTrades(),
-      loadTransactions()
-
-    ]);
-
-    await loadMessages();
-
-  }finally{
-
-    isLoading = false;
-
-  }
-
-}
-
-/* =====================================================
-ORDER TYPE
-===================================================== */
-
-function setOrderType(type){
-
-  orderType =
-    type === "sell"
-      ? "sell"
-      : "buy";
-
-  const buy =
-    document.getElementById(
-      "buyOrderTab"
-    );
-
-  const sell =
-    document.getElementById(
-      "sellOrderTab"
-    );
-
-  const button =
-    document.getElementById(
-      "createOrderButton"
-    );
-
-  if(!buy || !sell || !button){
-    return;
-  }
-
-  buy.classList.remove(
-    "active",
-    "buy"
-  );
-
-  sell.classList.remove(
-    "active",
-    "sell"
-  );
-
-  if(orderType === "buy"){
-
-    buy.classList.add(
-      "active",
-      "buy"
-    );
-
-    button.classList.remove(
-      "sell"
-    );
-
-    button.textContent =
-      "Create Buy Order";
-
-  }else{
-
-    sell.classList.add(
-      "active",
-      "sell"
-    );
-
-    button.classList.add(
-      "sell"
-    );
-
-    button.textContent =
-      "Create Sell Order";
-
-  }
-
-  updateFeePreview();
-
-}
-
-/* =====================================================
-PAIR
-===================================================== */
-
-function getPairParts(pair){
-
-  const parts =
-    String(pair || "").split("_");
-
-  return {
-
-    base:parts[0] || "",
-    quote:parts[1] || ""
-
-  };
-
-}
-
-function updateCurrency(){
-
-  const pair =
-    document.getElementById(
-      "pair"
-    );
-
-  const amount =
-    document.getElementById(
-      "amountCurrency"
-    );
-
-  const price =
-    document.getElementById(
-      "priceCurrency"
-    );
-
-  if(!pair || !amount || !price){
-    return;
-  }
-
-  const parts =
-    getPairParts(
-      pair.value
-    );
-
-  amount.textContent =
-    parts.base || "USDT";
-
-  price.textContent =
-    parts.quote || "USDT";
-
-}
-
-/* =====================================================
-FEE
-===================================================== */
-
-function calculatePlatformFee(value){
-
-  const number =
-    Number(value) || 0;
-
-  return number > 0
-    ? number * PLATFORM_FEE_RATE
-    : 0;
-
-}
-
-function calculateTotalWithFee(value){
-
-  const number =
-    Number(value) || 0;
-
-  return number +
-    calculatePlatformFee(number);
-
-}
-
-function updateFeeRateText(){
-
-  const text =
-    (PLATFORM_FEE_RATE * 100) +
-    "%";
-
-  [
-    "feeRateText",
-    "tradeFeeRateText"
-  ].forEach(id => {
-
-    const element =
-      document.getElementById(id);
-
-    if(element){
-      element.textContent = text;
-    }
-
-  });
-
-}
-
-/* =====================================================
-PAIR VALUE
-===================================================== */
-
-function calculatePairValue(
-  amount,
-  price
-){
-
-  const a =
-    Number(amount) || 0;
-
-  const p =
-    Number(price) || 0;
-
-  if(a <= 0 || p <= 0){
-    return 0;
-  }
-
-  return a * p;
-
-}
-
-/* =====================================================
-ORDER FEE PREVIEW
-===================================================== */
-
-function getOrderTradeValue(){
-
-  const amount =
-    Number(
-      document.getElementById(
-        "orderAmount"
-      )?.value
-    ) || 0;
-
-  const price =
-    Number(
-      document.getElementById(
-        "orderPrice"
-      )?.value
-    ) || 0;
-
-  return calculatePairValue(
-    amount,
-    price
-  );
-
-}
-
-function getOrderValueCurrency(){
-
-  const pair =
-    document.getElementById(
-      "pair"
-    )?.value;
-
-  return getPairParts(
-    pair
-  ).quote || "USDT";
-
-}
-
-function updateFeePreview(){
-
-  const value =
-    getOrderTradeValue();
-
-  const fee =
-    calculatePlatformFee(value);
-
-  const total =
-    calculateTotalWithFee(value);
-
-  const currency =
-    getOrderValueCurrency();
-
-  const tradeValue =
-    document.getElementById(
-      "feeTradeValue"
-    );
-
-  const feeAmount =
-    document.getElementById(
-      "feeAmount"
-    );
-
-  const feeTotal =
-    document.getElementById(
-      "feeTotal"
-    );
-
-  if(tradeValue){
-
-    tradeValue.textContent =
-      money(value) +
-      " " +
-      currency;
-
-  }
-
-  if(feeAmount){
-
-    feeAmount.textContent =
-      money(fee) +
-      " " +
-      currency;
-
-  }
-
-  if(feeTotal){
-
-    feeTotal.textContent =
-      money(total) +
-      " " +
-      currency;
-
-  }
-
-}
-
-/* =====================================================
-CREATE ORDER
-===================================================== */
-
-async function createOrder(){
-
-  if(!currentUser){
-
-    showLogin();
-    return;
-
-  }
-
-  const pair =
-    document.getElementById(
-      "pair"
-    ).value;
-
-  const amount =
-    Number(
-      document.getElementById(
-        "orderAmount"
-      ).value
-    );
-
-  const price =
-    Number(
-      document.getElementById(
-        "orderPrice"
-      ).value
-    );
-
-  const payment =
-    document.getElementById(
-      "paymentMethod"
-    ).value;
-
-  if(
-    !Number.isFinite(amount) ||
-    amount <= 0
-  ){
-
-    toast(
-      "Enter a valid amount.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-  if(
-    !Number.isFinite(price) ||
-    price <= 0
-  ){
-
-    toast(
-      "Enter a valid price.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-  if(!payment){
-
-    toast(
-      "Select a payment method.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-  const button =
-    document.getElementById(
-      "createOrderButton"
-    );
-
-  button.disabled = true;
-  button.textContent =
-    "Creating...";
-
-  try{
-
-    const {
-      error
-    } =
-    await supabaseClient.rpc(
-      "create_p2p_order",
-      {
-        p_order_type:orderType,
-        p_pair:pair,
-        p_amount:amount,
-        p_price:price,
-        p_payment_method:payment
-      }
-    );
-
-    if(error){
-
-      toast(
-        getErrorMessage(error),
-        "error"
-      );
-
-      return;
-
-    }
-
-    document.getElementById(
-      "orderAmount"
-    ).value = "";
-
-    document.getElementById(
-      "orderPrice"
-    ).value = "";
-
-    document.getElementById(
-      "paymentMethod"
-    ).value = "";
-
-    updateFeePreview();
-
-    toast(
-      "Order created successfully.",
-      "success"
-    );
-
-    await loadAll();
-
-  }catch(error){
-
-    toast(
-      getErrorMessage(error),
-      "error"
-    );
-
-  }finally{
-
-    button.disabled = false;
-
-    setOrderType(
-      orderType
-    );
-
-  }
-
-}
-
-/* =====================================================
-MY ORDERS
-===================================================== */
-
-async function loadMyOrders(){
-
-  const container =
-    document.getElementById(
-      "myOrders"
-    );
-
-  if(!container){
-    return;
-  }
-
-  container.innerHTML =
-    '<div class="empty">Loading orders...</div>';
-
-  const {
-    data,
-    error
-  } =
-  await supabaseClient
-    .from("p2p_orders")
-    .select("*")
-    .eq(
-      "user_id",
-      currentUser.id
-    )
-    .order(
-      "created_at",
-      {ascending:false}
-    );
-
-  if(error){
-
-    container.innerHTML =
-      emptyHtml(
-        "📋",
-        "Could not load orders.",
-        getErrorMessage(error)
-      );
-
-    return;
-
-  }
-
-  myOrders =
-    data || [];
-
-  const count =
-    document.getElementById(
-      "orderCount"
-    );
-
-  if(count){
-    count.textContent =
-      myOrders.length;
-  }
-
-  renderMyOrders();
-
-}
-
-function renderMyOrders(){
-
-  const container =
-    document.getElementById(
-      "myOrders"
-    );
-
-  if(!container){
-    return;
-  }
-
-  if(!myOrders.length){
-
-    container.innerHTML =
-      emptyHtml(
-        "📋",
-        "You have no orders yet."
-      );
-
-    return;
-
-  }
-
-  container.innerHTML = "";
-
-  const items =
-    ordersExpanded
-      ? myOrders
-      : myOrders.slice(0,3);
-
-  items.forEach(order => {
-
-    const type =
-      String(
-        order.order_type ||
-        order.type ||
-        "buy"
-      ).toLowerCase();
-
-    const safeType =
-      type === "sell"
-        ? "sell"
-        : "buy";
-
-    const status =
-      normalizeStatus(
-        order.status
-      );
-
-    const canCancel =
-      [
-        "active",
-        "open",
-        "pending"
-      ].includes(status);
-
-    const card =
-      document.createElement(
-        "div"
-      );
-
-    card.className =
-      "market-order";
-
-    card.innerHTML = `
-
-<div class="order-main">
-
-<div class="row">
-
-<div>
-
-<div class="order-title">
-${escapeHtml(
-  safeType.toUpperCase()
-)}
-</div>
-
-<div class="order-pair">
-${escapeHtml(
-  formatPair(order)
-)}
-</div>
-
-</div>
-
-<span class="type ${
-  safeType === "buy"
-    ? "buy-type"
-    : "sell-type"
-}">
-
-${
-  safeType === "buy"
-    ? "🟢 BUY"
-    : "🔴 SELL"
-}
-
-</span>
-
-</div>
-
-<div
-class="details"
-style="margin:12px -16px -16px;">
-
-${detail(
-  "Amount",
-  formatAmount(order)
-)}
-
-${detail(
-  "Price",
-  money(order.price) +
-  " " +
-  getPairParts(
-    order.pair ||
-    order.trading_pair
-  ).quote
-)}
-
-${detail(
-  "Payment",
-  order.payment_method ||
-  order.payment ||
-  "—"
-)}
-
-${
-  order.platform_fee != null
-  ? detail(
-      "Platform fee",
-      money(order.platform_fee)
-    )
-  : ""
-}
-
-${detail(
-  "Status",
-  `<span class="status ${statusClass(status)}">${escapeHtml(status)}</span>`
-)}
-
-${
-  canCancel
-  ? `
-<button
-type="button"
-class="cancel-btn"
-style="width:100%;margin-top:8px;padding:10px;border-radius:9px;"
-onclick="cancelOrder('${escapeJs(order.id)}')">
-
-❌ Cancel Order
-
-</button>
-`
-  : ""
-}
-
-</div>
-
-</div>
-`;
-
-    container.appendChild(
-      card
-    );
-
-  });
-
-}
-
-/* =====================================================
-CANCEL ORDER
-===================================================== */
-
-async function cancelOrder(orderId){
-
-  if(!orderId){
-    return;
-  }
-
-  if(!confirm(
-    "Cancel this order?"
-  )){
-    return;
-  }
-
-  try{
-
-    const {
-      error
-    } =
-    await supabaseClient.rpc(
-      "cancel_p2p_order",
-      {
-        p_order_id:orderId
-      }
-    );
-
-    if(error){
-
-      toast(
-        getErrorMessage(error),
-        "error"
-      );
-
-      return;
-
-    }
-
-    toast(
-      "Order cancelled.",
-      "success"
-    );
-
-    await loadAll();
-
-  }catch(error){
-
-    toast(
-      getErrorMessage(error),
-      "error"
-    );
-
-  }
-
-}
-
-/* =====================================================
-AVAILABLE OFFERS
-===================================================== */
-
-async function loadAvailableOffers(){
-
-  const container =
-    document.getElementById(
-      "offers"
-    );
-
-  if(!container){
-    return;
-  }
-
-  container.innerHTML =
-    '<div class="empty">Loading offers...</div>';
-
-  const {
-    data,
-    error
-  } =
-  await supabaseClient
-    .from("p2p_orders")
-    .select("*")
-    .neq(
-      "user_id",
-      currentUser.id
-    )
-    .in(
-      "status",
-      [
-        "active",
-        "open",
-        "pending"
-      ]
-    )
-    .order(
-      "created_at",
-      {ascending:false}
-    );
-
-  if(error){
-
-    container.innerHTML =
-      emptyHtml(
-        "👥",
-        "Could not load offers.",
-        getErrorMessage(error)
-      );
-
-    return;
-
-  }
-
-  availableOrders =
-    data || [];
-
-  const count =
-    document.getElementById(
-      "offerCount"
-    );
-
-  if(count){
-    count.textContent =
-      availableOrders.length;
-  }
-
-  renderOffers();
-
-}
-
-function renderOffers(){
-
-  const container =
-    document.getElementById(
-      "offers"
-    );
-
-  if(!container){
-    return;
-  }
-
-  if(!availableOrders.length){
-
-    container.innerHTML =
-      emptyHtml(
-        "👥",
-        "No P2P traders available right now.",
-        "New offers will appear here when traders create orders."
-      );
-
-    return;
-
-  }
-
-  container.innerHTML = "";
-
-  const items =
-    offersExpanded
-      ? availableOrders
-      : availableOrders.slice(0,3);
-
-  items.forEach(order => {
-
-    const type =
-      String(
-        order.order_type ||
-        order.type ||
-        "buy"
-      ).toLowerCase();
-
-    const parts =
-      getPairParts(
-        order.pair ||
-        order.trading_pair
-      );
-
-    const card =
-      document.createElement(
-        "div"
-      );
-
-    card.className =
-      "offer-card";
-
-    card.innerHTML = `
-
-<div class="offer-main">
-
-<div class="row">
-
-<div>
-
-<div class="offer-user">
-P2P Trader
-</div>
-
-<div class="offer-meta">
-
-${
-  type === "sell"
-    ? "🔴 Selling"
-    : "🟢 Buying"
-}
-
-· ${escapeHtml(
-  formatPair(order)
-)}
-
-</div>
-
-</div>
-
-<div class="offer-price">
-
-${money(order.price)}
-${escapeHtml(
-  parts.quote || "USDT"
-)}
-
-</div>
-
-</div>
-
-<div class="offer-amount">
-
-Available:
-
-<strong>
-${escapeHtml(
-  formatAmount(order)
-)}
-</strong>
-
-</div>
-
-<button
-type="button"
-class="offer-trade"
-onclick="openTradePage('${escapeJs(order.id)}')">
-
-🤝 Open Trade
-
-</button>
-
-</div>
-`;
-
-    container.appendChild(
-      card
-    );
-
-  });
-
-  const button =
-    document.getElementById(
-      "offerViewButton"
-    );
-
-  if(button){
-
-    button.textContent =
-      offersExpanded
-        ? "Show 3"
-        : "View All";
-
-  }
-
-}
-
-function toggleOffers(){
-
-  offersExpanded =
-    !offersExpanded;
-
-  renderOffers();
-
-}
-
-/* =====================================================
-P2P ORDER PAGE
-===================================================== */
-
-function openTradePage(orderId){
-
-  if(!orderId){
-    return;
-  }
-
-  window.location.href =
-    "p2p-order.html?order_id=" +
-    encodeURIComponent(
-      orderId
-    );
-
-}
-
-/* =====================================================
-TRADE
-===================================================== */
-
-function openTrade(orderId){
-
-  selectedOffer =
-    availableOrders.find(
-      order =>
-        String(order.id) ===
-        String(orderId)
-    );
-
-  if(!selectedOffer){
-
-    toast(
-      "Offer no longer exists. Refresh the offers.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-  const available =
-    getOfferAvailableAmount(
-      selectedOffer
-    );
-
-  if(available <= 0){
-
-    toast(
-      "This offer has no available amount.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-  const input =
-    document.getElementById(
-      "tradeAmount"
-    );
-
-  input.value = "";
-
-  input.min =
-    getMinimumTradeAmount(
-      selectedOffer
-    );
-
-  input.max =
-    available;
-
-  document.getElementById(
-    "tradeSummary"
-  ).innerHTML = `
-
-<div
-class="details"
-style="margin-bottom:12px;">
-
-${detail(
-  "Pair",
-  formatPair(selectedOffer)
-)}
-
-${detail(
-  "Price",
-  money(selectedOffer.price) +
-  " " +
-  getPairParts(
-    selectedOffer.pair ||
-    selectedOffer.trading_pair
-  ).quote
-)}
-
-${detail(
-  "Available",
-  formatAmount(selectedOffer)
-)}
-
-${detail(
-  "Payment",
-  selectedOffer.payment_method ||
-  selectedOffer.payment ||
-  "—"
-)}
-
-</div>
-`;
-
-  updateTradeFeePreview();
-
-  openModal(
-    "tradeModal"
-  );
-
-}
-
-function getOfferAvailableAmount(
-  offer
-){
-
-  if(!offer){
-    return 0;
-  }
-
-  const remainingValues = [
-
-    offer.remaining_amount,
-    offer.available_amount,
-    offer.remaining
-
-  ];
-
-  for(const value of remainingValues){
-
-    if(
-      value !== null &&
-      value !== undefined &&
-      value !== ""
-    ){
-
-      const number =
-        Number(value);
-
-      if(
-        Number.isFinite(number) &&
-        number >= 0
-      ){
-
-        return number;
-
-      }
-
-    }
-
-  }
-
-  const amount =
-    Number(
-      offer.amount
-    );
-
-  if(
-    Number.isFinite(amount) &&
-    amount >= 0
-  ){
-
-    return amount;
-
-  }
-
-  return 0;
-
-}
-
-function getMinimumTradeAmount(
-  offer
-){
-
-  if(!offer){
-    return 0.000001;
-  }
-
-  const values = [
-
-    offer.min_trade_amount,
-    offer.minimum_amount,
-    offer.min_amount
-
-  ];
-
-  for(const value of values){
-
-    const number =
-      Number(value);
-
-    if(
-      Number.isFinite(number) &&
-      number > 0
-    ){
-
-      return number;
-
-    }
-
-  }
-
-  return 0.000001;
-
-}
-
-/* =====================================================
-TRADE FEE PREVIEW
-===================================================== */
-
-function getTradeValue(){
-
-  if(!selectedOffer){
-    return 0;
-  }
-
-  const amount =
-    Number(
-      document.getElementById(
-        "tradeAmount"
-      )?.value
-    ) || 0;
-
-  return calculatePairValue(
-    amount,
-    Number(
-      selectedOffer.price
-    ) || 0
-  );
-
-}
-
 /*
-  Trade platform fee is displayed
-  in USDT.
-
-  The database RPC must be authoritative
-  for the real fee calculation.
+=====================================================
+CONFIGURATION
+=====================================================
 */
 
-function getTradeValueCurrency(){
+const BALANCE_API =
+    "/api/tron-usdt-balance";
 
-  return "USDT";
 
-}
+/*
+=====================================================
+STATE
+=====================================================
+*/
 
-function updateTradeFeePreview(){
+let walletAddress = "";
 
-  const value =
-    getTradeValue();
+let realUsdtBalance = 0;
 
-  const fee =
-    calculatePlatformFee(value);
+let balanceVisible = true;
 
-  const total =
-    calculateTotalWithFee(value);
 
-  const currency =
-    getTradeValueCurrency();
+/*
+=====================================================
+INITIALIZE
+=====================================================
+*/
 
-  const valueElement =
-    document.getElementById(
-      "tradeValuePreview"
-    );
+document.addEventListener(
+    "DOMContentLoaded",
+    async function(){
 
-  const feeElement =
-    document.getElementById(
-      "tradeFeePreviewAmount"
-    );
+        await loadWalletAddress();
 
-  const totalElement =
-    document.getElementById(
-      "tradeTotalPreview"
-    );
+        await refreshWallet();
 
-  if(valueElement){
-
-    valueElement.textContent =
-      money(value) +
-      " " +
-      currency;
-
-  }
-
-  if(feeElement){
-
-    feeElement.textContent =
-      money(fee) +
-      " " +
-      currency;
-
-  }
-
-  if(totalElement){
-
-    totalElement.textContent =
-      money(total) +
-      " " +
-      currency;
-
-  }
-
-}
-
-/* =====================================================
-SUBMIT TRADE
-===================================================== */
-
-async function submitTrade(){
-
-  if(!currentUser){
-
-    showLogin();
-    return;
-
-  }
-
-  if(!selectedOffer){
-
-    toast(
-      "Select an offer first.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-  let freshOffer = null;
-
-  try{
-
-    const {
-      data,
-      error
-    } =
-    await supabaseClient
-      .from("p2p_orders")
-      .select("*")
-      .eq(
-        "id",
-        selectedOffer.id
-      )
-      .maybeSingle();
-
-    if(error){
-
-      toast(
-        getErrorMessage(error),
-        "error"
-      );
-
-      return;
+        await loadMyOrders();
 
     }
+);
 
-    if(!data){
 
-      toast(
-        "This offer is no longer available.",
-        "warning"
-      );
+/*
+=====================================================
+GET WALLET ADDRESS
+=====================================================
 
-      closeModal(
-        "tradeModal"
-      );
+The preferred source is your logged-in user's wallet
+record.
 
-      await loadAll();
+If your authentication/database integration already
+sets localStorage.walletAddress, it will also work.
 
-      return;
+=====================================================
+*/
 
-    }
+async function loadWalletAddress(){
 
-    freshOffer =
-      data;
+    try{
 
-  }catch(error){
+        const saved =
+            localStorage.getItem(
+                "walletAddress"
+            );
 
-    toast(
-      getErrorMessage(error),
-      "error"
-    );
+        if(saved){
 
-    return;
+            walletAddress =
+                String(saved).trim();
 
-  }
+        }
 
-  selectedOffer =
-    freshOffer;
 
-  const status =
-    normalizeStatus(
-      selectedOffer.status
-    );
+        /*
+        If your existing authentication code stores
+        the wallet under another key, change only
+        this section.
+        */
 
-  if(
-    ![
-      "active",
-      "open",
-      "pending"
-    ].includes(status)
-  ){
+        if(!walletAddress){
 
-    toast(
-      "This offer is no longer active.",
-      "warning"
-    );
+            const possibleKeys = [
+                "tronAddress",
+                "userWalletAddress",
+                "wallet_address",
+                "address"
+            ];
 
-    closeModal(
-      "tradeModal"
-    );
+            for(
+                const key of possibleKeys
+            ){
 
-    await loadAll();
+                const value =
+                    localStorage.getItem(key);
 
-    return;
+                if(value){
 
-  }
+                    walletAddress =
+                        String(value).trim();
 
-  if(
-    String(
-      selectedOffer.user_id
-    ) ===
-    String(
-      currentUser.id
-    )
-  ){
+                    break;
+                }
+            }
+        }
 
-    toast(
-      "You cannot trade with your own order.",
-      "warning"
-    );
 
-    closeModal(
-      "tradeModal"
-    );
+        if(walletAddress){
 
-    return;
+            document.getElementById(
+                "walletAddress"
+            ).textContent =
+                walletAddress;
 
-  }
+        }else{
 
-  const amount =
-    Number(
-      document.getElementById(
-        "tradeAmount"
-      ).value
-    );
+            document.getElementById(
+                "walletAddress"
+            ).textContent =
+                "No TRON wallet address found";
 
-  const max =
-    getOfferAvailableAmount(
-      selectedOffer
-    );
+        }
 
-  const min =
-    getMinimumTradeAmount(
-      selectedOffer
-    );
+    }catch(error){
 
-  if(
-    !Number.isFinite(amount) ||
-    amount <= 0
-  ){
-
-    toast(
-      "Enter a valid trade amount.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-  if(amount < min){
-
-    toast(
-      "Trade amount is below the minimum allowed amount.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-  if(
-    !Number.isFinite(max) ||
-    max <= 0
-  ){
-
-    toast(
-      "This offer has no remaining amount.",
-      "warning"
-    );
-
-    closeModal(
-      "tradeModal"
-    );
-
-    await loadAll();
-
-    return;
-
-  }
-
-  if(
-    amount >
-    max +
-    0.000000001
-  ){
-
-    toast(
-      "Amount is greater than the remaining offer amount.",
-      "warning"
-    );
-
-    closeModal(
-      "tradeModal"
-    );
-
-    await loadAll();
-
-    return;
-
-  }
-
-  const normalizedAmount =
-    Number(
-      amount.toFixed(6)
-    );
-
-  if(
-    !Number.isFinite(
-      normalizedAmount
-    ) ||
-    normalizedAmount <= 0
-  ){
-
-    toast(
-      "Invalid trade amount.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-  if(!confirm(
-    "Create this P2P trade?"
-  )){
-    return;
-  }
-
-  const button =
-    document.getElementById(
-      "tradeSubmitButton"
-    );
-
-  button.disabled = true;
-  button.textContent =
-    "Creating...";
-
-  try{
-
-    const {
-      error
-    } =
-    await supabaseClient.rpc(
-      "create_p2p_trade",
-      {
-        p_order_id:
-          selectedOffer.id,
-        p_amount:
-          normalizedAmount
-      }
-    );
-
-    if(error){
-
-      if(
-        String(
-          error.message || ""
-        )
-        .toLowerCase()
-        .includes(
-          "p2p_trade_amount_check"
-        )
-      ){
-
-        toast(
-          "The database rejected this trade amount. Refresh the offer and try an allowed amount.",
-          "error"
+        console.error(
+            "Wallet address error:",
+            error
         );
 
-        await loadAll();
+    }
+
+}
+
+
+/*
+=====================================================
+VALIDATE TRON ADDRESS
+=====================================================
+*/
+
+function isValidTronAddress(address){
+
+    return /^T[1-9A-HJ-NP-Za-km-z]{33}$/
+        .test(address);
+
+}
+
+
+/*
+=====================================================
+LOAD REAL USDT BALANCE
+=====================================================
+*/
+
+async function refreshWallet(){
+
+    const status =
+        document.getElementById(
+            "balanceStatus"
+        );
+
+    const refreshBtn =
+        document.getElementById(
+            "refreshBtn"
+        );
+
+    if(!walletAddress){
+
+        status.textContent =
+            "No wallet address";
 
         return;
 
-      }
+    }
 
-      toast(
-        getErrorMessage(error),
-        "error"
-      );
 
-      return;
+    if(!isValidTronAddress(walletAddress)){
+
+        status.textContent =
+            "Invalid TRON address";
+
+        return;
 
     }
 
-    closeModal(
-      "tradeModal"
-    );
 
-    selectedOffer = null;
+    status.textContent =
+        "Checking blockchain...";
 
-    toast(
-      "Trade created successfully.",
-      "success"
-    );
+    refreshBtn.disabled = true;
 
-    await loadAll();
 
-  }catch(error){
+    try{
 
-    toast(
-      getErrorMessage(error),
-      "error"
-    );
+        const response =
+            await fetch(
+                BALANCE_API +
+                "?address=" +
+                encodeURIComponent(
+                    walletAddress
+                ),
+                {
+                    method:"GET",
+                    headers:{
+                        "Accept":
+                            "application/json"
+                    },
+                    cache:"no-store"
+                }
+            );
 
-  }finally{
 
-    button.disabled = false;
-    button.textContent =
-      "Create Trade";
+        const data =
+            await response.json();
 
-  }
 
-}
+        if(!response.ok){
 
-/* =====================================================
-LOAD TRADES
-===================================================== */
+            throw new Error(
+                data.error ||
+                "Balance request failed"
+            );
 
-async function loadTrades(){
+        }
 
-  const container =
-    document.getElementById(
-      "trades"
-    );
 
-  if(!container){
-    return;
-  }
+        /*
+        Expected backend response:
 
-  container.innerHTML =
-    '<div class="empty">Loading trades...</div>';
+        {
+            success: true,
+            address: "...",
+            usdt: 12.34,
+            rawBalance: "12340000"
+        }
+        */
 
-  const {
-    data,
-    error
-  } =
-  await supabaseClient
-    .from("p2p_trades")
-    .select("*")
-    .or(
-      "buyer_id.eq." +
-      currentUser.id +
-      ",seller_id.eq." +
-      currentUser.id
-    )
-    .order(
-      "created_at",
-      {ascending:false}
-    );
 
-  if(error){
+        if(
+            data.success !== true &&
+            typeof data.usdt === "undefined"
+        ){
 
-    container.innerHTML =
-      emptyHtml(
-        "🤝",
-        "Could not load trades.",
-        getErrorMessage(error)
-      );
+            throw new Error(
+                data.error ||
+                "Invalid balance response"
+            );
 
-    return;
+        }
 
-  }
 
-  myTrades =
-    data || [];
+        realUsdtBalance =
+            Number(data.usdt || 0);
 
-  const count =
-    document.getElementById(
-      "tradeCount"
-    );
 
-  if(count){
-    count.textContent =
-      myTrades.length;
-  }
+        updateBalanceDisplay();
 
-  renderTrades();
 
-}
+        status.textContent =
+            "Updated from TRON";
 
-function renderTrades(){
+    }catch(error){
 
-  const container =
-    document.getElementById(
-      "trades"
-    );
+        console.error(
+            "USDT balance error:",
+            error
+        );
 
-  if(!container){
-    return;
-  }
+        status.textContent =
+            "Balance check failed";
 
-  if(!myTrades.length){
+        /*
+        Do NOT replace a real balance with fake data.
+        */
 
-    container.innerHTML =
-      emptyHtml(
-        "🤝",
-        "No trades yet."
-      );
+    }finally{
 
-    return;
-
-  }
-
-  container.innerHTML = "";
-
-  const items =
-    tradesExpanded
-      ? myTrades
-      : myTrades.slice(0,3);
-
-  items.forEach(trade => {
-
-    const status =
-      normalizeStatus(
-        trade.status
-      );
-
-    const isBuyer =
-      String(
-        trade.buyer_id
-      ) ===
-      String(
-        currentUser.id
-      );
-
-    const isSeller =
-      String(
-        trade.seller_id
-      ) ===
-      String(
-        currentUser.id
-      );
-
-    const paid =
-      Boolean(
-        trade.buyer_paid ||
-        trade.payment_confirmed ||
-        trade.payment_status ===
-          "paid"
-      );
-
-    const expired =
-      Boolean(
-        trade.expires_at &&
-        new Date(
-          trade.expires_at
-        ).getTime() <
-        Date.now()
-      );
-
-    const card =
-      document.createElement(
-        "div"
-      );
-
-    card.className =
-      "trade-card";
-
-    card.innerHTML = `
-
-<div class="trade-main">
-
-<div class="row">
-
-<div>
-
-<strong>
-🤝 P2P Trade
-</strong>
-
-<div class="trade-number">
-
-Trade #
-
-${escapeHtml(
-  String(
-    trade.trade_number ||
-    trade.id ||
-    "—"
-  )
-)}
-
-</div>
-
-</div>
-
-<span class="status ${
-  statusClass(
-    expired
-      ? "expired"
-      : status
-  )
-}">
-
-${
-  expired
-    ? "Expired"
-    : escapeHtml(status)
-}
-
-</span>
-
-</div>
-
-<div class="trade-info">
-
-${detail(
-  "Amount",
-  formatTradeAmount(trade)
-)}
-
-${detail(
-  "Price",
-  money(
-    trade.price ||
-    trade.unit_price ||
-    0
-  )
-)}
-
-${
-  trade.trade_value != null
-    ? detail(
-        "Trade value",
-        money(trade.trade_value)
-      )
-    : ""
-}
-
-${
-  trade.platform_fee != null
-    ? detail(
-        "Platform fee",
-        money(trade.platform_fee)
-      )
-    : ""
-}
-
-${
-  trade.total_amount != null
-    ? detail(
-        "Total",
-        money(trade.total_amount)
-      )
-    : ""
-}
-
-${detail(
-  "Buyer",
-  isBuyer
-    ? "You"
-    : "Trader"
-)}
-
-${detail(
-  "Seller",
-  isSeller
-    ? "You"
-    : "Trader"
-)}
-
-${
-  trade.trader_commission != null
-    ? detail(
-        "Trader commission",
-        money(
-          trade.trader_commission
-        )
-      )
-    : ""
-}
-
-${
-  trade.expires_at
-    ? `
-<div class="trade-expiry">
-⏱️ Expires:
-${escapeHtml(
-  formatDate(
-    trade.expires_at
-  )
-)}
-</div>
-`
-    : ""
-}
-
-</div>
-
-${renderTradeActions(
-  trade,
-  isBuyer,
-  isSeller,
-  paid,
-  expired
-)}
-
-</div>
-`;
-
-    container.appendChild(
-      card
-    );
-
-  });
-
-  const button =
-    document.getElementById(
-      "tradeViewButton"
-    );
-
-  if(button){
-
-    button.textContent =
-      tradesExpanded
-        ? "Show 3"
-        : "View All";
-
-  }
-
-}
-
-function toggleTrades(){
-
-  tradesExpanded =
-    !tradesExpanded;
-
-  renderTrades();
-
-}
-
-/* =====================================================
-TRADE ACTIONS
-===================================================== */
-
-function renderTradeActions(
-  trade,
-  isBuyer,
-  isSeller,
-  paid,
-  expired
-){
-
-  const status =
-    normalizeStatus(
-      trade.status
-    );
-
-  if(
-    expired ||
-    [
-      "released",
-      "completed",
-      "cancelled",
-      "expired",
-      "closed"
-    ].includes(status)
-  ){
-
-    return `
-
-<button
-type="button"
-class="message-open-btn"
-onclick="openTradeMessage('${escapeJs(trade.id)}')">
-
-💬 Open Message
-
-</button>
-
-`;
-
-  }
-
-  let html = "";
-
-  if(
-    isBuyer &&
-    !paid
-  ){
-
-    html += `
-
-<button
-type="button"
-class="payment-btn"
-onclick="confirmBuyerPayment('${escapeJs(trade.id)}')">
-
-💰 I Have Paid
-
-</button>
-
-<button
-type="button"
-class="dispute-btn"
-onclick="openDispute('${escapeJs(trade.id)}')">
-
-⚠️ Open Dispute
-
-</button>
-
-<button
-type="button"
-class="cancel-btn"
-style="width:100%;margin-top:8px;padding:10px;border-radius:9px;"
-onclick="cancelTrade('${escapeJs(trade.id)}')">
-
-❌ Cancel Trade
-
-</button>
-
-`;
-
-  }
-
-  if(
-    isSeller &&
-    paid
-  ){
-
-    html += `
-
-<button
-type="button"
-class="release-btn"
-onclick="releaseTrade('${escapeJs(trade.id)}')">
-
-💵 Release Trade
-
-</button>
-
-<button
-type="button"
-class="dispute-btn"
-onclick="openDispute('${escapeJs(trade.id)}')">
-
-⚠️ Open Dispute
-
-</button>
-
-`;
-
-  }
-
-  if(
-    isBuyer &&
-    paid
-  ){
-
-    html += `
-
-<button
-type="button"
-class="dispute-btn"
-onclick="openDispute('${escapeJs(trade.id)}')">
-
-⚠️ Open Dispute
-
-</button>
-
-`;
-
-  }
-
-  html += `
-
-<button
-type="button"
-class="message-open-btn"
-onclick="openTradeMessage('${escapeJs(trade.id)}')">
-
-💬 Open Message
-
-</button>
-
-`;
-
-  return html;
-
-}
-
-/* =====================================================
-BUYER PAYMENT
-===================================================== */
-
-async function confirmBuyerPayment(
-  tradeId
-){
-
-  if(!tradeId){
-    return;
-  }
-
-  if(!confirm(
-    "Confirm that you have paid the seller?"
-  )){
-    return;
-  }
-
-  try{
-
-    const {
-      error
-    } =
-    await supabaseClient.rpc(
-      "buyer_confirm_payment",
-      {
-        p_trade_id:tradeId
-      }
-    );
-
-    if(error){
-
-      toast(
-        getErrorMessage(error),
-        "error"
-      );
-
-      return;
+        refreshBtn.disabled = false;
 
     }
 
-    toast(
-      "Payment confirmed.",
-      "success"
-    );
-
-    await loadAll();
-
-  }catch(error){
-
-    toast(
-      getErrorMessage(error),
-      "error"
-    );
-
-  }
-
 }
 
-/* =====================================================
-SELLER RELEASE
-===================================================== */
 
-async function releaseTrade(
-  tradeId
-){
+/*
+=====================================================
+DISPLAY BALANCE
+=====================================================
+*/
 
-  if(!tradeId){
-    return;
-  }
+function updateBalanceDisplay(){
 
-  if(!confirm(
-    "Release the trade to the buyer?"
-  )){
-    return;
-  }
+    const element =
+        document.getElementById(
+            "usdtBalance"
+        );
 
-  try{
 
-    const {
-      error
-    } =
-    await supabaseClient.rpc(
-      "seller_release_trade",
-      {
-        p_trade_id:tradeId
-      }
-    );
+    if(!balanceVisible){
 
-    if(error){
+        element.textContent =
+            "•••••• USDT";
 
-      toast(
-        getErrorMessage(error),
-        "error"
-      );
-
-      return;
+        return;
 
     }
 
-    toast(
-      "Trade released successfully.",
-      "success"
-    );
 
-    await loadAll();
-
-  }catch(error){
-
-    toast(
-      getErrorMessage(error),
-      "error"
-    );
-
-  }
+    element.textContent =
+        realUsdtBalance.toFixed(2) +
+        " USDT";
 
 }
 
-/* =====================================================
-CANCEL TRADE
-BUYER / CASH HOLDER ONLY
-===================================================== */
 
-async function cancelTrade(
-  tradeId
-){
+/*
+=====================================================
+HIDE / SHOW BALANCE
+=====================================================
+*/
 
-  if(!tradeId){
-    return;
-  }
+function toggleBalance(){
 
-  if(!confirm(
-    "Cancel this trade?"
-  )){
-    return;
-  }
+    balanceVisible =
+        !balanceVisible;
 
-  try{
 
-    const {
-      error
-    } =
-    await supabaseClient.rpc(
-      "buyer_cancel_trade",
-      {
-        p_trade_id:tradeId
-      }
-    );
+    const button =
+        document.getElementById(
+            "visibilityBtn"
+        );
 
-    if(error){
 
-      toast(
-        getErrorMessage(error),
-        "error"
-      );
+    if(balanceVisible){
 
-      return;
+        button.textContent =
+            "👁️";
+
+    }else{
+
+        button.textContent =
+            "🙈";
 
     }
 
-    toast(
-      "Trade cancelled.",
-      "success"
-    );
 
-    await loadAll();
-
-  }catch(error){
-
-    toast(
-      getErrorMessage(error),
-      "error"
-    );
-
-  }
+    updateBalanceDisplay();
 
 }
 
-/* =====================================================
-DISPUTE
-===================================================== */
 
-function openDispute(
-  tradeId
-){
-
-  if(!tradeId){
-    return;
-  }
-
-  selectedTradeId =
-    tradeId;
-
-  document.getElementById(
-    "disputeReason"
-  ).value = "";
-
-  openModal(
-    "disputeModal"
-  );
-
-}
-
-async function submitDispute(){
-
-  if(!selectedTradeId){
-
-    toast(
-      "Trade not selected.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-  const reason =
-    document.getElementById(
-      "disputeReason"
-    ).value.trim();
-
-  if(!reason){
-
-    toast(
-      "Please explain the problem.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-  const button =
-    document.getElementById(
-      "disputeSubmitButton"
-    );
-
-  button.disabled = true;
-  button.textContent =
-    "Opening...";
-
-  try{
-
-    const {
-      error
-    } =
-    await supabaseClient.rpc(
-      "open_p2p_dispute",
-      {
-        p_trade_id:
-          selectedTradeId,
-        p_reason:
-          reason
-      }
-    );
-
-    if(error){
-
-      toast(
-        getErrorMessage(error),
-        "error"
-      );
-
-      return;
-
-    }
-
-    closeModal(
-      "disputeModal"
-    );
-
-    selectedTradeId =
-      null;
-
-    toast(
-      "Dispute opened.",
-      "success"
-    );
-
-    await loadAll();
-
-  }catch(error){
-
-    toast(
-      getErrorMessage(error),
-      "error"
-    );
-
-  }finally{
-
-    button.disabled = false;
-    button.textContent =
-      "Open Dispute";
-
-  }
-
-}
-
-/* =====================================================
-DEPOSIT USDT
-===================================================== */
-
-function openDeposit(){
-
-  openModal(
-    "depositModal"
-  );
-
-}
-
-async function submitDeposit(){
-
-  if(!currentUser){
-
-    showLogin();
-    return;
-
-  }
-
-  const amount =
-    Number(
-      document.getElementById(
-        "depositAmount"
-      ).value
-    );
-
-  const address =
-    document.getElementById(
-      "depositAddress"
-    ).value.trim();
-
-  const network =
-    document.getElementById(
-      "depositNetwork"
-    ).value;
-
-  const note =
-    document.getElementById(
-      "depositNote"
-    ).value.trim();
-
-  if(
-    !Number.isFinite(amount) ||
-    amount <= 0
-  ){
-
-    toast(
-      "Enter a valid USDT deposit amount.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-  if(!address){
-
-    toast(
-      "Enter the USDT deposit address.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-  if(!network){
-
-    toast(
-      "Select the USDT network.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-  const button =
-    document.getElementById(
-      "depositSubmitButton"
-    );
-
-  button.disabled = true;
-  button.textContent =
-    "Submitting...";
-
-  try{
-
-    const {
-      error
-    } =
-    await supabaseClient.rpc(
-      "request_wallet_deposit",
-      {
-        p_amount:amount,
-        p_address:address,
-        p_network:network,
-        p_note:
-          note || null
-      }
-    );
-
-    if(error){
-
-      toast(
-        getErrorMessage(error),
-        "error"
-      );
-
-      return;
-
-    }
-
-    closeModal(
-      "depositModal"
-    );
-
-    document.getElementById(
-      "depositAmount"
-    ).value = "";
-
-    document.getElementById(
-      "depositAddress"
-    ).value = "";
-
-    document.getElementById(
-      "depositNetwork"
-    ).value = "";
-
-    document.getElementById(
-      "depositNote"
-    ).value = "";
-
-    toast(
-      "USDT deposit request submitted.",
-      "success"
-    );
-
-    await loadAll();
-
-  }catch(error){
-
-    toast(
-      getErrorMessage(error),
-      "error"
-    );
-
-  }finally{
-
-    button.disabled = false;
-    button.textContent =
-      "Submit Deposit";
-
-  }
-
-}
-
-/* =====================================================
-WITHDRAW USDT
-===================================================== */
-
-function openWithdraw(){
-
-  openModal(
-    "withdrawModal"
-  );
-
-}
-
-async function submitWithdraw(){
-
-  if(!currentUser){
-
-    showLogin();
-    return;
-
-  }
-
-  const amount =
-    Number(
-      document.getElementById(
-        "withdrawAmount"
-      ).value
-    );
-
-  const address =
-    document.getElementById(
-      "withdrawAddress"
-    ).value.trim();
-
-  const network =
-    document.getElementById(
-      "withdrawNetwork"
-    ).value;
-
-  const note =
-    document.getElementById(
-      "withdrawNote"
-    ).value.trim();
-
-  if(
-    !Number.isFinite(amount) ||
-    amount <= 0
-  ){
-
-    toast(
-      "Enter a valid USDT withdrawal amount.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-  if(!address){
-
-    toast(
-      "Enter the USDT withdrawal address.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-  if(!network){
-
-    toast(
-      "Select the USDT network.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-  const button =
-    document.getElementById(
-      "withdrawSubmitButton"
-    );
-
-  button.disabled = true;
-  button.textContent =
-    "Submitting...";
-
-  try{
-
-    const {
-      error
-    } =
-    await supabaseClient.rpc(
-      "request_wallet_withdrawal",
-      {
-        p_amount:amount,
-        p_address:address,
-        p_network:network,
-        p_note:
-          note || null
-      }
-    );
-
-    if(error){
-
-      toast(
-        getErrorMessage(error),
-        "error"
-      );
-
-      return;
-
-    }
-
-    closeModal(
-      "withdrawModal"
-    );
-
-    document.getElementById(
-      "withdrawAmount"
-    ).value = "";
-
-    document.getElementById(
-      "withdrawAddress"
-    ).value = "";
-
-    document.getElementById(
-      "withdrawNetwork"
-    ).value = "";
-
-    document.getElementById(
-      "withdrawNote"
-    ).value = "";
-
-    toast(
-      "USDT withdrawal request submitted.",
-      "success"
-    );
-
-    await loadAll();
-
-  }catch(error){
-
-    toast(
-      getErrorMessage(error),
-      "error"
-    );
-
-  }finally{
-
-    button.disabled = false;
-    button.textContent =
-      "Request Withdraw";
-
-  }
-
-}
-
-/* =====================================================
-DIAMOND SEND
-===================================================== */
+/*
+=====================================================
+SEND
+=====================================================
+*/
 
 function openSend(){
 
-  openModal(
-    "sendModal"
-  );
+    showModal("sendModal");
 
 }
 
-async function submitSend(){
 
-  if(!currentUser){
+function prepareSend(){
 
-    showLogin();
-    return;
+    const receiver =
+        document.getElementById(
+            "receiverAddress"
+        ).value.trim();
 
-  }
 
-  const recipient =
-    document.getElementById(
-      "sendRecipient"
-    ).value.trim();
-
-  const amount =
-    Number(
-      document.getElementById(
-        "sendAmount"
-      ).value
-    );
-
-  const note =
-    document.getElementById(
-      "sendNote"
-    ).value.trim();
-
-  if(!recipient){
-
-    toast(
-      "Enter the recipient.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-  if(
-    !Number.isFinite(amount) ||
-    amount <= 0 ||
-    !Number.isInteger(amount)
-  ){
-
-    toast(
-      "Enter a valid whole-number 💎 amount.",
-      "warning"
-    );
-
-    return;
-
-  }
-
-  const button =
-    document.getElementById(
-      "sendSubmitButton"
-    );
-
-  button.disabled = true;
-  button.textContent =
-    "Sending...";
-
-  try{
-
-    const {
-      error
-    } =
-    await supabaseClient.rpc(
-      "send_wallet_diamonds",
-      {
-        p_recipient:
-          recipient,
-        p_amount:
-          amount,
-        p_note:
-          note || null
-      }
-    );
-
-    if(error){
-
-      toast(
-        getErrorMessage(error),
-        "error"
-      );
-
-      return;
-
-    }
-
-    closeModal(
-      "sendModal"
-    );
-
-    document.getElementById(
-      "sendRecipient"
-    ).value = "";
-
-    document.getElementById(
-      "sendAmount"
-    ).value = "";
-
-    document.getElementById(
-      "sendNote"
-    ).value = "";
-
-    toast(
-      "💎 Diamonds sent successfully.",
-      "success"
-    );
-
-    await loadAll();
-
-  }catch(error){
-
-    toast(
-      getErrorMessage(error),
-      "error"
-    );
-
-  }finally{
-
-    button.disabled = false;
-    button.textContent =
-      "Send 💎";
-
-  }
-
-}
-
-/* =====================================================
-TRANSACTIONS
-===================================================== */
-
-async function loadTransactions(){
-
-  const container =
-    document.getElementById(
-      "transactions"
-    );
-
-  if(!container){
-    return;
-  }
-
-  container.innerHTML =
-    '<div class="empty">Loading transactions...</div>';
-
-  const {
-    data,
-    error
-  } =
-  await supabaseClient
-    .from("usdt_ledger")
-    .select("*")
-    .eq(
-      "user_id",
-      currentUser.id
-    )
-    .order(
-      "created_at",
-      {ascending:false}
-    )
-    .limit(50);
-
-  if(error){
-
-    container.innerHTML =
-      emptyHtml(
-        "💳",
-        "Could not load transactions.",
-        getErrorMessage(error)
-      );
-
-    return;
-
-  }
-
-  myTransactions =
-    data || [];
-
-  renderTransactions();
-
-}
-
-function getTransactionCurrency(
-  transaction
-){
-
-  return String(
-    transaction?.currency ||
-    transaction?.asset ||
-    transaction?.token ||
-    "USDT"
-  ).toUpperCase();
-
-}
-
-function renderTransactions(){
-
-  const container =
-    document.getElementById(
-      "transactions"
-    );
-
-  if(!container){
-    return;
-  }
-
-  if(!myTransactions.length){
-
-    container.innerHTML =
-      emptyHtml(
-        "💳",
-        "No transactions yet."
-      );
-
-    return;
-
-  }
-
-  container.innerHTML = "";
-
-  const items =
-    transactionsExpanded
-      ? myTransactions
-      : myTransactions.slice(0,3);
-
-  items.forEach(
-    transaction => {
-
-      const amount =
+    const amount =
         Number(
-          transaction.amount ??
-          transaction.usdt_amount ??
-          transaction.etb_amount ??
-          transaction.value ??
-          0
-        ) || 0;
-
-      const type =
-        String(
-          transaction.type ||
-          transaction.transaction_type ||
-          transaction.kind ||
-          ""
-        ).toLowerCase();
-
-      const positive =
-        [
-          "deposit",
-          "credit",
-          "receive",
-          "received",
-          "released",
-          "commission"
-        ].includes(type) ||
-        amount > 0;
-
-      const title =
-        transaction.description ||
-        transaction.title ||
-        transaction.reference ||
-        type ||
-        "Wallet transaction";
-
-      const currency =
-        getTransactionCurrency(
-          transaction
+            document.getElementById(
+                "sendAmount"
+            ).value
         );
 
-      const card =
-        document.createElement(
-          "div"
+
+    const message =
+        document.getElementById(
+            "sendMessage"
         );
 
-      card.className =
-        "transaction";
 
-      card.innerHTML = `
+    message.className =
+        "message";
 
-<div class="transaction-left">
 
-<div class="transaction-icon">
-${positive ? "↓" : "↑"}
-</div>
+    if(!isValidTronAddress(receiver)){
 
-<div>
+        showMessage(
+            message,
+            "Enter a valid TRON address.",
+            "error"
+        );
 
-<div class="transaction-title">
-${escapeHtml(title)}
-</div>
-
-<div class="transaction-date">
-${escapeHtml(
-  formatDate(
-    transaction.created_at
-  )
-)}
-</div>
-
-</div>
-
-</div>
-
-<div class="transaction-amount ${
-  positive
-    ? "positive"
-    : "negative"
-}">
-
-${positive ? "+" : "-"}
-
-${money(
-  Math.abs(amount)
-)}
-
-${escapeHtml(currency)}
-
-</div>
-`;
-
-      container.appendChild(
-        card
-      );
+        return;
 
     }
-  );
 
-  const button =
-    document.getElementById(
-      "transactionViewButton"
-    );
 
-  if(button){
+    if(!Number.isFinite(amount) ||
+       amount <= 0){
 
-    button.textContent =
-      transactionsExpanded
-        ? "Show 3"
-        : "View All";
-
-  }
-
-}
-
-function toggleTransactions(){
-
-  transactionsExpanded =
-    !transactionsExpanded;
-
-  renderTransactions();
-
-}
-
-/* =====================================================
-MESSAGES
-===================================================== */
-
-async function loadMessages(){
-
-  const messages = [];
-
-  myTrades
-    .slice(0,20)
-    .forEach(
-      trade => {
-
-        const status =
-          normalizeStatus(
-            trade.status
-          );
-
-        if(
-          [
-            "pending",
-            "paid",
-            "open"
-          ].includes(status)
-        ){
-
-          messages.push({
-            trade,
-            type:"pending"
-          });
-
-        }
-
-        if(
-          status === "disputed"
-        ){
-
-          messages.push({
-            trade,
-            type:"dispute"
-          });
-
-        }
-
-        if(
-          [
-            "completed",
-            "released",
-            "cancelled",
-            "closed",
-            "expired"
-          ].includes(status)
-        ){
-
-          messages.push({
-            trade,
-            type:"closed"
-          });
-
-        }
-
-      }
-    );
-
-  renderMessages(
-    messages.slice(0,20)
-  );
-
-}
-
-function renderMessages(
-  messages
-){
-
-  const container =
-    document.getElementById(
-      "messages"
-    );
-
-  if(!container){
-    return;
-  }
-
-  if(!messages.length){
-
-    container.innerHTML =
-      emptyHtml(
-        "💬",
-        "No pending messages",
-        "Pending orders, closed orders and disputes will appear here."
-      );
-
-    return;
-
-  }
-
-  container.innerHTML = "";
-
-  messages
-    .slice(0,3)
-    .forEach(
-      item => {
-
-        const trade =
-          item.trade;
-
-        const status =
-          normalizeStatus(
-            trade.status
-          );
-
-        const card =
-          document.createElement(
-            "div"
-          );
-
-        card.className =
-          "message-card " +
-          item.type;
-
-        card.innerHTML = `
-
-<div class="message-main">
-
-<div class="row">
-
-<div>
-
-<div class="message-title">
-
-${
-  item.type === "dispute"
-    ? "⚠️ Trade Dispute"
-    : item.type === "closed"
-      ? "🔒 Closed Order"
-      : "🕐 Pending Order"
-}
-
-</div>
-
-<div class="message-meta">
-
-Trade #
-
-${escapeHtml(
-  String(
-    trade.trade_number ||
-    trade.id ||
-    "—"
-  )
-)}
-
-</div>
-
-</div>
-
-<span class="status ${statusClass(status)}">
-
-${escapeHtml(status)}
-
-</span>
-
-</div>
-
-<div style="margin-top:10px;">
-
-${detail(
-  "Amount",
-  formatTradeAmount(trade)
-)}
-
-</div>
-
-<button
-type="button"
-class="message-open-btn"
-onclick="openTradeMessage('${escapeJs(trade.id)}')">
-
-💬 Open Trade Message
-
-</button>
-
-${
-  item.type === "dispute"
-  ? `
-<button
-type="button"
-class="dispute-btn"
-onclick="openDispute('${escapeJs(trade.id)}')">
-
-⚠️ Open Dispute
-
-</button>
-`
-  : ""
-}
-
-</div>
-`;
-
-        container.appendChild(
-          card
+        showMessage(
+            message,
+            "Enter a valid USDT amount.",
+            "error"
         );
 
-      }
+        return;
+
+    }
+
+
+    if(amount > realUsdtBalance){
+
+        showMessage(
+            message,
+            "Insufficient USDT balance.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    /*
+    IMPORTANT:
+
+    This is intentionally NOT signing a blockchain
+    transaction in frontend JavaScript.
+
+    A real transfer must use your secure wallet
+    signing architecture.
+
+    Never place a private key in wallet.html.
+    */
+
+    showMessage(
+        message,
+        "The transfer request is valid, but blockchain signing is not enabled in this frontend yet.",
+        "success"
     );
 
 }
 
-function openMessages(){
 
-  window.location.href =
-    "message.html";
+/*
+=====================================================
+BUY
+=====================================================
+*/
+
+function openBuy(){
+
+    showModal("buyModal");
 
 }
 
-function openTradeMessage(
-  tradeId
-){
 
-  if(!tradeId){
-    return;
-  }
+/*
+=====================================================
+TRADE
+=====================================================
+*/
 
-  window.location.href =
-    "message.html?trade_id=" +
-    encodeURIComponent(
-      tradeId
+function openTrade(){
+
+    showModal("tradeModal");
+
+}
+
+
+function createTrade(){
+
+    const amount =
+        Number(
+            document.getElementById(
+                "tradeAmount"
+            ).value
+        );
+
+
+    const type =
+        document.getElementById(
+            "tradeType"
+        ).value;
+
+
+    const message =
+        document.getElementById(
+            "tradeMessage"
+        );
+
+
+    message.className =
+        "message";
+
+
+    if(!Number.isFinite(amount) ||
+       amount <= 0){
+
+        showMessage(
+            message,
+            "Enter a valid trade amount.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    if(
+        type === "sell" &&
+        amount > realUsdtBalance
+    ){
+
+        showMessage(
+            message,
+            "You do not have enough USDT for this trade.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    showMessage(
+        message,
+        "Trade form validated. Connect this action to your P2P orders table to create the order.",
+        "success"
     );
 
 }
 
-/* =====================================================
-REALTIME
-===================================================== */
 
-function setupRealtime(){
+/*
+=====================================================
+ORDERS
+=====================================================
+*/
 
-  if(!currentUser){
-    return;
-  }
+async function loadMyOrders(){
 
-  if(realtimeChannel){
+    const container =
+        document.getElementById(
+            "myOrders"
+        );
 
-    supabaseClient.removeChannel(
-      realtimeChannel
-    );
 
-  }
+    /*
+    Temporary empty state.
 
-  realtimeChannel =
-    supabaseClient
-      .channel(
-        "wallet-p2p-live-" +
-        currentUser.id
-      )
+    When your Supabase orders table is connected,
+    this function can load the real orders.
+    */
 
-      .on(
-        "postgres_changes",
-        {
-          event:"*",
-          schema:"public",
-          table:"p2p_orders"
-        },
-        function(){
-
-          loadMyOrders();
-          loadAvailableOffers();
-
-        }
-      )
-
-      .on(
-        "postgres_changes",
-        {
-          event:"*",
-          schema:"public",
-          table:"p2p_trades"
-        },
-        function(){
-
-          loadTrades();
-          loadMessages();
-          loadProfile();
-
-        }
-      )
-
-      .on(
-        "postgres_changes",
-        {
-          event:"*",
-          schema:"public",
-          table:"usdt_ledger"
-        },
-        function(){
-
-          loadTransactions();
-          loadProfile();
-
-        }
-      )
-
-      .on(
-        "postgres_changes",
-        {
-          event:"*",
-          schema:"public",
-          table:"profiles",
-          filter:
-            "id=eq." +
-            currentUser.id
-        },
-        function(){
-
-          loadProfile();
-
-        }
-      )
-
-      .subscribe(
-        function(status){
-
-          console.log(
-            "Wallet realtime:",
-            status
-          );
-
-        }
-      );
+    container.innerHTML = `
+        <div class="empty">
+            No orders yet.
+        </div>
+    `;
 
 }
 
-/* =====================================================
-NAVIGATION
-===================================================== */
 
-function scrollToCreateOrder(
-  type
-){
+/*
+=====================================================
+AVAILABLE OFFERS
+=====================================================
+*/
 
-  setOrderType(
-    type
-  );
+function viewAllOffers(){
 
-  document
-    .getElementById(
-      "createOrderSection"
-    )
-    ?.scrollIntoView({
-      behavior:"smooth",
-      block:"start"
-    });
+    window.location.href =
+        "p2p.html";
 
 }
 
-function scrollToOffers(){
 
-  document
-    .getElementById(
-      "offers"
-    )
-    ?.scrollIntoView({
-      behavior:"smooth",
-      block:"start"
-    });
-
-}
-
-function showHistory(){
-
-  document
-    .getElementById(
-      "historySection"
-    )
-    ?.scrollIntoView({
-      behavior:"smooth",
-      block:"start"
-    });
-
-}
-
-function showAllOrders(){
-
-  ordersExpanded = true;
-
-  renderMyOrders();
-
-  document
-    .getElementById(
-      "myOrders"
-    )
-    ?.scrollIntoView({
-      behavior:"smooth",
-      block:"start"
-    });
-
-}
-
-/* =====================================================
+/*
+=====================================================
 MODALS
-===================================================== */
+=====================================================
+*/
 
-function openModal(id){
+function showModal(id){
 
-  const element =
-    document.getElementById(
-      id
-    );
+    const modal =
+        document.getElementById(id);
 
-  if(!element){
-    return;
-  }
+    if(modal){
 
-  element.classList.add(
-    "show"
-  );
+        modal.classList.add("show");
 
-  setTimeout(
-    () => {
-
-      const input =
-        element.querySelector(
-          "input,textarea,select"
-        );
-
-      if(input){
-        input.focus();
-      }
-
-    },
-    50
-  );
+    }
 
 }
+
 
 function closeModal(id){
 
-  const element =
-    document.getElementById(
-      id
-    );
+    const modal =
+        document.getElementById(id);
 
-  if(element){
+    if(modal){
 
-    element.classList.remove(
-      "show"
-    );
+        modal.classList.remove("show");
 
-  }
+    }
 
 }
 
-/* =====================================================
-HELPERS
-===================================================== */
-
-function formatPair(order){
-
-  const pair =
-    String(
-      order?.pair ||
-      order?.trading_pair ||
-      ""
-    );
-
-  if(pair.includes("_")){
-
-    return pair.replace(
-      "_",
-      " / "
-    );
-
-  }
-
-  return pair ||
-    "P2P";
-
-}
 
 /*
-  Uses remaining/available amount when
-  the database provides it.
+=====================================================
+CLICK OUTSIDE MODAL
+=====================================================
 */
 
-function formatAmount(order){
-
-  const amount =
-    getOfferAvailableAmount(
-      order
-    );
-
-  const parts =
-    getPairParts(
-      order?.pair ||
-      order?.trading_pair ||
-      ""
-    );
-
-  const base =
-    parts.base ||
-    String(
-      order?.pair ||
-      order?.trading_pair ||
-      ""
-    )
-    .split(/[_/:\-]/)[0] ||
-    "USDT";
-
-  return amount.toLocaleString(
-    undefined,
-    {
-      maximumFractionDigits:6
-    }
-  ) +
-  " " +
-  base;
-
-}
-
-function formatTradeAmount(
-  trade
-){
-
-  const amount =
-    Number(
-      trade?.amount ??
-      trade?.trade_amount ??
-      trade?.quantity ??
-      0
-    ) || 0;
-
-  const parts =
-    getPairParts(
-      trade?.pair ||
-      trade?.trading_pair ||
-      ""
-    );
-
-  const base =
-    parts.base ||
-    "USDT";
-
-  return amount.toLocaleString(
-    undefined,
-    {
-      maximumFractionDigits:6
-    }
-  ) +
-  " " +
-  base;
-
-}
-
-function money(value){
-
-  const number =
-    Number(value);
-
-  if(!Number.isFinite(number)){
-    return "0.00";
-  }
-
-  return number.toLocaleString(
-    undefined,
-    {
-      minimumFractionDigits:2,
-      maximumFractionDigits:6
-    }
-  );
-
-}
-
-function moneyNoDecimals(
-  value
-){
-
-  const number =
-    Number(value);
-
-  if(!Number.isFinite(number)){
-    return "0";
-  }
-
-  return number.toLocaleString(
-    undefined,
-    {
-      maximumFractionDigits:0
-    }
-  );
-
-}
-
-function formatDate(value){
-
-  if(!value){
-    return "—";
-  }
-
-  const date =
-    new Date(value);
-
-  if(
-    Number.isNaN(
-      date.getTime()
-    )
-  ){
-
-    return String(value);
-
-  }
-
-  return date.toLocaleString();
-
-}
-
-function normalizeStatus(
-  status
-){
-
-  const value =
-    String(
-      status || "pending"
-    )
-    .trim()
-    .toLowerCase();
-
-  return value ||
-    "pending";
-
-}
-
-function statusClass(
-  status
-){
-
-  const value =
-    normalizeStatus(
-      status
-    );
-
-  if(
-    [
-      "active",
-      "open",
-      "pending",
-      "paid"
-    ].includes(value)
-  ){
-
-    return value;
-
-  }
-
-  if(
-    [
-      "expired",
-      "cancelled",
-      "closed"
-    ].includes(value)
-  ){
-
-    return value;
-
-  }
-
-  if(
-    value === "disputed"
-  ){
-
-    return "disputed";
-
-  }
-
-  if(
-    [
-      "completed",
-      "released"
-    ].includes(value)
-  ){
-
-    return value;
-
-  }
-
-  return "";
-
-}
-
-function detail(
-  label,
-  value
-){
-
-  const safeLabel =
-    escapeHtml(
-      label
-    );
-
-  const stringValue =
-    String(
-      value ?? ""
-    );
-
-  const renderedValue =
-    stringValue.includes(
-      'class="status'
-    )
-      ? stringValue
-      : escapeHtml(
-          stringValue
-        );
-
-  return `
-
-<div class="detail-row">
-
-<span>
-${safeLabel}
-</span>
-
-<strong>
-${renderedValue}
-</strong>
-
-</div>
-`;
-
-}
-
-function emptyHtml(
-  icon,
-  title,
-  message
-){
-
-  return `
-
-<div class="empty">
-
-<div class="empty-icon">
-${escapeHtml(
-  icon || "ℹ️"
-)}
-</div>
-
-<strong>
-${escapeHtml(
-  title || ""
-)}
-</strong>
-
-${
-  message
-    ? `
-<div style="margin-top:7px;">
-${escapeHtml(message)}
-</div>
-`
-    : ""
-}
-
-</div>
-`;
-
-}
-
-/* =====================================================
-SECURITY HELPERS
-===================================================== */
-
-function escapeHtml(value){
-
-  return String(
-    value ?? ""
-  )
-  .replace(
-    /&/g,
-    "&amp;"
-  )
-  .replace(
-    /</g,
-    "&lt;"
-  )
-  .replace(
-    />/g,
-    "&gt;"
-  )
-  .replace(
-    /"/g,
-    "&quot;"
-  )
-  .replace(
-    /'/g,
-    "&#039;"
-  );
-
-}
-
-function escapeJs(value){
-
-  return String(
-    value ?? ""
-  )
-  .replace(
-    /\\/g,
-    "\\\\"
-  )
-  .replace(
-    /'/g,
-    "\\'"
-  )
-  .replace(
-    /"/g,
-    '\\"'
-  )
-  .replace(
-    /\r/g,
-    "\\r"
-  )
-  .replace(
-    /\n/g,
-    "\\n"
-  );
-
-}
-
-function getErrorMessage(
-  error
-){
-
-  if(!error){
-
-    return "Something went wrong.";
-
-  }
-
-  return (
-    error.message ||
-    error.details ||
-    error.hint ||
-    "Something went wrong."
-  );
-
-}
-
-/* =====================================================
-TOAST
-===================================================== */
-
-function toast(
-  message,
-  type = "normal"
-){
-
-  const element =
-    document.getElementById(
-      "toast"
-    );
-
-  if(!element){
-    return;
-  }
-
-  clearTimeout(
-    toastTimer
-  );
-
-  element.textContent =
-    String(
-      message || ""
-    );
-
-  element.classList.remove(
-    "success",
-    "error",
-    "warning"
-  );
-
-  if(
-    [
-      "success",
-      "error",
-      "warning"
-    ].includes(type)
-  ){
-
-    element.classList.add(
-      type
-    );
-
-  }
-
-  element.classList.add(
-    "show"
-  );
-
-  toastTimer =
-    setTimeout(
-      function(){
-
-        element.classList.remove(
-          "show"
-        );
-
-      },
-      3500
-    );
-
-}
-
-/* =====================================================
-OUTSIDE MODAL
-===================================================== */
-
 document.addEventListener(
-  "click",
-  function(event){
+    "click",
+    function(event){
 
-    if(
-      event.target.classList.contains(
-        "modal"
-      )
-    ){
+        if(
+            event.target.classList.contains(
+                "modal-bg"
+            )
+        ){
 
-      event.target.classList.remove(
-        "show"
-      );
-
-    }
-
-  }
-);
-
-/* =====================================================
-ESCAPE
-===================================================== */
-
-document.addEventListener(
-  "keydown",
-  function(event){
-
-    if(
-      event.key !== "Escape"
-    ){
-      return;
-    }
-
-    document
-      .querySelectorAll(
-        ".modal.show"
-      )
-      .forEach(
-        modal => {
-
-          modal.classList.remove(
-            "show"
-          );
+            event.target.classList.remove(
+                "show"
+            );
 
         }
-      );
 
-  }
+    }
 );
 
-/* =====================================================
-AUTO REFRESH
-===================================================== */
 
-setInterval(
-  async function(){
+/*
+=====================================================
+MESSAGES
+=====================================================
+*/
 
-    if(
-      currentUser &&
-      document.visibilityState ===
-      "visible"
-    ){
+function showMessage(
+    element,
+    text,
+    type
+){
 
-      try{
+    element.textContent =
+        text;
 
-        await loadProfile();
+    element.className =
+        "message show " +
+        type;
 
-      }catch(error){
+}
 
-        console.error(
-          "AUTO REFRESH ERROR:",
-          error
+
+/*
+=====================================================
+LOGOUT
+=====================================================
+*/
+
+async function logout(){
+
+    try{
+
+        /*
+        If your existing Supabase auth code
+        is already loaded, sign out here.
+
+        Example:
+
+        await supabase.auth.signOut();
+        */
+
+        localStorage.removeItem(
+            "walletAddress"
         );
 
-      }
+        localStorage.removeItem(
+            "tronAddress"
+        );
+
+        localStorage.removeItem(
+            "userWalletAddress"
+        );
+
+        localStorage.removeItem(
+            "wallet_address"
+        );
+
+        window.location.href =
+            "login.html";
+
+    }catch(error){
+
+        console.error(
+            "Logout error:",
+            error
+        );
+
+        window.location.href =
+            "login.html";
 
     }
 
-  },
-  30000
-);
-
-/* =====================================================
-CLEANUP
-===================================================== */
-
-window.addEventListener(
-  "beforeunload",
-  function(){
-
-    if(realtimeChannel){
-
-      supabaseClient.removeChannel(
-        realtimeChannel
-      );
-
-    }
-
-  }
-);
+}
 
 </script>
 

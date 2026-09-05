@@ -3034,4 +3034,2124 @@ function renderTradeModal(trade){
 
   document.getElementById(
     "tradeModalContent"
-  ).
+  ).innerHTML = `
+
+    <div class="item">
+
+      <div class="item-top">
+
+        <div>
+          <div class="item-title">
+            🤝 Trade #${tradeNumber}
+          </div>
+
+          <div class="item-sub">
+            ${
+              isBuyer
+                ? "Buyer"
+                : isSeller
+                  ? "Seller"
+                  : "Participant"
+            }
+          </div>
+        </div>
+
+        <span class="status ${statusClass(status)}">
+          ${safe(status)}
+        </span>
+
+      </div>
+
+      <div class="item-details">
+
+        <div class="detail">
+          <small>USDT Amount</small>
+          <strong>${money(amount)} USDT</strong>
+        </div>
+
+        <div class="detail">
+          <small>Payment Method</small>
+          <strong>${safe(trade.payment_method || "-")}</strong>
+        </div>
+
+        <div class="detail">
+          <small>Buyer</small>
+          <strong>${safe(trade.buyer_id || "-")}</strong>
+        </div>
+
+        <div class="detail">
+          <small>Seller</small>
+          <strong>${safe(trade.seller_id || "-")}</strong>
+        </div>
+
+        <div class="detail">
+          <small>Created</small>
+          <strong>${formatDate(trade.created_at)}</strong>
+        </div>
+
+        <div class="detail">
+          <small>Expires</small>
+          <strong>${formatDate(trade.expires_at)}</strong>
+        </div>
+
+      </div>
+
+      <div class="item-actions">
+        ${actions}
+      </div>
+
+    </div>
+
+    <div class="info" style="margin-top:12px">
+      Buyer payment, seller release, fees, commission,
+      expiration and balance changes are enforced by protected backend logic.
+    </div>
+  `;
+}
+
+
+/* =========================================================
+   CREATE TRADE
+   ========================================================= */
+
+async function createTrade(orderId){
+
+  if(!orderId){
+    return;
+  }
+
+  if(!STATE.currentUser){
+    showLogin();
+    return;
+  }
+
+  try{
+
+    const {
+      data,
+      error
+    } = await supabaseClient.rpc(
+      "create_p2p_trade",
+      {
+        p_order_id: orderId
+      }
+    );
+
+    if(error){
+      throw error;
+    }
+
+    toast(
+      "Trade created."
+    );
+
+    await loadTrades();
+    await loadMyOrders();
+    await loadAvailableOffers();
+
+  }catch(error){
+
+    console.error(error);
+
+    toast(
+      error.message ||
+      "Unable to create trade."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   BUYER PAYMENT
+   ========================================================= */
+
+async function buyerConfirmPayment(
+  tradeId
+){
+
+  if(!confirm(
+    "Confirm that you have completed the payment?"
+  )){
+    return;
+  }
+
+  try{
+
+    const {
+      error
+    } = await supabaseClient.rpc(
+      "buyer_confirm_payment",
+      {
+        p_trade_id: tradeId
+      }
+    );
+
+    if(error){
+      throw error;
+    }
+
+    toast(
+      "Payment confirmation submitted."
+    );
+
+    await loadTrades();
+
+    await openTrade(
+      tradeId
+    );
+
+  }catch(error){
+
+    console.error(error);
+
+    toast(
+      error.message ||
+      "Unable to confirm payment."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   SELLER RELEASE
+   ========================================================= */
+
+async function sellerReleaseTrade(
+  tradeId
+){
+
+  if(!confirm(
+    "Release the USDT for this trade?"
+  )){
+    return;
+  }
+
+  try{
+
+    const {
+      error
+    } = await supabaseClient.rpc(
+      "seller_release_trade",
+      {
+        p_trade_id: tradeId
+      }
+    );
+
+    if(error){
+      throw error;
+    }
+
+    toast(
+      "Trade release submitted."
+    );
+
+    await loadProfile();
+    await loadTrades();
+    await loadTransactions();
+
+    closeModal(
+      "tradeModal"
+    );
+
+  }catch(error){
+
+    console.error(error);
+
+    toast(
+      error.message ||
+      "Unable to release trade."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   CANCEL TRADE
+   ========================================================= */
+
+async function cancelTrade(
+  tradeId
+){
+
+  if(!confirm(
+    "Cancel this trade?"
+  )){
+    return;
+  }
+
+  try{
+
+    const {
+      error
+    } = await supabaseClient.rpc(
+      "buyer_cancel_trade",
+      {
+        p_trade_id: tradeId
+      }
+    );
+
+    if(error){
+      throw error;
+    }
+
+    toast(
+      "Trade cancellation submitted."
+    );
+
+    closeModal(
+      "tradeModal"
+    );
+
+    await loadTrades();
+    await loadMyOrders();
+
+  }catch(error){
+
+    console.error(error);
+
+    toast(
+      error.message ||
+      "Unable to cancel trade."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   DISPUTE
+   ========================================================= */
+
+function canShowDispute(trade){
+
+  if(!trade){
+    return false;
+  }
+
+  const status =
+    String(
+      trade.status ||
+      ""
+    ).toLowerCase();
+
+  return ![
+    "closed",
+    "completed",
+    "cancelled",
+    "resolved"
+  ].includes(status);
+}
+
+
+function openDispute(
+  tradeId
+){
+
+  document.getElementById(
+    "disputeTradeId"
+  ).value =
+    tradeId || "";
+
+  document.getElementById(
+    "disputeDetails"
+  ).value = "";
+
+  openModal(
+    "disputeModal"
+  );
+
+}
+
+
+async function submitDispute(){
+
+  const tradeId =
+    document.getElementById(
+      "disputeTradeId"
+    ).value;
+
+  const reason =
+    document.getElementById(
+      "disputeReason"
+    ).value;
+
+  const details =
+    document.getElementById(
+      "disputeDetails"
+    ).value.trim();
+
+  if(!tradeId){
+
+    toast(
+      "Trade ID is missing."
+    );
+
+    return;
+  }
+
+  if(!details){
+
+    toast(
+      "Please explain the dispute."
+    );
+
+    return;
+  }
+
+  try{
+
+    const {
+      error
+    } = await supabaseClient.rpc(
+      "open_p2p_dispute",
+      {
+        p_trade_id: tradeId,
+        p_reason: reason,
+        p_details: details
+      }
+    );
+
+    if(error){
+      throw error;
+    }
+
+    toast(
+      "Dispute opened."
+    );
+
+    closeModal(
+      "disputeModal"
+    );
+
+    closeModal(
+      "tradeModal"
+    );
+
+    await loadTrades();
+
+  }catch(error){
+
+    console.error(error);
+
+    toast(
+      error.message ||
+      "Unable to open dispute."
+    );
+
+  }
+
+}
+
+
+function openDisputeFromRecent(){
+
+  const trade =
+    STATE.trades.find(
+      t =>
+        canShowDispute(t)
+    );
+
+  if(!trade){
+
+    toast(
+      "No active trade available for dispute."
+    );
+
+    return;
+  }
+
+  openDispute(
+    trade.id ||
+    trade.trade_id
+  );
+}
+
+
+/* =========================================================
+   DEPOSIT
+   ========================================================= */
+
+async function openDeposit(){
+
+  await loadDepositAddress();
+
+  const address =
+    document.getElementById(
+      "depositAddress"
+    ).value;
+
+  document.getElementById(
+    "modalDepositAddress"
+  ).value =
+    address || "";
+
+  openModal(
+    "depositModal"
+  );
+}
+
+
+async function loadDepositAddress(){
+
+  if(!STATE.currentUser){
+    return;
+  }
+
+  /*
+    IMPORTANT:
+    This frontend does not contain the TronGrid API key.
+
+    The production backend should expose the authenticated
+    user's deposit address through a protected endpoint/RPC.
+
+    The RPC name below is optional. If your database already
+    stores the address in profiles, that address is used first.
+  */
+
+  let address =
+    STATE.profile &&
+    (
+      STATE.profile.deposit_address ||
+      STATE.profile.trc20_deposit_address ||
+      STATE.profile.usdt_deposit_address ||
+      STATE.profile.wallet_address
+    );
+
+  if(address){
+
+    document.getElementById(
+      "depositAddress"
+    ).value =
+      address;
+
+    return;
+  }
+
+  /*
+    Optional protected RPC.
+    It must be created on the backend if used.
+  */
+
+  try{
+
+    const {
+      data,
+      error
+    } = await supabaseClient.rpc(
+      "get_my_usdt_deposit_address"
+    );
+
+    if(!error){
+
+      if(
+        typeof data === "string"
+      ){
+
+        address = data;
+
+      }else if(data){
+
+        address =
+          data.address ||
+          data.deposit_address ||
+          data.trc20_address;
+      }
+
+    }
+
+  }catch(error){
+
+    console.log(
+      "Deposit address RPC unavailable:",
+      error
+    );
+
+  }
+
+  document.getElementById(
+    "depositAddress"
+  ).value =
+    address || "";
+}
+
+
+async function copyDepositAddress(){
+
+  const input =
+    document.getElementById(
+      "depositAddress"
+    );
+
+  await copyText(
+    input.value
+  );
+}
+
+
+async function copyModalDepositAddress(){
+
+  const input =
+    document.getElementById(
+      "modalDepositAddress"
+    );
+
+  await copyText(
+    input.value
+  );
+}
+
+
+/* =========================================================
+   BLOCKCHAIN BALANCE
+   ========================================================= */
+
+async function refreshBlockchainBalance(){
+
+  if(!STATE.currentUser){
+
+    showLogin();
+
+    return;
+  }
+
+  try{
+
+    toast(
+      "Checking real TRC-20 balance..."
+    );
+
+    /*
+      IMPORTANT:
+
+      There is NO TRONGRID_API_KEY here.
+
+      The secure backend/Edge Function should call
+      TronGrid and return the authenticated user's
+      real USDT balance.
+
+      Example protected Edge Function name:
+      get-trc20-balance
+
+      Configure the function server-side with:
+
+      TRONGRID_API_KEY
+
+      Never put that secret into this HTML.
+    */
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient.functions.invoke(
+        "get-trc20-balance",
+        {
+          body:{
+            user_id:
+              STATE.currentUser.id
+          }
+        }
+      );
+
+    if(error){
+      throw error;
+    }
+
+    if(!data){
+
+      throw new Error(
+        "No blockchain balance response."
+      );
+
+    }
+
+    if(
+      data.success === false
+    ){
+
+      throw new Error(
+        data.error ||
+        "Blockchain lookup failed."
+      );
+
+    }
+
+    const blockchainBalance =
+      Number(
+        data.usdt ??
+        data.balance ??
+        data.trc20_usdt ??
+        0
+      );
+
+    if(
+      !Number.isFinite(
+        blockchainBalance
+      )
+    ){
+
+      throw new Error(
+        "Invalid blockchain balance."
+      );
+
+    }
+
+    toast(
+      "Real TRC-20 balance: " +
+      money(
+        blockchainBalance
+      ) +
+      " USDT"
+    );
+
+    /*
+      Do not directly write this into the application
+      ledger from the browser.
+
+      A deposit reconciliation/crediting backend should
+      verify the transaction on-chain before crediting
+      the user's internal wallet.
+    */
+
+  }catch(error){
+
+    console.error(
+      "TRC-20 balance error:",
+      error
+    );
+
+    toast(
+      error.message ||
+      "Unable to check blockchain balance."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   DEPOSIT HISTORY
+   ========================================================= */
+
+async function loadDepositHistory(){
+
+  const container =
+    document.getElementById(
+      "depositHistory"
+    );
+
+  container.innerHTML =
+    loadingHtml();
+
+  try{
+
+    const {
+      data,
+      error
+    } = await supabaseClient
+      .from("usdt_ledger")
+      .select("*")
+      .eq(
+        "user_id",
+        STATE.currentUser.id
+      )
+      .order(
+        "created_at",
+        {
+          ascending:false
+        }
+      )
+      .limit(20);
+
+    if(error){
+      throw error;
+    }
+
+    const deposits =
+      (data || []).filter(
+        row =>
+          String(
+            row.type ||
+            row.transaction_type ||
+            ""
+          ).toLowerCase()
+          .includes("deposit")
+      );
+
+    container.innerHTML =
+      deposits.length
+        ? `
+          <div class="item">
+            ${deposits
+              .map(renderHistoryRow)
+              .join("")}
+          </div>
+        `
+        : emptyHtml(
+            "No deposit records."
+          );
+
+  }catch(error){
+
+    console.error(error);
+
+    container.innerHTML =
+      emptyHtml(
+        "Unable to load deposit history."
+      );
+
+  }
+
+}
+
+
+/* =========================================================
+   WITHDRAW
+   ========================================================= */
+
+function openWithdraw(){
+
+  document.getElementById(
+    "withdrawAmount"
+  ).value = "";
+
+  document.getElementById(
+    "withdrawAddress"
+  ).value = "";
+
+  openModal(
+    "withdrawModal"
+  );
+}
+
+
+async function submitWithdraw(){
+
+  const amount =
+    Number(
+      document.getElementById(
+        "withdrawAmount"
+      ).value
+    );
+
+  const address =
+    document.getElementById(
+      "withdrawAddress"
+    ).value.trim();
+
+  const network =
+    document.getElementById(
+      "withdrawNetwork"
+    ).value;
+
+  if(
+    !Number.isFinite(amount) ||
+    amount <= 0
+  ){
+
+    toast(
+      "Enter a valid amount."
+    );
+
+    return;
+  }
+
+  if(
+    amount >
+    STATE.usdtBalance
+  ){
+
+    toast(
+      "Insufficient available USDT."
+    );
+
+    return;
+  }
+
+  if(
+    !/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(
+      address
+    )
+  ){
+
+    toast(
+      "Enter a valid TRON address."
+    );
+
+    return;
+  }
+
+  try{
+
+    const {
+      error
+    } = await supabaseClient.rpc(
+      "request_wallet_withdrawal",
+      {
+        p_amount: amount,
+        p_address: address,
+        p_network: network
+      }
+    );
+
+    if(error){
+      throw error;
+    }
+
+    toast(
+      "Withdrawal request submitted."
+    );
+
+    closeModal(
+      "withdrawModal"
+    );
+
+    await loadProfile();
+    await loadTransactions();
+
+  }catch(error){
+
+    console.error(error);
+
+    toast(
+      error.message ||
+      "Unable to submit withdrawal."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   DIAMOND SEND
+   ========================================================= */
+
+function openSend(){
+
+  document.getElementById(
+    "diamondRecipient"
+  ).value = "";
+
+  document.getElementById(
+    "diamondAmount"
+  ).value = "";
+
+  document.getElementById(
+    "diamondMessage"
+  ).value = "";
+
+  openModal(
+    "sendModal"
+  );
+}
+
+
+async function submitDiamondSend(){
+
+  const recipient =
+    document.getElementById(
+      "diamondRecipient"
+    ).value.trim();
+
+  const amount =
+    Number(
+      document.getElementById(
+        "diamondAmount"
+      ).value
+    );
+
+  const message =
+    document.getElementById(
+      "diamondMessage"
+    ).value.trim();
+
+  if(!recipient){
+
+    toast(
+      "Enter a recipient."
+    );
+
+    return;
+  }
+
+  if(
+    !Number.isInteger(amount) ||
+    amount <= 0
+  ){
+
+    toast(
+      "Enter a valid diamond amount."
+    );
+
+    return;
+  }
+
+  if(
+    amount >
+    STATE.diamondBalance
+  ){
+
+    toast(
+      "Insufficient Diamonds."
+    );
+
+    return;
+  }
+
+  try{
+
+    const {
+      error
+    } = await supabaseClient.rpc(
+      "send_wallet_diamonds",
+      {
+        p_recipient_id: recipient,
+        p_amount: amount,
+        p_message: message || null
+      }
+    );
+
+    if(error){
+      throw error;
+    }
+
+    toast(
+      "💎 Diamonds sent."
+    );
+
+    closeModal(
+      "sendModal"
+    );
+
+    await loadProfile();
+
+  }catch(error){
+
+    console.error(error);
+
+    toast(
+      error.message ||
+      "Unable to send Diamonds."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   TRANSACTIONS
+   ========================================================= */
+
+async function loadTransactions(){
+
+  const container =
+    document.getElementById(
+      "transactionsList"
+    );
+
+  if(!STATE.currentUser){
+
+    container.innerHTML =
+      emptyHtml(
+        "Please sign in."
+      );
+
+    return;
+  }
+
+  container.innerHTML =
+    loadingHtml();
+
+  try{
+
+    const {
+      data,
+      error
+    } = await supabaseClient
+      .from("usdt_ledger")
+      .select("*")
+      .eq(
+        "user_id",
+        STATE.currentUser.id
+      )
+      .order(
+        "created_at",
+        {
+          ascending:false
+        }
+      )
+      .limit(50);
+
+    if(error){
+      throw error;
+    }
+
+    STATE.transactions =
+      data || [];
+
+    renderTransactions();
+
+  }catch(error){
+
+    console.error(error);
+
+    container.innerHTML =
+      emptyHtml(
+        "Unable to load transaction history."
+      );
+
+  }
+
+}
+
+
+function renderTransactions(){
+
+  const container =
+    document.getElementById(
+      "transactionsList"
+    );
+
+  const rows =
+    STATE.transactions || [];
+
+  document.getElementById(
+    "transactionCountLabel"
+  ).textContent =
+    "(" +
+    Math.min(
+      rows.length,
+      3
+    ) +
+    ")";
+
+  if(!rows.length){
+
+    container.innerHTML =
+      emptyHtml(
+        "No transactions yet."
+      );
+
+    return;
+  }
+
+  container.innerHTML = `
+    <div>
+      ${
+        rows
+          .slice(0,3)
+          .map(renderHistoryRow)
+          .join("")
+      }
+    </div>
+  `;
+}
+
+
+function renderHistoryRow(row){
+
+  const type =
+    String(
+      row.type ||
+      row.transaction_type ||
+      "transaction"
+    );
+
+  const amount =
+    Number(
+      row.amount ||
+      row.usdt_amount ||
+      0
+    );
+
+  const direction =
+    String(
+      row.direction ||
+      ""
+    ).toLowerCase();
+
+  const negative =
+    direction === "out" ||
+    direction === "debit" ||
+    amount < 0 ||
+    type.toLowerCase().includes(
+      "withdraw"
+    );
+
+  return `
+    <div class="history-row">
+
+      <div class="history-type">
+
+        <div class="history-icon">
+          ${
+            negative
+              ? "💸"
+              : "💰"
+          }
+        </div>
+
+        <div>
+          <strong>
+            ${safe(type)}
+          </strong>
+
+          <div class="item-sub">
+            ${formatDate(row.created_at)}
+          </div>
+        </div>
+
+      </div>
+
+      <div class="${
+        negative
+          ? "negative"
+          : "positive"
+      }">
+        ${
+          negative
+            ? "-"
+            : "+"
+        }${money(
+          Math.abs(amount)
+        )} USDT
+      </div>
+
+    </div>
+  `;
+}
+
+
+function showHistory(){
+
+  scrollToSection(
+    "transactions"
+  );
+
+  loadTransactions();
+}
+
+
+function viewAllTransactions(){
+
+  showHistory();
+
+  /*
+    The visible wallet intentionally shows only
+    recent transactions. If a dedicated history page
+    exists, this can navigate to it.
+  */
+}
+
+
+/* =========================================================
+   MESSAGES
+   ========================================================= */
+
+async function loadMessages(){
+
+  const container =
+    document.getElementById(
+      "messagesList"
+    );
+
+  if(!STATE.currentUser){
+
+    container.innerHTML =
+      emptyHtml(
+        "Please sign in."
+      );
+
+    return;
+  }
+
+  /*
+    Supports an existing messages table if available.
+    If your project uses another message table/schema,
+    keep that schema as the backend source of truth.
+  */
+
+  try{
+
+    const {
+      data,
+      error
+    } = await supabaseClient
+      .from("messages")
+      .select("*")
+      .or(
+        "sender_id.eq." +
+        STATE.currentUser.id +
+        ",receiver_id.eq." +
+        STATE.currentUser.id
+      )
+      .order(
+        "created_at",
+        {
+          ascending:false
+        }
+      )
+      .limit(3);
+
+    if(error){
+
+      /*
+        Do not break the wallet if the messages table
+        is not present in a particular deployment.
+      */
+
+      console.log(
+        "Messages query:",
+        error.message
+      );
+
+      container.innerHTML =
+        emptyHtml(
+          "No recent messages."
+        );
+
+      return;
+    }
+
+    const messages =
+      data || [];
+
+    container.innerHTML =
+      messages.length
+        ? messages.map(
+            renderMessagePreview
+          ).join("")
+        : emptyHtml(
+            "No recent messages."
+          );
+
+  }catch(error){
+
+    console.error(error);
+
+    container.innerHTML =
+      emptyHtml(
+        "No recent messages."
+      );
+
+  }
+
+}
+
+
+function renderMessagePreview(
+  message
+){
+
+  const text =
+    safe(
+      message.content ||
+      message.message ||
+      ""
+    );
+
+  return `
+    <div class="message-strip">
+
+      <div class="message-left">
+
+        <div class="message-avatar">
+          💬
+        </div>
+
+        <div>
+          <strong>
+            ${safe(
+              message.sender_name ||
+              message.username ||
+              "Message"
+            )}
+          </strong>
+
+          <div class="item-sub">
+            ${text.slice(0,70)}
+          </div>
+        </div>
+
+      </div>
+
+      ${
+        message.read === false
+          ? `<span class="badge">1</span>`
+          : ""
+      }
+
+    </div>
+  `;
+}
+
+
+function openMessages(){
+
+  window.location.href =
+    "message.html";
+}
+
+
+function openMessageForUser(
+  userId
+){
+
+  if(!userId){
+
+    openMessages();
+
+    return;
+  }
+
+  window.location.href =
+    "message.html?user_id=" +
+    encodeURIComponent(
+      userId
+    );
+}
+
+
+function openTradeMessage(
+  tradeId
+){
+
+  const trade =
+    STATE.trades.find(
+      t =>
+        String(
+          t.id ||
+          t.trade_id
+        ) === String(tradeId)
+    );
+
+  if(!trade){
+
+    openMessages();
+
+    return;
+  }
+
+  const otherUser =
+    String(trade.buyer_id) ===
+    String(STATE.currentUser.id)
+      ? trade.seller_id
+      : trade.buyer_id;
+
+  openMessageForUser(
+    otherUser
+  );
+}
+
+
+/* =========================================================
+   REALTIME
+   ========================================================= */
+
+function setupRealtime(){
+
+  cleanupRealtime();
+
+  if(!STATE.currentUser){
+    return;
+  }
+
+  const userId =
+    STATE.currentUser.id;
+
+  const ordersChannel =
+    supabaseClient
+      .channel(
+        "wallet-orders-" +
+        userId
+      )
+      .on(
+        "postgres_changes",
+        {
+          event:"*",
+          schema:"public",
+          table:"p2p_orders"
+        },
+        async () => {
+
+          await loadMyOrders();
+          await loadAvailableOffers();
+
+        }
+      )
+      .subscribe();
+
+  const tradesChannel =
+    supabaseClient
+      .channel(
+        "wallet-trades-" +
+        userId
+      )
+      .on(
+        "postgres_changes",
+        {
+          event:"*",
+          schema:"public",
+          table:"p2p_trades"
+        },
+        async () => {
+
+          await loadTrades();
+          await loadMyOrders();
+
+        }
+      )
+      .subscribe();
+
+  const ledgerChannel =
+    supabaseClient
+      .channel(
+        "wallet-ledger-" +
+        userId
+      )
+      .on(
+        "postgres_changes",
+        {
+          event:"*",
+          schema:"public",
+          table:"usdt_ledger",
+          filter:
+            "user_id=eq." +
+            userId
+        },
+        async () => {
+
+          await loadTransactions();
+          await loadProfile();
+
+        }
+      )
+      .subscribe();
+
+  const profileChannel =
+    supabaseClient
+      .channel(
+        "wallet-profile-" +
+        userId
+      )
+      .on(
+        "postgres_changes",
+        {
+          event:"*",
+          schema:"public",
+          table:"profiles",
+          filter:
+            "id=eq." +
+            userId
+        },
+        async () => {
+
+          await loadProfile();
+
+        }
+      )
+      .subscribe();
+
+  const messagesChannel =
+    supabaseClient
+      .channel(
+        "wallet-messages-" +
+        userId
+      )
+      .on(
+        "postgres_changes",
+        {
+          event:"*",
+          schema:"public",
+          table:"messages"
+        },
+        async () => {
+
+          await loadMessages();
+
+        }
+      )
+      .subscribe();
+
+  STATE.realtimeChannels = [
+    ordersChannel,
+    tradesChannel,
+    ledgerChannel,
+    profileChannel,
+    messagesChannel
+  ];
+
+}
+
+
+function cleanupRealtime(){
+
+  for(
+    const channel of
+    STATE.realtimeChannels
+  ){
+
+    try{
+      supabaseClient.removeChannel(
+        channel
+      );
+    }catch(e){}
+
+  }
+
+  STATE.realtimeChannels =
+    [];
+}
+
+
+/* =========================================================
+   AUTO REFRESH
+   ========================================================= */
+
+function startAutoRefresh(){
+
+  stopAutoRefresh();
+
+  STATE.refreshTimer =
+    setInterval(
+      async () => {
+
+        if(
+          document.visibilityState ===
+          "visible"
+        ){
+
+          await loadProfile();
+
+        }
+
+      },
+      30000
+    );
+
+}
+
+
+function stopAutoRefresh(){
+
+  if(
+    STATE.refreshTimer
+  ){
+
+    clearInterval(
+      STATE.refreshTimer
+    );
+
+    STATE.refreshTimer =
+      null;
+  }
+
+}
+
+
+document.addEventListener(
+  "visibilitychange",
+  () => {
+
+    if(
+      document.visibilityState ===
+      "visible"
+    ){
+
+      loadProfile();
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   MODALS
+   ========================================================= */
+
+function openModal(id){
+
+  const modal =
+    document.getElementById(id);
+
+  if(modal){
+
+    modal.classList.add(
+      "show"
+    );
+
+  }
+
+}
+
+
+function closeModal(id){
+
+  const modal =
+    document.getElementById(id);
+
+  if(modal){
+
+    modal.classList.remove(
+      "show"
+    );
+
+  }
+
+}
+
+
+document.querySelectorAll(
+  ".modal"
+).forEach(
+  modal => {
+
+    modal.addEventListener(
+      "click",
+      event => {
+
+        if(
+          event.target === modal
+        ){
+
+          modal.classList.remove(
+            "show"
+          );
+
+        }
+
+      }
+    );
+
+  }
+);
+
+
+document.addEventListener(
+  "keydown",
+  event => {
+
+    if(event.key !== "Escape"){
+      return;
+    }
+
+    document
+      .querySelectorAll(
+        ".modal.show"
+      )
+      .forEach(
+        modal =>
+          modal.classList.remove(
+            "show"
+          )
+      );
+
+  }
+);
+
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
+function goHome(){
+
+  window.location.href =
+    "index.html";
+}
+
+
+function goLive(){
+
+  window.location.href =
+    "live.html";
+}
+
+
+function goP2P(){
+
+  window.location.href =
+    "p2p.html";
+}
+
+
+function goProfile(){
+
+  window.location.href =
+    "profile.html";
+}
+
+
+/* =========================================================
+   SCROLL
+   ========================================================= */
+
+function scrollToSection(id){
+
+  const element =
+    document.getElementById(id);
+
+  if(element){
+
+    element.scrollIntoView({
+      behavior:"smooth",
+      block:"start"
+    });
+
+  }
+
+}
+
+
+function scrollToCreateOrder(
+  type
+){
+
+  setOrderType(
+    type
+  );
+
+  scrollToSection(
+    "createOrder"
+  );
+
+}
+
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+
+function isClosedOrder(
+  order
+){
+
+  const status =
+    String(
+      order.status ||
+      ""
+    ).toLowerCase();
+
+  return [
+    "closed",
+    "completed",
+    "cancelled",
+    "expired",
+    "filled"
+  ].includes(
+    status
+  );
+}
+
+
+function statusClass(
+  status
+){
+
+  const s =
+    String(
+      status || ""
+    ).toLowerCase();
+
+  if(
+    s.includes("dispute")
+  ){
+    return "dispute";
+  }
+
+  if(
+    s.includes("cancel")
+  ){
+    return "cancelled";
+  }
+
+  if(
+    s.includes("closed") ||
+    s.includes("complete") ||
+    s.includes("expire")
+  ){
+    return "closed";
+  }
+
+  if(
+    s.includes("paid") ||
+    s.includes("confirm")
+  ){
+    return "paid";
+  }
+
+  if(
+    s.includes("open") ||
+    s.includes("active")
+  ){
+    return "open";
+  }
+
+  return "pending";
+}
+
+
+function formatDate(
+  value
+){
+
+  if(!value){
+    return "-";
+  }
+
+  const date =
+    new Date(value);
+
+  if(
+    Number.isNaN(
+      date.getTime()
+    )
+  ){
+
+    return "-";
+  }
+
+  return date.toLocaleString();
+}
+
+
+function loadingHtml(){
+
+  return `
+    <div class="loading">
+      Loading...
+    </div>
+  `;
+}
+
+
+function emptyHtml(
+  text
+){
+
+  return `
+    <div class="empty">
+      ${safe(text)}
+    </div>
+  `;
+}
+
+
+function jsQuote(value){
+
+  return String(value)
+    .replace(/\\/g,"\\\\")
+    .replace(/'/g,"\\'")
+    .replace(/\n/g,"\\n")
+    .replace(/\r/g,"\\r");
+}
+
+
+async function copyText(
+  text
+){
+
+  if(!text){
+
+    toast(
+      "Nothing to copy."
+    );
+
+    return;
+  }
+
+  try{
+
+    await navigator.clipboard.writeText(
+      text
+    );
+
+    toast(
+      "Copied."
+    );
+
+  }catch(error){
+
+    /*
+      Fallback for older browsers.
+    */
+
+    const area =
+      document.createElement(
+        "textarea"
+      );
+
+    area.value =
+      text;
+
+    document.body.appendChild(
+      area
+    );
+
+    area.select();
+
+    document.execCommand(
+      "copy"
+    );
+
+    area.remove();
+
+    toast(
+      "Copied."
+    );
+
+  }
+
+}
+
+
+function toast(
+  message
+){
+
+  const element =
+    document.getElementById(
+      "toast"
+    );
+
+  element.textContent =
+    message;
+
+  element.classList.add(
+    "show"
+  );
+
+  clearTimeout(
+    toast.timer
+  );
+
+  toast.timer =
+    setTimeout(
+      () => {
+
+        element.classList.remove(
+          "show"
+        );
+
+      },
+      3000
+    );
+
+}
+
+
+function setBusyButton(
+  event,
+  text
+){
+
+  if(
+    !event ||
+    !event.currentTarget
+  ){
+    return;
+  }
+
+  const button =
+    event.currentTarget;
+
+  button.dataset.oldText =
+    button.textContent;
+
+  button.textContent =
+    text;
+
+  button.disabled =
+    true;
+
+  setTimeout(
+    () => {
+
+      button.disabled =
+        false;
+
+      button.textContent =
+        button.dataset.oldText ||
+        "Submit";
+
+    },
+    1500
+  );
+
+}
+
+
+/* =========================================================
+   CLEANUP
+   ========================================================= */
+
+window.addEventListener(
+  "beforeunload",
+  () => {
+
+    stopAutoRefresh();
+
+    cleanupRealtime();
+
+  }
+);
+
+
+/* =========================================================
+   OPTIONAL BACKEND CONTRACT
+   =========================================================
+
+   The frontend expects these protected operations:
+
+   create_p2p_order
+   cancel_p2p_order
+   create_p2p_trade
+   buyer_confirm_payment
+   seller_release_trade
+   buyer_cancel_trade
+   open_p2p_dispute
+   request_wallet_deposit
+   request_wallet_withdrawal
+   send_wallet_diamonds
+
+   Optional:
+
+   get_my_usdt_deposit_address
+
+   Edge Function:
+
+   get-trc20-balance
+
+   The Edge Function must keep:
+
+   TRONGRID_API_KEY
+
+   in its server-side environment/secrets.
+
+   It must authenticate the Supabase user and must
+   not trust an arbitrary frontend user_id.
+
+   ========================================================= */
+
+
+/* =========================================================
+   INITIAL FEE PREVIEW
+   ========================================================= */
+
+updateFeePreview();
+
+</script>
+
+</body>
+</html>

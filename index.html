@@ -2,4827 +2,3255 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#087f73">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="P2P Social">
-
-<link rel="manifest" href="./manifest.json">
-<link rel="icon" href="./p2p-logo.svg" type="image/svg+xml">
-
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#6c4cff">
 <title>P2P Social</title>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
-
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-  font-family:Arial,sans-serif;
-}
-
-body{
-  background:#f5f7fb;
-  color:#172033;
-  padding-bottom:75px;
-}
-
-/* =========================
-   HEADER
-========================= */
-
-header{
-  background:linear-gradient(135deg,#075e54,#087f73);
-  color:white;
-  padding:18px;
-  border-radius:0 0 22px 22px;
-}
-
-.top{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-}
-
-.logo-area{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  min-width:0;
-}
-
-.logo{
-  width:45px;
-  height:45px;
-  border-radius:14px;
-  background:linear-gradient(135deg,#064e46,#10a889);
-  position:relative;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  flex-shrink:0;
-  box-shadow:0 6px 15px rgba(0,0,0,.18);
-}
-
-.logo .p-left{
-  position:absolute;
-  left:8px;
-  top:10px;
-  width:13px;
-  height:25px;
-  border:4px solid white;
-  border-right:0;
-  border-radius:8px 0 0 8px;
-}
-
-.logo .p-right{
-  position:absolute;
-  right:8px;
-  top:10px;
-  width:13px;
-  height:25px;
-  border:4px solid white;
-  border-left:0;
-  border-radius:0 8px 8px 0;
-}
-
-.logo .center{
-  width:12px;
-  height:12px;
-  background:white;
-  border-radius:50%;
-  position:absolute;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  z-index:5;
-}
-
-.logo .dot{
-  width:4px;
-  height:4px;
-  background:#087f73;
-  border-radius:50%;
-}
-
-.brand{
-  font-size:21px;
-  font-weight:bold;
-  white-space:nowrap;
-}
-
-.brand span{
-  color:#b9fff1;
-}
-
-.top-actions{
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
-
-.auth-btn{
-  border:none;
-  border-radius:9px;
-  padding:8px 10px;
-  font-size:12px;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.login-btn{
-  background:white;
-  color:#087f73;
-}
-
-.register-btn{
-  background:#16a085;
-  color:white;
-  border:1px solid rgba(255,255,255,.7);
-}
-
-.logout-btn{
-  background:#e74c3c;
-  color:white;
-  display:none;
-}
-
-/* =========================
-   NOTIFICATIONS
-========================= */
-
-.notification-wrap{
-  position:relative;
-}
-
-.notification{
-  width:38px;
-  height:38px;
-  border:none;
-  background:transparent;
-  color:white;
-  font-size:23px;
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  position:relative;
-}
-
-.notification-badge{
-  position:absolute;
-  top:-2px;
-  right:-2px;
-  min-width:18px;
-  height:18px;
-  padding:0 5px;
-  border-radius:20px;
-  background:#e74c3c;
-  color:white;
-  font-size:10px;
-  font-weight:bold;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  border:2px solid #087f73;
-}
-
-.notification-panel{
-  display:none;
-  position:absolute;
-  right:0;
-  top:45px;
-  width:330px;
-  max-width:calc(100vw - 24px);
-  background:white;
-  color:#172033;
-  border-radius:16px;
-  box-shadow:0 10px 35px rgba(0,0,0,.2);
-  overflow:hidden;
-  z-index:3000;
-}
-
-.notification-panel.open{
-  display:block;
-}
-
-.notification-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:14px;
-  border-bottom:1px solid #edf0f4;
-}
-
-.mark-all{
-  border:none;
-  background:none;
-  color:#087f73;
-  font-size:11px;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.notification-list{
-  max-height:380px;
-  overflow-y:auto;
-}
-
-.notification-item{
-  display:flex;
-  gap:10px;
-  padding:12px 14px;
-  border-bottom:1px solid #f0f2f5;
-  cursor:pointer;
-}
-
-.notification-item.unread{
-  background:#edf9f6;
-}
-
-.notification-icon{
-  width:38px;
-  height:38px;
-  border-radius:50%;
-  background:#dff3ee;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  flex-shrink:0;
-  font-size:18px;
-}
-
-.notification-content{
-  min-width:0;
-  flex:1;
-}
-
-.notification-title{
-  font-weight:bold;
-  font-size:13px;
-}
-
-.notification-body{
-  font-size:12px;
-  color:#687386;
-  margin-top:3px;
-  line-height:1.4;
-}
-
-.notification-time{
-  font-size:10px;
-  color:#9299a5;
-  margin-top:5px;
-}
-
-.no-notifications{
-  padding:30px 15px;
-  text-align:center;
-  color:#858d99;
-  font-size:13px;
-}
-
-/* =========================
-   USER
-========================= */
-
-.user-info{
-  display:none;
-  margin-top:12px;
-  font-size:13px;
-}
-
-/* =========================
-   SEARCH
-========================= */
-
-.search{
-  margin-top:18px;
-  background:white;
-  color:#172033;
-  border-radius:14px;
-  padding:12px 15px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-.search input{
-  border:none;
-  outline:none;
-  width:100%;
-  font-size:15px;
-}
-
-/* =========================
-   WALLET
-========================= */
-
-.wallet{
-  margin:18px;
-  background:linear-gradient(135deg,#172033,#29364f);
-  color:white;
-  border-radius:20px;
-  padding:20px;
-  box-shadow:0 8px 25px rgba(0,0,0,.12);
-}
-
-.wallet-title{
-  font-size:14px;
-  opacity:.8;
-}
-
-.wallet-balance{
-  font-size:28px;
-  font-weight:bold;
-  margin:8px 0;
-}
-
-.wallet-row{
-  display:flex;
-  justify-content:space-between;
-  margin-top:15px;
-  font-size:14px;
-}
-
-.wallet-buttons{
-  display:flex;
-  gap:10px;
-  margin-top:18px;
-}
-
-.wallet-buttons button{
-  flex:1;
-  border:none;
-  padding:11px;
-  border-radius:10px;
-  cursor:pointer;
-  font-weight:bold;
-}
-
-.withdraw{
-  background:white;
-  color:#172033;
-}
-
-.wallet-conversions{
-  margin-top:14px;
-  padding-top:12px;
-  border-top:1px solid rgba(255,255,255,.12);
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  font-size:12px;
-}
-
-.wallet-conversion{
-  flex:1;
-}
-
-.wallet-conversion strong{
-  display:block;
-  font-size:13px;
-  margin-top:4px;
-}
-
-/* =========================
-   SECTIONS
-========================= */
-
-section{
-  padding:5px 18px 18px;
-}
-
-.section-title{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:12px;
-}
-
-.section-title h2{
-  font-size:19px;
-}
-
-.see-all{
-  color:#087f73;
-  font-size:13px;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-/* =========================
-   LIVE
-========================= */
-
-.live-container{
-  display:flex;
-  gap:14px;
-  overflow-x:auto;
-  padding-bottom:5px;
-}
-
-.live-card{
-  min-width:125px;
-  background:white;
-  border-radius:15px;
-  overflow:hidden;
-  box-shadow:0 3px 12px rgba(0,0,0,.07);
-  cursor:pointer;
-}
-
-.live-image{
-  height:125px;
-  background:linear-gradient(135deg,#ff6b6b,#6c5ce7);
-  position:relative;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  font-size:45px;
-}
-
-.live-badge{
-  position:absolute;
-  top:8px;
-  left:8px;
-  background:#e74c3c;
-  color:white;
-  padding:4px 7px;
-  border-radius:6px;
-  font-size:10px;
-  font-weight:bold;
-}
-
-.viewers{
-  position:absolute;
-  bottom:7px;
-  right:7px;
-  background:rgba(0,0,0,.6);
-  color:white;
-  padding:4px 7px;
-  border-radius:8px;
-  font-size:10px;
-}
-
-.live-name{
-  padding:10px;
-  font-size:13px;
-  font-weight:bold;
-}
-
-/* =========================
-   REAL P2P AVAILABLE OFFERS
-========================= */
-
-.p2p-offers{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
-
-.p2p-card{
-  background:white;
-  border-radius:16px;
-  padding:16px;
-  box-shadow:0 3px 12px rgba(0,0,0,.06);
-}
-
-.p2p-card-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-}
-
-.seller{
-  display:flex;
-  align-items:center;
-  gap:9px;
-  min-width:0;
-}
-
-.avatar{
-  width:40px;
-  height:40px;
-  border-radius:50%;
-  background:#dfeeea;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-weight:bold;
-  color:#087f73;
-  flex-shrink:0;
-  overflow:hidden;
-}
-
-.avatar img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-
-.username{
-  font-weight:bold;
-  font-size:14px;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-.online{
-  color:#16a085;
-  font-size:11px;
-  margin-top:3px;
-}
-
-.rate{
-  text-align:right;
-  flex-shrink:0;
-}
-
-.rate strong{
-  display:block;
-  font-size:17px;
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,Helvetica,sans-serif}
+:root{
+ --brand:#6c4cff;
+ --brand2:#8d72ff;
+ --bg:#f5f6fb;
+ --card:#fff;
+ --text:#182033;
+ --muted:#788195;
+ --border:#e5e7ef;
+ --green:#16a34a;
+ --blue:#2563eb;
+ --red:#dc2626;
+ --orange:#f59e0b;
+ --shadow:0 5px 20px rgba(30,35,70,.08);
+}
+body{background:var(--bg);color:var(--text);padding-bottom:82px}
+button,input,textarea,select{font:inherit}
+button{border:0;cursor:pointer}
+.hidden{display:none!important}
+.header{
+ position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid var(--border);
+ height:64px;padding:0 14px;display:flex;align-items:center;justify-content:space-between
+}
+.logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:20px}
+.logoIcon{width:39px;height:39px;border-radius:12px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center}
+.headerRight{display:flex;gap:7px}
+.iconBtn{width:40px;height:40px;border-radius:12px;background:#f0edff;color:var(--brand);font-size:18px}
+.main{max-width:900px;margin:auto;padding:14px}
+.card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:14px;box-shadow:var(--shadow);margin-bottom:13px}
+.sectionHeader{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sectionTitle{font-size:17px;font-weight:800}
+.muted{color:var(--muted);font-size:13px}
+.btn{padding:10px 13px;border-radius:11px;font-weight:700}
+.btnBrand{background:var(--brand);color:#fff}
+.btnGreen{background:var(--green);color:#fff}
+.btnBlue{background:var(--blue);color:#fff}
+.btnRed{background:var(--red);color:#fff}
+.btnLight{background:#f0f1f6;color:var(--text)}
+.smallBtn{padding:7px 10px;font-size:12px}
+.btnFull{width:100%}
+
+/* PROFILE */
+.profileMini{display:flex;align-items:center;gap:10px}
+.avatar{width:46px;height:46px;border-radius:50%;object-fit:cover;background:#e9e7ff;border:2px solid #fff}
+.avatarSmall{width:37px;height:37px}
+.avatarLarge{width:82px;height:82px}
+.userName{font-weight:800}
+.userMeta{font-size:12px;color:var(--muted);margin-top:3px}
+.level{font-size:11px;font-weight:800;color:var(--brand);margin-left:4px}
+.badge{display:inline-flex;padding:4px 8px;border-radius:20px;font-size:11px;font-weight:800}
+.badgePremium{background:#dcfce7;color:#15803d}
+.badgePlus{background:#dbeafe;color:#1d4ed8}
+.badgeMax{background:#f3e8ff;color:#7e22ce}
+
+/* PREMIUM */
+.premiumCard{background:linear-gradient(135deg,#fff,#f2efff)}
+.premiumGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.premiumBox{background:#fff;border:1px solid var(--border);border-radius:13px;padding:11px}
+.premiumBox strong{display:block;margin-bottom:5px}
+
+/* WALLET */
+.walletCard{background:linear-gradient(135deg,#15112f,#382778);color:#fff}
+.walletTop{display:flex;align-items:center;justify-content:space-between}
+.walletLabel{font-size:12px;opacity:.75}
+.walletBalance{font-size:29px;font-weight:800;margin-top:4px}
+.walletEye{width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.13);color:#fff}
+.walletAssets{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+.asset{background:rgba(255,255,255,.1);padding:12px;border-radius:14px}
+.assetLabel{font-size:12px;opacity:.75}
+.assetValue{font-size:19px;font-weight:800;margin-top:5px}
+.walletActions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px}
+.walletAction{padding:11px 5px;border-radius:12px;background:#fff;color:#21184b;font-weight:800}
+
+/* OFFERS */
+.offer{border:1px solid var(--border);border-radius:15px;padding:12px;margin-bottom:9px}
+.offerTop{display:flex;align-items:center;justify-content:space-between}
+.offerUser{display:flex;align-items:center;gap:8px}
+.offerDetails{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:10px 0}
+.detail{background:#f7f7fb;border-radius:10px;padding:8px;font-size:11px}
+.detail strong{display:block;font-size:13px;margin-top:3px}
+.offerActions{display:flex;gap:7px}
+
+/* CREATE */
+.createPost{display:flex;align-items:center;gap:9px}
+.postInput{flex:1;padding:12px;border:1px solid var(--border);border-radius:13px;background:#fafafe}
+.createActions{display:flex;gap:7px;margin-top:9px}
+.createAction{flex:1;padding:10px;border-radius:11px;background:#f1efff;color:var(--brand);font-weight:700}
+
+/* POSTS */
+.post{background:#fff;border:1px solid var(--border);border-radius:18px;padding:13px;margin-bottom:12px;box-shadow:var(--shadow)}
+.postHeader{display:flex;align-items:center;justify-content:space-between}
+.postUser{display:flex;gap:9px;align-items:center}
+.postMenu{width:34px;height:34px;border-radius:10px;background:#f2f2f7}
+.postText{font-size:15px;line-height:1.5;margin:12px 0;white-space:pre-wrap;word-break:break-word}
+.postImage,.postVideo{width:100%;max-height:480px;object-fit:cover;border-radius:13px;margin-top:8px}
+.postActions{display:flex;gap:4px;border-top:1px solid var(--border);padding-top:8px}
+.postAction{flex:1;background:#fff;padding:9px;border-radius:9px;font-weight:700;color:#555}
+.postAction.liked{color:#e11d48;background:#fff1f2}
+.comments{border-top:1px solid var(--border);margin-top:8px;padding-top:9px}
+.comment{display:flex;gap:8px;margin-bottom:8px}
+.commentBody{background:#f4f5f8;border-radius:12px;padding:8px;flex:1}
+.commentTop{display:flex;justify-content:space-between;font-size:12px;font-weight:700}
+.commentText{font-size:13px;margin-top:3px}
+.commentInput{display:flex;gap:6px;margin-top:8px}
+.commentInput input{flex:1;padding:9px;border:1px solid var(--border);border-radius:10px}
+
+/* LIVE */
+.liveGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.liveRoom{position:relative;overflow:hidden;border-radius:16px;min-height:190px;background:var(--brand);color:#fff;padding:13px;display:flex;flex-direction:column;justify-content:space-between}
+.liveRoomTitle{font-size:18px;font-weight:800}
+.liveRoomBottom{display:flex;justify-content:space-between;align-items:end}
+.liveBadge{background:#ef4444;color:#fff;padding:5px 8px;border-radius:20px;font-size:11px;font-weight:800}
+
+/* MODAL */
+.modalBack{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:center;justify-content:center;padding:15px}
+.modal{width:min(560px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:20px;padding:17px}
+.modalHeader{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}
+.modalTitle{font-size:19px;font-weight:800}
+.closeBtn{width:35px;height:35px;border-radius:10px;background:#f0f1f5}
+.formGroup{margin-bottom:11px}
+.formGroup label{display:block;font-size:12px;font-weight:700;margin-bottom:5px}
+.formGroup input,.formGroup textarea,.formGroup select{
+ width:100%;border:1px solid var(--border);border-radius:11px;padding:11px;background:#fff
+}
+.formGroup textarea{min-height:110px;resize:vertical}
+.modalActions{display:flex;gap:8px;margin-top:13px}
+.modalActions button{flex:1}
+.userProfile{text-align:center}
+.userProfile .avatar{margin:auto}
+.profileStats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:13px 0}
+.stat{background:#f5f5f8;border-radius:12px;padding:10px}
+.stat strong{display:block;font-size:18px}
+
+/* LIVE CHAT */
+.liveModal{padding:0;overflow:hidden}
+.liveHeader{background:var(--brand);color:#fff;padding:14px}
+.liveBody{height:420px;display:flex;flex-direction:column}
+.liveMessages{flex:1;overflow:auto;padding:10px;background:#f7f7fa}
+.liveMessage{margin-bottom:8px;max-width:90%}
+.liveMessageBubble{display:inline-block;background:#fff;border:1px solid var(--border);padding:8px 10px;border-radius:12px}
+.liveMessageName{font-size:11px;font-weight:800;color:var(--brand);margin-bottom:2px}
+.liveComposer{display:flex;gap:7px;padding:9px;border-top:1px solid var(--border)}
+.liveComposer input{flex:1;padding:10px;border:1px solid var(--border);border-radius:10px}
+.liveTools{display:flex;gap:5px;padding:8px;border-top:1px solid rgba(255,255,255,.2);flex-wrap:wrap}
+.liveTool{padding:7px 9px;border-radius:9px;background:rgba(255,255,255,.14);color:#fff;font-size:12px}
+
+/* NAV */
+.bottomNav{
+ position:fixed;bottom:0;left:0;right:0;height:72px;background:#fff;border-top:1px solid var(--border);
+ display:grid;grid-template-columns:repeat(5,1fr);z-index:200
+}
+.navBtn{background:#fff;color:#7a8191;font-size:11px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.navIcon{font-size:21px}
+.navBtn.active{color:var(--brand)}
+
+/* TOAST */
+.toast{
+ position:fixed;left:50%;bottom:90px;transform:translateX(-50%);
+ background:#161923;color:#fff;padding:11px 15px;border-radius:12px;z-index:1000;
+ box-shadow:0 5px 20px rgba(0,0,0,.2);font-size:13px
+}
+.empty{text-align:center;padding:25px;color:var(--muted)}
+.loading{text-align:center;padding:20px;color:var(--muted)}
+@media(max-width:600px){
+ .premiumGrid{grid-template-columns:1fr}
+ .liveGrid{grid-template-columns:1fr}
+ .walletActions{grid-template-columns:repeat(3,1fr)}
+ .offerDetails{grid-template-columns:1fr 1fr 1fr}
 }
-
-.rate small{
-  color:#777;
-}
-
-.trade-info{
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  margin:15px 0;
-  font-size:13px;
-}
-
-.trade-info span{
-  min-width:0;
-}
-
-.buy-btn,
-.sell-btn{
-  width:100%;
-  border:none;
-  padding:12px;
-  border-radius:10px;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.buy-btn{
-  background:#087f73;
-  color:white;
-}
-
-.sell-btn{
-  background:#eaf7f4;
-  color:#087f73;
-}
-
-.offer-type{
-  display:inline-block;
-  margin-bottom:8px;
-  padding:4px 7px;
-  border-radius:6px;
-  background:#eaf7f4;
-  color:#087f73;
-  font-size:10px;
-  font-weight:bold;
-}
-
-.no-offers{
-  background:white;
-  border-radius:16px;
-  padding:25px 18px;
-  text-align:center;
-  color:#7b8492;
-  box-shadow:0 3px 12px rgba(0,0,0,.05);
-}
-
-.no-offers-icon{
-  font-size:32px;
-  margin-bottom:8px;
-}
-
-.no-offers strong{
-  display:block;
-  color:#172033;
-  margin-bottom:5px;
-}
-
-.no-offers small{
-  font-size:12px;
-}
-
-/* =========================
-   POSTS
-========================= */
-
-.posts-section{
-  padding-top:0;
-}
-
-.posts-title{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:12px;
-}
-
-.posts-title h2{
-  font-size:19px;
-}
-
-.create-post-btn{
-  border:none;
-  background:#087f73;
-  color:white;
-  padding:9px 12px;
-  border-radius:10px;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.posts-feed{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
-
-.post-card{
-  background:white;
-  border-radius:16px;
-  padding:16px;
-  box-shadow:0 3px 12px rgba(0,0,0,.06);
-}
-
-.post-header{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  cursor:pointer;
-}
-
-.post-avatar{
-  width:42px;
-  height:42px;
-  border-radius:50%;
-  object-fit:cover;
-  background:#dfeeea;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:#087f73;
-  font-weight:bold;
-  flex-shrink:0;
-}
-
-.post-user-info{
-  flex:1;
-  min-width:0;
-}
-
-.post-name{
-  font-weight:bold;
-  font-size:14px;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-.post-handle{
-  color:#7a8494;
-  font-size:12px;
-  margin-top:3px;
-}
-
-.post-time{
-  color:#8a93a1;
-  font-size:11px;
-  white-space:nowrap;
-}
-
-.post-menu{
-  border:none;
-  background:none;
-  font-size:18px;
-  cursor:pointer;
-}
-
-.post-content{
-  margin-top:13px;
-  color:#303b4d;
-  font-size:14px;
-  line-height:1.55;
-  white-space:pre-wrap;
-  word-break:break-word;
-}
-
-.post-actions{
-  display:flex;
-  gap:18px;
-  margin-top:15px;
-  padding-top:12px;
-  border-top:1px solid #edf0f4;
-}
-
-.post-action{
-  border:none;
-  background:transparent;
-  color:#687386;
-  cursor:pointer;
-  font-size:13px;
-}
-
-.post-action.liked{
-  color:#e74c3c;
-  font-weight:bold;
-}
-
-/* =========================
-   COMMENTS
-========================= */
-
-.comments-box{
-  margin-top:12px;
-  border-top:1px solid #edf0f4;
-  padding-top:10px;
-}
-
-.comment{
-  display:flex;
-  gap:8px;
-  margin-bottom:9px;
-}
-
-.comment-avatar{
-  width:32px;
-  height:32px;
-  border-radius:50%;
-  background:#dfeeea;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  color:#087f73;
-  font-weight:bold;
-  flex-shrink:0;
-  overflow:hidden;
-}
-
-.comment-avatar img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-
-.comment-body{
-  background:#f5f7fb;
-  border-radius:12px;
-  padding:8px 10px;
-  flex:1;
-  position:relative;
-}
-
-.comment-name{
-  font-size:12px;
-  font-weight:bold;
-  padding-right:20px;
-}
-
-.comment-text{
-  font-size:13px;
-  color:#303b4d;
-  margin-top:3px;
-  white-space:pre-wrap;
-  word-break:break-word;
-}
-
-.comment-delete{
-  position:absolute;
-  top:6px;
-  right:7px;
-  border:none;
-  background:none;
-  color:#e74c3c;
-  font-size:11px;
-  cursor:pointer;
-}
-
-.comment-input-row{
-  display:flex;
-  gap:7px;
-  margin-top:10px;
-}
-
-.comment-input{
-  flex:1;
-  border:1px solid #dfe4eb;
-  border-radius:10px;
-  padding:9px 11px;
-  outline:none;
-  font-size:13px;
-}
-
-.comment-send{
-  border:none;
-  background:#087f73;
-  color:white;
-  border-radius:10px;
-  padding:0 13px;
-  cursor:pointer;
-  font-weight:bold;
-}
-
-.view-comments{
-  border:none;
-  background:none;
-  color:#087f73;
-  font-size:12px;
-  font-weight:bold;
-  cursor:pointer;
-  margin-bottom:5px;
-}
-
-.no-posts,
-.loading-posts{
-  background:white;
-  border-radius:16px;
-  padding:25px;
-  text-align:center;
-  color:#7b8492;
-  box-shadow:0 3px 12px rgba(0,0,0,.05);
-}
-
-/* =========================
-   LOAD MORE
-========================= */
-
-.load-more{
-  width:100%;
-  margin-top:5px;
-  border:none;
-  background:white;
-  color:#087f73;
-  padding:13px;
-  border-radius:12px;
-  font-weight:bold;
-  cursor:pointer;
-  box-shadow:0 3px 12px rgba(0,0,0,.05);
-}
-
-.load-more:disabled{
-  color:#999;
-  cursor:not-allowed;
-}
-
-/* =========================
-   CREATE POST MODAL
-========================= */
-
-.modal{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.55);
-  z-index:2000;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-}
-
-.modal-content{
-  width:100%;
-  max-width:450px;
-  background:white;
-  border-radius:18px;
-  padding:20px;
-}
-
-.modal-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:15px;
-}
-
-.modal-header h3{
-  font-size:19px;
-}
-
-.close-modal{
-  border:none;
-  background:none;
-  font-size:25px;
-  cursor:pointer;
-}
-
-.post-textarea{
-  width:100%;
-  min-height:130px;
-  resize:vertical;
-  border:1px solid #dfe4eb;
-  border-radius:12px;
-  padding:12px;
-  outline:none;
-  font-size:14px;
-}
-
-.visibility-label{
-  display:block;
-  margin:12px 0 6px;
-  font-size:13px;
-  font-weight:bold;
-}
-
-.visibility-select{
-  width:100%;
-  border:1px solid #dfe4eb;
-  border-radius:10px;
-  padding:11px;
-  background:white;
-}
-
-.publish-btn{
-  width:100%;
-  margin-top:14px;
-  border:none;
-  background:#087f73;
-  color:white;
-  padding:12px;
-  border-radius:10px;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-/* =========================
-   BOTTOM NAV
-========================= */
-
-.bottom-nav{
-  position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  height:68px;
-  background:white;
-  border-top:1px solid #ddd;
-  display:flex;
-  justify-content:space-around;
-  align-items:center;
-  z-index:1000;
-}
-
-.nav-item{
-  text-align:center;
-  color:#777;
-  font-size:11px;
-  cursor:pointer;
-}
-
-.nav-item span{
-  display:block;
-  font-size:22px;
-  margin-bottom:3px;
-}
-
-.nav-item.active{
-  color:#087f73;
-  font-weight:bold;
-}
-
-button:active{
-  transform:scale(.97);
-}
-
-/* =========================
-   MOBILE
-========================= */
-
-@media(max-width:450px){
-
-  header{
-    padding:16px 12px;
-  }
-
-  .logo{
-    width:43px;
-    height:43px;
-    border-radius:13px;
-  }
-
-  .logo .p-left,
-  .logo .p-right{
-    top:9px;
-    height:24px;
-  }
-
-  .logo .p-left{
-    left:8px;
-  }
-
-  .logo .p-right{
-    right:8px;
-  }
-
-  .brand{
-    font-size:19px;
-  }
-
-  .auth-btn{
-    padding:7px 8px;
-    font-size:11px;
-  }
-
-  .notification{
-    font-size:21px;
-  }
-
-  .wallet{
-    margin:16px 12px;
-  }
-
-  .wallet-balance{
-    font-size:27px;
-  }
-
-  .post-actions{
-    gap:12px;
-  }
-
-  .post-action{
-    font-size:12px;
-  }
-
-  .trade-info{
-    flex-direction:column;
-    gap:7px;
-  }
-
-  .p2p-card-header{
-    align-items:flex-start;
-  }
-
-  .wallet-conversions{
-    flex-direction:column;
-    gap:8px;
-  }
-
-}
-
 </style>
 </head>
 
 <body>
 
-<!-- =========================
-     HEADER
-========================= -->
-
-<header>
-
-<div class="top">
-
-<div class="logo-area">
-
-<div class="logo" aria-label="P2P Social Logo">
-
-<div class="p-left"></div>
-<div class="p-right"></div>
-
-<div class="center">
-<div class="dot"></div>
-</div>
-
-</div>
-
-<div class="brand">
-P2P <span>Social</span>
-</div>
-
-</div>
-
-<div class="top-actions">
-
-<button
-id="loginBtn"
-class="auth-btn login-btn"
-onclick="openLogin()">
-Login
-</button>
-
-<button
-id="registerBtn"
-class="auth-btn register-btn"
-onclick="openRegister()">
-Register
-</button>
-
-<button
-id="logoutBtn"
-class="auth-btn logout-btn"
-onclick="logout()">
-Logout
-</button>
-
-<div class="notification-wrap">
-
-<button
-id="notificationButton"
-class="notification"
-onclick="toggleNotificationPanel(event)"
-aria-label="Notifications">
-
-🔔
-
-<span
-id="notificationBadge"
-class="notification-badge">
-0
-</span>
-
-</button>
-
-<div
-id="notificationPanel"
-class="notification-panel">
-
-<div class="notification-header">
-
-<strong>
-Notifications
-</strong>
-
-<button
-class="mark-all"
-onclick="markAllNotificationsRead()">
-Mark all read
-</button>
-
-</div>
-
-<div
-id="notificationList"
-class="notification-list">
-
-<div class="no-notifications">
-No notifications yet.
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<div id="userInfo" class="user-info">
-
-Logged in as:
-<strong id="usernameDisplay"></strong>
-
-</div>
-
-<div class="search">
-
-🔎
-
-<input
-type="text"
-id="searchInput"
-placeholder="Search users, live rooms...">
-
-</div>
-
+<header class="header">
+  <div class="logo">
+    <div class="logoIcon">🚀</div>
+    <span>P2P Social</span>
+  </div>
+  <div class="headerRight">
+    <button class="iconBtn" onclick="refreshAll()">🔃</button>
+    <button class="iconBtn" onclick="openProfile()">👤</button>
+  </div>
 </header>
 
-<!-- =========================
-     WALLET
-========================= -->
+<main class="main">
 
-<div class="wallet">
+<!-- HOME -->
+<section id="homePage">
 
-<div class="wallet-title">
-Total Wallet Balance
-</div>
+  <div class="card">
+    <div class="profileMini">
+      <img id="currentAvatar" class="avatar" src="" alt="">
+      <div>
+        <div id="currentName" class="userName">Guest</div>
+        <div id="currentMeta" class="userMeta">Free • Level 1</div>
+      </div>
+    </div>
+  </div>
 
-<div
-class="wallet-balance"
-id="balanceDisplay">
-0 ETB
-</div>
+  <!-- PREMIUM -->
+  <div class="card premiumCard">
+    <div class="sectionHeader">
+      <div class="sectionTitle">⭐ Premium</div>
+      <button class="btn btnBrand smallBtn" onclick="openPremium()">View all</button>
+    </div>
 
-<div class="wallet-row">
+    <div class="premiumGrid">
+      <div class="premiumBox">
+        <span class="badge badgePremium">🟢 Premium</span>
+        <strong>Picture</strong>
+        <span class="muted">Post pictures + promote</span>
+      </div>
+      <div class="premiumBox">
+        <span class="badge badgePlus">🔵 Premium+</span>
+        <strong>Video</strong>
+        <span class="muted">Post videos + promote</span>
+      </div>
+      <div class="premiumBox">
+        <span class="badge badgeMax">🟣 Premium Max</span>
+        <strong>Live</strong>
+        <span class="muted">Picture + video + Live</span>
+      </div>
+    </div>
+  </div>
 
-<span>🇪🇹 ETB</span>
+  <!-- WALLET -->
+  <div class="card walletCard">
+    <div class="walletTop">
+      <div>
+        <div class="walletLabel">Wallet balance</div>
+        <div id="mainWalletBalance" class="walletBalance">0.00 USDT</div>
+      </div>
+      <button id="eyeButton" class="walletEye" onclick="toggleBalance()">👁️</button>
+    </div>
 
-<strong id="etbDisplay">
-0.00
-</strong>
+    <div class="walletAssets">
+      <div class="asset">
+        <div class="assetLabel">USDT</div>
+        <div id="usdtBalance" class="assetValue">0.00 USDT</div>
+      </div>
+      <div class="asset">
+        <div class="assetLabel">💎 Diamonds</div>
+        <div id="diamondBalance" class="assetValue">0 💎</div>
+      </div>
+    </div>
 
-</div>
+    <div class="walletActions">
+      <button class="walletAction" onclick="openSend()">💎 Send</button>
+      <button class="walletAction" onclick="openBuy()">🟢 Buy</button>
+      <button class="walletAction" onclick="openTrade()">🤝 Trade</button>
+    </div>
+  </div>
 
-<div class="wallet-row">
+  <!-- AVAILABLE OFFERS -->
+  <div class="card">
+    <div class="sectionHeader">
+      <div>
+        <div class="sectionTitle">👥 Available Offers (5)</div>
+        <div class="muted">Buy and sell P2P</div>
+      </div>
+      <div class="sectionTools">
+        <button class="btn btnBrand smallBtn" onclick="openCreateOffer()">Create Offer</button>
+        <button class="btn btnLight smallBtn" onclick="loadOffers()">🔃</button>
+      </div>
+    </div>
+    <div id="offersContainer" class="loading">Loading offers...</div>
+  </div>
 
-<span>💎 Diamonds</span>
+  <!-- CREATE POST -->
+  <div class="card">
+    <div class="createPost">
+      <img id="createAvatar" class="avatar avatarSmall" src="" alt="">
+      <div class="postInput" onclick="openCreatePost()">What's on your mind?</div>
+    </div>
 
-<strong id="diamondDisplay">
-0
-</strong>
+    <div class="createActions">
+      <button class="createAction" onclick="openCreatePost('text')">📝 Text</button>
+      <button class="createAction" onclick="openCreatePost('photo')">📷 Photo</button>
+      <button class="createAction" onclick="openCreatePost('video')">🎥 Video</button>
+    </div>
+  </div>
 
-</div>
+  <!-- POSTS -->
+  <div class="card">
+    <div class="sectionHeader">
+      <div>
+        <div class="sectionTitle">📄 Public Posts (10)</div>
+        <div class="muted">Text posts are available to everyone</div>
+      </div>
+      <button class="btn btnLight smallBtn" onclick="loadPosts(true)">🔃 Refresh</button>
+    </div>
+  </div>
 
-<div class="wallet-conversions">
+  <div id="postsContainer">
+    <div class="loading">Loading posts...</div>
+  </div>
 
-<div class="wallet-conversion">
-
-USDT/💎
-
-<strong id="usdtDiamondRate">
-0 USDT = 0 💎
-</strong>
-
-</div>
-
-<div class="wallet-conversion">
-
-ETB/💎
-
-<strong id="etbDiamondRate">
-0 ETB = 0 💎
-</strong>
-
-</div>
-
-</div>
-
-<div class="wallet-buttons">
-
-<button
-class="withdraw"
-onclick="openWallet()">
-Wallet
-</button>
-
-</div>
-
-</div>
-
-<!-- =========================
-     LIVE
-========================= -->
-
-<section>
-
-<div class="section-title">
-
-<h2>
-🔴 Live Now
-</h2>
-
-<span
-class="see-all"
-onclick="openLive()">
-See all
-</span>
-
-</div>
-
-<div class="live-container">
-
-<div
-class="live-card"
-onclick="openLive()">
-
-<div class="live-image">
-
-👩
-
-<span class="live-badge">
-LIVE
-</span>
-
-<span class="viewers">
-1.2K
-</span>
-
-</div>
-
-<div class="live-name">
-Hana Live
-</div>
-
-</div>
-
-<div
-class="live-card"
-onclick="openLive()">
-
-<div class="live-image">
-
-👨
-
-<span class="live-badge">
-LIVE
-</span>
-
-<span class="viewers">
-856
-</span>
-
-</div>
-
-<div class="live-name">
-Dawit Live
-</div>
-
-</div>
-
-<div
-class="live-card"
-onclick="openLive()">
-
-<div class="live-image">
-
-👩‍🦱
-
-<span class="live-badge">
-LIVE
-</span>
-
-<span class="viewers">
-543
-</span>
-
-</div>
-
-<div class="live-name">
-Meron Live
-</div>
-
-</div>
-
-</div>
+  <button id="loadMoreBtn" class="btn btnBrand btnFull hidden" onclick="loadMorePosts()">
+    ➕ Load more
+  </button>
 
 </section>
 
-<!-- =========================
-     AVAILABLE P2P OFFERS
-========================= -->
+<!-- LIVE PAGE -->
+<section id="livePage" class="hidden">
 
-<section>
+  <div class="card">
+    <div class="sectionHeader">
+      <div>
+        <div class="sectionTitle">🔴 Live</div>
+        <div class="muted">Maximum 10 live rooms</div>
+      </div>
+      <button class="btn btnBrand smallBtn" onclick="createLive()">🔴 Create Live</button>
+    </div>
 
-<div class="section-title">
-
-<h2>
-🔄 Available Offers
-</h2>
-
-<span
-class="see-all"
-onclick="openWallet()">
-See all
-</span>
-
-</div>
-
-<div
-id="p2pOffersContainer"
-class="p2p-offers">
-
-<div class="no-offers">
-
-<div class="no-offers-icon">
-🔄
-</div>
-
-<strong>
-Loading available offers...
-</strong>
-
-<small>
-Please wait.
-</small>
-
-</div>
-
-</div>
+    <div id="liveRooms" class="liveGrid">
+      <div class="loading">Loading live rooms...</div>
+    </div>
+  </div>
 
 </section>
 
-<!-- =========================
-     POSTS
-========================= -->
+<!-- P2P PAGE -->
+<section id="p2pPage" class="hidden">
 
-<section class="posts-section">
+  <div class="card">
+    <div class="sectionHeader">
+      <div>
+        <div class="sectionTitle">🔄 P2P Trade</div>
+        <div class="muted">Buy or sell USDT</div>
+      </div>
+      <button class="btn btnBrand smallBtn" onclick="openCreateOffer()">Create Offer</button>
+    </div>
 
-<div class="posts-title">
-
-<h2>
-📝 Public Posts
-</h2>
-
-<div
-style="display:flex;gap:7px;align-items:center;">
-
-<span
-class="see-all"
-onclick="loadPosts(true)">
-🔀 Shuffle
-</span>
-
-<button
-class="create-post-btn"
-onclick="openCreatePost()">
-+ Post
-</button>
-
-</div>
-
-</div>
-
-<div
-id="postsFeed"
-class="posts-feed">
-
-<div class="loading-posts">
-Loading public posts...
-</div>
-
-</div>
-
-<button
-id="loadMoreBtn"
-class="load-more"
-onclick="loadMorePosts()"
-style="display:none;">
-
-➕ Load more posts
-
-</button>
+    <div id="p2pOffers"></div>
+  </div>
 
 </section>
 
-<!-- =========================
-     CREATE POST MODAL
-========================= -->
+<!-- MESSAGES -->
+<section id="messagesPage" class="hidden">
 
-<div
-id="createPostModal"
-class="modal">
+  <div class="card">
+    <div class="sectionHeader">
+      <div>
+        <div class="sectionTitle">💬 Messages</div>
+        <div class="muted">Your conversations</div>
+      </div>
+      <button class="btn btnLight smallBtn" onclick="loadMessages()">🔃</button>
+    </div>
+    <div id="messagesContainer" class="loading">Loading messages...</div>
+  </div>
 
-<div class="modal-content">
+</section>
 
-<div class="modal-header">
+<!-- PROFILE -->
+<section id="profilePage" class="hidden">
 
-<h3>
-Create Post
-</h3>
+  <div id="profileContainer"></div>
 
-<button
-class="close-modal"
-onclick="closeCreatePost()">
-×
-</button>
+</section>
 
-</div>
+</main>
 
-<textarea
-id="postContentInput"
-class="post-textarea"
-maxlength="5000"
-placeholder="What's on your mind?"></textarea>
-
-<label class="visibility-label">
-Post visibility
-</label>
-
-<select
-id="postVisibility"
-class="visibility-select">
-
-<option value="public">
-🌍 Public
-</option>
-
-<option value="private">
-🔒 Private
-</option>
-
-</select>
-
-<button
-id="publishPostBtn"
-class="publish-btn"
-onclick="createPost()">
-
-Publish Post
-
-</button>
-
-</div>
-
-</div>
-
-<!-- =========================
-     BOTTOM NAVIGATION
-========================= -->
-
-<nav class="bottom-nav">
-
-<div
-class="nav-item active"
-onclick="window.scrollTo({top:0,behavior:'smooth'})">
-
-<span>🏠</span>
-Home
-
-</div>
-
-<div
-class="nav-item"
-onclick="openLive()">
-
-<span>🔴</span>
-Live
-
-</div>
-
-<div
-class="nav-item"
-onclick="openWallet()">
-
-<span>🔄</span>
-P2P
-
-</div>
-
-<div
-class="nav-item"
-onclick="openMessages()">
-
-<span>💬</span>
-Messages
-
-</div>
-
-<div
-class="nav-item"
-onclick="openProfile()">
-
-<span>👤</span>
-Profile
-
-</div>
-
+<!-- BOTTOM NAV -->
+<nav class="bottomNav">
+  <button id="navHome" class="navBtn active" onclick="showPage('home')">
+    <span class="navIcon">🏠</span>Home
+  </button>
+  <button id="navLive" class="navBtn" onclick="showPage('live')">
+    <span class="navIcon">🔴</span>Live
+  </button>
+  <button id="navP2P" class="navBtn" onclick="showPage('p2p')">
+    <span class="navIcon">🔄</span>P2P
+  </button>
+  <button id="navMessages" class="navBtn" onclick="showPage('messages')">
+    <span class="navIcon">💬</span>Messages
+  </button>
+  <button id="navProfile" class="navBtn" onclick="showPage('profile')">
+    <span class="navIcon">👤</span>Profile
+  </button>
 </nav>
 
-<!-- =========================
-     SUPABASE
-========================= -->
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<div id="modalRoot"></div>
+<div id="toast" class="toast hidden"></div>
 
 <script>
+/* =========================================================
+   SUPABASE
+========================================================= */
 
 const SUPABASE_URL =
-"https://mbsvuwrgigqfporxwpfr.supabase.co";
+  "https://mbsvuwrgigqfporxwpfr.supabase.co";
 
-const SUPABASE_PUBLISHABLE_KEY =
-"sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
+const SUPABASE_KEY =
+  "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
 
 const supabaseClient =
-window.supabase.createClient(
-SUPABASE_URL,
-SUPABASE_PUBLISHABLE_KEY
-);
+  window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-let currentSession = null;
-let allPosts = [];
-let displayedPostCount = 10;
-let commentsOpen = {};
-let notificationChannel = null;
+/* =========================================================
+   GLOBAL STATE
+========================================================= */
 
-/* ================================
-   DIAMOND SYSTEM
-================================ */
+let currentUser = null;
+let currentProfile = null;
+let currentWallet = null;
 
-const DIAMOND_COLUMNS = [
-  "diamonds",
-  "diamond_balance",
-  "diamond"
-];
+let balanceVisible = true;
+let postsOffset = 0;
+const POST_LIMIT = 10;
 
-const USDT_DIAMOND_COLUMNS = [
-  "usdt_per_diamond",
-  "diamond_usdt_rate",
-  "usdt_diamond_rate"
-];
+let currentPage = "home";
+let activeLiveRoom = null;
 
-const ETB_DIAMOND_COLUMNS = [
-  "etb_per_diamond",
-  "diamond_etb_rate",
-  "etb_diamond_rate"
-];
+let liveMessagesChannel = null;
+let messagesChannel = null;
 
-function getNumericProfileValue(profile,columns){
+/* =========================================================
+   HELPERS
+========================================================= */
 
-  if(!profile){
-    return 0;
-  }
-
-  for(const column of columns){
-
-    if(
-      Object.prototype.hasOwnProperty.call(
-        profile,
-        column
-      )
-    ){
-
-      const value =
-        Number(profile[column]);
-
-      if(
-        Number.isFinite(value)
-      ){
-
-        return value;
-
-      }
-
-    }
-
-  }
-
-  return 0;
-
+function esc(value){
+  if(value === null || value === undefined) return "";
+  return String(value)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
 }
 
-function getProfileDiamondBalance(profile){
-
-  return getNumericProfileValue(
-    profile,
-    DIAMOND_COLUMNS
-  );
-
+function money(value){
+  return Number(value || 0).toFixed(2);
 }
 
-function getUsdtDiamondRate(profile){
+function toast(message){
+  const el = document.getElementById("toast");
+  el.textContent = message;
+  el.classList.remove("hidden");
 
-  return getNumericProfileValue(
-    profile,
-    USDT_DIAMOND_COLUMNS
-  );
+  clearTimeout(window.toastTimer);
 
+  window.toastTimer =
+    setTimeout(()=>el.classList.add("hidden"),2500);
 }
 
-function getEtbDiamondRate(profile){
-
-  return getNumericProfileValue(
-    profile,
-    ETB_DIAMOND_COLUMNS
-  );
-
+function avatarUrl(profile){
+  return profile?.avatar_url ||
+    profile?.profile_photo ||
+    "https://ui-avatars.com/api/?name="+
+    encodeURIComponent(profile?.username || "User")+
+    "&background=6c4cff&color=fff";
 }
 
-function updateDiamondDashboard(profile){
+function badge(profile){
+  const tier = profile?.premium_tier || "Free";
 
-  const diamondBalance =
-    getProfileDiamondBalance(profile);
+  if(tier === "Premium Max")
+    return '<span class="badge badgeMax">🟣 Premium Max</span>';
 
-  const usdtRate =
-    getUsdtDiamondRate(profile);
+  if(tier === "Premium+")
+    return '<span class="badge badgePlus">🔵 Premium+</span>';
 
-  const etbRate =
-    getEtbDiamondRate(profile);
+  if(tier === "Premium")
+    return '<span class="badge badgePremium">🟢 Premium</span>';
 
-  const diamondDisplay =
-    document.getElementById(
-      "diamondDisplay"
-    );
-
-  const usdtDiamondRate =
-    document.getElementById(
-      "usdtDiamondRate"
-    );
-
-  const etbDiamondRate =
-    document.getElementById(
-      "etbDiamondRate"
-    );
-
-  if(diamondDisplay){
-
-    diamondDisplay.textContent =
-      diamondBalance.toLocaleString(
-        undefined,
-        {
-          maximumFractionDigits:8
-        }
-      );
-
-  }
-
-  if(usdtDiamondRate){
-
-    usdtDiamondRate.textContent =
-      usdtRate > 0
-      ? "1 USDT = "+
-        usdtRate.toLocaleString(
-          undefined,
-          {
-            maximumFractionDigits:8
-          }
-        )+
-        " 💎"
-      : "Rate unavailable";
-
-  }
-
-  if(etbDiamondRate){
-
-    etbDiamondRate.textContent =
-      etbRate > 0
-      ? "1 ETB = "+
-        etbRate.toLocaleString(
-          undefined,
-          {
-            maximumFractionDigits:8
-          }
-        )+
-        " 💎"
-      : "Rate unavailable";
-
-  }
-
+  return "";
 }
 
-function resetDiamondDashboard(){
-
-  const diamondDisplay =
-    document.getElementById(
-      "diamondDisplay"
-    );
-
-  const usdtDiamondRate =
-    document.getElementById(
-      "usdtDiamondRate"
-    );
-
-  const etbDiamondRate =
-    document.getElementById(
-      "etbDiamondRate"
-    );
-
-  if(diamondDisplay){
-
-    diamondDisplay.textContent="0";
-
-  }
-
-  if(usdtDiamondRate){
-
-    usdtDiamondRate.textContent =
-      "0 USDT = 0 💎";
-
-  }
-
-  if(etbDiamondRate){
-
-    etbDiamondRate.textContent =
-      "0 ETB = 0 💎";
-
-  }
-
+function level(profile){
+  return `<span class="level">⭐ Level ${Number(profile?.level || 1)}</span>`;
 }
 
-/* ================================
+function isAdmin(){
+  return !!currentProfile?.is_admin;
+}
+
+/* =========================================================
    AUTH
-================================ */
+========================================================= */
 
-async function checkLogin(){
+async function loadCurrentUser(){
 
-  const {data,error} =
-    await supabaseClient.auth.getSession();
+  const {data:{user}} =
+    await supabaseClient.auth.getUser();
 
-  if(error){
+  currentUser = user;
 
-    console.error(error);
+  if(!user){
+    currentProfile = {
+      id:null,
+      username:"Guest",
+      premium_tier:"Free",
+      level:1,
+      is_admin:false
+    };
 
+    currentWallet = {
+      usdt_balance:0,
+      diamond_balance:0
+    };
+
+    updateHeader();
+    updateWallet();
     return;
-
   }
 
-  currentSession =
-    data.session;
-
-  await updateAuthUI();
-
-}
-
-async function updateAuthUI(){
-
-  const loginBtn =
-    document.getElementById("loginBtn");
-
-  const registerBtn =
-    document.getElementById("registerBtn");
-
-  const logoutBtn =
-    document.getElementById("logoutBtn");
-
-  const userInfo =
-    document.getElementById("userInfo");
-
-  const usernameDisplay =
-    document.getElementById(
-      "usernameDisplay"
-    );
-
-  if(!currentSession){
-
-    loginBtn.style.display="block";
-    registerBtn.style.display="block";
-    logoutBtn.style.display="none";
-    userInfo.style.display="none";
-
-    document.getElementById(
-      "balanceDisplay"
-    ).textContent="0 ETB";
-
-    document.getElementById(
-      "etbDisplay"
-    ).textContent="0.00";
-
-    resetDiamondDashboard();
-
-    resetNotifications();
-
-    return;
-
-  }
-
-  loginBtn.style.display="none";
-  registerBtn.style.display="none";
-  logoutBtn.style.display="block";
-  userInfo.style.display="block";
-
-  const user =
-    currentSession.user;
-
-  let username =
-    user.user_metadata?.username ||
-    user.email?.split("@")[0] ||
-    "User";
-
-  usernameDisplay.textContent =
-    username;
-
-  const {
-    data:profile,
-    error:profileError
-  } =
+  let {data:profile,error} =
     await supabaseClient
       .from("profiles")
       .select("*")
       .eq("id",user.id)
       .maybeSingle();
 
-  if(profileError){
-
-    console.error(profileError);
-
+  if(error){
+    console.error(error);
   }
 
-  if(profile){
+  currentProfile = profile || {
+    id:user.id,
+    username:user.email?.split("@")[0] || "User",
+    premium_tier:"Free",
+    level:1,
+    is_admin:false
+  };
 
-    if(profile.username){
-
-      usernameDisplay.textContent =
-        profile.username;
-
-    }
-
-    const balance =
-      Number(profile.balance)||0;
-
-    document.getElementById(
-      "balanceDisplay"
-    ).textContent =
-      balance.toLocaleString()+" ETB";
-
-    document.getElementById(
-      "etbDisplay"
-    ).textContent =
-      balance.toLocaleString(
-        undefined,
-        {
-          minimumFractionDigits:2,
-          maximumFractionDigits:2
-        }
-      );
-
-    updateDiamondDashboard(profile);
-
-  }else{
-
-    resetDiamondDashboard();
-
-  }
-
+  await loadWallet();
+  updateHeader();
 }
 
-/* ================================
-   AVAILABLE P2P OFFERS
-================================ */
+async function loadWallet(){
 
-async function loadAvailableOffers(){
+  if(!currentUser){
+    currentWallet={
+      usdt_balance:0,
+      diamond_balance:0
+    };
+    updateWallet();
+    return;
+  }
 
-  const container =
-    document.getElementById(
-      "p2pOffersContainer"
-    );
-
-  if(!container)return;
-
-  container.innerHTML=`
-
-    <div class="no-offers">
-
-      <div class="no-offers-icon">
-        🔄
-      </div>
-
-      <strong>
-        Loading available offers...
-      </strong>
-
-      <small>
-        Please wait.
-      </small>
-
-    </div>
-
-  `;
-
-  let result =
+  const {data,error} =
     await supabaseClient
-      .from("p2p_offers")
+      .from("wallets")
       .select("*")
-      .limit(50);
-
-  if(result.error){
-
-    result =
-      await supabaseClient
-        .from("offers")
-        .select("*")
-        .limit(50);
-
-  }
-
-  if(result.error){
-
-    console.log(
-      "Available P2P offers are not available:",
-      result.error.message
-    );
-
-    renderNoOffers();
-
-    return;
-
-  }
-
-  const offers =
-    (result.data||[])
-      .filter(
-        offer =>
-          isOfferAvailable(offer)
-      );
-
-  if(!offers.length){
-
-    renderNoOffers();
-
-    return;
-
-  }
-
-  await renderAvailableOffers(
-    offers
-  );
-
-}
-
-function isOfferAvailable(offer){
-
-  if(!offer){
-    return false;
-  }
-
-  const status =
-    String(
-      offer.status ??
-      ""
-    )
-      .toLowerCase()
-      .trim();
-
-  if(
-    status &&
-    [
-      "closed",
-      "cancelled",
-      "canceled",
-      "completed",
-      "inactive",
-      "disabled",
-      "sold"
-    ].includes(status)
-  ){
-
-    return false;
-
-  }
-
-  if(
-    offer.is_active === false ||
-    offer.active === false
-  ){
-
-    return false;
-
-  }
-
-  const amountValue =
-    getFirstValue(
-      offer,
-      [
-        "available_amount",
-        "available",
-        "remaining_amount",
-        "amount"
-      ]
-    );
-
-  if(
-    amountValue !== null &&
-    amountValue !== undefined &&
-    amountValue !== ""
-  ){
-
-    const amount =
-      Number(amountValue);
-
-    if(
-      !Number.isNaN(amount) &&
-      amount <= 0
-    ){
-
-      return false;
-
-    }
-
-  }
-
-  return true;
-
-}
-
-async function renderAvailableOffers(
-  offers
-){
-
-  const container =
-    document.getElementById(
-      "p2pOffersContainer"
-    );
-
-  if(!container)return;
-
-  const userIds =
-    [
-      ...new Set(
-        offers
-          .map(
-            offer =>
-              offer.user_id ||
-              offer.seller_id ||
-              offer.owner_id ||
-              offer.created_by
-          )
-          .filter(Boolean)
-      )
-    ];
-
-  let profiles=[];
-
-  if(userIds.length){
-
-    const result =
-      await supabaseClient
-        .from("profiles")
-        .select(
-          "id,username,avatar_url"
-        )
-        .in(
-          "id",
-          userIds
-        );
-
-    if(!result.error){
-
-      profiles =
-        result.data||[];
-
-    }
-
-  }
-
-  const profileMap={};
-
-  profiles.forEach(
-    profile=>{
-
-      profileMap[
-        profile.id
-      ]=profile;
-
-    }
-  );
-
-  container.innerHTML="";
-
-  offers
-    .slice(0,5)
-    .forEach(
-      offer=>{
-
-        const card =
-          createOfferCard(
-            offer,
-            profileMap
-          );
-
-        container.appendChild(
-          card
-        );
-
-      }
-    );
-
-}
-
-function createOfferCard(
-  offer,
-  profileMap
-){
-
-  const card =
-    document.createElement(
-      "div"
-    );
-
-  card.className =
-    "p2p-card";
-
-  const userId =
-    offer.user_id ||
-    offer.seller_id ||
-    offer.owner_id ||
-    offer.created_by ||
-    "";
-
-  const profile =
-    profileMap[userId]||{};
-
-  const username =
-    profile.username ||
-    offer.username ||
-    offer.seller_username ||
-    "Available trader";
-
-  const avatarUrl =
-    profile.avatar_url ||
-    offer.avatar_url ||
-    "";
-
-  const initial =
-    username
-      .charAt(0)
-      .toUpperCase() ||
-    "U";
-
-  const typeRaw =
-    getFirstValue(
-      offer,
-      [
-        "type",
-        "trade_type",
-        "side",
-        "offer_type"
-      ]
-    );
-
-  const type =
-    String(
-      typeRaw ||
-      "buy"
-    )
-      .toLowerCase();
-
-  const rate =
-    getFirstValue(
-      offer,
-      [
-        "rate",
-        "price",
-        "exchange_rate",
-        "price_per_usdt"
-      ]
-    );
-
-  const amount =
-    getFirstValue(
-      offer,
-      [
-        "available_amount",
-        "available",
-        "remaining_amount",
-        "amount"
-      ]
-    );
-
-  const min =
-    getFirstValue(
-      offer,
-      [
-        "min_amount",
-        "minimum_amount",
-        "min"
-      ]
-    );
-
-  const max =
-    getFirstValue(
-      offer,
-      [
-        "max_amount",
-        "maximum_amount",
-        "max"
-      ]
-    );
-
-  const normalizedType =
-    type.includes("sell")
-    ? "sell"
-    : "buy";
-
-  const buttonText =
-    "Buy USDT";
-
-  const offerLabel =
-    normalizedType==="sell"
-    ? "SELL USDT"
-    : "BUY USDT";
-
-  card.innerHTML=`
-
-    <div class="offer-type">
-      ${escapeHtml(offerLabel)}
-    </div>
-
-    <div class="p2p-card-header">
-
-      <div class="seller">
-
-        ${
-          avatarUrl
-          ?
-          `
-          <div class="avatar">
-            <img
-              src="${escapeHtml(avatarUrl)}"
-              alt="Profile">
-          </div>
-          `
-          :
-          `
-          <div class="avatar">
-            ${escapeHtml(initial)}
-          </div>
-          `
-        }
-
-        <div>
-
-          <div class="username">
-            ${escapeHtml(username)}
-          </div>
-
-          <div class="online">
-            ● Available
-          </div>
-
-        </div>
-
-      </div>
-
-      ${
-        rate !== null &&
-        rate !== undefined &&
-        rate !== ""
-        ?
-        `
-        <div class="rate">
-
-          <strong>
-            ${escapeHtml(
-              formatNumber(rate)
-            )} ETB
-          </strong>
-
-          <small>
-            1 USDT
-          </small>
-
-        </div>
-        `
-        :
-        ""
-      }
-
-    </div>
-
-    <div class="trade-info">
-
-      ${
-        amount !== null &&
-        amount !== undefined &&
-        amount !== ""
-        ?
-        `
-        <span>
-          Available:
-          <strong>
-            ${escapeHtml(
-              formatNumber(amount)
-            )} USDT
-          </strong>
-        </span>
-        `
-        :
-        `
-        <span>
-          Available offer
-        </span>
-        `
-      }
-
-      ${
-        min !== null &&
-        min !== undefined &&
-        min !== ""
-        ?
-        `
-        <span>
-          Min:
-          ${escapeHtml(
-            formatNumber(min)
-          )} ETB
-        </span>
-        `
-        :
-        ""
-      }
-
-      ${
-        max !== null &&
-        max !== undefined &&
-        max !== ""
-        ?
-        `
-        <span>
-          Max:
-          ${escapeHtml(
-            formatNumber(max)
-          )} ETB
-        </span>
-        `
-        :
-        ""
-      }
-
-    </div>
-
-    <button
-      class="buy-btn"
-      onclick="openP2POffer(
-        '${escapeJs(offer.id)}'
-      )">
-
-      ${buttonText}
-
-    </button>
-
-  `;
-
-  return card;
-
-}
-
-function renderNoOffers(){
-
-  const container =
-    document.getElementById(
-      "p2pOffersContainer"
-    );
-
-  if(!container)return;
-
-  container.innerHTML=`
-
-    <div class="no-offers">
-
-      <div class="no-offers-icon">
-        🔄
-      </div>
-
-      <strong>
-        No available offers yet.
-      </strong>
-
-      <small>
-        Available P2P offers will appear here
-        when traders create them.
-      </small>
-
-    </div>
-
-  `;
-
-}
-
-function openP2POffer(
-  offerId
-){
-
-  if(!currentSession){
-
-    alert(
-      "Please login first."
-    );
-
-    openLogin();
-
-    return;
-
-  }
-
-  window.location.href =
-    "p2p-order.html?offer="+
-    encodeURIComponent(
-      offerId
-    );
-
-}
-
-function getFirstValue(
-  object,
-  keys
-){
-
-  for(
-    const key of keys
-  ){
-
-    if(
-      Object.prototype.hasOwnProperty.call(
-        object,
-        key
-      )
-    ){
-
-      if(
-        object[key] !== null &&
-        object[key] !== undefined &&
-        object[key] !== ""
-      ){
-
-        return object[key];
-
-      }
-
-    }
-
-  }
-
-  return null;
-
-}
-
-function formatNumber(
-  value
-){
-
-  const number =
-    Number(value);
-
-  if(
-    Number.isNaN(number)
-  ){
-
-    return String(
-      value
-    );
-
-  }
-
-  return number.toLocaleString(
-    undefined,
-    {
-      maximumFractionDigits:8
-    }
-  );
-
-}
-
-/* ================================
-   NOTIFICATIONS
-================================ */
-
-async function loadNotifications(){
-
-  if(!currentSession){
-
-    resetNotifications();
-
-    return;
-
-  }
-
-  const {
-    data,
-    error
-  } =
-    await supabaseClient
-      .from("notifications")
-      .select(`
-        id,
-        user_id,
-        type,
-        title,
-        body,
-        link,
-        is_read,
-        created_at
-      `)
-      .eq(
-        "user_id",
-        currentSession.user.id
-      )
-      .order(
-        "created_at",
-        {ascending:false}
-      )
-      .limit(50);
+      .eq("user_id",currentUser.id)
+      .maybeSingle();
 
   if(error){
-
-    console.error(
-      "Notification loading error:",
-      error
-    );
-
-    return;
-
+    console.error(error);
   }
 
-  renderNotifications(
-    data||[]
-  );
+  currentWallet = data || {
+    user_id:currentUser.id,
+    usdt_balance:0,
+    diamond_balance:0
+  };
 
+  updateWallet();
 }
 
-function renderNotifications(
-  notifications
-){
+function updateHeader(){
 
-  const list =
-    document.getElementById(
-      "notificationList"
+  const name =
+    currentProfile?.username ||
+    currentUser?.email ||
+    "Guest";
+
+  document.getElementById("currentName").innerHTML =
+    esc(name) + " " +
+    badge(currentProfile) +
+    level(currentProfile);
+
+  document.getElementById("currentMeta").textContent =
+    `${currentProfile?.premium_tier || "Free"} • Level ${Number(currentProfile?.level || 1)}`;
+
+  const avatar =
+    avatarUrl(currentProfile);
+
+  document.getElementById("currentAvatar").src=avatar;
+  document.getElementById("createAvatar").src=avatar;
+}
+
+function updateWallet(){
+
+  const usdt =
+    Number(currentWallet?.usdt_balance || 0);
+
+  const diamonds =
+    Number(
+      currentWallet?.diamond_balance ??
+      currentWallet?.diamonds ??
+      0
     );
 
-  const badge =
-    document.getElementById(
-      "notificationBadge"
-    );
+  if(!balanceVisible){
 
-  if(!notifications.length){
+    document.getElementById("mainWalletBalance")
+      .textContent="••••••";
 
-    list.innerHTML=`
-      <div class="no-notifications">
-        🔔 No notifications yet.
+    document.getElementById("usdtBalance")
+      .textContent="••••";
+
+    document.getElementById("diamondBalance")
+      .textContent="••••";
+
+    document.getElementById("eyeButton")
+      .textContent="🙈";
+
+    return;
+  }
+
+  document.getElementById("mainWalletBalance")
+    .textContent=`${money(usdt)} USDT`;
+
+  document.getElementById("usdtBalance")
+    .textContent=`${money(usdt)} USDT`;
+
+  document.getElementById("diamondBalance")
+    .textContent=`${Math.floor(diamonds)} 💎`;
+
+  document.getElementById("eyeButton")
+    .textContent="👁️";
+}
+
+function toggleBalance(){
+  balanceVisible=!balanceVisible;
+  updateWallet();
+}
+
+/* =========================================================
+   PAGE NAVIGATION
+========================================================= */
+
+function showPage(page){
+
+  currentPage=page;
+
+  const pages={
+    home:"homePage",
+    live:"livePage",
+    p2p:"p2pPage",
+    messages:"messagesPage",
+    profile:"profilePage"
+  };
+
+  Object.values(pages).forEach(id=>{
+    document.getElementById(id)
+      .classList.add("hidden");
+  });
+
+  document.getElementById(pages[page])
+    .classList.remove("hidden");
+
+  document.querySelectorAll(".navBtn")
+    .forEach(btn=>btn.classList.remove("active"));
+
+  const nav={
+    home:"navHome",
+    live:"navLive",
+    p2p:"navP2P",
+    messages:"navMessages",
+    profile:"navProfile"
+  };
+
+  document.getElementById(nav[page])
+    ?.classList.add("active");
+
+  if(page==="live") loadLiveRooms();
+  if(page==="p2p") loadP2POffers();
+  if(page==="messages") loadMessages();
+  if(page==="profile") loadOwnProfile();
+}
+
+function openProfile(){
+  showPage("profile");
+}
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+function openModal(title,html){
+
+  document.getElementById("modalRoot").innerHTML=`
+    <div class="modalBack" onclick="closeModal(event)">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modalHeader">
+          <div class="modalTitle">${title}</div>
+          <button class="closeBtn" onclick="closeModal()">✕</button>
+        </div>
+        ${html}
       </div>
-    `;
+    </div>`;
+}
 
-    badge.style.display="none";
+function closeModal(event){
+  if(event && event.target !== event.currentTarget) return;
+  document.getElementById("modalRoot").innerHTML="";
+}
 
+/* =========================================================
+   PREMIUM
+========================================================= */
+
+function openPremium(){
+
+  openModal("⭐ Premium Plans",`
+
+    <div class="premiumBox" style="margin-bottom:9px">
+      <span class="badge badgePremium">🟢 Premium</span>
+      <p style="margin-top:8px">
+        Picture posts + promotion inside photos.
+      </p>
+      <p class="muted" style="margin-top:5px">
+        1 month 2 USDT • 3 months 6 USDT •
+        6 months 12 USDT • 12 months 24 USDT
+      </p>
+      <button class="btn btnGreen btnFull"
+        style="margin-top:9px"
+        onclick="buyPremium('Premium')">
+        Buy Premium
+      </button>
+    </div>
+
+    <div class="premiumBox" style="margin-bottom:9px">
+      <span class="badge badgePlus">🔵 Premium+</span>
+      <p style="margin-top:8px">
+        Video posts + promotion inside videos.
+      </p>
+      <p class="muted" style="margin-top:5px">
+        1 month 5.42 USDT • 3 months 16.26 USDT •
+        6 months 32.52 USDT • 12 months 65.04 USDT
+      </p>
+      <button class="btn btnBlue btnFull"
+        style="margin-top:9px"
+        onclick="buyPremium('Premium+')">
+        Buy Premium+
+      </button>
+    </div>
+
+    <div class="premiumBox">
+      <span class="badge badgeMax">🟣 Premium Max</span>
+      <p style="margin-top:8px">
+        Pictures + videos + promotion + Live creation.
+      </p>
+      <p class="muted" style="margin-top:5px">
+        1 month 108.50 USDT • 3 months 325.50 USDT •
+        6 months 651 USDT • 12 months 1302 USDT
+      </p>
+      <button class="btn btnBrand btnFull"
+        style="margin-top:9px"
+        onclick="buyPremium('Premium Max')">
+        Buy Premium Max
+      </button>
+    </div>
+  `);
+}
+
+async function buyPremium(tier){
+
+  if(!currentUser){
+    toast("Please sign in first");
     return;
-
   }
 
-  const unreadCount =
-    notifications.filter(
-      n=>!n.is_read
-    ).length;
+  const prices={
+    "Premium":2,
+    "Premium+":5.42,
+    "Premium Max":108.5
+  };
 
-  if(unreadCount>0){
+  const amount=prices[tier];
 
-    badge.textContent =
-      unreadCount>99
-      ? "99+"
-      : unreadCount;
-
-    badge.style.display="flex";
-
-  }else{
-
-    badge.style.display="none";
-
+  if(Number(currentWallet?.usdt_balance||0)<amount){
+    toast("Insufficient USDT balance");
+    return;
   }
-
-  list.innerHTML="";
-
-  notifications.forEach(
-    notification=>{
-
-      const item =
-        document.createElement("div");
-
-      item.className =
-        "notification-item"+
-        (
-          notification.is_read
-          ? ""
-          : " unread"
-        );
-
-      item.innerHTML=`
-
-        <div class="notification-icon">
-          ${notificationIcon(
-            notification.type
-          )}
-        </div>
-
-        <div class="notification-content">
-
-          <div class="notification-title">
-            ${escapeHtml(
-              notification.title||
-              "Notification"
-            )}
-          </div>
-
-          <div class="notification-body">
-            ${escapeHtml(
-              notification.body||""
-            )}
-          </div>
-
-          <div class="notification-time">
-            ${escapeHtml(
-              formatPostTime(
-                notification.created_at
-              )
-            )}
-          </div>
-
-        </div>
-
-      `;
-
-      item.addEventListener(
-        "click",
-        async()=>{
-
-          if(!notification.is_read){
-
-            await markNotificationRead(
-              notification.id
-            );
-
-          }
-
-          if(notification.link){
-
-            window.location.href =
-              notification.link;
-
-          }else{
-
-            window.location.href =
-              "message.html";
-
-          }
-
-        }
-      );
-
-      list.appendChild(item);
-
-    }
-  );
-
-}
-
-function notificationIcon(type){
-
-  switch(type){
-
-    case "message":
-      return "💬";
-
-    case "like":
-      return "❤️";
-
-    case "comment":
-      return "💬";
-
-    case "follow":
-      return "👤";
-
-    case "wallet":
-      return "💰";
-
-    case "deposit":
-      return "💵";
-
-    case "withdraw":
-      return "🏦";
-
-    case "trade":
-      return "🔄";
-
-    default:
-      return "🔔";
-
-  }
-
-}
-
-async function markNotificationRead(
-  id
-){
-
-  if(!currentSession)return;
-
-  await supabaseClient
-    .from("notifications")
-    .update({
-      is_read:true
-    })
-    .eq(
-      "id",
-      id
-    )
-    .eq(
-      "user_id",
-      currentSession.user.id
-    );
-
-  await loadNotifications();
-
-}
-
-async function markAllNotificationsRead(){
-
-  if(!currentSession)return;
 
   const {error} =
     await supabaseClient
-      .from("notifications")
-      .update({
-        is_read:true
-      })
-      .eq(
-        "user_id",
-        currentSession.user.id
-      )
-      .eq(
-        "is_read",
-        false
-      );
+      .from("premium_orders")
+      .insert({
+        user_id:currentUser.id,
+        tier,
+        amount,
+        duration_months:1,
+        status:"pending"
+      });
 
   if(error){
-
-    alert(
-      "Could not mark notifications as read."
-    );
-
+    toast(error.message);
     return;
-
   }
 
-  await loadNotifications();
-
+  closeModal();
+  toast("Premium order created");
 }
 
-function resetNotifications(){
+/* =========================================================
+   WALLET ACTIONS
+========================================================= */
 
-  document.getElementById(
-    "notificationBadge"
-  ).style.display="none";
+function openSend(){
 
-  document.getElementById(
-    "notificationList"
-  ).innerHTML=`
-    <div class="no-notifications">
-      🔔 Login to see notifications.
+  openModal("💎 Send",`
+
+    <div class="formGroup">
+      <label>Asset</label>
+      <select id="sendAsset">
+        <option value="diamond">💎 Diamonds</option>
+        <option value="usdt">USDT</option>
+      </select>
     </div>
-  `;
 
+    <div class="formGroup">
+      <label>Username / recipient</label>
+      <input id="sendRecipient" placeholder="@username">
+    </div>
+
+    <div class="formGroup">
+      <label>Amount</label>
+      <input id="sendAmount" type="number" min="0" step="0.01">
+    </div>
+
+    <div class="modalActions">
+      <button class="btn btnLight" onclick="closeModal()">Cancel</button>
+      <button class="btn btnBrand" onclick="sendAsset()">Send</button>
+    </div>
+  `);
 }
 
-function toggleNotificationPanel(
-  event
-){
+async function sendAsset(){
 
-  if(event){
-    event.stopPropagation();
-  }
-
-  if(!currentSession){
-
-    alert(
-      "Please login to view notifications."
-    );
-
-    openLogin();
-
+  if(!currentUser){
+    toast("Please sign in first");
     return;
-
   }
 
-  const panel =
-    document.getElementById(
-      "notificationPanel"
-    );
+  const asset=document.getElementById("sendAsset").value;
+  const recipient=document.getElementById("sendRecipient").value.trim();
+  const amount=Number(document.getElementById("sendAmount").value);
 
-  panel.classList.toggle(
-    "open"
-  );
-
-  if(
-    panel.classList.contains(
-      "open"
-    )
-  ){
-
-    loadNotifications();
-
+  if(!recipient || amount<=0){
+    toast("Enter recipient and amount");
+    return;
   }
 
+  const field =
+    asset==="diamond" ?
+    "diamond_balance" :
+    "usdt_balance";
+
+  const balance=Number(currentWallet?.[field]||0);
+
+  if(balance<amount){
+    toast("Insufficient balance");
+    return;
+  }
+
+  const {data:userProfile} =
+    await supabaseClient
+      .from("profiles")
+      .select("id,username")
+      .ilike("username",recipient.replace(/^@/,""))
+      .maybeSingle();
+
+  if(!userProfile){
+    toast("Recipient not found");
+    return;
+  }
+
+  const {error} =
+    await supabaseClient
+      .from("transfers")
+      .insert({
+        sender_id:currentUser.id,
+        receiver_id:userProfile.id,
+        asset,
+        amount,
+        status:"pending"
+      });
+
+  if(error){
+    toast(error.message);
+    return;
+  }
+
+  closeModal();
+  toast("Transfer request sent");
 }
 
-document.addEventListener(
-  "click",
-  event=>{
+/* =========================================================
+   BUY
+========================================================= */
 
-    const panel =
-      document.getElementById(
-        "notificationPanel"
-      );
+function openBuy(){
 
-    const button =
-      document.getElementById(
-        "notificationButton"
-      );
+  openModal("🟢 Buy",`
 
-    if(
-      panel &&
-      !panel.contains(event.target) &&
-      button &&
-      !button.contains(event.target)
-    ){
+    <div class="formGroup">
+      <label>Buy USDT amount</label>
+      <input id="buyAmount" type="number" min="0" step="0.01"
+        placeholder="Amount">
+    </div>
 
-      panel.classList.remove(
-        "open"
-      );
+    <div class="formGroup">
+      <label>Payment method</label>
+      <select id="buyMethod">
+        <option>Bank Transfer</option>
+        <option>Telebirr</option>
+        <option>Mobile Money</option>
+        <option>Other</option>
+      </select>
+    </div>
 
+    <button class="btn btnGreen btnFull"
+      onclick="createBuyRequest()">
+      🟢 Create Buy Request
+    </button>
+  `);
+}
+
+async function createBuyRequest(){
+
+  if(!currentUser){
+    toast("Please sign in first");
+    return;
+  }
+
+  const amount=
+    Number(document.getElementById("buyAmount").value);
+
+  const method=
+    document.getElementById("buyMethod").value;
+
+  if(amount<=0){
+    toast("Enter amount");
+    return;
+  }
+
+  const {error} =
+    await supabaseClient
+      .from("trades")
+      .insert({
+        buyer_id:currentUser.id,
+        amount,
+        payment_method:method,
+        status:"pending"
+      });
+
+  if(error){
+    toast(error.message);
+    return;
+  }
+
+  closeModal();
+  toast("Buy request created");
+  showPage("messages");
+}
+
+/* =========================================================
+   TRADE
+========================================================= */
+
+function openTrade(){
+  showPage("p2p");
+}
+
+/* =========================================================
+   OFFERS
+========================================================= */
+
+async function loadOffers(){
+
+  const container=
+    document.getElementById("offersContainer");
+
+  container.innerHTML=
+    `<div class="loading">Loading offers...</div>`;
+
+  const {data,error} =
+    await supabaseClient
+      .from("offers")
+      .select(`
+        *,
+        profiles:user_id(
+          id,username,avatar_url,premium_tier,level
+        )
+      `)
+      .eq("status","active")
+      .order("created_at",{ascending:false})
+      .limit(5);
+
+  if(error){
+    console.error(error);
+    container.innerHTML=
+      `<div class="empty">Unable to load offers.</div>`;
+    return;
+  }
+
+  if(!data?.length){
+    container.innerHTML=
+      `<div class="empty">No available offers.</div>`;
+    return;
+  }
+
+  container.innerHTML=
+    data.map(renderOffer).join("");
+}
+
+function renderOffer(offer){
+
+  const p=offer.profiles || {};
+
+  const type=
+    String(offer.type||offer.side||"sell").toLowerCase();
+
+  const action=
+    type==="buy" ? "Sell" : "Buy";
+
+  return `
+    <div class="offer">
+
+      <div class="offerTop">
+        <div class="offerUser"
+          onclick="openUserProfile('${p.id||offer.user_id}')">
+          <img class="avatar avatarSmall"
+            src="${avatarUrl(p)}">
+          <div>
+            <div class="userName">
+              ${esc(p.username||"User")}
+              ${badge(p)}
+              ${level(p)}
+            </div>
+            <div class="muted">${esc(type.toUpperCase())}</div>
+          </div>
+        </div>
+
+        <div class="offerAmount">
+          ${money(offer.amount)} USDT
+        </div>
+      </div>
+
+      <div class="offerDetails">
+        <div class="detail">
+          Price
+          <strong>${money(offer.price||offer.rate||0)}</strong>
+        </div>
+        <div class="detail">
+          Limit
+          <strong>${esc(offer.min_limit||0)} -
+          ${esc(offer.max_limit||offer.amount||0)}</strong>
+        </div>
+        <div class="detail">
+          Payment
+          <strong>${esc(offer.payment_method||"P2P")}</strong>
+        </div>
+      </div>
+
+      <div class="offerActions">
+        <button class="btn btnBrand"
+          onclick="startTrade('${offer.id}')">
+          ${action}
+        </button>
+
+        <button class="btn btnLight"
+          onclick="openUserProfile('${p.id||offer.user_id}')">
+          👤 Profile
+        </button>
+      </div>
+
+    </div>`;
+}
+
+async function loadP2POffers(){
+
+  const container=
+    document.getElementById("p2pOffers");
+
+  container.innerHTML=
+    `<div class="loading">Loading...</div>`;
+
+  const {data,error} =
+    await supabaseClient
+      .from("offers")
+      .select(`
+        *,
+        profiles:user_id(
+          id,username,avatar_url,premium_tier,level
+        )
+      `)
+      .eq("status","active")
+      .order("created_at",{ascending:false})
+      .limit(20);
+
+  if(error){
+    container.innerHTML=
+      `<div class="empty">${esc(error.message)}</div>`;
+    return;
+  }
+
+  container.innerHTML=
+    data?.length
+      ? data.map(renderOffer).join("")
+      : `<div class="empty">No offers.</div>`;
+}
+
+function openCreateOffer(){
+
+  if(!currentUser){
+    toast("Please sign in first");
+    return;
+  }
+
+  openModal("Create P2P Offer",`
+
+    <div class="formGroup">
+      <label>Offer type</label>
+      <select id="offerType">
+        <option value="sell">Sell USDT</option>
+        <option value="buy">Buy USDT</option>
+      </select>
+    </div>
+
+    <div class="formGroup">
+      <label>USDT amount</label>
+      <input id="offerAmount" type="number" min="0" step="0.01">
+    </div>
+
+    <div class="formGroup">
+      <label>Price</label>
+      <input id="offerPrice" type="number" min="0" step="0.01">
+    </div>
+
+    <div class="formGroup">
+      <label>Minimum limit</label>
+      <input id="offerMin" type="number" min="0" step="0.01">
+    </div>
+
+    <div class="formGroup">
+      <label>Maximum limit</label>
+      <input id="offerMax" type="number" min="0" step="0.01">
+    </div>
+
+    <div class="formGroup">
+      <label>Payment method</label>
+      <input id="offerPayment" placeholder="Bank / Telebirr / Mobile Money">
+    </div>
+
+    <button class="btn btnBrand btnFull"
+      onclick="createOffer()">
+      Create Offer
+    </button>
+  `);
+}
+
+async function createOffer(){
+
+  const amount=
+    Number(document.getElementById("offerAmount").value);
+
+  const price=
+    Number(document.getElementById("offerPrice").value);
+
+  const min=
+    Number(document.getElementById("offerMin").value||0);
+
+  const max=
+    Number(document.getElementById("offerMax").value||amount);
+
+  const type=
+    document.getElementById("offerType").value;
+
+  const payment=
+    document.getElementById("offerPayment").value.trim();
+
+  if(amount<=0 || price<=0){
+    toast("Enter valid amount and price");
+    return;
+  }
+
+  const {error} =
+    await supabaseClient
+      .from("offers")
+      .insert({
+        user_id:currentUser.id,
+        type,
+        amount,
+        price,
+        min_limit:min,
+        max_limit:max,
+        payment_method:payment,
+        status:"active",
+        is_pinned:false
+      });
+
+  if(error){
+    toast(error.message);
+    return;
+  }
+
+  closeModal();
+  toast("Offer created");
+  loadOffers();
+  loadP2POffers();
+}
+
+async function startTrade(offerId){
+
+  if(!currentUser){
+    toast("Please sign in first");
+    return;
+  }
+
+  const {data:offer,error} =
+    await supabaseClient
+      .from("offers")
+      .select("*")
+      .eq("id",offerId)
+      .maybeSingle();
+
+  if(error || !offer){
+    toast("Offer not found");
+    return;
+  }
+
+  if(offer.user_id===currentUser.id){
+    toast("You cannot trade your own offer");
+    return;
+  }
+
+  const type=
+    String(offer.type||"sell").toLowerCase();
+
+  const trade={
+    offer_id:offer.id,
+    buyer_id:type==="sell"
+      ? currentUser.id
+      : offer.user_id,
+    seller_id:type==="sell"
+      ? offer.user_id
+      : currentUser.id,
+    amount:Number(offer.amount||0),
+    status:"pending"
+  };
+
+  const {data,error:tradeError} =
+    await supabaseClient
+      .from("trades")
+      .insert(trade)
+      .select()
+      .single();
+
+  if(tradeError){
+    toast(tradeError.message);
+    return;
+  }
+
+  closeModal();
+
+  toast("Trade started");
+
+  openTradeMessages(
+    type==="sell" ? offer.user_id : offer.user_id,
+    trade.id
+  );
+}
+
+/* =========================================================
+   POSTS
+========================================================= */
+
+async function loadPosts(refresh=false){
+
+  if(refresh){
+    postsOffset=0;
+  }
+
+  const container=
+    document.getElementById("postsContainer");
+
+  if(postsOffset===0){
+    container.innerHTML=
+      `<div class="loading">Loading posts...</div>`;
+  }
+
+  const {data,error} =
+    await supabaseClient
+      .from("posts")
+      .select(`
+        *,
+        profiles:user_id(
+          id,username,avatar_url,premium_tier,level
+        )
+      `)
+      .order("created_at",{ascending:false})
+      .range(postsOffset,postsOffset+POST_LIMIT-1);
+
+  if(error){
+    console.error(error);
+    container.innerHTML=
+      `<div class="empty">Unable to load posts.</div>`;
+    return;
+  }
+
+  if(postsOffset===0){
+    container.innerHTML="";
+  }
+
+  if(!data?.length){
+
+    if(postsOffset===0){
+      container.innerHTML=
+        `<div class="card empty">No posts yet. Create the first post 🚀</div>`;
     }
 
+    document.getElementById("loadMoreBtn")
+      .classList.add("hidden");
+
+    return;
   }
-);
 
-function subscribeToNotifications(){
+  for(const post of data){
+    const html=await renderPost(post);
+    container.insertAdjacentHTML("beforeend",html);
+  }
 
-  if(!currentSession)return;
+  postsOffset+=data.length;
 
-  if(notificationChannel){
-
-    supabaseClient.removeChannel(
-      notificationChannel
+  document.getElementById("loadMoreBtn")
+    .classList.toggle(
+      "hidden",
+      data.length<POST_LIMIT
     );
+}
 
-    notificationChannel=null;
+async function loadMorePosts(){
+  await loadPosts(false);
+}
 
+async function renderPost(post){
+
+  const p=post.profiles||{};
+
+  let liked=false;
+
+  if(currentUser){
+
+    const {data} =
+      await supabaseClient
+        .from("likes")
+        .select("id")
+        .eq("post_id",post.id)
+        .eq("user_id",currentUser.id)
+        .maybeSingle();
+
+    liked=!!data;
   }
 
-  const userId =
-    currentSession.user.id;
+  const comments=
+    await getComments(post.id);
 
-  notificationChannel =
+  const media =
+    post.media_url || post.image_url || post.video_url;
+
+  let mediaHtml="";
+
+  if(media && (post.type==="video" || post.video_url)){
+    mediaHtml=
+      `<video class="postVideo" controls
+        src="${esc(media)}"></video>`;
+  }else if(media){
+    mediaHtml=
+      `<img class="postImage"
+        src="${esc(media)}" alt="Post">`;
+  }
+
+  return `
+    <article class="post" id="post-${post.id}">
+
+      <div class="postHeader">
+
+        <div class="postUser"
+          onclick="openUserProfile('${p.id||post.user_id}')">
+
+          <img class="avatar avatarSmall"
+            src="${avatarUrl(p)}">
+
+          <div>
+            <div class="userName">
+              ${esc(p.username||"User")}
+              ${badge(p)}
+              ${level(p)}
+            </div>
+            <div class="userMeta">
+              ${post.visibility==="private" ? "🔒 Private" : "🌎 Public"}
+              • ${timeAgo(post.created_at)}
+            </div>
+          </div>
+
+        </div>
+
+        <button class="postMenu"
+          onclick="openPostMenu('${post.id}','${post.user_id}')">
+          ⋮
+        </button>
+
+      </div>
+
+      <div class="postText">${esc(post.content||post.text||"")}</div>
+
+      ${mediaHtml}
+
+      ${post.is_promoted ? `
+        <div style="margin-top:8px;color:var(--brand);font-size:12px;font-weight:800">
+          📢 Promoted
+        </div>` : ""}
+
+      <div class="postActions">
+
+        <button
+          class="postAction ${liked?"liked":""}"
+          onclick="toggleLike('${post.id}',this)">
+          ❤️ ${Number(post.like_count||post.likes_count||0)}
+        </button>
+
+        <button class="postAction"
+          onclick="toggleComments('${post.id}')">
+          💬 ${Number(post.comment_count||comments.length||0)}
+        </button>
+
+        <button class="postAction"
+          onclick="sharePost('${post.id}')">
+          ↗️ Share
+        </button>
+
+      </div>
+
+      <div id="comments-${post.id}" class="comments hidden">
+
+        <div id="commentList-${post.id}">
+          ${comments.map(renderComment).join("")}
+        </div>
+
+        ${currentUser ? `
+        <div class="commentInput">
+          <input id="commentInput-${post.id}"
+            placeholder="Write a comment...">
+          <button class="btn btnBrand"
+            onclick="addComment('${post.id}')">
+            Send
+          </button>
+        </div>` : ""}
+
+      </div>
+
+    </article>`;
+}
+
+async function getComments(postId){
+
+  const {data,error} =
+    await supabaseClient
+      .from("comments")
+      .select(`
+        *,
+        profiles:user_id(
+          id,username,avatar_url,premium_tier,level
+        )
+      `)
+      .eq("post_id",postId)
+      .order("created_at",{ascending:true})
+      .limit(100);
+
+  if(error){
+    console.error(error);
+    return [];
+  }
+
+  return data||[];
+}
+
+function renderComment(comment){
+
+  const p=comment.profiles||{};
+
+  return `
+    <div class="comment">
+
+      <img class="avatar avatarSmall"
+        src="${avatarUrl(p)}">
+
+      <div class="commentBody">
+
+        <div class="commentTop">
+          <span onclick="openUserProfile('${p.id||comment.user_id}')">
+            ${esc(p.username||"User")}
+            ${badge(p)}
+            ${level(p)}
+          </span>
+
+          ${currentUser &&
+            currentUser.id===comment.user_id
+            ? `
+            <button
+              onclick="deleteComment('${comment.id}')"
+              style="background:none;color:var(--red)">
+              🗑️
+            </button>`
+            : ""}
+        </div>
+
+        <div class="commentText">
+          ${esc(comment.content||comment.text||"")}
+        </div>
+
+      </div>
+
+    </div>`;
+}
+
+function toggleComments(postId){
+
+  document.getElementById("comments-"+postId)
+    ?.classList.toggle("hidden");
+}
+
+async function addComment(postId){
+
+  if(!currentUser){
+    toast("Please sign in first");
+    return;
+  }
+
+  const input=
+    document.getElementById("commentInput-"+postId);
+
+  const text=input.value.trim();
+
+  if(!text) return;
+
+  const {error} =
+    await supabaseClient
+      .from("comments")
+      .insert({
+        post_id:postId,
+        user_id:currentUser.id,
+        content:text
+      });
+
+  if(error){
+    toast(error.message);
+    return;
+  }
+
+  input.value="";
+
+  const list=
+    document.getElementById("commentList-"+postId);
+
+  const comments=
+    await getComments(postId);
+
+  list.innerHTML=
+    comments.map(renderComment).join("");
+
+  toast("Comment added");
+}
+
+async function deleteComment(commentId){
+
+  if(!currentUser) return;
+
+  const {error} =
+    await supabaseClient
+      .from("comments")
+      .delete()
+      .eq("id",commentId)
+      .eq("user_id",currentUser.id);
+
+  if(error){
+    toast(error.message);
+    return;
+  }
+
+  document.querySelectorAll(".post")
+    .forEach(async postEl=>{
+      const postId=
+        postEl.id.replace("post-","");
+
+      const list=
+        document.getElementById("commentList-"+postId);
+
+      if(list){
+        const comments=
+          await getComments(postId);
+
+        list.innerHTML=
+          comments.map(renderComment).join("");
+      }
+    });
+
+  toast("Comment deleted");
+}
+
+async function toggleLike(postId,button){
+
+  if(!currentUser){
+    toast("Please sign in first");
+    return;
+  }
+
+  const {data:existing} =
+    await supabaseClient
+      .from("likes")
+      .select("id")
+      .eq("post_id",postId)
+      .eq("user_id",currentUser.id)
+      .maybeSingle();
+
+  if(existing){
+
+    await supabaseClient
+      .from("likes")
+      .delete()
+      .eq("id",existing.id);
+
+    button.classList.remove("liked");
+
+  }else{
+
+    await supabaseClient
+      .from("likes")
+      .insert({
+        post_id:postId,
+        user_id:currentUser.id
+      });
+
+    button.classList.add("liked");
+  }
+
+  const {count} =
+    await supabaseClient
+      .from("likes")
+      .select("*",{count:"exact",head:true})
+      .eq("post_id",postId);
+
+  button.textContent=
+    `❤️ ${count||0}`;
+}
+
+async function sharePost(postId){
+
+  const url=
+    location.href.split("#")[0]+
+    "#post-"+postId;
+
+  try{
+    if(navigator.share){
+      await navigator.share({
+        title:"P2P Social",
+        text:"Check this post",
+        url
+      });
+    }else{
+      await navigator.clipboard.writeText(url);
+      toast("Post link copied");
+    }
+  }catch(e){}
+}
+
+function openPostMenu(postId,ownerId){
+
+  let buttons="";
+
+  if(currentUser?.id===ownerId){
+    buttons+=`
+      <button class="btn btnRed btnFull"
+        onclick="deletePost('${postId}')">
+        🗑️ Delete Post
+      </button>`;
+  }
+
+  if(isAdmin()){
+    buttons+=`
+      <button class="btn btnBrand btnFull"
+        style="margin-top:8px"
+        onclick="pinPost('${postId}')">
+        📌 Pin Post
+      </button>`;
+  }
+
+  if(!buttons){
+    buttons=
+      `<div class="empty">No actions available.</div>`;
+  }
+
+  openModal("Post options",buttons);
+}
+
+async function deletePost(postId){
+
+  if(!currentUser) return;
+
+  const {error} =
+    await supabaseClient
+      .from("posts")
+      .delete()
+      .eq("id",postId)
+      .eq("user_id",currentUser.id);
+
+  if(error){
+    toast(error.message);
+    return;
+  }
+
+  closeModal();
+  document.getElementById("post-"+postId)?.remove();
+  toast("Post deleted");
+}
+
+/* =========================================================
+   CREATE POST
+========================================================= */
+
+function openCreatePost(type="text"){
+
+  if(!currentUser){
+    toast("Please sign in first");
+    return;
+  }
+
+  const tier=
+    currentProfile?.premium_tier || "Free";
+
+  const isPhoto=
+    tier==="Premium" ||
+    tier==="Premium+" ||
+    tier==="Premium Max";
+
+  const isVideo=
+    tier==="Premium+" ||
+    tier==="Premium Max";
+
+  if(type==="photo" && !isPhoto){
+    toast("Premium is required for picture posts");
+    return;
+  }
+
+  if(type==="video" && !isVideo){
+    toast("Premium+ is required for video posts");
+    return;
+  }
+
+  openModal("Create Post",`
+
+    <div class="formGroup">
+      <label>Post type</label>
+      <select id="postType">
+        <option value="text">📝 Text</option>
+        ${isPhoto?'<option value="photo">📷 Photo</option>':""}
+        ${isVideo?'<option value="video">🎥 Video</option>':""}
+      </select>
+    </div>
+
+    <div class="formGroup">
+      <label>Visibility</label>
+      <select id="postVisibility">
+        <option value="public">🌎 Public</option>
+        <option value="private">🔒 Private</option>
+      </select>
+    </div>
+
+    <div class="formGroup">
+      <label>Message</label>
+      <textarea id="postContent"
+        placeholder="Write your post..."></textarea>
+    </div>
+
+    <div class="formGroup">
+      <label>Media URL (optional)</label>
+      <input id="postMedia"
+        placeholder="https://...">
+    </div>
+
+    <button class="btn btnBrand btnFull"
+      onclick="createPost()">
+      🚀 Publish
+    </button>
+  `);
+}
+
+async function createPost(){
+
+  const content=
+    document.getElementById("postContent").value.trim();
+
+  const type=
+    document.getElementById("postType").value;
+
+  const visibility=
+    document.getElementById("postVisibility").value;
+
+  const media=
+    document.getElementById("postMedia").value.trim();
+
+  if(!content && !media){
+    toast("Write something or add media");
+    return;
+  }
+
+  const {error} =
+    await supabaseClient
+      .from("posts")
+      .insert({
+        user_id:currentUser.id,
+        content,
+        type,
+        visibility,
+        media_url:media || null,
+        is_promoted:false,
+        is_pinned:false
+      });
+
+  if(error){
+    toast(error.message);
+    return;
+  }
+
+  closeModal();
+  toast("Post published");
+  await loadPosts(true);
+}
+
+/* =========================================================
+   PINNING
+========================================================= */
+
+async function getPinnedCount(table){
+
+  const {count} =
+    await supabaseClient
+      .from(table)
+      .select("*",{count:"exact",head:true})
+      .eq("is_pinned",true);
+
+  return count||0;
+}
+
+async function pinPost(postId){
+
+  if(!isAdmin()){
+    toast("Admin only");
+    return;
+  }
+
+  const count=
+    await getPinnedCount("posts");
+
+  if(count>=3){
+    toast("Maximum 3 pinned posts allowed");
+    return;
+  }
+
+  const {error} =
+    await supabaseClient
+      .from("posts")
+      .update({is_pinned:true})
+      .eq("id",postId);
+
+  if(error){
+    toast(error.message);
+    return;
+  }
+
+  closeModal();
+  toast("Post pinned");
+}
+
+/* =========================================================
+   LIVE ROOMS
+========================================================= */
+
+async function loadLiveRooms(){
+
+  const container=
+    document.getElementById("liveRooms");
+
+  container.innerHTML=
+    `<div class="loading">Loading live rooms...</div>`;
+
+  const {data,error} =
+    await supabaseClient
+      .from("live_rooms")
+      .select(`
+        *,
+        profiles:owner_id(
+          id,username,avatar_url,premium_tier,level
+        )
+      `)
+      .eq("status","live")
+      .order("created_at",{ascending:false})
+      .limit(10);
+
+  if(error){
+    console.error(error);
+    container.innerHTML=
+      `<div class="empty">Unable to load Live rooms.</div>`;
+    return;
+  }
+
+  if(!data?.length){
+    container.innerHTML=
+      `<div class="empty">No Live rooms right now.</div>`;
+    return;
+  }
+
+  container.innerHTML=
+    data.map(renderLiveRoom).join("");
+}
+
+function renderLiveRoom(room){
+
+  const p=room.profiles||{};
+
+  return `
+    <div class="liveRoom"
+      style="background:${room.background_color||"var(--brand)"}">
+
+      <div>
+        <div class="liveBadge">🔴 LIVE</div>
+        <div class="liveRoomTitle">
+          ${esc(room.title||"Live Room")}
+        </div>
+
+        <div style="margin-top:7px;font-size:12px">
+          👤 ${esc(p.username||"Host")}
+          ${badge(p)}
+          ${level(p)}
+        </div>
+      </div>
+
+      <div class="liveRoomBottom">
+
+        <div>
+          👥 ${Number(room.viewer_count||0)} viewers
+        </div>
+
+        <button class="btn btnLight smallBtn"
+          onclick="joinLive('${room.id}')">
+          Join
+        </button>
+
+      </div>
+
+    </div>`;
+}
+
+async function createLive(){
+
+  if(!currentUser){
+    toast("Please sign in first");
+    return;
+  }
+
+  if(currentProfile?.premium_tier!=="Premium Max"){
+    toast("🟣 Premium Max is required to create Live");
+    return;
+  }
+
+  const {count} =
+    await supabaseClient
+      .from("live_rooms")
+      .select("*",{count:"exact",head:true})
+      .eq("status","live");
+
+  if((count||0)>=10){
+    toast("Maximum 10 Live rooms reached");
+    return;
+  }
+
+  openModal("🔴 Create Live",`
+
+    <div class="formGroup">
+      <label>Room title</label>
+      <input id="liveTitle"
+        placeholder="My Live Room">
+    </div>
+
+    <div class="formGroup">
+      <label>Brand room color</label>
+      <input id="liveColor"
+        value="#6c4cff"
+        type="color"
+        style="height:45px;padding:3px">
+    </div>
+
+    <div class="formGroup">
+      <label>Voice chat</label>
+      <select id="liveVoice">
+        <option value="true">🗣️ Allowed</option>
+        <option value="false">Disabled</option>
+      </select>
+    </div>
+
+    <button class="btn btnBrand btnFull"
+      onclick="saveLiveRoom()">
+      🔴 Start Live
+    </button>
+  `);
+}
+
+async function saveLiveRoom(){
+
+  const title=
+    document.getElementById("liveTitle").value.trim() ||
+    "Live Room";
+
+  const color=
+    document.getElementById("liveColor").value;
+
+  const voice=
+    document.getElementById("liveVoice").value==="true";
+
+  const {count} =
+    await supabaseClient
+      .from("live_rooms")
+      .select("*",{count:"exact",head:true})
+      .eq("status","live");
+
+  if((count||0)>=10){
+    toast("Maximum 10 rooms reached");
+    return;
+  }
+
+  const {data,error} =
+    await supabaseClient
+      .from("live_rooms")
+      .insert({
+        owner_id:currentUser.id,
+        title,
+        background_color:color,
+        voice_enabled:voice,
+        status:"live",
+        viewer_count:0
+      })
+      .select()
+      .single();
+
+  if(error){
+    toast(error.message);
+    return;
+  }
+
+  closeModal();
+  toast("Live started");
+  await loadLiveRooms();
+
+  joinLive(data.id);
+}
+
+async function joinLive(roomId){
+
+  const {data:room,error} =
+    await supabaseClient
+      .from("live_rooms")
+      .select(`
+        *,
+        profiles:owner_id(
+          id,username,avatar_url,premium_tier,level
+        )
+      `)
+      .eq("id",roomId)
+      .maybeSingle();
+
+  if(error || !room){
+    toast("Live room not found");
+    return;
+  }
+
+  activeLiveRoom=room;
+
+  const {data:messages} =
+    await supabaseClient
+      .from("live_messages")
+      .select(`
+        *,
+        profiles:user_id(
+          id,username,avatar_url,premium_tier,level
+        )
+      `)
+      .eq("room_id",roomId)
+      .order("created_at",{ascending:true})
+      .limit(100);
+
+  openModal("",`
+    <div class="liveModal">
+
+      <div class="liveHeader"
+        style="background:${room.background_color||"var(--brand)"}">
+
+        <div style="display:flex;justify-content:space-between">
+          <div>
+            <div style="font-weight:800;font-size:18px">
+              🔴 ${esc(room.title||"Live")}
+            </div>
+            <div style="font-size:12px;margin-top:3px">
+              Host:
+              ${esc(room.profiles?.username||"Host")}
+              ${level(room.profiles)}
+            </div>
+          </div>
+
+          <button
+            onclick="closeLiveRoom()"
+            style="background:transparent;color:#fff;font-size:20px">
+            ✕
+          </button>
+        </div>
+
+        <div class="liveTools">
+
+          <button class="liveTool"
+            onclick="openGift('${room.id}','${room.owner_id}')">
+            🎁 Gift
+          </button>
+
+          <button class="liveTool"
+            onclick="sendLiveMessage('${room.id}')">
+            💬 Message
+          </button>
+
+          ${room.voice_enabled ? `
+          <button class="liveTool"
+            onclick="toggleVoice()">
+            🗣️ Voice
+          </button>` : ""}
+
+          ${isLiveOwner(room) ? `
+          <button class="liveTool"
+            onclick="openLiveAdmin('${room.id}')">
+            🛡️ Admin
+          </button>` : ""}
+
+        </div>
+
+      </div>
+
+      <div class="liveBody">
+
+        <div id="liveMessages"
+          class="liveMessages">
+
+          ${(messages||[]).map(renderLiveMessage).join("")}
+
+        </div>
+
+        <div class="liveComposer">
+          <input id="liveMessageInput"
+            placeholder="Write a message..."
+            onkeydown="if(event.key==='Enter')sendLiveMessage('${room.id}')">
+
+          <button class="btn btnBrand"
+            onclick="sendLiveMessage('${room.id}')">
+            Send
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  `);
+
+  subscribeLiveMessages(roomId);
+}
+
+function renderLiveMessage(msg){
+
+  const p=msg.profiles||{};
+
+  return `
+    <div class="liveMessage">
+
+      <div class="liveMessageBubble">
+
+        <div class="liveMessageName"
+          onclick="openUserProfile('${p.id||msg.user_id}')">
+
+          ${esc(p.username||"User")}
+          ${badge(p)}
+          ${level(p)}
+
+        </div>
+
+        <div>${esc(msg.message||msg.content||"")}</div>
+
+        ${msg.is_pinned ? `
+          <div style="font-size:10px;color:var(--orange);margin-top:3px">
+            📌 Pinned
+          </div>` : ""}
+
+      </div>
+
+    </div>`;
+}
+
+function isLiveOwner(room){
+  return currentUser?.id===room.owner_id;
+}
+
+function subscribeLiveMessages(roomId){
+
+  if(liveMessagesChannel){
     supabaseClient
-      .channel(
-        "notifications-"+userId
-      )
+      .removeChannel(liveMessagesChannel);
+  }
+
+  liveMessagesChannel =
+    supabaseClient
+      .channel("live-"+roomId)
       .on(
         "postgres_changes",
         {
           event:"INSERT",
           schema:"public",
-          table:"notifications",
-          filter:
-            "user_id=eq."+userId
+          table:"live_messages",
+          filter:"room_id=eq."+roomId
         },
-        payload=>{
+        async payload=>{
 
-          showNewNotificationPopup(
-            payload.new
-          );
+          const {data} =
+            await supabaseClient
+              .from("live_messages")
+              .select(`
+                *,
+                profiles:user_id(
+                  id,username,avatar_url,premium_tier,level
+                )
+              `)
+              .eq("id",payload.new.id)
+              .maybeSingle();
 
-          loadNotifications();
+          if(data){
 
+            document
+              .getElementById("liveMessages")
+              ?.insertAdjacentHTML(
+                "beforeend",
+                renderLiveMessage(data)
+              );
+
+            scrollLiveMessages();
+          }
         }
       )
       .subscribe();
-
 }
 
-function showNewNotificationPopup(
-  notification
-){
+function scrollLiveMessages(){
 
-  if(document.hidden)return;
+  const el=
+    document.getElementById("liveMessages");
 
-  if(
-    "Notification" in window &&
-    Notification.permission==="granted"
-  ){
+  if(el) el.scrollTop=el.scrollHeight;
+}
 
-    try{
+async function sendLiveMessage(roomId){
 
-      new Notification(
-        notification.title||
-        "New notification",
-        {
-          body:
-            notification.body||""
-        }
-      );
-
-    }catch(error){
-
-      console.log(error);
-
-    }
-
+  if(!currentUser){
+    toast("Please sign in");
+    return;
   }
 
-}
+  const input=
+    document.getElementById("liveMessageInput");
 
-async function requestNotificationPermission(){
+  const text=input?.value.trim();
 
-  if(!("Notification" in window))return;
+  if(!text) return;
 
-  if(
-    Notification.permission==="default"
-  ){
+  const {error} =
+    await supabaseClient
+      .from("live_messages")
+      .insert({
+        room_id:roomId,
+        user_id:currentUser.id,
+        message:text,
+        is_pinned:false
+      });
 
-    try{
-
-      await Notification.requestPermission();
-
-    }catch(error){
-
-      console.log(error);
-
-    }
-
+  if(error){
+    toast(error.message);
+    return;
   }
 
+  input.value="";
 }
 
-/* ================================
-   POSTS
-================================ */
+function toggleVoice(){
+  toast("Voice chat enabled for this room");
+}
 
-async function loadPosts(
-  shuffle=false
-){
+/* =========================================================
+   LIVE GIFTS
+========================================================= */
 
-  const feed =
-    document.getElementById(
-      "postsFeed"
+function openGift(roomId,ownerId){
+
+  openModal("🎁 Send Gift",`
+
+    <div class="formGroup">
+      <label>Gift</label>
+      <select id="giftAmount">
+        <option value="10">💎 10 Diamonds</option>
+        <option value="50">💎 50 Diamonds</option>
+        <option value="100">💎 100 Diamonds</option>
+        <option value="500">💎 500 Diamonds</option>
+        <option value="1000">💎 1000 Diamonds</option>
+      </select>
+    </div>
+
+    <p class="muted">
+      Live owner receives 85%. Platform fee is 15%.
+    </p>
+
+    <button class="btn btnBrand btnFull"
+      style="margin-top:12px"
+      onclick="sendGift('${roomId}','${ownerId}')">
+      🎁 Send Gift
+    </button>
+  `);
+}
+
+async function sendGift(roomId,ownerId){
+
+  if(!currentUser) return;
+
+  const amount=
+    Number(document.getElementById("giftAmount").value);
+
+  const diamonds=
+    Number(
+      currentWallet?.diamond_balance ??
+      currentWallet?.diamonds ??
+      0
     );
 
-  feed.innerHTML=`
-    <div class="loading-posts">
-      Loading public posts...
-    </div>
-  `;
+  if(diamonds<amount){
+    toast("Not enough 💎 Diamonds");
+    return;
+  }
 
-  let query =
-    supabaseClient
-      .from("posts")
+  const platformFee=
+    Number((amount*0.15).toFixed(2));
+
+  const ownerEarning=
+    Number((amount*0.85).toFixed(2));
+
+  const {error} =
+    await supabaseClient
+      .from("live_gifts")
+      .insert({
+        room_id:roomId,
+        sender_id:currentUser.id,
+        receiver_id:ownerId,
+        amount,
+        platform_fee_percent:15,
+        platform_fee:platformFee,
+        owner_earning_percent:85,
+        owner_earning:ownerEarning,
+        asset:"diamond",
+        status:"completed"
+      });
+
+  if(error){
+    toast(error.message);
+    return;
+  }
+
+  closeModal();
+  toast(
+    `🎁 Gift sent • ${platformFee} 💎 platform fee • ${ownerEarning} 💎 owner earning`
+  );
+}
+
+/* =========================================================
+   LIVE ADMIN
+========================================================= */
+
+function openLiveAdmin(roomId){
+
+  openModal("🛡️ Live Admin",`
+
+    <p class="muted">
+      Manage users in this Live room.
+    </p>
+
+    <div style="margin-top:12px">
+
+      <button class="btn btnLight btnFull"
+        onclick="manageLiveUsers('${roomId}')">
+        👥 View Users
+      </button>
+
+      <button class="btn btnBrand btnFull"
+        style="margin-top:8px"
+        onclick="pinLiveMessage('${roomId}')">
+        📌 Pin Message
+      </button>
+
+      <button class="btn btnRed btnFull"
+        style="margin-top:8px"
+        onclick="endLive('${roomId}')">
+        ⛔ End Live
+      </button>
+
+    </div>
+  `);
+}
+
+async function manageLiveUsers(roomId){
+
+  const {data,error} =
+    await supabaseClient
+      .from("live_messages")
       .select(`
-        id,
         user_id,
-        content,
-        created_at,
-        visibility
+        profiles:user_id(
+          id,username,avatar_url,level,premium_tier
+        )
       `)
-      .or(
-        "visibility.eq.public,visibility.is.null"
-      )
-      .order(
-        "created_at",
-        {ascending:false}
-      )
+      .eq("room_id",roomId)
       .limit(100);
 
-  const {
-    data:posts,
-    error
-  } =
-    await query;
-
   if(error){
-
-    console.error(
-      "Posts loading error:",
-      error
-    );
-
-    feed.innerHTML=`
-      <div class="no-posts">
-        Could not load posts.<br>
-        <small>
-          ${escapeHtml(
-            error.message
-          )}
-        </small>
-      </div>
-    `;
-
+    toast(error.message);
     return;
-
   }
 
-  allPosts =
-    posts||[];
-
-  if(shuffle){
-
-    allPosts.sort(
-      ()=>Math.random()-.5
-    );
-
-  }
-
-  displayedPostCount=10;
-
-  await renderPosts();
-
-}
-
-async function loadMorePosts(){
-
-  if(
-    displayedPostCount>=
-    allPosts.length
-  ){
-
-    return;
-
-  }
-
-  displayedPostCount+=10;
-
-  await renderPosts();
-
-}
-
-/* ================================
-   RENDER POSTS
-================================ */
-
-async function renderPosts(){
-
-  const feed =
-    document.getElementById(
-      "postsFeed"
-    );
-
-  const visiblePosts =
-    allPosts.slice(
-      0,
-      displayedPostCount
-    );
-
-  if(!visiblePosts.length){
-
-    feed.innerHTML=`
-      <div class="no-posts">
-        No public posts yet.
-      </div>
-    `;
-
-    document.getElementById(
-      "loadMoreBtn"
-    ).style.display="none";
-
-    return;
-
-  }
-
-  const postIds =
-    visiblePosts.map(
-      p=>p.id
-    );
-
-  const userIds =
-    [...new Set(
-      visiblePosts.map(
-        p=>p.user_id
-      )
-    )];
-
-  let profiles=[];
-
-  if(userIds.length){
-
-    const result =
-      await supabaseClient
-        .from("profiles")
-        .select(
-          "id,username,avatar_url"
-        )
-        .in(
-          "id",
-          userIds
-        );
-
-    if(!result.error){
-
-      profiles =
-        result.data||[];
-
-    }
-
-  }
-
-  const profileMap={};
-
-  profiles.forEach(
-    profile=>{
-
-      profileMap[
-        profile.id
-      ]=profile;
-
-    }
-  );
-
-  let likes=[];
-
-  if(postIds.length){
-
-    const result =
-      await supabaseClient
-        .from("post_likes")
-        .select(
-          "post_id,user_id"
-        )
-        .in(
-          "post_id",
-          postIds
-        );
-
-    if(!result.error){
-
-      likes =
-        result.data||[];
-
-    }
-
-  }
-
-  const likeCount={};
-
-  likes.forEach(
-    like=>{
-
-      likeCount[
-        like.post_id
-      ]=
-        (
-          likeCount[
-            like.post_id
-          ]||0
-        )+1;
-
-    }
-  );
-
-  const myLikes =
-    new Set(
-      currentSession
-      ?
-      likes
-        .filter(
-          like=>
-            like.user_id===
-            currentSession.user.id
-        )
-        .map(
-          like=>like.post_id
-        )
-      :
-      []
-    );
-
-  let comments=[];
-
-  if(postIds.length){
-
-    const result =
-      await supabaseClient
-        .from("post_comments")
-        .select(
-          "id,post_id,user_id,comment,created_at"
-        )
-        .in(
-          "post_id",
-          postIds
-        )
-        .order(
-          "created_at",
-          {
-            ascending:true
-          }
-        );
-
-    if(!result.error){
-
-      comments =
-        result.data||[];
-
-    }
-
-  }
-
-  const commentUserIds =
-    [...new Set(
-      comments.map(
-        c=>c.user_id
-      )
-    )];
-
-  if(commentUserIds.length){
-
-    const result =
-      await supabaseClient
-        .from("profiles")
-        .select(
-          "id,username,avatar_url"
-        )
-        .in(
-          "id",
-          commentUserIds
-        );
-
-    if(!result.error){
-
-      (
-        result.data||[]
-      ).forEach(
-        profile=>{
-
-          profileMap[
-            profile.id
-          ]=profile;
-
-        }
-      );
-
-    }
-
-  }
-
-  feed.innerHTML="";
-
-  visiblePosts.forEach(
-    post=>{
-
-      const profile =
-        profileMap[
-          post.user_id
-        ]||{};
-
-      const username =
-        profile.username||
-        "User";
-
-      const avatar =
-        profile.avatar_url||
-        "";
-
-      const initial =
-        username
-          .charAt(0)
-          .toUpperCase();
-
-      const postComments =
-        comments.filter(
-          c=>
-            String(c.post_id)===
-            String(post.id)
-        );
-
-      const isOwner =
-        currentSession &&
-        currentSession.user.id===
-        post.user_id;
-
-      const card =
-        document.createElement(
-          "article"
-        );
-
-      card.className =
-        "post-card";
-
-      card.innerHTML=`
-
-        <div
-          class="post-header"
-          onclick="openUserProfile(
-            '${escapeJs(post.user_id)}'
-          )">
-
-          ${
-            avatar
-            ?
-            `
-            <img
-              class="post-avatar"
-              src="${escapeHtml(avatar)}"
-              alt="Profile">
-            `
-            :
-            `
-            <div class="post-avatar">
-              ${escapeHtml(initial)}
+  const unique={};
+
+  (data||[]).forEach(x=>{
+    if(x.user_id) unique[x.user_id]=x.profiles;
+  });
+
+  const users=
+    Object.values(unique)
+      .filter(Boolean)
+      .filter(p=>p.id!==currentUser.id);
+
+  openModal("👥 Live Users",`
+
+    ${
+      users.length
+      ? users.map(p=>`
+        <div class="offer"
+          style="display:flex;align-items:center;justify-content:space-between">
+
+          <div class="offerUser">
+            <img class="avatar avatarSmall"
+              src="${avatarUrl(p)}">
+
+            <div>
+              <div class="userName">
+                ${esc(p.username)}
+                ${badge(p)}
+              </div>
+              <div class="muted">
+                ${level(p)}
+              </div>
             </div>
-            `
-          }
-
-          <div class="post-user-info">
-
-            <div class="post-name">
-              ${escapeHtml(username)}
-            </div>
-
-            <div class="post-handle">
-              @${escapeHtml(username)}
-            </div>
-
           </div>
 
-          <div class="post-time">
-
-            ${escapeHtml(
-              formatPostTime(
-                post.created_at
-              )
-            )}
-
-          </div>
-
-          ${
-            isOwner
-            ?
-            `
-            <button
-              class="post-menu"
-              onclick="
-                event.stopPropagation();
-                deletePost(
-                  '${escapeJs(post.id)}'
-                )
-              ">
-              🗑️
+          <div>
+            <button class="btn btnLight smallBtn"
+              onclick="kickLiveUser('${roomId}','${p.id}')">
+              Kick
             </button>
-            `
-            :
-            ""
-          }
 
-        </div>
-
-        <div class="post-content">
-
-          ${escapeHtml(
-            post.content||""
-          )}
-
-        </div>
-
-        <div class="post-actions">
-
-          <button
-            class="post-action ${
-              myLikes.has(post.id)
-              ? "liked"
-              : ""
-            }"
-            onclick="
-              event.stopPropagation();
-              likePost(
-                '${escapeJs(post.id)}'
-              )
-            ">
-
-            ${
-              myLikes.has(post.id)
-              ? "♥ Liked"
-              : "♡ Like"
-            }
-
-            <span>
-              ${likeCount[post.id]||0}
-            </span>
-
-          </button>
-
-          <button
-            class="post-action"
-            onclick="
-              event.stopPropagation();
-              toggleComments(
-                '${escapeJs(post.id)}'
-              )
-            ">
-
-            💬 Comments
-
-            <span>
-              ${postComments.length}
-            </span>
-
-          </button>
-
-          <button
-            class="post-action"
-            onclick="
-              event.stopPropagation();
-              sharePost(
-                '${escapeJs(post.id)}'
-              )
-            ">
-
-            ↗ Share
-
-          </button>
-
-        </div>
-
-        <div
-          id="comments-${escapeHtml(post.id)}"
-          class="comments-box"
-          style="
-            display:${
-              commentsOpen[post.id]
-              ? "block"
-              : "none"
-            };
-          ">
-
-          ${renderComments(
-            post.id,
-            comments,
-            profileMap
-          )}
-
-        </div>
-
-      `;
-
-      feed.appendChild(card);
-
-    }
-  );
-
-  const loadMoreBtn =
-    document.getElementById(
-      "loadMoreBtn"
-    );
-
-  loadMoreBtn.style.display =
-    displayedPostCount<
-    allPosts.length
-    ? "block"
-    : "none";
-
-}
-
-/* ================================
-   COMMENTS OPEN / CLOSE
-================================ */
-
-function toggleComments(
-  postId
-){
-
-  commentsOpen[postId]=
-    !commentsOpen[postId];
-
-  const box =
-    document.getElementById(
-      "comments-"+postId
-    );
-
-  if(box){
-
-    box.style.display =
-      commentsOpen[postId]
-      ? "block"
-      : "none";
-
-  }
-
-  if(
-    commentsOpen[postId]
-  ){
-
-    refreshSinglePostComments(
-      postId
-    );
-
-  }
-
-}
-
-async function refreshSinglePostComments(
-  postId
-){
-
-  const box =
-    document.getElementById(
-      "comments-"+postId
-    );
-
-  if(!box)return;
-
-  const {
-    data:comments,
-    error
-  } =
-    await supabaseClient
-      .from("post_comments")
-      .select(
-        "id,post_id,user_id,comment,created_at"
-      )
-      .eq(
-        "post_id",
-        postId
-      )
-      .order(
-        "created_at",
-        {
-          ascending:true
-        }
-      );
-
-  if(error){
-
-    console.error(error);
-
-    return;
-
-  }
-
-  const userIds =
-    [...new Set(
-      (comments||[]).map(
-        c=>c.user_id
-      )
-    )];
-
-  let profiles=[];
-
-  if(userIds.length){
-
-    const result =
-      await supabaseClient
-        .from("profiles")
-        .select(
-          "id,username,avatar_url"
-        )
-        .in(
-          "id",
-          userIds
-        );
-
-    if(!result.error){
-
-      profiles =
-        result.data||[];
-
-    }
-
-  }
-
-  const profileMap={};
-
-  profiles.forEach(
-    profile=>{
-
-      profileMap[
-        profile.id
-      ]=profile;
-
-    }
-  );
-
-  box.innerHTML =
-    renderComments(
-      postId,
-      comments||[],
-      profileMap
-    );
-
-}
-
-function renderComments(
-  postId,
-  comments,
-  profileMap
-){
-
-  const postComments =
-    comments.filter(
-      c=>
-        String(c.post_id)===
-        String(postId)
-    );
-
-  let html="";
-
-  const showing =
-    commentsOpen[postId]
-    ?
-    postComments
-    :
-    postComments.slice(
-      0,
-      2
-    );
-
-  showing.forEach(
-    comment=>{
-
-      const profile =
-        profileMap[
-          comment.user_id
-        ]||{};
-
-      const username =
-        profile.username||
-        "User";
-
-      const avatar =
-        profile.avatar_url||
-        "";
-
-      const initial =
-        username
-          .charAt(0)
-          .toUpperCase();
-
-      const owner =
-        currentSession &&
-        currentSession.user.id===
-        comment.user_id;
-
-      html+=`
-
-        <div class="comment">
-
-          <div class="comment-avatar">
-
-            ${
-              avatar
-              ?
-              `
-              <img
-                src="${escapeHtml(avatar)}"
-                alt="Profile">
-              `
-              :
-              escapeHtml(initial)
-            }
-
-          </div>
-
-          <div class="comment-body">
-
-            <div class="comment-name">
-              ${escapeHtml(username)}
-            </div>
-
-            <div class="comment-text">
-              ${escapeHtml(
-                comment.comment||""
-              )}
-            </div>
-
-            ${
-              owner
-              ?
-              `
-              <button
-                class="comment-delete"
-                onclick="
-                  deleteComment(
-                    '${escapeJs(comment.id)}'
-                  )
-                ">
-                🗑️
-              </button>
-              `
-              :
-              ""
-            }
-
+            <button class="btn btnRed smallBtn"
+              onclick="banLiveUser('${roomId}','${p.id}')">
+              Ban
+            </button>
           </div>
 
         </div>
-
-      `;
-
+      `).join("")
+      : `<div class="empty">No other users found.</div>`
     }
-  );
-
-  if(
-    postComments.length>2 &&
-    !commentsOpen[postId]
-  ){
-
-    html+=`
-
-      <button
-        class="view-comments"
-        onclick="
-          toggleComments(
-            '${escapeJs(postId)}'
-          )
-        ">
-
-        👀 View all
-        ${postComments.length}
-        comments
-
-      </button>
-
-    `;
-
-  }
-
-  if(
-    commentsOpen[postId]
-  ){
-
-    html+=`
-
-      <button
-        class="view-comments"
-        onclick="
-          toggleComments(
-            '${escapeJs(postId)}'
-          )
-        ">
-
-        Hide comments
-
-      </button>
-
-    `;
-
-  }
-
-  if(currentSession){
-
-    html+=`
-
-      <div class="comment-input-row">
-
-        <input
-          id="comment-input-${escapeHtml(postId)}"
-          class="comment-input"
-          maxlength="500"
-          placeholder="Write a comment..."
-          onkeydown="
-            if(event.key==='Enter'){
-              sendComment(
-                '${escapeJs(postId)}'
-              )
-            }
-          ">
-
-        <button
-          class="comment-send"
-          onclick="
-            sendComment(
-              '${escapeJs(postId)}'
-            )
-          ">
-
-          Send
-
-        </button>
-
-      </div>
-
-    `;
-
-  }else{
-
-    html+=`
-
-      <div
-        style="
-          font-size:12px;
-          color:#777;
-          margin-top:8px;
-        ">
-
-        Login to comment.
-
-      </div>
-
-    `;
-
-  }
-
-  return html;
-
+  `);
 }
 
-/* ================================
-   SEND COMMENT
-================================ */
-
-async function sendComment(
-  postId
-){
-
-  if(!currentSession){
-
-    alert(
-      "Please login to comment."
-    );
-
-    openLogin();
-
-    return;
-
-  }
-
-  const input =
-    document.getElementById(
-      "comment-input-"+postId
-    );
-
-  if(!input)return;
-
-  const text =
-    String(
-      input.value||""
-    ).trim();
-
-  if(!text)return;
-
-  if(text.length>500){
-
-    alert(
-      "Comment is too long."
-    );
-
-    return;
-
-  }
+async function kickLiveUser(roomId,userId){
 
   const {error} =
     await supabaseClient
-      .from("post_comments")
+      .from("live_bans")
       .insert({
-
-        post_id:postId,
-
-        user_id:
-          currentSession.user.id,
-
-        comment:text
-
+        room_id:roomId,
+        user_id:userId,
+        action:"kick"
       });
 
   if(error){
-
-    console.error(error);
-
-    alert(
-      "Comment failed: "+
-      error.message
-    );
-
+    toast(error.message);
     return;
-
   }
 
-  commentsOpen[postId]=true;
-
-  await renderPosts();
-
+  toast("User kicked");
 }
 
-/* ================================
-   DELETE COMMENT
-================================ */
+async function banLiveUser(roomId,userId){
 
-async function deleteComment(
-  commentId
-){
+  const {error} =
+    await supabaseClient
+      .from("live_bans")
+      .insert({
+        room_id:roomId,
+        user_id:userId,
+        action:"ban"
+      });
 
-  if(!currentSession)return;
-
-  if(!confirm(
-    "Delete your comment?"
-  )){
-
+  if(error){
+    toast(error.message);
     return;
+  }
 
+  toast("User banned");
+}
+
+async function pinLiveMessage(roomId){
+
+  if(!isAdmin() && !isLiveOwner(activeLiveRoom)){
+    toast("Only admin or room owner can pin");
+    return;
+  }
+
+  const {data:messages} =
+    await supabaseClient
+      .from("live_messages")
+      .select("id,message")
+      .eq("room_id",roomId)
+      .order("created_at",{ascending:false})
+      .limit(10);
+
+  if(!messages?.length){
+    toast("No messages");
+    return;
+  }
+
+  openModal("📌 Pin Live Message",
+    messages.map(m=>`
+      <button class="btn btnLight btnFull"
+        style="margin-bottom:7px;text-align:left"
+        onclick="confirmPinLiveMessage('${m.id}')">
+        ${esc(m.message)}
+      </button>
+    `).join("")
+  );
+}
+
+async function confirmPinLiveMessage(messageId){
+
+  if(!isAdmin() && !isLiveOwner(activeLiveRoom)){
+    toast("Not allowed");
+    return;
   }
 
   const {error} =
     await supabaseClient
-      .from("post_comments")
-      .delete()
-      .eq(
-        "id",
-        commentId
-      )
-      .eq(
-        "user_id",
-        currentSession.user.id
-      );
+      .from("live_messages")
+      .update({is_pinned:true})
+      .eq("id",messageId);
 
   if(error){
-
-    alert(
-      "Could not delete comment: "+
-      error.message
-    );
-
+    toast(error.message);
     return;
-
   }
 
-  await renderPosts();
-
+  closeModal();
+  toast("Message pinned");
 }
 
-/* ================================
-   LIKE / UNLIKE
-================================ */
+async function endLive(roomId){
 
-async function likePost(
-  postId
-){
-
-  if(!currentSession){
-
-    alert(
-      "Please login to like posts."
-    );
-
-    openLogin();
-
+  if(!isLiveOwner(activeLiveRoom) && !isAdmin()){
+    toast("Only owner/admin");
     return;
-
   }
 
-  const userId =
-    currentSession.user.id;
-
-  const {
-    data:existing,
-    error:checkError
-  } =
+  const {error} =
     await supabaseClient
-      .from("post_likes")
-      .select(
-        "post_id"
+      .from("live_rooms")
+      .update({
+        status:"ended",
+        ended_at:new Date().toISOString()
+      })
+      .eq("id",roomId);
+
+  if(error){
+    toast(error.message);
+    return;
+  }
+
+  closeModal();
+  closeLiveRoom();
+  toast("Live ended");
+  loadLiveRooms();
+}
+
+function closeLiveRoom(){
+
+  if(liveMessagesChannel){
+    supabaseClient
+      .removeChannel(liveMessagesChannel);
+
+    liveMessagesChannel=null;
+  }
+
+  activeLiveRoom=null;
+  closeModal();
+}
+
+/* =========================================================
+   MESSAGES
+========================================================= */
+
+async function loadMessages(){
+
+  const container=
+    document.getElementById("messagesContainer");
+
+  if(!currentUser){
+    container.innerHTML=
+      `<div class="empty">Please sign in to use Messages.</div>`;
+    return;
+  }
+
+  const {data,error} =
+    await supabaseClient
+      .from("messages")
+      .select(`
+        *,
+        sender:sender_id(
+          id,username,avatar_url,premium_tier,level
+        ),
+        receiver:receiver_id(
+          id,username,avatar_url,premium_tier,level
+        )
+      `)
+      .or(
+        `sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`
       )
-      .eq(
-        "post_id",
-        postId
-      )
-      .eq(
-        "user_id",
-        userId
-      )
+      .order("created_at",{ascending:false})
+      .limit(50);
+
+  if(error){
+    container.innerHTML=
+      `<div class="empty">${esc(error.message)}</div>`;
+    return;
+  }
+
+  if(!data?.length){
+    container.innerHTML=
+      `<div class="empty">No messages yet.</div>`;
+    return;
+  }
+
+  const grouped={};
+
+  data.forEach(m=>{
+
+    const other=
+      m.sender_id===currentUser.id
+        ? m.receiver
+        : m.sender;
+
+    const id=other?.id || "unknown";
+
+    if(!grouped[id]){
+      grouped[id]={
+        user:other,
+        message:m
+      };
+    }
+  });
+
+  container.innerHTML=
+    Object.values(grouped)
+      .map(x=>`
+        <div class="offer"
+          onclick="openChat('${x.user?.id}')">
+
+          <div class="offerUser">
+
+            <img class="avatar avatarSmall"
+              src="${avatarUrl(x.user)}">
+
+            <div>
+              <div class="userName">
+                ${esc(x.user?.username||"User")}
+                ${badge(x.user)}
+                ${level(x.user)}
+              </div>
+
+              <div class="muted">
+                ${esc(x.message.content||x.message.message||"")}
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      `).join("");
+}
+
+function openTradeMessages(userId,tradeId){
+  openChat(userId,tradeId);
+}
+
+async function openChat(userId,tradeId=null){
+
+  if(!currentUser) return;
+
+  const {data:user} =
+    await supabaseClient
+      .from("profiles")
+      .select("*")
+      .eq("id",userId)
       .maybeSingle();
 
-  if(checkError){
-
-    alert(
-      "Could not update like: "+
-      checkError.message
-    );
-
+  if(!user){
+    toast("User not found");
     return;
-
   }
 
-  if(existing){
-
-    const {error} =
-      await supabaseClient
-        .from("post_likes")
-        .delete()
-        .eq(
-          "post_id",
-          postId
-        )
-        .eq(
-          "user_id",
-          userId
-        );
-
-    if(error){
-
-      alert(
-        "Could not unlike post."
-      );
-
-      return;
-
-    }
-
-  }else{
-
-    const {error} =
-      await supabaseClient
-        .from("post_likes")
-        .insert({
-
-          post_id:postId,
-
-          user_id:userId
-
-        });
-
-    if(error){
-
-      alert(
-        "Could not like post."
-      );
-
-      return;
-
-    }
-
-  }
-
-  await renderPosts();
-
-}
-
-/* ================================
-   DELETE POST
-================================ */
-
-async function deletePost(
-  postId
-){
-
-  if(!currentSession){
-
-    openLogin();
-
-    return;
-
-  }
-
-  if(!confirm(
-    "Delete your post?"
-  )){
-
-    return;
-
-  }
-
-  const {error} =
+  const {data:messages} =
     await supabaseClient
-      .from("posts")
-      .delete()
-      .eq(
-        "id",
-        postId
+      .from("messages")
+      .select("*")
+      .or(
+        `and(sender_id.eq.${currentUser.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${currentUser.id})`
       )
-      .eq(
-        "user_id",
-        currentSession.user.id
-      );
+      .order("created_at",{ascending:true})
+      .limit(100);
 
-  if(error){
+  openModal(`💬 ${esc(user.username)}`,`
 
-    console.error(error);
+    <div id="chatMessages"
+      style="height:350px;overflow:auto;background:#f7f7fa;padding:9px;border-radius:12px">
 
-    alert(
-      "Could not delete post: "+
-      error.message
-    );
+      ${(messages||[]).map(m=>`
+        <div style="
+          text-align:${m.sender_id===currentUser.id?"right":"left"};
+          margin-bottom:8px">
 
-    return;
+          <span style="
+            display:inline-block;
+            max-width:80%;
+            padding:9px 11px;
+            border-radius:12px;
+            background:${m.sender_id===currentUser.id?"#6c4cff":"#fff"};
+            color:${m.sender_id===currentUser.id?"#fff":"#182033"}">
+            ${esc(m.content||m.message||"")}
+          </span>
 
-  }
+        </div>
+      `).join("")}
 
-  allPosts =
-    allPosts.filter(
-      post =>
-        String(post.id)!==
-        String(postId)
-    );
+    </div>
 
-  await renderPosts();
+    <div style="display:flex;gap:7px;margin-top:8px">
 
+      <input id="chatInput"
+        style="flex:1;padding:10px;border:1px solid var(--border);border-radius:10px"
+        placeholder="Message...">
+
+      <button class="btn btnBrand"
+        onclick="sendMessage('${userId}')">
+        Send
+      </button>
+
+    </div>
+
+  `);
+
+  setTimeout(()=>{
+    const el=document.getElementById("chatMessages");
+    if(el) el.scrollTop=el.scrollHeight;
+  },50);
 }
 
-/* ================================
-   CREATE POST
-================================ */
+async function sendMessage(receiverId){
 
-function openCreatePost(){
+  const input=
+    document.getElementById("chatInput");
 
-  if(!currentSession){
+  const text=input.value.trim();
 
-    alert(
-      "Please login to create a post."
-    );
-
-    openLogin();
-
-    return;
-
-  }
-
-  document.getElementById(
-    "postContentInput"
-  ).value="";
-
-  document.getElementById(
-    "postVisibility"
-  ).value="public";
-
-  document.getElementById(
-    "createPostModal"
-  ).style.display="flex";
-
-}
-
-function closeCreatePost(){
-
-  document.getElementById(
-    "createPostModal"
-  ).style.display="none";
-
-}
-
-async function createPost(){
-
-  if(!currentSession){
-
-    openLogin();
-
-    return;
-
-  }
-
-  const input =
-    document.getElementById(
-      "postContentInput"
-    );
-
-  const visibility =
-    document.getElementById(
-      "postVisibility"
-    ).value;
-
-  const content =
-    String(
-      input.value||""
-    ).trim();
-
-  if(!content){
-
-    alert(
-      "Write something first."
-    );
-
-    return;
-
-  }
-
-  if(content.length>5000){
-
-    alert(
-      "Post is too long."
-    );
-
-    return;
-
-  }
-
-  const button =
-    document.getElementById(
-      "publishPostBtn"
-    );
-
-  button.disabled=true;
-
-  button.textContent=
-    "Publishing...";
+  if(!text) return;
 
   const {error} =
     await supabaseClient
-      .from("posts")
+      .from("messages")
       .insert({
-
-        user_id:
-          currentSession.user.id,
-
-        content:content,
-
-        visibility:visibility
-
+        sender_id:currentUser.id,
+        receiver_id:receiverId,
+        content:text
       });
 
-  button.disabled=false;
-
-  button.textContent=
-    "Publish Post";
-
   if(error){
-
-    console.error(error);
-
-    alert(
-      "Could not create post: "+
-      error.message
-    );
-
+    toast(error.message);
     return;
-
   }
 
-  closeCreatePost();
+  input.value="";
+  toast("Message sent");
+}
 
+/* =========================================================
+   USER PROFILE
+========================================================= */
+
+async function openUserProfile(userId){
+
+  if(!userId) return;
+
+  const {data:user,error} =
+    await supabaseClient
+      .from("profiles")
+      .select("*")
+      .eq("id",userId)
+      .maybeSingle();
+
+  if(error || !user){
+    toast("Profile not found");
+    return;
+  }
+
+  const {count:postsCount} =
+    await supabaseClient
+      .from("posts")
+      .select("*",{count:"exact",head:true})
+      .eq("user_id",userId);
+
+  const {count:offersCount} =
+    await supabaseClient
+      .from("offers")
+      .select("*",{count:"exact",head:true})
+      .eq("user_id",userId);
+
+  openModal("",`
+
+    <div class="userProfile">
+
+      <img class="avatar avatarLarge"
+        src="${avatarUrl(user)}">
+
+      <h2 style="margin-top:8px">
+        ${esc(user.username||"User")}
+      </h2>
+
+      <div style="margin-top:5px">
+        ${badge(user)}
+        ${level(user)}
+      </div>
+
+      <div class="profileStats">
+
+        <div class="stat">
+          <strong>${postsCount||0}</strong>
+          <span class="muted">Posts</span>
+        </div>
+
+        <div class="stat">
+          <strong>${offersCount||0}</strong>
+          <span class="muted">Offers</span>
+        </div>
+
+        <div class="stat">
+          <strong>Level ${Number(user.level||1)}</strong>
+          <span class="muted">Level</span>
+        </div>
+
+      </div>
+
+      <p class="muted">
+        ${esc(user.bio||"P2P Social user")}
+      </p>
+
+      <button class="btn btnBrand btnFull"
+        style="margin-top:12px"
+        onclick="openChat('${user.id}')">
+        💬 Message
+      </button>
+
+    </div>
+  `);
+}
+
+async function loadOwnProfile(){
+
+  const container=
+    document.getElementById("profileContainer");
+
+  if(!currentUser){
+    container.innerHTML=`
+      <div class="card empty">
+        Please sign in to view your profile.
+      </div>`;
+    return;
+  }
+
+  const {data:user} =
+    await supabaseClient
+      .from("profiles")
+      .select("*")
+      .eq("id",currentUser.id)
+      .maybeSingle();
+
+  const {count:postCount} =
+    await supabaseClient
+      .from("posts")
+      .select("*",{count:"exact",head:true})
+      .eq("user_id",currentUser.id);
+
+  container.innerHTML=`
+
+    <div class="card userProfile">
+
+      <img class="avatar avatarLarge"
+        src="${avatarUrl(user||currentProfile)}">
+
+      <h2 style="margin-top:8px">
+        ${esc(user?.username||currentProfile.username)}
+      </h2>
+
+      <div style="margin-top:5px">
+        ${badge(user||currentProfile)}
+        ${level(user||currentProfile)}
+      </div>
+
+      <div class="profileStats">
+
+        <div class="stat">
+          <strong>${postCount||0}</strong>
+          <span class="muted">Posts</span>
+        </div>
+
+        <div class="stat">
+          <strong>${money(currentWallet?.usdt_balance)}</strong>
+          <span class="muted">USDT</span>
+        </div>
+
+        <div class="stat">
+          <strong>${Math.floor(Number(currentWallet?.diamond_balance||0))}</strong>
+          <span class="muted">💎</span>
+        </div>
+
+      </div>
+
+      <button class="btn btnBrand"
+        onclick="editProfile()">
+        ✏️ Edit Profile
+      </button>
+
+    </div>
+
+    <div class="card">
+      <div class="sectionTitle">⚙️ Account</div>
+
+      <button class="btn btnLight btnFull"
+        style="margin-top:10px"
+        onclick="openPremium()">
+        ⭐ Premium
+      </button>
+
+      <button class="btn btnLight btnFull"
+        style="margin-top:7px"
+        onclick="showPage('messages')">
+        💬 Messages
+      </button>
+    </div>
+  `;
+}
+
+function editProfile(){
+
+  openModal("Edit Profile",`
+
+    <div class="formGroup">
+      <label>Username</label>
+      <input id="editUsername"
+        value="${esc(currentProfile?.username||"")}">
+    </div>
+
+    <div class="formGroup">
+      <label>Profile photo URL</label>
+      <input id="editAvatar"
+        value="${esc(currentProfile?.avatar_url||"")}">
+    </div>
+
+    <div class="formGroup">
+      <label>Bio</label>
+      <textarea id="editBio">${esc(currentProfile?.bio||"")}</textarea>
+    </div>
+
+    <button class="btn btnBrand btnFull"
+      onclick="saveProfile()">
+      Save
+    </button>
+  `);
+}
+
+async function saveProfile(){
+
+  const username=
+    document.getElementById("editUsername").value.trim();
+
+  const avatar=
+    document.getElementById("editAvatar").value.trim();
+
+  const bio=
+    document.getElementById("editBio").value.trim();
+
+  if(!username){
+    toast("Username required");
+    return;
+  }
+
+  const {error} =
+    await supabaseClient
+      .from("profiles")
+      .update({
+        username,
+        avatar_url:avatar||null,
+        bio
+      })
+      .eq("id",currentUser.id);
+
+  if(error){
+    toast(error.message);
+    return;
+  }
+
+  currentProfile={
+    ...currentProfile,
+    username,
+    avatar_url:avatar,
+    bio
+  };
+
+  updateHeader();
+  closeModal();
+  loadOwnProfile();
+  toast("Profile updated");
+}
+
+/* =========================================================
+   ADMIN PIN RULES
+========================================================= */
+
+async function pinOffer(offerId){
+
+  if(!isAdmin()){
+    toast("Admin only");
+    return;
+  }
+
+  const count=
+    await getPinnedCount("offers");
+
+  if(count>=3){
+    toast("Maximum 3 pinned offers");
+    return;
+  }
+
+  const {error} =
+    await supabaseClient
+      .from("offers")
+      .update({is_pinned:true})
+      .eq("id",offerId);
+
+  if(error){
+    toast(error.message);
+    return;
+  }
+
+  toast("Offer pinned");
+}
+
+/* =========================================================
+   REFRESH
+========================================================= */
+
+async function refreshAll(){
+
+  await loadWallet();
+  await loadOffers();
   await loadPosts(true);
 
+  if(currentPage==="live")
+    await loadLiveRooms();
+
+  if(currentPage==="p2p")
+    await loadP2POffers();
+
+  if(currentPage==="messages")
+    await loadMessages();
+
+  if(currentPage==="profile")
+    await loadOwnProfile();
+
+  toast("Refreshed");
 }
 
-/* ================================
-   PROFILE
-================================ */
+/* =========================================================
+   TIME
+========================================================= */
 
-function openUserProfile(
-  userId
-){
+function timeAgo(date){
 
-  if(!userId)return;
+  if(!date) return "";
 
-  window.location.href =
-    "profile.html?user="+
-    encodeURIComponent(
-      userId
+  const seconds=
+    Math.floor(
+      (Date.now()-new Date(date).getTime())/1000
     );
 
+  if(seconds<60)
+    return `${seconds}s ago`;
+
+  const minutes=
+    Math.floor(seconds/60);
+
+  if(minutes<60)
+    return `${minutes}m ago`;
+
+  const hours=
+    Math.floor(minutes/60);
+
+  if(hours<24)
+    return `${hours}h ago`;
+
+  const days=
+    Math.floor(hours/24);
+
+  return `${days}d ago`;
 }
 
-/* ================================
-   SHARE
-================================ */
+/* =========================================================
+   REALTIME
+========================================================= */
 
-async function sharePost(
-  postId
-){
+function setupRealtime(){
 
-  const url =
-    window.location.origin+
-    window.location.pathname+
-    "?post="+
-    encodeURIComponent(
-      postId
-    );
+  supabaseClient
+    .channel("public-posts")
+    .on(
+      "postgres_changes",
+      {
+        event:"*",
+        schema:"public",
+        table:"posts"
+      },
+      ()=>{
+        if(currentPage==="home")
+          loadPosts(true);
+      }
+    )
+    .subscribe();
 
-  if(navigator.share){
+  supabaseClient
+    .channel("public-offers")
+    .on(
+      "postgres_changes",
+      {
+        event:"*",
+        schema:"public",
+        table:"offers"
+      },
+      ()=>{
+        loadOffers();
 
-    try{
+        if(currentPage==="p2p")
+          loadP2POffers();
+      }
+    )
+    .subscribe();
 
-      await navigator.share({
+  supabaseClient
+    .channel("public-live")
+    .on(
+      "postgres_changes",
+      {
+        event:"*",
+        schema:"public",
+        table:"live_rooms"
+      },
+      ()=>{
+        if(currentPage==="live")
+          loadLiveRooms();
+      }
+    )
+    .subscribe();
+}
 
-        title:
-          "P2P Social Post",
+/* =========================================================
+   INIT
+========================================================= */
 
-        text:
-          "Check out this post on P2P Social.",
-
-        url:url
-
-      });
-
-    }catch(error){
-
-      console.log(error);
-
-    }
-
-    return;
-
-  }
+async function init(){
 
   try{
 
-    await navigator.clipboard.writeText(
-      url
-    );
+    await loadCurrentUser();
 
-    alert(
-      "Post link copied."
+    await loadOffers();
+
+    await loadPosts(true);
+
+    setupRealtime();
+
+    supabaseClient.auth.onAuthStateChange(
+      async ()=>{
+        await loadCurrentUser();
+      }
     );
 
   }catch(error){
 
-    alert(
-      "Post link: "+url
-    );
+    console.error(error);
 
+    toast("Application initialization error");
   }
-
 }
 
-/* ================================
-   TIME
-================================ */
-
-function formatPostTime(
-  dateString
-){
-
-  if(!dateString)return"";
-
-  const date =
-    new Date(dateString);
-
-  if(
-    isNaN(
-      date.getTime()
-    )
-  ){
-
-    return"";
-
-  }
-
-  const now =
-    new Date();
-
-  const seconds =
-    Math.floor(
-      (now-date)/1000
-    );
-
-  if(seconds<60)return"now";
-
-  const minutes =
-    Math.floor(
-      seconds/60
-    );
-
-  if(minutes<60){
-
-    return minutes+"m";
-
-  }
-
-  const hours =
-    Math.floor(
-      minutes/60
-    );
-
-  if(hours<24){
-
-    return hours+"h";
-
-  }
-
-  const days =
-    Math.floor(
-      hours/24
-    );
-
-  if(days<7){
-
-    return days+"d";
-
-  }
-
-  return date.toLocaleDateString();
-
-}
-
-/* ================================
-   NAVIGATION
-================================ */
-
-function openLogin(){
-
-  window.location.href=
-    "login.html";
-
-}
-
-function openRegister(){
-
-  window.location.href=
-    "register.html";
-
-}
-
-function openLive(){
-
-  window.location.href=
-    "live.html";
-
-}
-
-function openWallet(){
-
-  if(!currentSession){
-
-    alert(
-      "Please login to access your wallet."
-    );
-
-    openLogin();
-
-    return;
-
-  }
-
-  window.location.href=
-    "wallet.html";
-
-}
-
-function openMessages(){
-
-  if(!currentSession){
-
-    alert(
-      "Please login to access messages."
-    );
-
-    openLogin();
-
-    return;
-
-  }
-
-  window.location.href=
-    "message.html";
-
-}
-
-function openProfile(){
-
-  if(!currentSession){
-
-    alert(
-      "Please login to access your profile."
-    );
-
-    openLogin();
-
-    return;
-
-  }
-
-  window.location.href=
-    "profile.html";
-
-}
-
-/* ================================
-   LOGOUT
-================================ */
-
-async function logout(){
-
-  if(!confirm(
-    "Do you want to log out?"
-  )){
-
-    return;
-
-  }
-
-  if(notificationChannel){
-
-    await supabaseClient
-      .removeChannel(
-        notificationChannel
-      );
-
-    notificationChannel=null;
-
-  }
-
-  const {error} =
-    await supabaseClient.auth.signOut();
-
-  if(error){
-
-    alert(
-      "Logout failed: "+
-      error.message
-    );
-
-    return;
-
-  }
-
-  currentSession=null;
-
-  window.location.href=
-    "index.html";
-
-}
-
-/* ================================
-   SEARCH
-================================ */
-
-document
-  .getElementById(
-    "searchInput"
-  )
-  .addEventListener(
-    "input",
-    function(){
-
-      const search =
-        this.value
-          .toLowerCase()
-          .trim();
-
-      const cards =
-        document.querySelectorAll(
-          ".post-card"
-        );
-
-      cards.forEach(
-        card=>{
-
-          if(!search){
-
-            card.style.display=
-              "block";
-
-            return;
-
-          }
-
-          const text =
-            card.textContent
-              .toLowerCase();
-
-          card.style.display =
-            text.includes(search)
-            ? "block"
-            : "none";
-
-        }
-      );
-
-    }
-  );
-
-/* ================================
-   ESCAPE HTML
-================================ */
-
-function escapeHtml(
-  text
-){
-
-  const div =
-    document.createElement(
-      "div"
-    );
-
-  div.textContent =
-    text==null
-    ? ""
-    : String(text);
-
-  return div.innerHTML;
-
-}
-
-/* ================================
-   ESCAPE JS
-================================ */
-
-function escapeJs(
-  text
-){
-
-  return String(
-    text||""
-  )
-    .replace(
-      /\\/g,
-      "\\\\"
-    )
-    .replace(
-      /'/g,
-      "\\'"
-    )
-    .replace(
-      /\r/g,
-      "\\r"
-    )
-    .replace(
-      /\n/g,
-      "\\n"
-    );
-
-}
-
-/* ================================
-   CLOSE MODAL
-================================ */
-
-document
-  .getElementById(
-    "createPostModal"
-  )
-  .addEventListener(
-    "click",
-    function(event){
-
-      if(
-        event.target===
-        this
-      ){
-
-        closeCreatePost();
-
-      }
-
-    }
-  );
-
-/* ================================
-   AUTH STATE
-================================ */
-
-supabaseClient.auth.onAuthStateChange(
-  function(
-    event,
-    session
-  ){
-
-    currentSession=
-      session;
-
-    setTimeout(
-      async function(){
-
-        await updateAuthUI();
-
-        await loadPosts();
-
-        await loadAvailableOffers();
-
-        if(currentSession){
-
-          await loadNotifications();
-
-          subscribeToNotifications();
-
-        }
-
-      },
-      0
-    );
-
-  }
-);
-
-/* ================================
-   SERVICE WORKER / PWA
-================================ */
-
-if(
-  "serviceWorker" in navigator
-){
-
-  window.addEventListener(
-    "load",
-    function(){
-
-      navigator.serviceWorker
-        .register(
-          "./service-worker.js"
-        )
-        .then(
-          registration=>{
-
-            console.log(
-              "P2P Social service worker registered:",
-              registration.scope
-            );
-
-          }
-        )
-        .catch(
-          error=>{
-
-            console.error(
-              "Service worker registration failed:",
-              error
-            );
-
-          }
-        );
-
-    }
-  );
-
-}
-
-/* ================================
-   START
-================================ */
-
-async function startApp(){
-
-  await checkLogin();
-
-  await loadPosts();
-
-  await loadAvailableOffers();
-
-  if(currentSession){
-
-    await loadNotifications();
-
-    subscribeToNotifications();
-
-    requestNotificationPermission();
-
-  }
-
-}
-
-startApp();
+init();
 
 </script>
-
 </body>
 </html>

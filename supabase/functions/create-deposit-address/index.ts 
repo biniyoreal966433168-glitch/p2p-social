@@ -1,291 +1,529 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
-import { TronWeb } from "npm:tronweb@6";
+// supabase/functions/create-deposit-address/index.ts
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get(
-  "SUPABASE_SERVICE_ROLE_KEY",
-)!;
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const DEPOSIT_PRIVATE_KEY = Deno.env.get(
-  "TRON_DEPOSIT_PRIVATE_KEY",
-);
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Content-Type": "application/json",
+};
 
-const supabaseAdmin = createClient(
+const SUPABASE_URL =
+  Deno.env.get("SUPABASE_URL") ?? "";
+
+const SUPABASE_SERVICE_ROLE_KEY =
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+const supabase = createClient(
   SUPABASE_URL,
-  SUPABASE_SERVICE_ROLE_KEY,
+  SUPABASE_SERVICE_ROLE_KEY
 );
 
-function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+const TRON_NETWORK = "TRON";
+const TRC20_STANDARD = "TRC-20";
+const USDT_ASSET = "USDT";
+
+function json(
+  body: unknown,
+  status = 200
+) {
+  return new Response(
+    JSON.stringify(body),
+    {
+      status,
+      headers: corsHeaders,
+    }
+  );
+}
+
+function isValidTronAddress(
+  address: string
+) {
+  return /^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(
+    address
+  );
 }
 
 Deno.serve(async (req) => {
+
+  if (req.method === "OPTIONS") {
+    return new Response(
+      "ok",
+      {
+        status: 200,
+        headers: corsHeaders,
+      }
+    );
+  }
+
+  if (req.method !== "POST") {
+    return json(
+      {
+        error: "Method not allowed",
+      },
+      405
+    );
+  }
+
   try {
-    if (req.method !== "POST") {
-      return json(
-        {
-          success: false,
-          error: "Method not allowed",
-        },
-        405,
-      );
-    }
 
     /*
-     * Authenticate the caller.
-     */
-    const authorization =
+    ============================================
+    AUTHENTICATE USER
+    ============================================
+    */
+
+    const authHeader =
       req.headers.get("Authorization");
 
-    if (!authorization) {
+    if (!authHeader) {
       return json(
         {
-          success: false,
           error: "Missing Authorization header",
         },
-        401,
+        401
       );
     }
 
-    const supabaseUser = createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY,
-      {
-        global: {
-          headers: {
-            Authorization: authorization,
-          },
+    const token =
+      authHeader.replace(
+        /^Bearer\s+/i,
+        ""
+      );
+
+    if (!token) {
+      return json(
+        {
+          error: "Missing access token",
         },
-      },
-    );
+        401
+      );
+    }
 
     const {
-      data: { user },
-      error: authError,
-    } = await supabaseUser.auth.getUser();
+      data: userData,
+      error: userError,
+    } =
+      await supabase.auth.getUser(token);
 
-    if (authError || !user) {
+    if (
+      userError ||
+      !userData?.user
+    ) {
       return json(
         {
-          success: false,
-          error: "Unauthorized",
+          error:
+            userError?.message ??
+            "Unauthorized",
         },
-        401,
+        401
       );
     }
 
+    const userId =
+      userData.user.id;
+
+
     /*
-     * Check whether this user already has a TRON/USDT
-     * deposit wallet.
-     */
-    const { data: existingWallet, error: lookupError } =
-      await supabaseAdmin
-        .from("wallets")
-        .select(`
-          id,
-          user_id,
-          blockchain,
-          network,
-          asset,
-          deposit_address,
-          status,
-          created_at,
-          updated_at
-        `)
-        .eq("user_id", user.id)
-        .eq("blockchain", "TRON")
-        .eq("network", "TRC-20")
-        .eq("asset", "USDT")
+    ============================================
+    READ REQUEST
+    ============================================
+    */
+
+    let body: Record<string, unknown> = {};
+
+    try {
+      body = await req.json();
+    } catch {
+      body = {};
+    }
+
+    const requestedNetwork =
+      String(
+        body.network ??
+        TRON_NETWORK
+      ).trim();
+
+    const requestedToken =
+      String(
+        body.token ??
+        body.asset ??
+        USDT_ASSET
+      ).trim()
+      .toUpperCase();
+
+    const requestedStandard =
+      String(
+        body.standard ??
+        TRC20_STANDARD
+      ).trim();
+
+
+    /*
+    ============================================
+    VALIDATE DEPOSIT TYPE
+    ============================================
+    */
+
+    if (
+      requestedNetwork !==
+      TRON_NETWORK
+    ) {
+      return json(
+        {
+          error:
+            "Only TRON deposits are supported.",
+        },
+        400
+      );
+    }
+
+    if (
+      requestedToken !==
+      USDT_ASSET
+    ) {
+      return json(
+        {
+          error:
+            "Only USDT deposits are supported.",
+        },
+        400
+      );
+    }
+
+    if (
+      requestedStandard !==
+      TRC20_STANDARD
+    ) {
+      return json(
+        {
+          error:
+            "Only TRC-20 deposits are supported.",
+        },
+        400
+      );
+    }
+
+
+    /*
+    ============================================
+    CHECK EXISTING ADDRESS
+    ============================================
+    */
+
+    const {
+      data: existing,
+      error: existingError,
+    } =
+      await supabase
+        .from("deposit_addresses")
+        .select(
+          "id,user_id,blockchain,network,asset,deposit_address,status,created_at,updated_at"
+        )
+        .eq(
+          "user_id",
+          userId
+        )
+        .eq(
+          "blockchain",
+          TRON_NETWORK
+        )
+        .eq(
+          "network",
+          TRON_NETWORK
+        )
+        .eq(
+          "asset",
+          USDT_ASSET
+        )
+        .eq(
+          "status",
+          "active"
+        )
+        .order(
+          "created_at",
+          {
+            ascending: false,
+          }
+        )
+        .limit(1)
         .maybeSingle();
 
-    if (lookupError) {
-      console.error("Wallet lookup error:", lookupError);
+    if (existingError) {
+
+      console.error(
+        "Existing address lookup error:",
+        existingError
+      );
 
       return json(
         {
-          success: false,
-          error: "Could not check wallet",
+          error:
+            "Failed to check existing deposit address.",
+          details:
+            existingError.message,
         },
-        500,
+        500
       );
     }
 
+
     /*
-     * If the user already has an address,
-     * return it instead of creating another one.
-     */
-    if (existingWallet) {
+    ============================================
+    RETURN EXISTING VALID ADDRESS
+    ============================================
+    */
+
+    if (
+      existing?.deposit_address &&
+      isValidTronAddress(
+        existing.deposit_address
+      )
+    ) {
+
       return json({
         success: true,
-        existing: true,
-        wallet: existingWallet,
+        address:
+          existing.deposit_address,
         deposit_address:
-          existingWallet.deposit_address,
+          existing.deposit_address,
+        wallet_address:
+          existing.deposit_address,
+        blockchain: TRON_NETWORK,
+        network: TRON_NETWORK,
+        asset: USDT_ASSET,
+        token: USDT_ASSET,
+        standard: TRC20_STANDARD,
+        status:
+          existing.status ?? "active",
+        existing: true,
       });
     }
 
-    /*
-     * A dedicated deposit wallet secret is required.
-     */
-    if (!DEPOSIT_PRIVATE_KEY) {
-      console.error(
-        "TRON_DEPOSIT_PRIVATE_KEY is not configured",
-      );
-
-      return json(
-        {
-          success: false,
-          error: "Deposit wallet is not configured",
-        },
-        500,
-      );
-    }
 
     /*
-     * IMPORTANT:
-     *
-     * Do NOT use the platform withdrawal private key here.
-     *
-     * This function currently derives the public address
-     * controlled by TRON_DEPOSIT_PRIVATE_KEY.
-     *
-     * A production multi-user deposit system should use
-     * deterministic HD-wallet derivation or another secure
-     * custody/address-allocation system so every user receives
-     * a different controlled deposit address.
-     */
-    const tronWeb = new TronWeb({
-      fullHost: "https://api.trongrid.io",
-      privateKey: DEPOSIT_PRIVATE_KEY,
-    });
+    ============================================
+    IMPORTANT
+    ============================================
 
-    const depositAddress =
-      tronWeb.address.fromPrivateKey(
-        DEPOSIT_PRIVATE_KEY,
-      );
+    A deposit address must be generated from
+    a server-side wallet/address service.
 
-    if (!depositAddress) {
-      return json(
-        {
-          success: false,
-          error: "Could not derive TRON address",
-        },
-        500,
-      );
-    }
+    This function does NOT put private keys
+    in wallet.html.
+
+    Set these environment variables on the
+    Edge Function if using your own TRON
+    deposit-address generator:
+
+      TRON_DEPOSIT_ADDRESS
+    ============================================
+    */
+
+    const configuredAddress =
+      Deno.env.get(
+        "TRON_DEPOSIT_ADDRESS"
+      )?.trim() ?? "";
+
 
     /*
-     * SAFETY STOP:
-     *
-     * Do not assign the same address to multiple users.
-     *
-     * Before accepting real deposits, this must be replaced
-     * with unique address derivation/allocation.
-     */
-    const { data: addressAlreadyUsed, error: addressError } =
-      await supabaseAdmin
-        .from("wallets")
-        .select("id, user_id")
-        .eq("deposit_address", depositAddress)
-        .maybeSingle();
+    ============================================
+    USE CONFIGURED TRON DEPOSIT ADDRESS
+    ============================================
+    */
 
-    if (addressError) {
-      console.error(
-        "Address lookup error:",
-        addressError,
-      );
+    if (
+      configuredAddress &&
+      !isValidTronAddress(
+        configuredAddress
+      )
+    ) {
 
       return json(
         {
-          success: false,
-          error: "Could not verify deposit address",
-        },
-        500,
-      );
-    }
-
-    if (addressAlreadyUsed) {
-      return json(
-        {
-          success: false,
           error:
-            "Deposit address allocation is not configured for multiple users yet",
-          code: "UNIQUE_DEPOSIT_ADDRESS_REQUIRED",
+            "TRON_DEPOSIT_ADDRESS is not a valid TRON address.",
         },
-        409,
+        500
       );
     }
+
+
+    if (configuredAddress) {
+
+      const {
+        data: inserted,
+        error: insertError,
+      } =
+        await supabase
+          .from("deposit_addresses")
+          .insert({
+            user_id: userId,
+            blockchain: TRON_NETWORK,
+            network: TRON_NETWORK,
+            asset: USDT_ASSET,
+            deposit_address:
+              configuredAddress,
+            status: "active",
+          })
+          .select(
+            "id,user_id,blockchain,network,asset,deposit_address,status,created_at,updated_at"
+          )
+          .single();
+
+      if (insertError) {
+
+        console.error(
+          "Deposit address insert error:",
+          insertError
+        );
+
+        /*
+        If another request created the
+        address at the same time, try
+        loading the existing one again.
+        */
+
+        const {
+          data: retryExisting,
+          error: retryError,
+        } =
+          await supabase
+            .from("deposit_addresses")
+            .select(
+              "id,user_id,blockchain,network,asset,deposit_address,status,created_at,updated_at"
+            )
+            .eq(
+              "user_id",
+              userId
+            )
+            .eq(
+              "blockchain",
+              TRON_NETWORK
+            )
+            .eq(
+              "network",
+              TRON_NETWORK
+            )
+            .eq(
+              "asset",
+              USDT_ASSET
+            )
+            .eq(
+              "status",
+              "active"
+            )
+            .order(
+              "created_at",
+              {
+                ascending: false,
+              }
+            )
+            .limit(1)
+            .maybeSingle();
+
+        if (
+          !retryError &&
+          retryExisting?.deposit_address &&
+          isValidTronAddress(
+            retryExisting.deposit_address
+          )
+        ) {
+
+          return json({
+            success: true,
+            address:
+              retryExisting.deposit_address,
+            deposit_address:
+              retryExisting.deposit_address,
+            wallet_address:
+              retryExisting.deposit_address,
+            blockchain:
+              TRON_NETWORK,
+            network:
+              TRON_NETWORK,
+            asset:
+              USDT_ASSET,
+            token:
+              USDT_ASSET,
+            standard:
+              TRC20_STANDARD,
+            status:
+              retryExisting.status ??
+              "active",
+            existing: true,
+          });
+        }
+
+        return json(
+          {
+            error:
+              "Failed to save deposit address.",
+            details:
+              insertError.message,
+          },
+          500
+        );
+      }
+
+      return json({
+        success: true,
+        address:
+          inserted.deposit_address,
+        deposit_address:
+          inserted.deposit_address,
+        wallet_address:
+          inserted.deposit_address,
+        blockchain:
+          inserted.blockchain,
+        network:
+          inserted.network,
+        asset:
+          inserted.asset,
+        token:
+          inserted.asset,
+        standard:
+          TRC20_STANDARD,
+        status:
+          inserted.status,
+        existing: false,
+      });
+    }
+
 
     /*
-     * Save the address using your EXACT wallets schema.
-     */
-    const { data: wallet, error: insertError } =
-      await supabaseAdmin
-        .from("wallets")
-        .insert({
-          user_id: user.id,
-          blockchain: "TRON",
-          network: "TRC-20",
-          asset: "USDT",
-          deposit_address: depositAddress,
-          status: "active",
-        })
-        .select(`
-          id,
-          user_id,
-          blockchain,
-          network,
-          asset,
-          deposit_address,
-          status,
-          created_at,
-          updated_at
-        `)
-        .single();
+    ============================================
+    NO ADDRESS PROVIDER CONFIGURED
+    ============================================
+    */
 
-    if (insertError) {
-      console.error(
-        "Wallet insert error:",
-        insertError,
-      );
+    return json(
+      {
+        error:
+          "No TRON deposit address is configured for this Edge Function.",
+        details:
+          "Set TRON_DEPOSIT_ADDRESS as a server-side Edge Function secret, or connect this function to your server-side TRON address-generation service.",
+      },
+      500
+    );
 
-      return json(
-        {
-          success: false,
-          error: "Could not save deposit wallet",
-        },
-        500,
-      );
-    }
-
-    return json({
-      success: true,
-      existing: false,
-      wallet,
-      deposit_address:
-        wallet.deposit_address,
-    });
   } catch (error) {
+
     console.error(
-      "create-deposit-address error:",
-      error,
+      "create-deposit-address fatal error:",
+      error
     );
 
     return json(
       {
-        success: false,
         error:
           error instanceof Error
             ? error.message
             : "Internal server error",
       },
-      500,
+      500
     );
   }
 });

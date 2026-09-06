@@ -2,562 +2,861 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>Live • P2P Social</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
+
 html,body{
-  width:100%;
-  height:100%;
-  overflow:hidden;
-  font-family:Arial,Helvetica,sans-serif;
-  background:#f5f7fb;
-  color:#172033;
+ width:100%;
+ height:100%;
+ overflow:hidden;
+ font-family:Arial,Helvetica,sans-serif;
+ background:#f5f7fb;
+ color:#172033;
 }
-button,input,select,textarea{font-family:inherit}
+
+button,input,textarea,select{font-family:inherit}
 
 #authScreen{
-  position:fixed;
-  inset:0;
-  z-index:99999;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:#f5f7fb;
+ position:fixed;
+ inset:0;
+ z-index:99999;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ background:#f5f7fb;
 }
+
 .authBox{
-  background:#fff;
-  width:90%;
-  max-width:380px;
-  padding:30px 22px;
-  border-radius:18px;
-  text-align:center;
-  box-shadow:0 8px 30px rgba(0,0,0,.12);
+ background:#fff;
+ width:90%;
+ max-width:380px;
+ padding:30px 22px;
+ border-radius:18px;
+ text-align:center;
+ box-shadow:0 8px 30px rgba(0,0,0,.12);
 }
+
 .authLogo{font-size:42px;margin-bottom:12px}
 .authTitle{font-size:22px;font-weight:800;margin-bottom:8px}
 .authText{color:#687386;font-size:14px}
 
 #liveApp{
-  position:fixed;
-  inset:0;
-  display:none;
-  background:#172033;
+ position:fixed;
+ inset:0;
+ display:none;
+ background:#172033;
 }
 
 .liveBackground{
-  position:absolute;
-  inset:0;
-  background:
-    radial-gradient(circle at 50% 30%,rgba(8,127,115,.22),transparent 42%),
-    linear-gradient(180deg,#172033 0%,#111827 100%);
+ position:absolute;
+ inset:0;
+ background:
+ radial-gradient(circle at 50% 30%,rgba(8,127,115,.22),transparent 42%),
+ linear-gradient(180deg,#172033 0%,#111827 100%);
 }
 
-.liveVideo{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  background:#172033;
-  display:none;
+#seatGrid{
+ position:absolute;
+ inset:0;
+ z-index:5;
+ padding:86px 8px 150px;
+ display:grid;
+ grid-template-columns:repeat(4,1fr);
+ grid-auto-rows:1fr;
+ gap:6px;
+ overflow:hidden;
 }
 
-.livePlaceholder{
-  position:absolute;
-  inset:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  flex-direction:column;
-  text-align:center;
-  padding:30px;
-  color:#fff;
+.seat{
+ position:relative;
+ min-width:0;
+ min-height:0;
+ overflow:hidden;
+ border-radius:10px;
+ background:#111827;
+ border:1px solid rgba(255,255,255,.13);
 }
-.livePlaceholderIcon{
-  width:100px;
-  height:100px;
-  border-radius:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:#087f73;
-  font-size:44px;
-  margin-bottom:18px;
-  box-shadow:0 10px 35px rgba(0,0,0,.3);
+
+.seat video{
+ position:absolute;
+ inset:0;
+ width:100%;
+ height:100%;
+ object-fit:cover;
+ background:#172033;
 }
-.livePlaceholderTitle{
-  font-size:25px;
-  font-weight:800;
-  margin-bottom:8px;
+
+.seatPlaceholder{
+ position:absolute;
+ inset:0;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ text-align:center;
+ color:#fff;
+ padding:6px;
+ background:
+ linear-gradient(180deg,rgba(23,32,51,.15),rgba(23,32,51,.8));
 }
-.livePlaceholderText{
-  font-size:14px;
-  opacity:.8;
-  max-width:330px;
-  line-height:1.5;
+
+.seatAvatar{
+ width:48px;
+ height:48px;
+ border-radius:50%;
+ background:#087f73;
+ color:#fff;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ font-size:19px;
+ font-weight:800;
+ overflow:hidden;
+ margin-bottom:5px;
+ border:2px solid rgba(255,255,255,.8);
+}
+
+.seatAvatar img{
+ width:100%;
+ height:100%;
+ object-fit:cover;
+}
+
+.seatName{
+ max-width:95%;
+ color:#fff;
+ font-size:11px;
+ font-weight:800;
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis;
+}
+
+.seatStatus{
+ margin-top:3px;
+ font-size:9px;
+ color:rgba(255,255,255,.75);
+}
+
+.seatEmpty{
+ opacity:.55;
+}
+
+.seatEmpty .seatAvatar{
+ background:#172033;
+ border-color:rgba(255,255,255,.2);
+}
+
+.seatLabel{
+ position:absolute;
+ left:5px;
+ right:5px;
+ bottom:5px;
+ z-index:3;
+ padding:4px 6px;
+ border-radius:7px;
+ background:rgba(23,32,51,.78);
+ color:#fff;
+ font-size:9px;
+ backdrop-filter:blur(7px);
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis;
+}
+
+.seatLive{
+ position:absolute;
+ top:5px;
+ left:5px;
+ z-index:4;
+ padding:3px 6px;
+ border-radius:5px;
+ background:#e74c3c;
+ color:#fff;
+ font-size:8px;
+ font-weight:800;
+}
+
+.seatMute{
+ position:absolute;
+ top:5px;
+ right:5px;
+ z-index:4;
+ width:23px;
+ height:23px;
+ border-radius:50%;
+ background:rgba(23,32,51,.8);
+ color:#fff;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ font-size:11px;
 }
 
 .topBar{
-  position:absolute;
-  top:0;
-  left:0;
-  right:0;
-  z-index:20;
-  padding:14px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  background:linear-gradient(180deg,rgba(0,0,0,.7),transparent);
+ position:absolute;
+ top:0;
+ left:0;
+ right:0;
+ z-index:50;
+ padding:12px;
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ background:linear-gradient(180deg,rgba(0,0,0,.85),transparent);
 }
+
 .liveInfo{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  min-width:0;
+ display:flex;
+ align-items:center;
+ gap:9px;
+ min-width:0;
 }
+
 .liveAvatar{
-  width:42px;
-  height:42px;
-  border-radius:50%;
-  background:#087f73;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:#fff;
-  font-weight:800;
-  overflow:hidden;
-  border:2px solid rgba(255,255,255,.8);
-  flex-shrink:0;
+ width:40px;
+ height:40px;
+ border-radius:50%;
+ background:#087f73;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ color:#fff;
+ font-weight:800;
+ overflow:hidden;
+ border:2px solid rgba(255,255,255,.8);
+ flex-shrink:0;
 }
+
 .liveAvatar img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
+ width:100%;
+ height:100%;
+ object-fit:cover;
 }
-.liveUserInfo{min-width:0;color:#fff}
+
+.liveUserInfo{
+ min-width:0;
+ color:#fff;
+}
+
 .liveUsername{
-  font-size:15px;
-  font-weight:800;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+ font-size:14px;
+ font-weight:800;
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis;
+ max-width:160px;
 }
+
 .liveStatus{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  font-size:12px;
-  margin-top:3px;
-  opacity:.9;
+ display:flex;
+ align-items:center;
+ gap:5px;
+ font-size:11px;
+ margin-top:2px;
+ opacity:.9;
 }
+
 .liveDot{
-  width:8px;
-  height:8px;
-  border-radius:50%;
-  background:#e74c3c;
+ width:7px;
+ height:7px;
+ border-radius:50%;
+ background:#e74c3c;
+ display:inline-block;
 }
-.topActions{display:flex;gap:8px}
+
+.topActions{
+ display:flex;
+ gap:6px;
+}
+
 .iconButton{
-  width:42px;
-  height:42px;
-  border:0;
-  border-radius:50%;
-  background:rgba(23,32,51,.8);
-  color:#fff;
-  cursor:pointer;
-  font-size:19px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  backdrop-filter:blur(8px);
+ width:40px;
+ height:40px;
+ border:0;
+ border-radius:50%;
+ background:rgba(23,32,51,.82);
+ color:#fff;
+ cursor:pointer;
+ font-size:18px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ backdrop-filter:blur(8px);
 }
+
 .iconButton:active{transform:scale(.95)}
 
 .liveBadge{
-  position:absolute;
-  top:72px;
-  left:14px;
-  z-index:20;
-  padding:7px 11px;
-  border-radius:9px;
-  background:#e74c3c;
-  color:#fff;
-  font-size:12px;
-  font-weight:800;
-}
-.viewerBadge{
-  position:absolute;
-  top:72px;
-  right:14px;
-  z-index:20;
-  padding:7px 11px;
-  border-radius:9px;
-  background:rgba(23,32,51,.8);
-  color:#fff;
-  font-size:12px;
-  backdrop-filter:blur(8px);
+ position:absolute;
+ top:62px;
+ left:12px;
+ z-index:50;
+ padding:6px 9px;
+ border-radius:8px;
+ background:#e74c3c;
+ color:#fff;
+ font-size:11px;
+ font-weight:800;
 }
 
-.liveCountry{
-  position:absolute;
-  top:112px;
-  left:14px;
-  z-index:20;
-  padding:7px 11px;
-  border-radius:9px;
-  background:rgba(23,32,51,.8);
-  color:#fff;
-  font-size:13px;
-  backdrop-filter:blur(8px);
+.viewerBadge{
+ position:absolute;
+ top:62px;
+ right:12px;
+ z-index:50;
+ padding:6px 9px;
+ border-radius:8px;
+ background:rgba(23,32,51,.82);
+ color:#fff;
+ font-size:11px;
+ backdrop-filter:blur(8px);
+}
+
+.countryBar{
+ position:absolute;
+ top:61px;
+ left:65px;
+ right:65px;
+ z-index:51;
+ height:29px;
+ display:flex;
+ align-items:center;
+ gap:4px;
+ overflow:hidden;
+}
+
+.countryFlag{
+ flex:0 0 auto;
+ height:28px;
+ min-width:30px;
+ padding:0 6px;
+ border:0;
+ border-radius:8px;
+ background:rgba(23,32,51,.78);
+ color:#fff;
+ cursor:pointer;
+ font-size:15px;
+ backdrop-filter:blur(8px);
+}
+
+.countryFlag.active{
+ background:#087f73;
+}
+
+.moreCountries{
+ flex:0 0 auto;
+ height:28px;
+ padding:0 8px;
+ border:0;
+ border-radius:8px;
+ background:rgba(23,32,51,.9);
+ color:#fff;
+ font-size:10px;
+ font-weight:800;
+ cursor:pointer;
 }
 
 .bottomArea{
-  position:absolute;
-  left:0;
-  right:0;
-  bottom:0;
-  z-index:20;
-  padding:14px;
-  padding-bottom:calc(14px + env(safe-area-inset-bottom));
-  background:linear-gradient(0deg,rgba(0,0,0,.88),transparent);
+ position:absolute;
+ left:0;
+ right:0;
+ bottom:0;
+ z-index:60;
+ padding:10px;
+ padding-bottom:calc(10px + env(safe-area-inset-bottom));
+ background:linear-gradient(0deg,rgba(0,0,0,.92),transparent);
+}
+
+.bottomButtons{
+ display:flex;
+ gap:7px;
+ margin-bottom:8px;
+}
+
+.bottomButton{
+ flex:1;
+ height:40px;
+ border:0;
+ border-radius:11px;
+ background:rgba(23,32,51,.9);
+ color:#fff;
+ cursor:pointer;
+ font-size:12px;
+ font-weight:800;
+ backdrop-filter:blur(8px);
+}
+
+.bottomButton.primary{
+ background:#087f73;
 }
 
 .comments{
-  max-height:145px;
-  overflow-y:auto;
-  margin-bottom:10px;
-  display:flex;
-  flex-direction:column;
-  gap:7px;
+ max-height:105px;
+ overflow-y:auto;
+ margin-bottom:8px;
+ display:flex;
+ flex-direction:column;
+ gap:5px;
 }
+
 .comment{
-  width:max-content;
-  max-width:85%;
-  padding:7px 10px;
-  border-radius:12px;
-  background:rgba(23,32,51,.78);
-  color:#fff;
-  font-size:13px;
-  line-height:1.35;
-  backdrop-filter:blur(8px);
-}
-.comment strong{margin-right:5px}
-
-.reactionButtons{
-  display:flex;
-  justify-content:center;
-  gap:10px;
-  margin-bottom:10px;
-}
-.reactionButton{
-  width:44px;
-  height:44px;
-  border:0;
-  border-radius:50%;
-  background:rgba(23,32,51,.82);
-  color:#fff;
-  cursor:pointer;
-  font-size:20px;
-  backdrop-filter:blur(8px);
+ width:max-content;
+ max-width:85%;
+ padding:6px 9px;
+ border-radius:10px;
+ background:rgba(23,32,51,.82);
+ color:#fff;
+ font-size:11px;
+ line-height:1.35;
+ backdrop-filter:blur(8px);
 }
 
-.liveActions{
-  display:flex;
-  gap:8px;
-  margin-bottom:10px;
-}
-.liveActionButton{
-  flex:1;
-  height:44px;
-  border:0;
-  border-radius:22px;
-  background:rgba(23,32,51,.88);
-  color:#fff;
-  cursor:pointer;
-  font-size:14px;
-  font-weight:800;
-  backdrop-filter:blur(8px);
-}
-.giftActionButton{
-  background:#087f73;
-}
+.comment strong{margin-right:4px}
 
 .commentForm{
-  display:flex;
-  gap:8px;
+ display:flex;
+ gap:7px;
 }
+
 .commentInput{
-  flex:1;
-  min-width:0;
-  height:44px;
-  border:1px solid rgba(255,255,255,.18);
-  border-radius:22px;
-  padding:0 16px;
-  outline:none;
-  background:rgba(255,255,255,.12);
-  color:#fff;
-  backdrop-filter:blur(10px);
+ flex:1;
+ min-width:0;
+ height:40px;
+ border:1px solid rgba(255,255,255,.18);
+ border-radius:20px;
+ padding:0 14px;
+ outline:none;
+ background:rgba(255,255,255,.12);
+ color:#fff;
+ backdrop-filter:blur(10px);
 }
-.commentInput::placeholder{color:rgba(255,255,255,.7)}
+
+.commentInput::placeholder{
+ color:rgba(255,255,255,.7);
+}
+
 .sendComment{
-  width:44px;
-  height:44px;
-  border:0;
-  border-radius:50%;
-  background:#087f73;
-  color:#fff;
-  cursor:pointer;
-  font-size:18px;
+ width:40px;
+ height:40px;
+ border:0;
+ border-radius:50%;
+ background:#087f73;
+ color:#fff;
+ cursor:pointer;
+ font-size:17px;
 }
 
-.giftPanel{
-  position:absolute;
-  left:0;
-  right:0;
-  bottom:0;
-  z-index:150;
-  display:none;
-  background:#fff;
-  border-radius:20px 20px 0 0;
-  padding:16px;
-  max-height:78vh;
-  overflow-y:auto;
-  box-shadow:0 -8px 30px rgba(0,0,0,.3);
+.reactionButtons{
+ display:flex;
+ justify-content:center;
+ gap:7px;
+ margin-bottom:7px;
 }
-.giftHeader{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:14px;
+
+.reactionButton{
+ width:38px;
+ height:38px;
+ border:0;
+ border-radius:50%;
+ background:rgba(23,32,51,.85);
+ color:#fff;
+ cursor:pointer;
+ font-size:18px;
+ backdrop-filter:blur(8px);
 }
-.giftTitle{
-  font-size:20px;
-  font-weight:800;
-  color:#172033;
+
+.reactionButton:active{
+ transform:scale(.9);
 }
-.closeGift{
-  width:38px;
-  height:38px;
-  border:0;
-  border-radius:50%;
-  background:#f5f7fb;
-  color:#172033;
-  font-size:19px;
+
+.panel{
+ position:absolute;
+ inset:0;
+ z-index:1000;
+ display:none;
+ align-items:flex-end;
+ justify-content:center;
+ background:rgba(0,0,0,.62);
 }
-.giftBalance{
-  padding:10px 12px;
-  border-radius:10px;
-  background:#f5f7fb;
-  color:#172033;
-  font-weight:800;
-  margin-bottom:14px;
+
+.panelBox{
+ width:100%;
+ max-width:560px;
+ max-height:88vh;
+ overflow:auto;
+ background:#fff;
+ border-radius:20px 20px 0 0;
+ padding:18px;
 }
+
+.panelHeader{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ margin-bottom:15px;
+}
+
+.panelTitle{
+ font-size:20px;
+ font-weight:800;
+}
+
+.closePanel{
+ width:38px;
+ height:38px;
+ border:0;
+ border-radius:50%;
+ background:#f5f7fb;
+ color:#172033;
+ cursor:pointer;
+ font-size:19px;
+}
+
+.liveList{
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:10px;
+}
+
+.liveCard{
+ position:relative;
+ min-height:145px;
+ border-radius:13px;
+ overflow:hidden;
+ background:#172033;
+ color:#fff;
+ cursor:pointer;
+ border:0;
+ text-align:left;
+}
+
+.liveCardBg{
+ position:absolute;
+ inset:0;
+ background:
+ radial-gradient(circle at 50% 30%,rgba(8,127,115,.35),transparent 45%),
+ #172033;
+}
+
+.liveCardContent{
+ position:absolute;
+ inset:0;
+ padding:11px;
+ display:flex;
+ flex-direction:column;
+ justify-content:flex-end;
+ background:linear-gradient(0deg,rgba(0,0,0,.82),transparent 65%);
+}
+
+.liveCardAvatar{
+ width:38px;
+ height:38px;
+ border-radius:50%;
+ background:#087f73;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ overflow:hidden;
+ font-weight:800;
+ margin-bottom:auto;
+}
+
+.liveCardAvatar img{
+ width:100%;
+ height:100%;
+ object-fit:cover;
+}
+
+.liveCardTitle{
+ font-size:13px;
+ font-weight:800;
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis;
+}
+
+.liveCardUser{
+ font-size:10px;
+ opacity:.8;
+ margin-top:3px;
+}
+
+.liveCardMeta{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ margin-top:6px;
+ font-size:10px;
+}
+
+.cardLive{
+ background:#e74c3c;
+ padding:3px 6px;
+ border-radius:5px;
+ font-weight:800;
+}
+
 .giftGrid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:9px;
-}
-.giftItem{
-  border:1px solid #dfe4ec;
-  background:#fff;
-  border-radius:12px;
-  padding:10px 5px;
-  cursor:pointer;
-  text-align:center;
-}
-.giftItem:active{transform:scale(.96)}
-.giftEmoji{font-size:27px}
-.giftName{
-  font-size:11px;
-  font-weight:700;
-  margin-top:4px;
-  color:#172033;
-}
-.giftPrice{
-  font-size:11px;
-  color:#687386;
-  margin-top:3px;
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:9px;
 }
 
-.countryPanel{
-  position:absolute;
-  left:0;
-  right:0;
-  bottom:0;
-  z-index:150;
-  display:none;
-  background:#fff;
-  border-radius:20px 20px 0 0;
-  padding:16px;
-  max-height:78vh;
-  overflow-y:auto;
-  box-shadow:0 -8px 30px rgba(0,0,0,.3);
+.giftButton{
+ border:1px solid #dfe4ec;
+ background:#fff;
+ border-radius:13px;
+ min-height:88px;
+ cursor:pointer;
+ color:#172033;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
 }
-.countryHeader{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom:12px;
+
+.giftButton:active{
+ transform:scale(.97);
 }
-.countryTitle{
-  font-size:20px;
-  font-weight:800;
+
+.giftEmoji{
+ font-size:29px;
+ margin-bottom:5px;
 }
-.closeCountry{
-  width:38px;
-  height:38px;
-  border:0;
-  border-radius:50%;
-  background:#f5f7fb;
-  color:#172033;
-  font-size:19px;
+
+.giftName{
+ font-size:11px;
+ font-weight:800;
 }
-.countrySearch{
-  width:100%;
-  height:44px;
-  border:1px solid #dfe4ec;
-  border-radius:10px;
-  padding:0 12px;
-  outline:none;
-  margin-bottom:12px;
+
+.giftCost{
+ font-size:10px;
+ color:#687386;
+ margin-top:3px;
 }
-.countryGrid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:7px;
-}
-.countryItem{
-  border:1px solid #dfe4ec;
-  background:#fff;
-  border-radius:10px;
-  padding:9px 5px;
-  cursor:pointer;
-  font-size:12px;
-  text-align:center;
-}
-.countryItem:active{transform:scale(.97)}
 
 .createPanel{
-  position:absolute;
-  inset:0;
-  z-index:200;
-  display:none;
-  align-items:flex-end;
-  justify-content:center;
-  background:rgba(0,0,0,.6);
+ position:absolute;
+ inset:0;
+ z-index:1100;
+ display:none;
+ align-items:flex-end;
+ justify-content:center;
+ background:rgba(0,0,0,.6);
 }
+
 .createBox{
-  width:100%;
-  max-width:520px;
-  background:#fff;
-  border-radius:20px 20px 0 0;
-  padding:20px;
-  max-height:90vh;
-  overflow:auto;
+ width:100%;
+ max-width:520px;
+ background:#fff;
+ border-radius:20px 20px 0 0;
+ padding:20px;
+ max-height:90vh;
+ overflow:auto;
 }
+
 .createHeader{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom:18px;
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ margin-bottom:18px;
 }
-.createTitle{font-size:20px;font-weight:800}
+
+.createTitle{
+ font-size:20px;
+ font-weight:800;
+}
+
 .closeCreate{
-  width:38px;
-  height:38px;
-  border:0;
-  border-radius:50%;
-  background:#f5f7fb;
-  color:#172033;
-  cursor:pointer;
-  font-size:20px;
+ width:38px;
+ height:38px;
+ border:0;
+ border-radius:50%;
+ background:#f5f7fb;
+ color:#172033;
+ cursor:pointer;
+ font-size:20px;
 }
+
 .createLabel{
-  display:block;
-  font-size:13px;
-  font-weight:700;
-  margin-bottom:7px;
+ display:block;
+ font-size:13px;
+ font-weight:700;
+ margin-bottom:7px;
 }
-.createInput,.createTextarea,.createSelect{
-  width:100%;
-  border:1px solid #dfe4ec;
-  border-radius:10px;
-  padding:0 12px;
-  outline:none;
-  margin-bottom:14px;
+
+.createInput,
+.createSelect{
+ width:100%;
+ height:44px;
+ border:1px solid #dfe4ec;
+ border-radius:10px;
+ padding:0 12px;
+ outline:none;
+ margin-bottom:14px;
+ background:#fff;
+ color:#172033;
 }
-.createInput,.createSelect{height:44px}
+
 .createTextarea{
-  min-height:90px;
-  padding-top:12px;
-  resize:none;
+ width:100%;
+ min-height:90px;
+ resize:none;
+ border:1px solid #dfe4ec;
+ border-radius:10px;
+ padding:12px;
+ outline:none;
+ margin-bottom:14px;
 }
+
 .startLiveButton{
-  width:100%;
-  height:48px;
-  border:0;
-  border-radius:11px;
-  background:#087f73;
-  color:#fff;
-  font-size:15px;
-  font-weight:800;
-  cursor:pointer;
+ width:100%;
+ height:48px;
+ border:0;
+ border-radius:11px;
+ background:#087f73;
+ color:#fff;
+ font-size:15px;
+ font-weight:800;
+ cursor:pointer;
 }
+
 .stopLiveButton{
-  width:100%;
-  height:48px;
-  border:0;
-  border-radius:11px;
-  background:#e74c3c;
-  color:#fff;
-  font-size:15px;
-  font-weight:800;
-  cursor:pointer;
-  display:none;
-  margin-top:8px;
+ width:100%;
+ height:48px;
+ border:0;
+ border-radius:11px;
+ background:#e74c3c;
+ color:#fff;
+ font-size:15px;
+ font-weight:800;
+ cursor:pointer;
+ display:none;
+ margin-top:8px;
 }
 
 .ownerTreasury{
-  position:absolute;
-  right:14px;
-  bottom:180px;
-  z-index:25;
-  display:none;
-  width:185px;
-  padding:12px;
-  border-radius:13px;
-  background:rgba(23,32,51,.9);
-  color:#fff;
-  backdrop-filter:blur(10px);
+ position:absolute;
+ right:12px;
+ bottom:150px;
+ z-index:70;
+ display:none;
+ width:175px;
+ padding:10px;
+ border-radius:12px;
+ background:rgba(23,32,51,.9);
+ color:#fff;
+ backdrop-filter:blur(10px);
+ box-shadow:0 8px 25px rgba(0,0,0,.25);
 }
-.ownerTreasuryTitle{font-size:12px;font-weight:800;margin-bottom:6px}
-.ownerTreasuryBalance{font-size:17px;font-weight:800}
-.ownerTreasurySub{font-size:11px;opacity:.7;margin-top:3px}
+
+.ownerTreasuryTitle{
+ font-size:11px;
+ font-weight:800;
+ margin-bottom:5px;
+}
+
+.ownerTreasuryBalance{
+ font-size:16px;
+ font-weight:800;
+}
+
+.ownerTreasurySub{
+ font-size:10px;
+ opacity:.7;
+ margin-top:3px;
+}
 
 .messageBox{
-  position:fixed;
-  left:50%;
-  bottom:30px;
-  transform:translateX(-50%);
-  z-index:99999;
-  background:#172033;
-  color:#fff;
-  padding:11px 16px;
-  border-radius:10px;
-  font-size:13px;
-  display:none;
-  max-width:90%;
-  text-align:center;
+ position:fixed;
+ left:50%;
+ bottom:25px;
+ transform:translateX(-50%);
+ z-index:99999;
+ background:#172033;
+ color:#fff;
+ padding:10px 15px;
+ border-radius:10px;
+ font-size:12px;
+ display:none;
+ max-width:90%;
+ text-align:center;
+}
+
+.fullscreenHint{
+ position:absolute;
+ top:96px;
+ left:50%;
+ transform:translateX(-50%);
+ z-index:45;
+ color:#fff;
+ font-size:10px;
+ background:rgba(23,32,51,.7);
+ padding:5px 8px;
+ border-radius:7px;
+ display:none;
 }
 
 @media(max-width:600px){
-  .giftGrid{grid-template-columns:repeat(4,1fr)}
-  .countryGrid{grid-template-columns:repeat(3,1fr)}
-  .ownerTreasury{bottom:210px;width:165px}
+ #seatGrid{
+  grid-template-columns:repeat(4,1fr);
+  grid-auto-rows:1fr;
+  padding:96px 5px 155px;
+  gap:4px;
+ }
+
+ .seat{
+  border-radius:7px;
+ }
+
+ .seatAvatar{
+  width:34px;
+  height:34px;
+  font-size:14px;
+ }
+
+ .seatName{
+  font-size:9px;
+ }
+
+ .seatStatus{
+  font-size:7px;
+ }
+
+ .seatLabel{
+  font-size:7px;
+  padding:3px 4px;
+ }
+
+ .seatLive{
+  font-size:6px;
+  padding:2px 4px;
+ }
+
+ .seatMute{
+  width:18px;
+  height:18px;
+  font-size:8px;
+ }
+
+ .liveList{
+  grid-template-columns:repeat(2,1fr);
+ }
+
+ .giftGrid{
+  grid-template-columns:repeat(3,1fr);
+ }
+
+ .ownerTreasury{
+  bottom:150px;
+  width:155px;
+ }
 }
 </style>
 </head>
@@ -565,1921 +864,2855 @@ button,input,select,textarea{font-family:inherit}
 <body>
 
 <div id="authScreen">
-  <div class="authBox">
-    <div class="authLogo">🔴</div>
-    <div class="authTitle">P2P Social Live</div>
-    <div class="authText" id="authText">Checking your account...</div>
-  </div>
+ <div class="authBox">
+  <div class="authLogo">🔴</div>
+  <div class="authTitle">P2P Social Live</div>
+  <div class="authText" id="authText">Checking your account...</div>
+ </div>
 </div>
 
 <div id="liveApp">
 
-  <div class="liveBackground"></div>
+ <div class="liveBackground"></div>
 
-  <video
-    id="liveVideo"
-    class="liveVideo"
-    autoplay
-    muted
-    playsinline>
-  </video>
+ <div id="seatGrid"></div>
 
-  <div id="livePlaceholder" class="livePlaceholder">
-    <div class="livePlaceholderIcon">🔴</div>
-    <div class="livePlaceholderTitle">Live Room</div>
-    <div class="livePlaceholderText">
-      Welcome to P2P Social Live
+ <div class="topBar">
+  <div class="liveInfo">
+   <div class="liveAvatar" id="liveAvatar">U</div>
+
+   <div class="liveUserInfo">
+    <div class="liveUsername" id="liveUsername">P2P Social Live</div>
+
+    <div class="liveStatus">
+     <span class="liveDot"></span>
+     <span id="liveState">LIVE</span>
     </div>
+   </div>
   </div>
 
-  <div class="topBar">
+  <div class="topActions">
+   <button class="iconButton" onclick="openLiveList()" title="Live">📺</button>
+   <button class="iconButton" onclick="shareLive()" title="Share">↗</button>
+   <button class="iconButton" onclick="toggleFullscreen()" title="Fullscreen">⛶</button>
+   <button class="iconButton" onclick="closeLive()" title="Close">✕</button>
+  </div>
+ </div>
 
-    <div class="liveInfo">
-      <div class="liveAvatar" id="liveAvatar">U</div>
+ <div class="liveBadge">LIVE</div>
 
-      <div class="liveUserInfo">
-        <div class="liveUsername" id="liveUsername">
-          Live User
-        </div>
+ <div class="viewerBadge">
+  👁 <span id="viewerCount">1</span>/24
+ </div>
 
-        <div class="liveStatus">
-          <span class="liveDot"></span>
-          <span id="liveState">LIVE</span>
-        </div>
-      </div>
-    </div>
+ <div id="countryBar" class="countryBar"></div>
 
-    <div class="topActions">
-      <button class="iconButton" onclick="shareLive()">↗</button>
-      <button class="iconButton" onclick="closeLive()">✕</button>
-    </div>
+ <div class="fullscreenHint" id="fullscreenHint">
+  24-seat Live Room
+ </div>
 
+ <div id="ownerTreasury" class="ownerTreasury">
+  <div class="ownerTreasuryTitle">💎 Owner Treasury</div>
+  <div id="ownerTreasuryBalance" class="ownerTreasuryBalance">0 💎</div>
+  <div class="ownerTreasurySub">Diamond treasury</div>
+ </div>
+
+ <div class="bottomArea">
+
+  <div class="bottomButtons">
+   <button class="bottomButton primary" onclick="openLiveList()">👥 Join Live</button>
+   <button class="bottomButton" onclick="openGiftPanel()">🎁 Send Gift</button>
+   <button class="bottomButton" onclick="openCreateLive()">🔴 Create Live</button>
   </div>
 
-  <div class="liveBadge">LIVE</div>
+  <div id="comments" class="comments"></div>
 
-  <div class="viewerBadge">
-    👁 <span id="viewerCount">1</span>
+  <div class="reactionButtons">
+   <button class="reactionButton" onclick="sendReaction('❤️')">❤️</button>
+   <button class="reactionButton" onclick="sendReaction('🔥')">🔥</button>
+   <button class="reactionButton" onclick="sendReaction('👏')">👏</button>
+   <button class="reactionButton" onclick="sendReaction('💎')">💎</button>
   </div>
 
-  <div class="liveCountry" id="liveCountry">
-    🇪🇹 Ethiopia
+  <form id="commentForm" class="commentForm" onsubmit="sendComment(event)">
+   <input
+    id="commentInput"
+    class="commentInput"
+    maxlength="500"
+    autocomplete="off"
+    placeholder="Say something..."
+   >
+   <button class="sendComment" type="submit">➤</button>
+  </form>
+
+ </div>
+</div>
+
+<!-- LIVE LIST -->
+
+<div id="liveListPanel" class="panel">
+
+ <div class="panelBox">
+
+  <div class="panelHeader">
+   <div class="panelTitle">👥 Live to Join</div>
+   <button class="closePanel" onclick="closeLiveList()">✕</button>
   </div>
 
-  <div id="ownerTreasury" class="ownerTreasury">
-    <div class="ownerTreasuryTitle">💎 Owner Treasury</div>
-    <div id="ownerTreasuryBalance" class="ownerTreasuryBalance">
-      0 💎
-    </div>
-    <div class="ownerTreasurySub">
-      Diamond treasury
-    </div>
+  <div id="liveList" class="liveList">
+   <div style="padding:20px;text-align:center;color:#687386;grid-column:1/-1">
+    Loading Live rooms...
+   </div>
   </div>
 
-  <div class="bottomArea">
+ </div>
+</div>
 
-    <div id="comments" class="comments"></div>
+<!-- GIFT PANEL -->
 
-    <div class="reactionButtons">
-      <button class="reactionButton" onclick="sendReaction('❤️')">❤️</button>
-      <button class="reactionButton" onclick="sendReaction('🔥')">🔥</button>
-      <button class="reactionButton" onclick="sendReaction('👏')">👏</button>
-      <button class="reactionButton" onclick="sendReaction('💎')">💎</button>
-    </div>
+<div id="giftPanel" class="panel">
 
-    <div class="liveActions">
+ <div class="panelBox">
 
-      <button
-        class="liveActionButton"
-        onclick="openCountryPanel()">
-        🌍 Country
-      </button>
-
-      <button
-        class="liveActionButton giftActionButton"
-        onclick="openGiftPanel()">
-        🎁 Send Gift
-      </button>
-
-    </div>
-
-    <form
-      id="commentForm"
-      class="commentForm"
-      onsubmit="sendComment(event)">
-
-      <input
-        id="commentInput"
-        class="commentInput"
-        maxlength="500"
-        autocomplete="off"
-        placeholder="Say something...">
-
-      <button class="sendComment" type="submit">
-        ➤
-      </button>
-
-    </form>
-
+  <div class="panelHeader">
+   <div class="panelTitle">🎁 Send Gift</div>
+   <button class="closePanel" onclick="closeGiftPanel()">✕</button>
   </div>
 
-  <div id="giftPanel" class="giftPanel">
+  <div class="giftGrid">
 
-    <div class="giftHeader">
-      <div class="giftTitle">🎁 Send Gift</div>
+   <button class="giftButton" onclick="sendGift('❤️','Heart',1)">
+    <div class="giftEmoji">❤️</div>
+    <div class="giftName">Heart</div>
+    <div class="giftCost">1 💎</div>
+   </button>
 
-      <button
-        class="closeGift"
-        onclick="closeGiftPanel()">
-        ✕
-      </button>
-    </div>
+   <button class="giftButton" onclick="sendGift('🌹','Rose',5)">
+    <div class="giftEmoji">🌹</div>
+    <div class="giftName">Rose</div>
+    <div class="giftCost">5 💎</div>
+   </button>
 
-    <div class="giftBalance">
-      💎 Your Diamonds:
-      <span id="giftDiamondBalance">0</span>
-    </div>
+   <button class="giftButton" onclick="sendGift('💎','Diamond',10)">
+    <div class="giftEmoji">💎</div>
+    <div class="giftName">Diamond</div>
+    <div class="giftCost">10 💎</div>
+   </button>
 
-    <div id="giftGrid" class="giftGrid"></div>
+   <button class="giftButton" onclick="sendGift('🎁','Gift',20)">
+    <div class="giftEmoji">🎁</div>
+    <div class="giftName">Gift</div>
+    <div class="giftCost">20 💎</div>
+   </button>
 
-  </div>
+   <button class="giftButton" onclick="sendGift('👑','Crown',50)">
+    <div class="giftEmoji">👑</div>
+    <div class="giftName">Crown</div>
+    <div class="giftCost">50 💎</div>
+   </button>
 
-  <div id="countryPanel" class="countryPanel">
-
-    <div class="countryHeader">
-      <div class="countryTitle">🌍 Choose Country</div>
-
-      <button
-        class="closeCountry"
-        onclick="closeCountryPanel()">
-        ✕
-      </button>
-    </div>
-
-    <input
-      id="countrySearch"
-      class="countrySearch"
-      placeholder="Search country..."
-      oninput="filterCountries()">
-
-    <div id="countryGrid" class="countryGrid"></div>
+   <button class="giftButton" onclick="sendGift('🚀','Rocket',100)">
+    <div class="giftEmoji">🚀</div>
+    <div class="giftName">Rocket</div>
+    <div class="giftCost">100 💎</div>
+   </button>
 
   </div>
 
-  <div id="createPanel" class="createPanel">
+ </div>
+</div>
 
-    <div class="createBox">
+<!-- CREATE LIVE -->
 
-      <div class="createHeader">
+<div id="createPanel" class="createPanel">
 
-        <div class="createTitle">
-          🔴 Create Live
-        </div>
+ <div class="createBox">
 
-        <button
-          class="closeCreate"
-          onclick="closeCreateLive()">
-          ✕
-        </button>
-
-      </div>
-
-      <label class="createLabel">
-        Live title
-      </label>
-
-      <input
-        id="createLiveTitle"
-        class="createInput"
-        maxlength="100"
-        placeholder="Enter live title">
-
-      <label class="createLabel">
-        Description
-      </label>
-
-      <textarea
-        id="createLiveDescription"
-        class="createTextarea"
-        maxlength="500"
-        placeholder="Describe your live..."></textarea>
-
-      <label class="createLabel">
-        Country
-      </label>
-
-      <select
-        id="createLiveCountry"
-        class="createSelect">
-      </select>
-
-      <button
-        id="startLiveButton"
-        class="startLiveButton"
-        onclick="startLive()">
-        🔴 Start Live
-      </button>
-
-      <button
-        id="stopLiveButton"
-        class="stopLiveButton"
-        onclick="stopLive()">
-        ⛔ Stop Live
-      </button>
-
-    </div>
-
+  <div class="createHeader">
+   <div class="createTitle">🔴 Create Live</div>
+   <button class="closeCreate" onclick="closeCreateLive()">✕</button>
   </div>
 
+  <label class="createLabel">Live title</label>
+
+  <input
+   id="createLiveTitle"
+   class="createInput"
+   maxlength="100"
+   placeholder="Enter live title"
+  >
+
+  <label class="createLabel">Country</label>
+
+  <select id="liveCountry" class="createSelect"></select>
+
+  <label class="createLabel">Description</label>
+
+  <textarea
+   id="createLiveDescription"
+   class="createTextarea"
+   maxlength="500"
+   placeholder="Describe your live..."
+  ></textarea>
+
+  <button
+   id="startLiveButton"
+   class="startLiveButton"
+   onclick="startLive()"
+  >
+   🔴 Start Live
+  </button>
+
+  <button
+   id="stopLiveButton"
+   class="stopLiveButton"
+   onclick="stopLive()"
+  >
+   ⛔ Stop Live
+  </button>
+
+ </div>
 </div>
 
 <div id="messageBox" class="messageBox"></div>
 
 <script>
-const SUPABASE_URL =
-"https://mbsvuwrgigqfporxwpfr.supabase.co";
 
-const SUPABASE_PUBLISHABLE_KEY =
+const SUPABASE_URL="https://mbsvuwrgigqfporxwpfr.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY=
 "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
 
-const supabaseClient =
+const supabaseClient=
 window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY
+ SUPABASE_URL,
+ SUPABASE_PUBLISHABLE_KEY
 );
 
 let currentUser=null;
 let currentProfile=null;
 let currentLiveId=null;
 let liveChannel=null;
+let commentChannel=null;
 let isHost=false;
 let localStream=null;
 let viewerCount=1;
-let diamondBalance=0;
-let selectedCountry="🇪🇹 Ethiopia";
+let currentCountryFlag="";
+let currentCountryCode="";
+let roomParticipants={};
+let peerConnections={};
+let participantSlots={};
+let liveRoomsCache=[];
 
+const MAX_SEATS=24;
 const PREMIUM_MAX_MIN_LEVEL=3;
 
 const countries=[
-["🏳️‍🌈","LGBTQ+"],
-["🏳️‍⚧️","Transgender"],
-["🇦🇨","Ascension Island"],
-["🇦🇩","Andorra"],
-["🇦🇪","United Arab Emirates"],
-["🇦🇫","Afghanistan"],
-["🇦🇬","Antigua and Barbuda"],
-["🇦🇮","Anguilla"],
-["🇦🇱","Albania"],
-["🇦🇲","Armenia"],
-["🇦🇴","Angola"],
-["🇦🇶","Antarctica"],
-["🇦🇷","Argentina"],
-["🇦🇸","American Samoa"],
-["🇦🇹","Austria"],
-["🇦🇺","Australia"],
-["🇦🇼","Aruba"],
-["🇦🇽","Åland Islands"],
-["🇦🇿","Azerbaijan"],
-["🇧🇦","Bosnia and Herzegovina"],
-["🇧🇧","Barbados"],
-["🇧🇩","Bangladesh"],
-["🇧🇪","Belgium"],
-["🇧🇫","Burkina Faso"],
-["🇧🇬","Bulgaria"],
-["🇧🇭","Bahrain"],
-["🇧🇮","Burundi"],
-["🇧🇯","Benin"],
-["🇧🇱","Saint Barthélemy"],
-["🇧🇲","Bermuda"],
-["🇧🇳","Brunei"],
-["🇧🇴","Bolivia"],
-["🇧🇶","Caribbean Netherlands"],
-["🇧🇷","Brazil"],
-["🇧🇸","Bahamas"],
-["🇧🇹","Bhutan"],
-["🇧🇻","Bouvet Island"],
-["🇧🇼","Botswana"],
-["🇧🇾","Belarus"],
-["🇧🇿","Belize"],
-["🇨🇦","Canada"],
-["🇨🇩","DR Congo"],
-["🇨🇫","Central African Republic"],
-["🇨🇬","Republic of the Congo"],
-["🇨🇭","Switzerland"],
-["🇨🇮","Côte d’Ivoire"],
-["🇨🇰","Cook Islands"],
-["🇨🇱","Chile"],
-["🇨🇲","Cameroon"],
-["🇨🇳","China"],
-["🇨🇴","Colombia"],
-["🇨🇵","Clipperton Island"],
-["🇨🇷","Costa Rica"],
-["🇨🇺","Cuba"],
-["🇨🇻","Cabo Verde"],
-["🇨🇼","Curaçao"],
-["🇨🇽","Christmas Island"],
-["🇨🇾","Cyprus"],
-["🇨🇿","Czechia"],
-["🇩🇪","Germany"],
-["🇩🇬","Diego Garcia"],
-["🇩🇯","Djibouti"],
-["🇩🇰","Denmark"],
-["🇩🇲","Dominica"],
-["🇩🇴","Dominican Republic"],
-["🇩🇿","Algeria"],
-["🇪🇦","Ceuta and Melilla"],
-["🇪🇨","Ecuador"],
-["🇪🇪","Estonia"],
-["🇪🇬","Egypt"],
-["🇪🇭","Western Sahara"],
-["🇪🇷","Eritrea"],
-["🇪🇸","Spain"],
-["🇪🇹","Ethiopia"],
-["🇫🇮","Finland"],
-["🇫🇯","Fiji"],
-["🇫🇰","Falkland Islands"],
-["🇫🇲","Micronesia"],
-["🇫🇴","Faroe Islands"],
-["🇫🇷","France"],
-["🇬🇦","Gabon"],
-["🇬🇧","United Kingdom"],
-["🇬🇩","Grenada"],
-["🇬🇪","Georgia"],
-["🇬🇫","French Guiana"],
-["🇬🇬","Guernsey"],
-["🇬🇭","Ghana"],
-["🇬🇮","Gibraltar"],
-["🇬🇱","Greenland"],
-["🇬🇲","Gambia"],
-["🇬🇳","Guinea"],
-["🇬🇵","Guadeloupe"],
-["🇬🇶","Equatorial Guinea"],
-["🇬🇷","Greece"],
-["🇬🇸","South Georgia and South Sandwich Islands"],
-["🇬🇹","Guatemala"],
-["🇬🇺","Guam"],
-["🇬🇼","Guinea-Bissau"],
-["🇬🇾","Guyana"],
-["🇭🇰","Hong Kong"],
-["🇭🇲","Heard Island and McDonald Islands"],
-["🇭🇳","Honduras"],
-["🇭🇷","Croatia"],
-["🇭🇺","Hungary"],
-["🇭🇹","Haiti"],
-["🇮🇨","Canary Islands"],
-["🇮🇩","Indonesia"],
-["🇮🇪","Ireland"],
-["🇮🇱","Israel"],
-["🇮🇲","Isle of Man"],
-["🇮🇳","India"],
-["🇮🇴","British Indian Ocean Territory"],
-["🇮🇶","Iraq"],
-["🇮🇷","Iran"],
-["🇮🇸","Iceland"],
-["🇮🇹","Italy"],
-["🇯🇪","Jersey"],
-["🇯🇲","Jamaica"],
-["🇯🇴","Jordan"],
-["🇯🇵","Japan"],
-["🇰🇪","Kenya"],
-["🇰🇬","Kyrgyzstan"],
-["🇰🇭","Cambodia"],
-["🇰🇮","Kiribati"],
-["🇰🇲","Comoros"],
-["🇰🇳","Saint Kitts and Nevis"],
-["🇰🇵","North Korea"],
-["🇰🇷","South Korea"],
-["🇰🇼","Kuwait"],
-["🇰🇾","Cayman Islands"],
-["🇰🇿","Kazakhstan"],
-["🇱🇦","Laos"],
-["🇱🇧","Lebanon"],
-["🇱🇨","Saint Lucia"],
-["🇱🇮","Liechtenstein"],
-["🇱🇰","Sri Lanka"],
-["🇱🇷","Liberia"],
-["🇱🇸","Lesotho"],
-["🇱🇹","Lithuania"],
-["🇱🇺","Luxembourg"],
-["🇱🇻","Latvia"],
-["🇱🇾","Libya"],
-["🇲🇨","Monaco"],
-["🇲🇩","Moldova"],
-["🇲🇦","Morocco"],
-["🇲🇪","Montenegro"],
-["🇲🇫","Saint Martin"],
-["🇲🇬","Madagascar"],
-["🇲🇭","Marshall Islands"],
-["🇲🇰","North Macedonia"],
-["🇲🇱","Mali"],
-["🇲🇲","Myanmar"],
-["🇲🇳","Mongolia"],
-["🇲🇴","Macao"],
-["🇲🇵","Northern Mariana Islands"],
-["🇲🇶","Martinique"],
-["🇲🇷","Mauritania"],
-["🇲🇸","Montserrat"],
-["🇲🇹","Malta"],
-["🇲🇺","Mauritius"],
-["🇲🇻","Maldives"],
-["🇲🇼","Malawi"],
-["🇲🇽","Mexico"],
-["🇲🇾","Malaysia"],
-["🇲🇿","Mozambique"],
-["🇳🇦","Namibia"],
-["🇳🇨","New Caledonia"],
-["🇳🇫","Norfolk Island"],
-["🇳🇪","Niger"],
-["🇳🇬","Nigeria"],
-["🇳🇮","Nicaragua"],
-["🇳🇱","Netherlands"],
-["🇳🇴","Norway"],
-["🇳🇵","Nepal"],
-["🇳🇷","Nauru"],
-["🇳🇺","Niue"],
-["🇳🇿","New Zealand"],
-["🇴🇲","Oman"],
-["🇵🇦","Panama"],
-["🇵🇪","Peru"],
-["🇵🇫","French Polynesia"],
-["🇵🇬","Papua New Guinea"],
-["🇵🇭","Philippines"],
-["🇵🇰","Pakistan"],
-["🇵🇱","Poland"],
-["🇵🇲","Saint Pierre and Miquelon"],
-["🇵🇳","Pitcairn"],
-["🇵🇷","Puerto Rico"],
-["🇵🇸","Palestine"],
-["🇵🇹","Portugal"],
-["🇵🇼","Palau"],
-["🇵🇾","Paraguay"],
-["🇶🇦","Qatar"],
-["🇷🇪","Réunion"],
-["🇷🇴","Romania"],
-["🇷🇸","Serbia"],
-["🇷🇺","Russia"],
-["🇷🇼","Rwanda"],
-["🇸🇦","Saudi Arabia"],
-["🇸🇧","Solomon Islands"],
-["🇸🇨","Seychelles"],
-["🇸🇩","Sudan"],
-["🇸🇪","Sweden"],
-["🇸🇬","Singapore"],
-["🇸🇭","Saint Helena"],
-["🇸🇮","Slovenia"],
-["🇸🇯","Svalbard and Jan Mayen"],
-["🇸🇰","Slovakia"],
-["🇸🇱","Sierra Leone"],
-["🇸🇲","San Marino"],
-["🇸🇳","Senegal"],
-["🇸🇴","Somalia"],
-["🇸🇷","Suriname"],
-["🇸🇸","South Sudan"],
-["🇸🇹","São Tomé and Príncipe"],
-["🇸🇻","El Salvador"],
-["🇸🇽","Sint Maarten"],
-["🇸🇾","Syria"],
-["🇸🇿","Eswatini"],
-["🇹🇦","Tristan da Cunha"],
-["🇹🇨","Turks and Caicos Islands"],
-["🇹🇩","Chad"],
-["🇹🇫","French Southern Territories"],
-["🇹🇬","Togo"],
-["🇹🇭","Thailand"],
-["🇹🇯","Tajikistan"],
-["🇹🇰","Tokelau"],
-["🇹🇱","Timor-Leste"],
-["🇹🇲","Turkmenistan"],
-["🇹🇳","Tunisia"],
-["🇹🇴","Tonga"],
-["🇹🇷","Türkiye"],
-["🇹🇹","Trinidad and Tobago"],
-["🇹🇻","Tuvalu"],
-["🇹🇼","Taiwan"],
-["🇹🇿","Tanzania"],
-["🇺🇦","Ukraine"],
-["🇺🇬","Uganda"],
-["🇺🇲","United States Outlying Islands"],
-["🇺🇸","United States"],
-["🇺🇾","Uruguay"],
-["🇺🇿","Uzbekistan"],
-["🇻🇦","Vatican City"],
-["🇻🇨","Saint Vincent and the Grenadines"],
-["🇻🇪","Venezuela"],
-["🇻🇬","British Virgin Islands"],
-["🇻🇮","U.S. Virgin Islands"],
-["🇻🇳","Vietnam"],
-["🇻🇺","Vanuatu"],
-["🇼🇫","Wallis and Futuna"],
-["🇼🇸","Samoa"],
-["🇽🇰","Kosovo"],
-["🇾🇪","Yemen"],
-["🇾🇹","Mayotte"],
-["🇿🇦","South Africa"],
-["🇿🇲","Zambia"],
-["🇿🇼","Zimbabwe"]
-];
-
-const gifts=[
-["🌹","Rose",1],
-["❤️","Heart",5],
-["👍","Like",10],
-["🔥","Fire",25],
-["👏","Clap",50],
-["⭐","Star",100],
-["🎉","Party",250],
-["💎","Diamond",500],
-["👑","Crown",1000],
-["🚀","Rocket",2500],
-["💰","Money",5000],
-["🏆","Trophy",10000]
+ ["🏳️‍🌈","PRIDE"],
+ ["🏳️‍⚧️","TRANS"],
+ ["🇦🇨","AC"],
+ ["🇦🇩","AD"],
+ ["🇦🇪","AE"],
+ ["🇦🇫","AF"],
+ ["🇦🇬","AG"],
+ ["🇦🇮","AI"],
+ ["🇦🇱","AL"],
+ ["🇦🇲","AM"],
+ ["🇦🇴","AO"],
+ ["🇦🇶","AQ"],
+ ["🇦🇷","AR"],
+ ["🇦🇸","AS"],
+ ["🇦🇹","AT"],
+ ["🇦🇺","AU"],
+ ["🇦🇼","AW"],
+ ["🇦🇽","AX"],
+ ["🇦🇿","AZ"],
+ ["🇧🇦","BA"],
+ ["🇧🇧","BB"],
+ ["🇧🇩","BD"],
+ ["🇧🇪","BE"],
+ ["🇧🇫","BF"],
+ ["🇧🇬","BG"],
+ ["🇧🇭","BH"],
+ ["🇧🇮","BI"],
+ ["🇧🇯","BJ"],
+ ["🇧🇱","BL"],
+ ["🇧🇲","BM"],
+ ["🇧🇳","BN"],
+ ["🇧🇴","BO"],
+ ["🇧🇶","BQ"],
+ ["🇧🇷","BR"],
+ ["🇧🇸","BS"],
+ ["🇧🇹","BT"],
+ ["🇧🇻","BV"],
+ ["🇧🇼","BW"],
+ ["🇧🇾","BY"],
+ ["🇧🇿","BZ"],
+ ["🇨🇦","CA"],
+ ["🇨🇩","CD"],
+ ["🇨🇫","CF"],
+ ["🇨🇬","CG"],
+ ["🇨🇭","CH"],
+ ["🇨🇮","CI"],
+ ["🇨🇰","CK"],
+ ["🇨🇱","CL"],
+ ["🇨🇲","CM"],
+ ["🇨🇳","CN"],
+ ["🇨🇴","CO"],
+ ["🇨🇵","CP"],
+ ["🇨🇷","CR"],
+ ["🇨🇻","CV"],
+ ["🇨🇼","CW"],
+ ["🇨🇽","CX"],
+ ["🇨🇾","CY"],
+ ["🇨🇿","CZ"],
+ ["🇩🇪","DE"],
+ ["🇩🇬","DG"],
+ ["🇩🇯","DJ"],
+ ["🇩🇰","DK"],
+ ["🇩🇲","DM"],
+ ["🇩🇴","DO"],
+ ["🇩🇿","DZ"],
+ ["🇪🇦","EA"],
+ ["🇪🇨","EC"],
+ ["🇪🇪","EE"],
+ ["🇪🇬","EG"],
+ ["🇪🇭","EH"],
+ ["🇪🇷","ER"],
+ ["🇪🇸","ES"],
+ ["🇪🇹","ET"],
+ ["🇫🇮","FI"],
+ ["🇫🇯","FJ"],
+ ["🇫🇰","FK"],
+ ["🇫🇲","FM"],
+ ["🇫🇴","FO"],
+ ["🇫🇷","FR"],
+ ["🇬🇦","GA"],
+ ["🇬🇧","GB"],
+ ["🇬🇩","GD"],
+ ["🇬🇪","GE"],
+ ["🇬🇫","GF"],
+ ["🇬🇬","GG"],
+ ["🇬🇭","GH"],
+ ["🇬🇮","GI"],
+ ["🇬🇱","GL"],
+ ["🇬🇲","GM"],
+ ["🇬🇳","GN"],
+ ["🇬🇵","GP"],
+ ["🇬🇶","GQ"],
+ ["🇬🇷","GR"],
+ ["🇬🇸","GS"],
+ ["🇬🇹","GT"],
+ ["🇬🇺","GU"],
+ ["🇬🇼","GW"],
+ ["🇬🇾","GY"],
+ ["🇭🇰","HK"],
+ ["🇭🇲","HM"],
+ ["🇭🇳","HN"],
+ ["🇭🇷","HR"],
+ ["🇭🇺","HU"],
+ ["🇭🇹","HT"],
+ ["🇮🇨","IC"],
+ ["🇮🇩","ID"],
+ ["🇮🇪","IE"],
+ ["🇮🇱","IL"],
+ ["🇮🇲","IM"],
+ ["🇮🇳","IN"],
+ ["🇮🇴","IO"],
+ ["🇮🇶","IQ"],
+ ["🇮🇷","IR"],
+ ["🇮🇸","IS"],
+ ["🇮🇹","IT"],
+ ["🇯🇪","JE"],
+ ["🇯🇲","JM"],
+ ["🇯🇴","JO"],
+ ["🇯🇵","JP"],
+ ["🇰🇪","KE"],
+ ["🇰🇬","KG"],
+ ["🇰🇭","KH"],
+ ["🇰🇮","KI"],
+ ["🇰🇲","KM"],
+ ["🇰🇳","KN"],
+ ["🇰🇵","KP"],
+ ["🇰🇷","KR"],
+ ["🇰🇼","KW"],
+ ["🇰🇾","KY"],
+ ["🇰🇿","KZ"],
+ ["🇱🇦","LA"],
+ ["🇱🇧","LB"],
+ ["🇱🇨","LC"],
+ ["🇱🇮","LI"],
+ ["🇱🇰","LK"],
+ ["🇱🇷","LR"],
+ ["🇱🇸","LS"],
+ ["🇱🇹","LT"],
+ ["🇱🇺","LU"],
+ ["🇱🇻","LV"],
+ ["🇱🇾","LY"],
+ ["🇲🇨","MC"],
+ ["🇲🇩","MD"],
+ ["🇲🇦","MA"],
+ ["🇲🇪","ME"],
+ ["🇲🇫","MF"],
+ ["🇲🇬","MG"],
+ ["🇲🇭","MH"],
+ ["🇲🇰","MK"],
+ ["🇲🇱","ML"],
+ ["🇲🇲","MM"],
+ ["🇲🇳","MN"],
+ ["🇲🇴","MO"],
+ ["🇲🇵","MP"],
+ ["🇲🇶","MQ"],
+ ["🇲🇷","MR"],
+ ["🇲🇸","MS"],
+ ["🇲🇹","MT"],
+ ["🇲🇺","MU"],
+ ["🇲🇻","MV"],
+ ["🇲🇼","MW"],
+ ["🇲🇽","MX"],
+ ["🇲🇾","MY"],
+ ["🇲🇿","MZ"],
+ ["🇳🇦","NA"],
+ ["🇳🇨","NC"],
+ ["🇳🇫","NF"],
+ ["🇳🇪","NE"],
+ ["🇳🇬","NG"],
+ ["🇳🇮","NI"],
+ ["🇳🇱","NL"],
+ ["🇳🇴","NO"],
+ ["🇳🇵","NP"],
+ ["🇳🇷","NR"],
+ ["🇳🇺","NU"],
+ ["🇳🇿","NZ"],
+ ["🇴🇲","OM"],
+ ["🇵🇦","PA"],
+ ["🇵🇪","PE"],
+ ["🇵🇫","PF"],
+ ["🇵🇬","PG"],
+ ["🇵🇭","PH"],
+ ["🇵🇰","PK"],
+ ["🇵🇱","PL"],
+ ["🇵🇲","PM"],
+ ["🇵🇳","PN"],
+ ["🇵🇷","PR"],
+ ["🇵🇸","PS"],
+ ["🇵🇹","PT"],
+ ["🇵🇼","PW"],
+ ["🇵🇾","PY"],
+ ["🇶🇦","QA"],
+ ["🇷🇪","RE"],
+ ["🇷🇴","RO"],
+ ["🇷🇸","RS"],
+ ["🇷🇺","RU"],
+ ["🇷🇼","RW"],
+ ["🇸🇦","SA"],
+ ["🇸🇧","SB"],
+ ["🇸🇨","SC"],
+ ["🇸🇩","SD"],
+ ["🇸🇪","SE"],
+ ["🇸🇬","SG"],
+ ["🇸🇭","SH"],
+ ["🇸🇮","SI"],
+ ["🇸🇯","SJ"],
+ ["🇸🇰","SK"],
+ ["🇸🇱","SL"],
+ ["🇸🇲","SM"],
+ ["🇸🇳","SN"],
+ ["🇸🇴","SO"],
+ ["🇸🇷","SR"],
+ ["🇸🇸","SS"],
+ ["🇸🇹","ST"],
+ ["🇸🇻","SV"],
+ ["🇸🇽","SX"],
+ ["🇸🇾","SY"],
+ ["🇸🇿","SZ"],
+ ["🇹🇦","TA"],
+ ["🇹🇨","TC"],
+ ["🇹🇩","TD"],
+ ["🇹🇫","TF"],
+ ["🇹🇬","TG"],
+ ["🇹🇭","TH"],
+ ["🇹🇯","TJ"],
+ ["🇹🇰","TK"],
+ ["🇹🇱","TL"],
+ ["🇹🇲","TM"],
+ ["🇹🇳","TN"],
+ ["🇹🇴","TO"],
+ ["🇹🇷","TR"],
+ ["🇹🇹","TT"],
+ ["🇹🇻","TV"],
+ ["🇹🇼","TW"],
+ ["🇹🇿","TZ"],
+ ["🇺🇦","UA"],
+ ["🇺🇬","UG"],
+ ["🇺🇲","UM"],
+ ["🇺🇳","UN"],
+ ["🇺🇸","US"],
+ ["🇺🇾","UY"],
+ ["🇺🇿","UZ"],
+ ["🇻🇦","VA"],
+ ["🇻🇨","VC"],
+ ["🇻🇪","VE"],
+ ["🇻🇬","VG"],
+ ["🇻🇮","VI"],
+ ["🇻🇳","VN"],
+ ["🇻🇺","VU"],
+ ["🇼🇫","WF"],
+ ["🇼🇸","WS"],
+ ["🇽🇰","XK"],
+ ["🇾🇪","YE"],
+ ["🇾🇹","YT"],
+ ["🇿🇦","ZA"],
+ ["🇿🇲","ZM"],
+ ["🇿🇼","ZW"]
 ];
 
 function escapeHtml(value){
-  return String(value??"")
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#039;");
-}
-
-function getFirstValue(obj,keys,fallback=""){
-  for(const key of keys){
-    if(
-      obj &&
-      obj[key]!==undefined &&
-      obj[key]!==null &&
-      obj[key]!==""
-    ) return obj[key];
-  }
-  return fallback;
+ return String(value??"")
+  .replace(/&/g,"&amp;")
+  .replace(/</g,"&lt;")
+  .replace(/>/g,"&gt;")
+  .replace(/"/g,"&quot;")
+  .replace(/'/g,"&#039;");
 }
 
 function showMessage(message){
-  const box=document.getElementById("messageBox");
-  box.textContent=message;
-  box.style.display="block";
-  clearTimeout(window.messageTimer);
-  window.messageTimer=setTimeout(()=>{
-    box.style.display="none";
-  },3000);
+ const box=document.getElementById("messageBox");
+ box.textContent=message;
+ box.style.display="block";
+
+ clearTimeout(window.messageTimer);
+
+ window.messageTimer=setTimeout(()=>{
+  box.style.display="none";
+ },3000);
+}
+
+function getFirstValue(obj,keys,fallback=""){
+ for(const key of keys){
+  if(
+   obj &&
+   obj[key]!==undefined &&
+   obj[key]!==null &&
+   obj[key]!==""
+  ){
+   return obj[key];
+  }
+ }
+
+ return fallback;
 }
 
 function getUserLevel(profile){
-  const value=getFirstValue(
-    profile,
-    ["level","user_level","account_level","membership_level"],
-    0
-  );
-  const number=parseInt(value,10);
-  return Number.isFinite(number)?number:0;
+ const value=getFirstValue(
+  profile,
+  ["level","user_level","account_level","membership_level"],
+  0
+ );
+
+ const number=parseInt(value,10);
+
+ return Number.isFinite(number)?number:0;
 }
 
 function normalizePremiumTier(profile){
-  return String(
-    getFirstValue(
-      profile,
-      ["premium_tier","premium","subscription_tier","plan","membership"],
-      ""
-    )
-  ).toLowerCase().trim();
+ return String(
+  getFirstValue(
+   profile,
+   ["premium_tier","premium","subscription_tier","plan","membership"],
+   ""
+  )
+ ).toLowerCase().trim();
 }
 
 function hasPremiumMax(){
-  const tier=normalizePremiumTier(currentProfile);
-  return [
-    "premium max",
-    "premium_max",
-    "premium-max",
-    "max",
-    "premiummax"
-  ].includes(tier);
+ if(!currentProfile)return false;
+
+ const tier=normalizePremiumTier(currentProfile);
+
+ return [
+  "premium max",
+  "premium_max",
+  "premium-max",
+  "max",
+  "premiummax"
+ ].includes(tier);
 }
 
 function canCreateLive(){
-  return (
-    hasPremiumMax() &&
-    getUserLevel(currentProfile)>=PREMIUM_MAX_MIN_LEVEL
-  );
+ return hasPremiumMax() &&
+        getUserLevel(currentProfile)>=PREMIUM_MAX_MIN_LEVEL;
 }
 
 async function requireLogin(){
 
-  const {data,error}=
-    await supabaseClient.auth.getSession();
+ const {data,error}=
+ await supabaseClient.auth.getSession();
 
-  if(error||!data.session){
-    window.location.href="./login.html";
-    return false;
-  }
+ if(error||!data.session){
+  window.location.href="./login.html";
+  return false;
+ }
 
-  currentUser=data.session.user;
-  return true;
+ currentUser=data.session.user;
+
+ return true;
 }
 
 async function loadProfile(){
 
-  let result=
-    await supabaseClient
-      .from("profiles")
-      .select("*")
-      .eq("id",currentUser.id)
-      .maybeSingle();
+ if(!currentUser)return null;
 
-  if(result.data){
-    currentProfile=result.data;
-    return currentProfile;
-  }
+ let result=
+ await supabaseClient
+  .from("profiles")
+  .select("*")
+  .eq("id",currentUser.id)
+  .maybeSingle();
 
-  result=
-    await supabaseClient
-      .from("users")
-      .select("*")
-      .eq("id",currentUser.id)
-      .maybeSingle();
-
-  if(result.data){
-    currentProfile=result.data;
-    return currentProfile;
-  }
-
-  currentProfile={
-    id:currentUser.id,
-    username:
-      currentUser.user_metadata?.username||
-      currentUser.email?.split("@")[0]||
-      "User"
-  };
-
+ if(result.data){
+  currentProfile=result.data;
   return currentProfile;
+ }
+
+ result=
+ await supabaseClient
+  .from("users")
+  .select("*")
+  .eq("id",currentUser.id)
+  .maybeSingle();
+
+ if(result.data){
+  currentProfile=result.data;
+  return currentProfile;
+ }
+
+ currentProfile={
+  id:currentUser.id,
+  username:
+   currentUser.user_metadata?.username ||
+   currentUser.email?.split("@")[0] ||
+   "User"
+ };
+
+ return currentProfile;
 }
 
 function getUsername(){
-  return getFirstValue(
-    currentProfile,
-    ["username","user_name","name","display_name"],
-    currentUser?.email?.split("@")[0]||"User"
-  );
+
+ return getFirstValue(
+  currentProfile,
+  ["username","user_name","name","display_name"],
+  currentUser?.email?.split("@")[0]||"User"
+ );
 }
 
 function getAvatar(){
-  return getFirstValue(
-    currentProfile,
-    ["avatar_url","avatar","profile_image","photo_url","image_url"],
-    ""
-  );
+
+ return getFirstValue(
+  currentProfile,
+  ["avatar_url","avatar","profile_image","photo_url","image_url"],
+  ""
+ );
 }
 
 function updateLiveUser(){
 
-  const username=getUsername();
+ const username=getUsername();
 
-  document.getElementById("liveUsername")
-    .textContent=username;
+ document.getElementById("liveUsername")
+  .textContent=username;
 
-  const avatar=getAvatar();
-  const box=document.getElementById("liveAvatar");
+ const avatar=getAvatar();
 
-  if(avatar){
-    box.innerHTML=
-      '<img src="'+escapeHtml(avatar)+'" alt="">';
-  }else{
-    box.textContent=
-      username.charAt(0).toUpperCase();
-  }
+ const avatarBox=
+  document.getElementById("liveAvatar");
+
+ if(avatar){
+
+  avatarBox.innerHTML=
+   '<img src="'+escapeHtml(avatar)+'" alt="">';
+
+ }else{
+
+  avatarBox.textContent=
+   username.charAt(0).toUpperCase();
+ }
 }
 
-function renderCountries(){
+function buildCountrySelectors(){
 
-  const grid=document.getElementById("countryGrid");
+ const bar=document.getElementById("countryBar");
+ const select=document.getElementById("liveCountry");
 
-  grid.innerHTML="";
+ bar.innerHTML="";
+ select.innerHTML="";
 
-  countries.forEach(([flag,name])=>{
+ countries.forEach((item,index)=>{
 
-    const button=document.createElement("button");
-    button.className="countryItem";
-    button.type="button";
-    button.dataset.name=name.toLowerCase();
+  const flag=item[0];
+  const code=item[1];
 
-    button.innerHTML=
-      escapeHtml(flag)+" "+
-      escapeHtml(name);
+  const button=document.createElement("button");
 
-    button.onclick=()=>{
-      selectedCountry=flag+" "+name;
+  button.className="countryFlag";
 
-      document.getElementById("liveCountry")
-        .textContent=selectedCountry;
-
-      const select=
-        document.getElementById("createLiveCountry");
-
-      select.value=selectedCountry;
-
-      closeCountryPanel();
-    };
-
-    grid.appendChild(button);
-  });
-}
-
-function filterCountries(){
-
-  const search=
-    document.getElementById("countrySearch")
-      .value.toLowerCase().trim();
-
-  document
-    .querySelectorAll(".countryItem")
-    .forEach(item=>{
-      item.style.display=
-        !search||
-        item.dataset.name.includes(search)
-          ? "block"
-          : "none";
-    });
-}
-
-function fillCountrySelect(){
-
-  const select=
-    document.getElementById("createLiveCountry");
-
-  select.innerHTML="";
-
-  countries.forEach(([flag,name])=>{
-    const option=document.createElement("option");
-    option.value=flag+" "+name;
-    option.textContent=flag+" "+name;
-    select.appendChild(option);
-  });
-
-  select.value="🇪🇹 Ethiopia";
-}
-
-function openCountryPanel(){
-  document.getElementById("countryPanel")
-    .style.display="block";
-}
-
-function closeCountryPanel(){
-  document.getElementById("countryPanel")
-    .style.display="none";
-}
-
-function openGiftPanel(){
-
-  document.getElementById("giftPanel")
-    .style.display="block";
-
-  loadDiamondBalance();
-}
-
-function closeGiftPanel(){
-  document.getElementById("giftPanel")
-    .style.display="none";
-}
-
-function renderGifts(){
-
-  const grid=document.getElementById("giftGrid");
-
-  grid.innerHTML="";
-
-  gifts.forEach(([emoji,name,price])=>{
-
-    const button=document.createElement("button");
-
-    button.className="giftItem";
-    button.type="button";
-
-    button.innerHTML=
-      '<div class="giftEmoji">'+
-      escapeHtml(emoji)+
-      '</div>'+
-      '<div class="giftName">'+
-      escapeHtml(name)+
-      '</div>'+
-      '<div class="giftPrice">'+
-      price.toLocaleString()+
-      ' 💎</div>';
-
-    button.onclick=()=>{
-      sendGift(emoji,name,price);
-    };
-
-    grid.appendChild(button);
-  });
-}
-
-async function loadDiamondBalance(){
-
-  diamondBalance=0;
-
-  const tables=[
-    "wallets",
-    "profiles",
-    "users"
-  ];
-
-  for(const table of tables){
-
-    const result=
-      await supabaseClient
-        .from(table)
-        .select("*")
-        .eq("id",currentUser.id)
-        .maybeSingle();
-
-    if(!result.error&&result.data){
-
-      const value=
-        getFirstValue(
-          result.data,
-          [
-            "diamond_balance",
-            "diamonds",
-            "diamond",
-            "balance_diamond"
-          ],
-          0
-        );
-
-      diamondBalance=Number(value)||0;
-      break;
-    }
+  if(code==="ET"){
+   button.classList.add("active");
   }
 
-  document.getElementById("giftDiamondBalance")
-    .textContent=diamondBalance.toLocaleString();
-}
+  button.textContent=flag;
 
-async function sendGift(emoji,name,price){
+  button.title=code;
 
-  if(!currentUser){
-    showMessage("Please login first.");
-    return;
-  }
+  button.onclick=()=>{
+   currentCountryFlag=flag;
+   currentCountryCode=code;
 
-  if(!currentLiveId){
-    showMessage("No Live room selected.");
-    return;
-  }
+   document
+    .querySelectorAll(".countryFlag")
+    .forEach(b=>b.classList.remove("active"));
 
-  await loadDiamondBalance();
+   button.classList.add("active");
 
-  if(diamondBalance<price){
-    showMessage(
-      "Not enough 💎 Diamonds."
-    );
-    return;
-  }
-
-  if(isHost){
-    showMessage(
-      "You cannot send a gift to your own Live."
-    );
-    return;
-  }
-
-  let hostId=null;
-
-  const roomResult=
-    await supabaseClient
-      .from("live_rooms")
-      .select("*")
-      .eq("id",currentLiveId)
-      .maybeSingle();
-
-  if(roomResult.data){
-    hostId=
-      getFirstValue(
-        roomResult.data,
-        ["host_id","user_id","owner_id","creator_id"],
-        null
-      );
-  }
-
-  if(!hostId){
-
-    const fallback=
-      await supabaseClient
-        .from("live")
-        .select("*")
-        .eq("id",currentLiveId)
-        .maybeSingle();
-
-    if(fallback.data){
-      hostId=
-        getFirstValue(
-          fallback.data,
-          ["host_id","user_id","owner_id","creator_id"],
-          null
-        );
-    }
-  }
-
-  if(!hostId){
-    showMessage("Live host not found.");
-    return;
-  }
-
-  const giftData={
-    live_id:currentLiveId,
-    sender_id:currentUser.id,
-    receiver_id:hostId,
-    gift_name:name,
-    gift_emoji:emoji,
-    diamond_amount:price,
-    amount:price,
-    created_at:new Date().toISOString()
+   filterLiveByCountry(code);
   };
 
-  let result=
-    await supabaseClient
-      .from("live_gifts")
-      .insert(giftData);
+  bar.appendChild(button);
 
-  if(result.error){
+  const option=document.createElement("option");
 
-    result=
-      await supabaseClient
-        .from("gifts")
-        .insert(giftData);
+  option.value=code;
+  option.textContent=flag+" "+code;
+
+  if(code==="ET"){
+   option.selected=true;
+   currentCountryFlag=flag;
+   currentCountryCode=code;
   }
 
-  if(result.error){
+  select.appendChild(option);
 
-    console.error(result.error);
+ });
 
-    showMessage(
-      "Gift could not be sent."
-    );
+ const more=document.createElement("button");
 
-    return;
+ more.className="moreCountries";
+ more.textContent="More";
+
+ more.onclick=()=>{
+  bar.style.overflowX=
+   bar.style.overflowX==="auto"?"hidden":"auto";
+ };
+
+ bar.appendChild(more);
+
+ select.onchange=()=>{
+  const selected=
+   countries.find(x=>x[1]===select.value);
+
+  if(selected){
+   currentCountryFlag=selected[0];
+   currentCountryCode=selected[1];
   }
-
-  await deductDiamonds(price);
-
-  await addGiftToTreasury(price);
-
-  diamondBalance-=price;
-
-  document.getElementById("giftDiamondBalance")
-    .textContent=
-      Math.max(0,diamondBalance).toLocaleString();
-
-  closeGiftPanel();
-
-  showReaction(emoji);
-
-  showMessage(
-    emoji+" "+name+
-    " sent successfully!"
-  );
-
-  if(liveChannel){
-
-    try{
-      await liveChannel.send({
-        type:"broadcast",
-        event:"gift",
-        payload:{
-          emoji:emoji,
-          name:name,
-          amount:price
-        }
-      });
-    }catch(error){
-      console.error(error);
-    }
-  }
-}
-
-async function deductDiamonds(amount){
-
-  const newBalance=
-    Math.max(0,diamondBalance-amount);
-
-  const possible=[
-    "wallets",
-    "profiles",
-    "users"
-  ];
-
-  for(const table of possible){
-
-    const result=
-      await supabaseClient
-        .from(table)
-        .update({
-          diamond_balance:newBalance,
-          diamonds:newBalance
-        })
-        .eq("id",currentUser.id);
-
-    if(!result.error) return true;
-  }
-
-  return false;
-}
-
-async function addGiftToTreasury(amount){
-
-  const tables=[
-    "owner_treasury",
-    "diamond_treasury",
-    "treasury"
-  ];
-
-  for(const table of tables){
-
-    const existing=
-      await supabaseClient
-        .from(table)
-        .select("*")
-        .limit(1)
-        .maybeSingle();
-
-    if(existing.error) continue;
-
-    if(existing.data){
-
-      const current=
-        Number(
-          getFirstValue(
-            existing.data,
-            [
-              "diamond_balance",
-              "diamonds",
-              "balance",
-              "total_diamonds"
-            ],
-            0
-          )
-        )||0;
-
-      const id=existing.data.id;
-
-      const result=
-        await supabaseClient
-          .from(table)
-          .update({
-            diamond_balance:current+amount,
-            diamonds:current+amount,
-            balance:current+amount,
-            total_diamonds:current+amount,
-            updated_at:new Date().toISOString()
-          })
-          .eq("id",id);
-
-      if(!result.error) return true;
-
-    }else{
-
-      const result=
-        await supabaseClient
-          .from(table)
-          .insert({
-            diamond_balance:amount,
-            diamonds:amount,
-            balance:amount,
-            total_diamonds:amount,
-            updated_at:new Date().toISOString()
-          });
-
-      if(!result.error) return true;
-    }
-  }
-
-  return false;
+ };
 }
 
 function openCreateLive(){
 
-  if(!currentUser){
-    showMessage("Please login first.");
-    return;
-  }
+ if(!currentUser){
+  showMessage("Please login first.");
+  return;
+ }
 
-  if(!canCreateLive()){
-    showMessage(
-      "Premium Max and Level 3+ are required to create Live."
-    );
-    return;
-  }
+ if(!canCreateLive()){
+  showMessage(
+   "Premium Max and Level 3+ are required to create Live."
+  );
+  return;
+ }
 
-  document.getElementById("createPanel")
-    .style.display="flex";
+ document.getElementById("createPanel")
+  .style.display="flex";
 }
 
 function closeCreateLive(){
-  document.getElementById("createPanel")
-    .style.display="none";
+ document.getElementById("createPanel")
+  .style.display="none";
 }
 
 async function startLive(){
 
-  if(!canCreateLive()){
-    showMessage(
-      "Premium Max and Level 3+ are required."
-    );
-    return;
+ if(!canCreateLive()){
+  showMessage(
+   "Premium Max and Level 3+ are required."
+  );
+  return;
+ }
+
+ const title=
+  document.getElementById("createLiveTitle")
+  .value.trim();
+
+ const description=
+  document.getElementById("createLiveDescription")
+  .value.trim();
+
+ const country=
+  document.getElementById("liveCountry").value;
+
+ const countryData=
+  countries.find(x=>x[1]===country)||["🇪🇹","ET"];
+
+ if(!title){
+  showMessage("Enter a live title.");
+  return;
+ }
+
+ const startButton=
+  document.getElementById("startLiveButton");
+
+ startButton.disabled=true;
+ startButton.textContent="Starting...";
+
+ try{
+
+  const payload={
+   host_id:currentUser.id,
+   title:title,
+   description:description,
+   status:"live",
+   is_live:true,
+   country_code:countryData[1],
+   country_flag:countryData[0]
+  };
+
+  let result=
+   await supabaseClient
+    .from("live_rooms")
+    .insert(payload)
+    .select("*")
+    .single();
+
+  if(result.error){
+
+   const fallbackPayload={
+    user_id:currentUser.id,
+    title:title,
+    description:description,
+    status:"live",
+    is_live:true,
+    country_code:countryData[1],
+    country_flag:countryData[0]
+   };
+
+   result=
+    await supabaseClient
+     .from("live")
+     .insert(fallbackPayload)
+     .select("*")
+     .single();
   }
 
-  const title=
-    document.getElementById("createLiveTitle")
-      .value.trim();
+  if(result.error){
 
-  const description=
-    document.getElementById("createLiveDescription")
-      .value.trim();
+   const simplePayload={
+    host_id:currentUser.id,
+    title:title,
+    description:description,
+    status:"live",
+    is_live:true
+   };
 
-  const country=
-    document.getElementById("createLiveCountry")
-      .value;
-
-  if(!title){
-    showMessage("Enter a live title.");
-    return;
+   result=
+    await supabaseClient
+     .from("live_rooms")
+     .insert(simplePayload)
+     .select("*")
+     .single();
   }
 
-  const button=
-    document.getElementById("startLiveButton");
+  if(result.error)throw result.error;
 
-  button.disabled=true;
-  button.textContent="Starting...";
+  currentLiveId=result.data.id;
+  isHost=true;
 
-  try{
+  currentCountryCode=
+   getFirstValue(
+    result.data,
+    ["country_code"],
+    countryData[1]
+   );
 
-    const payload={
-      host_id:currentUser.id,
-      user_id:currentUser.id,
-      title:title,
-      description:description,
-      country:country,
-      country_name:country,
-      status:"live",
-      is_live:true,
-      started_at:new Date().toISOString()
-    };
+  currentCountryFlag=
+   getFirstValue(
+    result.data,
+    ["country_flag"],
+    countryData[0]
+   );
 
-    let result=
-      await supabaseClient
-        .from("live_rooms")
-        .insert(payload)
-        .select("*")
-        .single();
+  closeCreateLive();
 
-    if(result.error){
+  document.getElementById("liveState")
+   .textContent="LIVE";
 
-      result=
-        await supabaseClient
-          .from("live")
-          .insert(payload)
-          .select("*")
-          .single();
-    }
+  document.getElementById("startLiveButton")
+   .style.display="none";
 
-    if(result.error)
-      throw result.error;
+  document.getElementById("stopLiveButton")
+   .style.display="block";
 
-    currentLiveId=result.data.id;
-    isHost=true;
+  showMessage("Your 24-seat Live room is open.");
 
-    document.getElementById("liveCountry")
-      .textContent=country;
+  await startCamera();
 
-    closeCreateLive();
+  await enterLiveRoom();
 
-    document.getElementById("liveState")
-      .textContent="LIVE";
+  await loadComments();
 
-    document.getElementById("startLiveButton")
-      .style.display="none";
+  document.getElementById("ownerTreasury")
+   .style.display="block";
 
-    document.getElementById("stopLiveButton")
-      .style.display="block";
+  await loadOwnerTreasury();
 
-    document.getElementById("ownerTreasury")
-      .style.display="block";
+  await forceFullscreen();
 
-    showMessage("Your Live room is open.");
+ }catch(error){
 
-    await startCamera();
-    await subscribeToLive();
-    await loadOwnerTreasury();
+  console.error(error);
 
-  }catch(error){
+  showMessage("Unable to create Live room.");
 
-    console.error(error);
+ }finally{
 
-    showMessage(
-      "Unable to create Live room."
-    );
-
-  }finally{
-
-    button.disabled=false;
-    button.textContent="🔴 Start Live";
-  }
+  startButton.disabled=false;
+  startButton.textContent="🔴 Start Live";
+ }
 }
 
 async function startCamera(){
 
-  if(!isHost) return;
+ if(!isHost)return;
+
+ if(
+  !navigator.mediaDevices ||
+  !navigator.mediaDevices.getUserMedia
+ ){
+  showMessage(
+   "Camera is not available in this browser."
+  );
+  return;
+ }
+
+ try{
+
+  localStream=
+   await navigator.mediaDevices.getUserMedia({
+    video:{
+     facingMode:"user",
+     width:{ideal:1280},
+     height:{ideal:720}
+    },
+    audio:true
+   });
+
+  addLocalSeat();
+
+ }catch(error){
+
+  console.error(error);
+
+  showMessage(
+   "Camera permission was not granted."
+  );
+ }
+}
+
+function createSeat(index){
+
+ const seat=document.createElement("div");
+
+ seat.className="seat seatEmpty";
+ seat.id="seat-"+index;
+
+ seat.innerHTML=`
+  <div class="seatPlaceholder">
+   <div class="seatAvatar">+</div>
+   <div class="seatName">Empty Seat</div>
+   <div class="seatStatus">Join</div>
+  </div>
+ `;
+
+ return seat;
+}
+
+function initializeSeats(){
+
+ const grid=document.getElementById("seatGrid");
+
+ grid.innerHTML="";
+
+ for(let i=0;i<MAX_SEATS;i++){
+
+  const seat=createSeat(i);
+
+  grid.appendChild(seat);
+ }
+}
+
+function addLocalSeat(){
+
+ const index=0;
+
+ participantSlots[currentUser.id]=index;
+
+ const seat=
+  document.getElementById("seat-"+index);
+
+ if(!seat)return;
+
+ seat.className="seat";
+
+ seat.innerHTML=`
+  <video id="video-local"
+         autoplay
+         muted
+         playsinline></video>
+  <div class="seatLive">LIVE</div>
+  <div class="seatMute">🎙</div>
+  <div class="seatLabel">
+   ${escapeHtml(getUsername())}
+  </div>
+ `;
+
+ const video=
+  document.getElementById("video-local");
+
+ video.srcObject=localStream;
+}
+
+function findFreeSeat(){
+
+ const used=
+  Object.values(participantSlots);
+
+ for(let i=0;i<MAX_SEATS;i++){
+
+  if(!used.includes(i)){
+   return i;
+  }
+ }
+
+ return -1;
+}
+
+function addRemoteParticipant(participant){
+
+ if(!participant)return;
+
+ const userId=participant.user_id;
+
+ if(!userId)return;
+
+ if(userId===currentUser?.id)return;
+
+ if(
+  participantSlots[userId]===undefined
+ ){
+  const slot=findFreeSeat();
+
+  if(slot<0){
+   return;
+  }
+
+  participantSlots[userId]=slot;
+ }
+
+ const index=participantSlots[userId];
+
+ const seat=
+  document.getElementById("seat-"+index);
+
+ if(!seat)return;
+
+ const username=
+  participant.username||"Live User";
+
+ const avatar=
+  participant.avatar||"";
+
+ seat.className="seat";
+
+ seat.innerHTML=`
+  <video
+   id="video-${escapeHtml(userId)}"
+   autoplay
+   playsinline>
+  </video>
+
+  <div class="seatLive">LIVE</div>
+
+  <div class="seatMute">🎙</div>
+
+  <div class="seatLabel">
+   ${escapeHtml(username)}
+  </div>
+ `;
+
+ if(avatar){
+
+  const video=
+   document.getElementById(
+    "video-"+userId
+   );
+
+  const avatarImg=
+   document.createElement("img");
+
+  avatarImg.src=avatar;
+ }
+}
+
+async function enterLiveRoom(){
+
+ if(!currentLiveId)return;
+
+ if(liveChannel){
+
+  try{
+   await supabaseClient.removeChannel(
+    liveChannel
+   );
+  }catch(e){}
+
+  liveChannel=null;
+ }
+
+ participantSlots={};
+ roomParticipants={};
+
+ initializeSeats();
+
+ if(isHost){
+  addLocalSeat();
+ }
+
+ liveChannel=
+  supabaseClient
+   .channel("live-24-"+currentLiveId,{
+    config:{
+     broadcast:{
+      self:false
+     },
+     presence:{
+      key:currentUser.id
+     }
+    }
+   })
+   .on(
+    "presence",
+    {event:"sync"},
+    async()=>{
+     await handlePresenceSync();
+    }
+   )
+   .on(
+    "presence",
+    {event:"join"},
+    async({key,newPresences})=>{
+     await handlePresenceSync();
+    }
+   )
+   .on(
+    "presence",
+    {event:"leave"},
+    async({key,leftPresences})=>{
+     removeParticipant(key);
+     await updateViewerDisplay();
+    }
+   )
+   .on(
+    "broadcast",
+    {event:"reaction"},
+    payload=>{
+     if(payload?.payload?.emoji){
+      showReaction(
+       payload.payload.emoji
+      );
+     }
+    }
+   )
+   .on(
+    "broadcast",
+    {event:"gift"},
+    payload=>{
+     if(payload?.payload){
+      showGiftAnimation(
+       payload.payload
+      );
+     }
+    }
+   )
+   .on(
+    "broadcast",
+    {event:"viewer"},
+    payload=>{
+     const count=
+      Number(payload?.payload?.count);
+
+     if(Number.isFinite(count)){
+      viewerCount=
+       Math.min(MAX_SEATS,count);
+
+      document.getElementById(
+       "viewerCount"
+      ).textContent=viewerCount;
+     }
+    }
+   )
+   .on(
+    "broadcast",
+    {event:"offer"},
+    async({payload})=>{
+     await receiveOffer(payload);
+    }
+   )
+   .on(
+    "broadcast",
+    {event:"answer"},
+    async({payload})=>{
+     await receiveAnswer(payload);
+    }
+   )
+   .on(
+    "broadcast",
+    {event:"ice"},
+    async({payload})=>{
+     await receiveIce(payload);
+    }
+   )
+   .on(
+    "broadcast",
+    {event:"leave-peer"},
+    payload=>{
+     if(payload?.payload?.user_id){
+      removeParticipant(
+       payload.payload.user_id
+      );
+     }
+    }
+   )
+   .subscribe(async status=>{
+
+    if(status==="SUBSCRIBED"){
+
+     await liveChannel.track({
+      user_id:currentUser.id,
+      username:getUsername(),
+      avatar:getAvatar(),
+      country_code:currentCountryCode,
+      country_flag:currentCountryFlag,
+      role:isHost?"host":"viewer",
+      joined_at:new Date().toISOString()
+     });
+
+     await updateViewerDisplay();
+    }
+   });
+
+ commentChannel=liveChannel;
+}
+
+async function handlePresenceSync(){
+
+ if(!liveChannel)return;
+
+ const state=liveChannel.presenceState();
+
+ roomParticipants={};
+
+ Object.keys(state).forEach(key=>{
+
+  const list=state[key]||[];
+
+  if(list.length){
+
+   const p=list[list.length-1];
+
+   roomParticipants[key]=p;
+
+   if(key!==currentUser.id){
+
+    addRemoteParticipant(p);
+   }
+  }
+ });
+
+ const count=
+  Object.keys(roomParticipants).length+1;
+
+ viewerCount=
+  Math.min(MAX_SEATS,count);
+
+ document.getElementById("viewerCount")
+  .textContent=viewerCount;
+
+ await setupPeerConnections();
+
+}
+
+async function setupPeerConnections(){
+
+ const ids=
+  Object.keys(roomParticipants);
+
+ for(const userId of ids){
+
+  if(userId===currentUser.id)continue;
+
+  if(!peerConnections[userId]){
+
+   const pc=
+    createPeerConnection(userId);
+
+   peerConnections[userId]=pc;
+
+   /*
+    The lower user id starts negotiation.
+    This prevents both sides from continuously
+    creating offers.
+   */
+
+   if(String(currentUser.id)<String(userId)){
+
+    try{
+
+     const offer=
+      await pc.createOffer();
+
+     await pc.setLocalDescription(offer);
+
+     await sendSignal(
+      "offer",
+      userId,
+      {
+       type:pc.localDescription.type,
+       sdp:pc.localDescription.sdp
+      }
+     );
+
+    }catch(error){
+
+     console.error(
+      "Offer error",
+      error
+     );
+    }
+   }
+  }
+ }
+}
+
+function createPeerConnection(remoteUserId){
+
+ const pc=
+  new RTCPeerConnection({
+   iceServers:[
+    {urls:"stun:stun.l.google.com:19302"},
+    {urls:"stun:stun1.l.google.com:19302"}
+   ]
+  });
+
+ if(localStream){
+
+  localStream.getTracks().forEach(track=>{
+
+   try{
+    pc.addTrack(track,localStream);
+   }catch(e){}
+  });
+ }
+
+ pc.onicecandidate=async event=>{
+
+  if(event.candidate){
+
+   await sendSignal(
+    "ice",
+    remoteUserId,
+    {
+     candidate:event.candidate
+    }
+   );
+  }
+ };
+
+ pc.ontrack=event=>{
+
+  const video=
+   document.getElementById(
+    "video-"+remoteUserId
+   );
+
+  if(video){
+
+   if(
+    video.srcObject!==event.streams[0]
+   ){
+
+    video.srcObject=
+     event.streams[0];
+   }
+
+   video.play().catch(()=>{});
+  }
+ };
+
+ pc.onconnectionstatechange=()=>{
+
+  const state=pc.connectionState;
 
   if(
-    !navigator.mediaDevices||
-    !navigator.mediaDevices.getUserMedia
+   state==="failed" ||
+   state==="closed" ||
+   state==="disconnected"
   ){
-    showMessage(
-      "Camera is not available."
-    );
-    return;
+
+   removeParticipant(remoteUserId);
   }
+ };
 
-  try{
-
-    localStream=
-      await navigator.mediaDevices.getUserMedia({
-        video:{
-          facingMode:"user"
-        },
-        audio:true
-      });
-
-    const video=
-      document.getElementById("liveVideo");
-
-    video.srcObject=localStream;
-    video.style.display="block";
-
-    document.getElementById("livePlaceholder")
-      .style.display="none";
-
-  }catch(error){
-
-    console.error(error);
-
-    showMessage(
-      "Camera permission was not granted."
-    );
-  }
+ return pc;
 }
 
-async function loadLiveFromUrl(){
-
-  const params=
-    new URLSearchParams(location.search);
-
-  const liveId=
-    params.get("id")||
-    params.get("live_id")||
-    params.get("room");
-
-  if(!liveId){
-
-    document.getElementById("liveState")
-      .textContent="READY";
-
-    if(canCreateLive()){
-      openCreateLive();
-    }
-
-    return;
-  }
-
-  currentLiveId=liveId;
-
-  await loadLiveRoom(liveId);
-}
-
-async function loadLiveRoom(liveId){
-
-  let result=
-    await supabaseClient
-      .from("live_rooms")
-      .select("*")
-      .eq("id",liveId)
-      .maybeSingle();
-
-  if(!result.data){
-
-    result=
-      await supabaseClient
-        .from("live")
-        .select("*")
-        .eq("id",liveId)
-        .maybeSingle();
-  }
-
-  if(result.error){
-    console.error(result.error);
-    return;
-  }
-
-  if(!result.data){
-    showMessage("Live room not found.");
-    return;
-  }
-
-  const room=result.data;
-
-  const hostId=
-    getFirstValue(
-      room,
-      ["host_id","user_id","owner_id","creator_id"],
-      ""
-    );
-
-  if(hostId===currentUser.id)
-    isHost=true;
-
-  const title=
-    getFirstValue(
-      room,
-      ["title","name"],
-      "Live Room"
-    );
-
-  const description=
-    getFirstValue(
-      room,
-      ["description","caption"],
-      "Welcome to P2P Social Live"
-    );
-
-  const country=
-    getFirstValue(
-      room,
-      ["country","country_name"],
-      "🇪🇹 Ethiopia"
-    );
-
-  document.title=
-    title+" • P2P Social";
-
-  document.querySelector(".livePlaceholderTitle")
-    .textContent=title;
-
-  document.querySelector(".livePlaceholderText")
-    .textContent=description;
-
-  document.getElementById("liveCountry")
-    .textContent=country;
-
-  if(hostId)
-    await loadHostProfile(hostId);
-
-  await subscribeToLive();
-  await loadComments();
-
-  if(isHost){
-
-    document.getElementById("stopLiveButton")
-      .style.display="block";
-
-    document.getElementById("startLiveButton")
-      .style.display="none";
-
-    document.getElementById("ownerTreasury")
-      .style.display="block";
-
-    await loadOwnerTreasury();
-  }
-}
-
-async function loadHostProfile(hostId){
-
-  let result=
-    await supabaseClient
-      .from("profiles")
-      .select("*")
-      .eq("id",hostId)
-      .maybeSingle();
-
-  if(!result.data){
-
-    result=
-      await supabaseClient
-        .from("users")
-        .select("*")
-        .eq("id",hostId)
-        .maybeSingle();
-  }
-
-  if(!result.data) return;
-
-  const profile=result.data;
-
-  const username=
-    getFirstValue(
-      profile,
-      ["username","user_name","name","display_name"],
-      "Live User"
-    );
-
-  document.getElementById("liveUsername")
-    .textContent=username;
-
-  const avatar=
-    getFirstValue(
-      profile,
-      ["avatar_url","avatar","profile_image","photo_url","image_url"],
-      ""
-    );
-
-  const box=document.getElementById("liveAvatar");
-
-  if(avatar){
-    box.innerHTML=
-      '<img src="'+escapeHtml(avatar)+'" alt="">';
-  }else{
-    box.textContent=
-      username.charAt(0).toUpperCase();
-  }
-}
-
-async function subscribeToLive(){
-
-  if(!currentLiveId) return;
-
-  if(liveChannel){
-    await supabaseClient.removeChannel(liveChannel);
-  }
-
-  liveChannel=
-    supabaseClient
-      .channel("live-room-"+currentLiveId)
-      .on(
-        "broadcast",
-        {event:"reaction"},
-        payload=>{
-          if(payload?.payload?.emoji)
-            showReaction(payload.payload.emoji);
-        }
-      )
-      .on(
-        "broadcast",
-        {event:"gift"},
-        payload=>{
-          const gift=payload?.payload;
-          if(gift?.emoji)
-            showReaction(gift.emoji);
-        }
-      )
-      .on(
-        "broadcast",
-        {event:"viewer"},
-        payload=>{
-          if(payload?.payload?.count){
-            viewerCount=payload.payload.count;
-            document.getElementById("viewerCount")
-              .textContent=viewerCount;
-          }
-        }
-      )
-      .subscribe();
-}
-
-async function loadComments(){
-
-  if(!currentLiveId) return;
-
-  const tables=[
-    "live_comments",
-    "comments"
-  ];
-
-  for(const table of tables){
-
-    const result=
-      await supabaseClient
-        .from(table)
-        .select("*")
-        .eq("live_id",currentLiveId)
-        .order("created_at",{ascending:true})
-        .limit(100);
-
-    if(!result.error){
-
-      (result.data||[])
-        .forEach(addCommentToScreen);
-
-      return;
-    }
-  }
-}
-
-function addCommentToScreen(comment){
-
-  const container=
-    document.getElementById("comments");
-
-  const username=
-    getFirstValue(
-      comment,
-      ["username","user_name","name"],
-      "User"
-    );
-
-  const text=
-    getFirstValue(
-      comment,
-      ["comment","text","body","content"],
-      ""
-    );
-
-  if(!text) return;
-
-  const div=document.createElement("div");
-
-  div.className="comment";
-
-  div.innerHTML=
-    "<strong>"+
-    escapeHtml(username)+
-    "</strong> "+
-    escapeHtml(text);
-
-  container.appendChild(div);
-
-  while(container.children.length>100)
-    container.removeChild(container.firstChild);
-
-  container.scrollTop=container.scrollHeight;
-}
-
-async function sendComment(event){
-
-  event.preventDefault();
-
-  if(!currentUser){
-    showMessage("Please login first.");
-    return;
-  }
-
-  if(!currentLiveId){
-    showMessage("No active Live room.");
-    return;
-  }
-
-  const input=
-    document.getElementById("commentInput");
-
-  const text=input.value.trim();
-
-  if(!text) return;
-
-  input.value="";
-
-  const username=getUsername();
-
-  let result=
-    await supabaseClient
-      .from("live_comments")
-      .insert({
-        live_id:currentLiveId,
-        user_id:currentUser.id,
-        username:username,
-        comment:text,
-        text:text
-      });
-
-  if(result.error){
-
-    result=
-      await supabaseClient
-        .from("comments")
-        .insert({
-          live_id:currentLiveId,
-          user_id:currentUser.id,
-          username:username,
-          text:text
-        });
-  }
-
-  addCommentToScreen({
-    username:username,
-    text:text
-  });
-}
-
-async function sendReaction(emoji){
-
-  showReaction(emoji);
-
-  if(!liveChannel) return;
-
-  try{
-
-    await liveChannel.send({
-      type:"broadcast",
-      event:"reaction",
-      payload:{
-        emoji:emoji,
-        user_id:currentUser?.id||null
-      }
-    });
-
-  }catch(error){
-    console.error(error);
-  }
-}
-
-function showReaction(emoji){
-
-  const reaction=document.createElement("div");
-
-  reaction.textContent=emoji;
-
-  reaction.style.position="fixed";
-  reaction.style.left=(20+Math.random()*60)+"%";
-  reaction.style.bottom="120px";
-  reaction.style.zIndex="300";
-  reaction.style.fontSize="34px";
-  reaction.style.pointerEvents="none";
-  reaction.style.transition=
-    "transform 2s ease,opacity 2s ease";
-
-  document.body.appendChild(reaction);
-
-  requestAnimationFrame(()=>{
-    reaction.style.transform=
-      "translateY(-180px) scale(1.4)";
-    reaction.style.opacity="0";
+async function sendSignal(
+ event,
+ targetUserId,
+ data
+){
+
+ if(!liveChannel)return;
+
+ try{
+
+  await liveChannel.send({
+   type:"broadcast",
+   event:event,
+   payload:{
+    from:currentUser.id,
+    to:targetUserId,
+    ...data
+   }
   });
 
-  setTimeout(()=>reaction.remove(),2000);
+ }catch(error){
+
+  console.error(
+   "Signal error",
+   error
+  );
+ }
 }
 
-async function updateViewerCount(){
+async function receiveOffer(payload){
 
-  if(!liveChannel) return;
+ if(!payload)return;
 
-  viewerCount++;
+ if(payload.to!==currentUser.id)return;
 
-  document.getElementById("viewerCount")
-    .textContent=viewerCount;
+ const from=payload.from;
+
+ if(!from)return;
+
+ let pc=peerConnections[from];
+
+ if(!pc){
+
+  pc=createPeerConnection(from);
+
+  peerConnections[from]=pc;
+ }
+
+ try{
+
+  await pc.setRemoteDescription(
+   new RTCSessionDescription({
+    type:"offer",
+    sdp:payload.sdp
+   })
+  );
+
+  const answer=
+   await pc.createAnswer();
+
+  await pc.setLocalDescription(answer);
+
+  await sendSignal(
+   "answer",
+   from,
+   {
+    type:pc.localDescription.type,
+    sdp:pc.localDescription.sdp
+   }
+  );
+
+ }catch(error){
+
+  console.error(
+   "Answer error",
+   error
+  );
+ }
+}
+
+async function receiveAnswer(payload){
+
+ if(!payload)return;
+
+ if(payload.to!==currentUser.id)return;
+
+ const from=payload.from;
+
+ const pc=peerConnections[from];
+
+ if(!pc)return;
+
+ try{
+
+  await pc.setRemoteDescription(
+   new RTCSessionDescription({
+    type:"answer",
+    sdp:payload.sdp
+   })
+  );
+
+ }catch(error){
+
+  console.error(
+   "Remote answer error",
+   error
+  );
+ }
+}
+
+async function receiveIce(payload){
+
+ if(!payload)return;
+
+ if(payload.to!==currentUser.id)return;
+
+ const from=payload.from;
+
+ const pc=peerConnections[from];
+
+ if(!pc)return;
+
+ try{
+
+  if(payload.candidate){
+
+   await pc.addIceCandidate(
+    new RTCIceCandidate(
+     payload.candidate
+    )
+   );
+  }
+
+ }catch(error){
+
+  console.error(
+   "ICE error",
+   error
+  );
+ }
+}
+
+function removeParticipant(userId){
+
+ const index=
+  participantSlots[userId];
+
+ if(index!==undefined){
+
+  const seat=
+   document.getElementById(
+    "seat-"+index
+   );
+
+  if(seat){
+
+   seat.className=
+    "seat seatEmpty";
+
+   seat.innerHTML=`
+    <div class="seatPlaceholder">
+     <div class="seatAvatar">+</div>
+     <div class="seatName">Empty Seat</div>
+     <div class="seatStatus">Join</div>
+    </div>
+   `;
+  }
+
+  delete participantSlots[userId];
+ }
+
+ const pc=
+  peerConnections[userId];
+
+ if(pc){
 
   try{
+   pc.close();
+  }catch(e){}
 
-    await liveChannel.send({
-      type:"broadcast",
-      event:"viewer",
-      payload:{
-        count:viewerCount
-      }
-    });
+  delete peerConnections[userId];
+ }
 
-  }catch(error){
-    console.error(error);
-  }
+ delete roomParticipants[userId];
 }
 
-async function loadOwnerTreasury(){
+async function updateViewerDisplay(){
 
-  let balance=0;
+ if(!liveChannel)return;
 
-  const tables=[
-    "owner_treasury",
-    "treasury",
-    "diamond_treasury"
-  ];
+ const count=
+  Math.min(
+   MAX_SEATS,
+   Object.keys(roomParticipants).length+1
+  );
 
-  for(const table of tables){
+ viewerCount=count;
 
-    const result=
-      await supabaseClient
-        .from(table)
-        .select("*")
-        .limit(1)
-        .maybeSingle();
+ document.getElementById(
+  "viewerCount"
+ ).textContent=count;
 
-    if(!result.error&&result.data){
+ try{
 
-      balance=
-        Number(
-          getFirstValue(
-            result.data,
-            [
-              "diamond_balance",
-              "diamonds",
-              "balance",
-              "total_diamonds"
-            ],
-            0
-          )
-        )||0;
+  await liveChannel.send({
+   type:"broadcast",
+   event:"viewer",
+   payload:{
+    count:count
+   }
+  });
 
-      break;
-    }
-  }
-
-  document.getElementById("ownerTreasuryBalance")
-    .textContent=
-      balance.toLocaleString()+" 💎";
+ }catch(error){}
 }
 
 async function stopLive(){
 
-  if(!isHost||!currentLiveId){
-    closeLive();
-    return;
+ if(
+  !isHost ||
+  !currentLiveId
+ ){
+
+  closeLive();
+  return;
+ }
+
+ try{
+
+  let result=
+   await supabaseClient
+    .from("live_rooms")
+    .update({
+     status:"ended",
+     is_live:false,
+     ended_at:new Date().toISOString()
+    })
+    .eq("id",currentLiveId);
+
+  if(result.error){
+
+   await supabaseClient
+    .from("live")
+    .update({
+     status:"ended",
+     is_live:false,
+     ended_at:new Date().toISOString()
+    })
+    .eq("id",currentLiveId);
   }
 
-  try{
+ }catch(error){
 
-    let result=
-      await supabaseClient
-        .from("live_rooms")
-        .update({
-          status:"ended",
-          is_live:false,
-          ended_at:new Date().toISOString()
-        })
-        .eq("id",currentLiveId);
+  console.error(error);
 
-    if(result.error){
+ }finally{
 
-      await supabaseClient
-        .from("live")
-        .update({
-          status:"ended",
-          is_live:false,
-          ended_at:new Date().toISOString()
-        })
-        .eq("id",currentLiveId);
-    }
+  stopCamera();
 
-  }catch(error){
+  closePeerConnections();
 
-    console.error(error);
+  showMessage("Live ended.");
 
-  }finally{
-
-    stopCamera();
-
-    showMessage("Live ended.");
-
-    setTimeout(()=>{
-      window.location.href="./index.html";
-    },700);
-  }
+  setTimeout(()=>{
+   window.location.href="./index.html";
+  },800);
+ }
 }
 
 function stopCamera(){
 
-  if(localStream){
+ if(localStream){
 
-    localStream
-      .getTracks()
-      .forEach(track=>track.stop());
+  localStream
+   .getTracks()
+   .forEach(track=>track.stop());
 
-    localStream=null;
+  localStream=null;
+ }
+
+ const localVideo=
+  document.getElementById("video-local");
+
+ if(localVideo){
+
+  localVideo.srcObject=null;
+ }
+}
+
+function closePeerConnections(){
+
+ Object.keys(peerConnections)
+  .forEach(userId=>{
+
+   try{
+    peerConnections[userId].close();
+   }catch(e){}
+  });
+
+ peerConnections={};
+}
+
+async function loadLiveFromUrl(){
+
+ const params=
+  new URLSearchParams(
+   window.location.search
+  );
+
+ const liveId=
+  params.get("id") ||
+  params.get("live_id") ||
+  params.get("room");
+
+ if(!liveId){
+
+  document.getElementById("liveState")
+   .textContent="LIVE";
+
+  await loadLiveRooms();
+
+  return;
+ }
+
+ currentLiveId=liveId;
+
+ await loadLiveRoom(liveId);
+}
+
+async function loadLiveRoom(liveId){
+
+ let result=
+  await supabaseClient
+   .from("live_rooms")
+   .select("*")
+   .eq("id",liveId)
+   .maybeSingle();
+
+ if(!result.data){
+
+  result=
+   await supabaseClient
+    .from("live")
+    .select("*")
+    .eq("id",liveId)
+    .maybeSingle();
+ }
+
+ if(result.error){
+
+  console.error(result.error);
+  showMessage("Unable to load Live room.");
+  return;
+ }
+
+ if(!result.data){
+
+  showMessage("Live room not found.");
+  return;
+ }
+
+ const room=result.data;
+
+ const hostId=
+  getFirstValue(
+   room,
+   ["host_id","user_id","owner_id","creator_id"],
+   ""
+  );
+
+ if(
+  hostId &&
+  currentUser &&
+  hostId===currentUser.id
+ ){
+  isHost=true;
+ }
+
+ currentCountryCode=
+  getFirstValue(
+   room,
+   ["country_code"],
+   ""
+  );
+
+ currentCountryFlag=
+  getFirstValue(
+   room,
+   ["country_flag"],
+   ""
+  );
+
+ const title=
+  getFirstValue(
+   room,
+   ["title","name"],
+   "Live Room"
+  );
+
+ document.title=
+  title+" • P2P Social";
+
+ const description=
+  getFirstValue(
+   room,
+   ["description","caption"],
+   "Welcome to P2P Social Live"
+  );
+
+ if(hostId){
+
+  await loadHostProfile(hostId);
+ }
+
+ document.getElementById("liveState")
+  .textContent=
+  getFirstValue(
+   room,
+   ["status"],
+   "LIVE"
+  ).toUpperCase();
+
+ if(isHost){
+
+  document.getElementById(
+   "stopLiveButton"
+  ).style.display="block";
+
+  document.getElementById(
+   "startLiveButton"
+  ).style.display="none";
+
+  document.getElementById(
+   "ownerTreasury"
+  ).style.display="block";
+
+  await loadOwnerTreasury();
+
+  if(!localStream){
+   await startCamera();
+  }
+ }
+
+ await enterLiveRoom();
+
+ await loadComments();
+
+ await forceFullscreen();
+}
+
+async function loadHostProfile(hostId){
+
+ let result=
+  await supabaseClient
+   .from("profiles")
+   .select("*")
+   .eq("id",hostId)
+   .maybeSingle();
+
+ if(!result.data){
+
+  result=
+   await supabaseClient
+    .from("users")
+    .select("*")
+    .eq("id",hostId)
+    .maybeSingle();
+ }
+
+ if(!result.data)return;
+
+ const profile=result.data;
+
+ const username=
+  getFirstValue(
+   profile,
+   ["username","user_name","name","display_name"],
+   "Live User"
+  );
+
+ document.getElementById(
+  "liveUsername"
+ ).textContent=username;
+
+ const avatar=
+  getFirstValue(
+   profile,
+   ["avatar_url","avatar","profile_image","photo_url","image_url"],
+   ""
+  );
+
+ const avatarBox=
+  document.getElementById(
+   "liveAvatar"
+  );
+
+ if(avatar){
+
+  avatarBox.innerHTML=
+   '<img src="'+
+   escapeHtml(avatar)+
+   '" alt="">';
+
+ }else{
+
+  avatarBox.textContent=
+   username.charAt(0).toUpperCase();
+ }
+}
+
+async function loadComments(){
+
+ if(!currentLiveId)return;
+
+ const tables=[
+  "live_comments",
+  "comments"
+ ];
+
+ for(const table of tables){
+
+  const result=
+   await supabaseClient
+    .from(table)
+    .select("*")
+    .eq("live_id",currentLiveId)
+    .order("created_at",{ascending:true})
+    .limit(100);
+
+  if(!result.error){
+
+   const comments=
+    result.data||[];
+
+   comments.forEach(
+    addCommentToScreen
+   );
+
+   return;
+  }
+ }
+}
+
+function addCommentToScreen(comment){
+
+ const container=
+  document.getElementById(
+   "comments"
+  );
+
+ const username=
+  getFirstValue(
+   comment,
+   ["username","user_name","name"],
+   "User"
+  );
+
+ const text=
+  getFirstValue(
+   comment,
+   ["comment","text","body","content"],
+   ""
+  );
+
+ if(!text)return;
+
+ const div=
+  document.createElement("div");
+
+ div.className="comment";
+
+ div.innerHTML=
+  "<strong>"+
+  escapeHtml(username)+
+  "</strong> "+
+  escapeHtml(text);
+
+ container.appendChild(div);
+
+ while(
+  container.children.length>100
+ ){
+
+  container.removeChild(
+   container.firstChild
+  );
+ }
+
+ container.scrollTop=
+  container.scrollHeight;
+}
+
+async function sendComment(event){
+
+ event.preventDefault();
+
+ if(!currentUser){
+
+  showMessage(
+   "Please login first."
+  );
+
+  return;
+ }
+
+ if(!currentLiveId){
+
+  showMessage(
+   "No active Live room."
+  );
+
+  return;
+ }
+
+ const input=
+  document.getElementById(
+   "commentInput"
+  );
+
+ const text=
+  input.value.trim();
+
+ if(!text)return;
+
+ input.value="";
+
+ const username=
+  getUsername();
+
+ let saved=false;
+
+ const result=
+  await supabaseClient
+   .from("live_comments")
+   .insert({
+    live_id:currentLiveId,
+    user_id:currentUser.id,
+    username:username,
+    comment:text,
+    text:text
+   });
+
+ if(!result.error){
+
+  saved=true;
+
+ }else{
+
+  const fallback=
+   await supabaseClient
+    .from("comments")
+    .insert({
+     live_id:currentLiveId,
+     user_id:currentUser.id,
+     username:username,
+     text:text
+    });
+
+  if(!fallback.error){
+   saved=true;
+  }
+ }
+
+ addCommentToScreen({
+  username:username,
+  text:text
+ });
+
+ if(liveChannel){
+
+  try{
+
+   await liveChannel.send({
+    type:"broadcast",
+    event:"comment",
+    payload:{
+     username:username,
+     text:text
+    }
+   });
+
+  }catch(e){}
+ }
+}
+
+async function sendReaction(emoji){
+
+ showReaction(emoji);
+
+ if(!liveChannel)return;
+
+ try{
+
+  await liveChannel.send({
+   type:"broadcast",
+   event:"reaction",
+   payload:{
+    emoji:emoji,
+    user_id:currentUser?.id||null
+   }
+  });
+
+ }catch(error){
+
+  console.error(error);
+ }
+}
+
+function showReaction(emoji){
+
+ const reaction=
+  document.createElement("div");
+
+ reaction.textContent=emoji;
+
+ reaction.style.position="fixed";
+ reaction.style.left=
+  (20+Math.random()*60)+"%";
+ reaction.style.bottom="120px";
+ reaction.style.zIndex="800";
+ reaction.style.fontSize="34px";
+ reaction.style.pointerEvents="none";
+ reaction.style.transition=
+  "transform 2s ease,opacity 2s ease";
+
+ document.body.appendChild(reaction);
+
+ requestAnimationFrame(()=>{
+
+  reaction.style.transform=
+   "translateY(-180px) scale(1.4)";
+
+  reaction.style.opacity="0";
+ });
+
+ setTimeout(()=>{
+  reaction.remove();
+ },2000);
+}
+
+function openGiftPanel(){
+
+ if(!currentLiveId){
+
+  showMessage(
+   "Join a Live first."
+  );
+
+  return;
+ }
+
+ document.getElementById(
+  "giftPanel"
+ ).style.display="flex";
+}
+
+function closeGiftPanel(){
+
+ document.getElementById(
+  "giftPanel"
+ ).style.display="none";
+}
+
+async function sendGift(
+ emoji,
+ giftName,
+ diamonds
+){
+
+ if(!currentUser){
+
+  showMessage(
+   "Please login first."
+  );
+
+  return;
+ }
+
+ if(!currentLiveId){
+
+  showMessage(
+   "Join a Live first."
+  );
+
+  return;
+ }
+
+ const giftPayload={
+  live_id:currentLiveId,
+  user_id:currentUser.id,
+  username:getUsername(),
+  gift:emoji,
+  gift_name:giftName,
+  diamonds:Number(diamonds),
+  created_at:new Date().toISOString()
+ };
+
+ let saved=false;
+
+ try{
+
+  const result=
+   await supabaseClient
+    .from("live_gifts")
+    .insert(giftPayload);
+
+  if(!result.error){
+   saved=true;
   }
 
-  const video=
-    document.getElementById("liveVideo");
+ }catch(error){
 
-  video.srcObject=null;
-  video.style.display="none";
+  console.error(error);
+ }
 
-  document.getElementById("livePlaceholder")
-    .style.display="flex";
+ if(liveChannel){
+
+  try{
+
+   await liveChannel.send({
+    type:"broadcast",
+    event:"gift",
+    payload:{
+     emoji:emoji,
+     gift_name:giftName,
+     diamonds:Number(diamonds),
+     username:getUsername()
+    }
+   });
+
+  }catch(error){
+
+   console.error(error);
+  }
+ }
+
+ showGiftAnimation({
+  emoji:emoji,
+  gift_name:giftName,
+  diamonds:Number(diamonds),
+  username:getUsername()
+ });
+
+ closeGiftPanel();
+
+ showMessage(
+  "Sent "+giftName+" "+emoji
+ );
+}
+
+function showGiftAnimation(data){
+
+ const box=
+  document.createElement("div");
+
+ box.style.position="fixed";
+ box.style.left=
+  (15+Math.random()*55)+"%";
+ box.style.bottom="170px";
+ box.style.zIndex="900";
+ box.style.pointerEvents="none";
+ box.style.textAlign="center";
+ box.style.color="#fff";
+ box.style.fontWeight="800";
+ box.style.fontSize="18px";
+ box.style.textShadow=
+  "0 2px 8px rgba(0,0,0,.7)";
+ box.style.transition=
+  "transform 2.2s ease,opacity 2.2s ease";
+
+ box.innerHTML=
+  "<div style='font-size:48px'>"+
+  escapeHtml(data.emoji||"🎁")+
+  "</div>"+
+  "<div>"+
+  escapeHtml(data.username||"User")+
+  " sent "+
+  escapeHtml(data.gift_name||"Gift")+
+  "</div>";
+
+ document.body.appendChild(box);
+
+ requestAnimationFrame(()=>{
+
+  box.style.transform=
+   "translateY(-230px) scale(1.25)";
+
+  box.style.opacity="0";
+ });
+
+ setTimeout(()=>{
+  box.remove();
+ },2200);
+}
+
+async function loadOwnerTreasury(){
+
+ if(!isHost)return;
+
+ let balance=0;
+
+ const possibleTables=[
+  "owner_treasury",
+  "treasury",
+  "diamond_treasury"
+ ];
+
+ for(
+  const table of possibleTables
+ ){
+
+  const result=
+   await supabaseClient
+    .from(table)
+    .select("*")
+    .limit(1)
+    .maybeSingle();
+
+  if(
+   !result.error &&
+   result.data
+  ){
+
+   balance=
+    Number(
+     getFirstValue(
+      result.data,
+      [
+       "diamond_balance",
+       "diamonds",
+       "balance",
+       "total_diamonds"
+      ],
+      0
+     )
+    )||0;
+
+   break;
+  }
+ }
+
+ document.getElementById(
+  "ownerTreasuryBalance"
+ ).textContent=
+  Number(balance).toLocaleString()+
+  " 💎";
+}
+
+async function loadLiveRooms(){
+
+ const container=
+  document.getElementById(
+   "liveList"
+  );
+
+ container.innerHTML=
+  '<div style="padding:20px;text-align:center;color:#687386;grid-column:1/-1">Loading Live rooms...</div>';
+
+ let result=
+  await supabaseClient
+   .from("live_rooms")
+   .select("*")
+   .limit(100);
+
+ let rooms=[];
+
+ if(!result.error){
+
+  rooms=
+   (result.data||[])
+    .filter(room=>
+     room.is_live===true ||
+     String(room.status).toLowerCase()==="live"
+    );
+
+ }else{
+
+  result=
+   await supabaseClient
+    .from("live")
+    .select("*")
+    .limit(100);
+
+  if(!result.error){
+
+   rooms=
+    (result.data||[])
+     .filter(room=>
+      room.is_live===true ||
+      String(room.status).toLowerCase()==="live"
+     );
+  }
+ }
+
+ liveRoomsCache=rooms;
+
+ renderLiveRooms(rooms);
+}
+
+async function renderLiveRooms(rooms){
+
+ const container=
+  document.getElementById(
+   "liveList"
+  );
+
+ container.innerHTML="";
+
+ if(!rooms.length){
+
+  container.innerHTML=
+   '<div style="padding:25px;text-align:center;color:#687386;grid-column:1/-1">No Live rooms right now.</div>';
+
+  return;
+ }
+
+ for(const room of rooms){
+
+  const hostId=
+   getFirstValue(
+    room,
+    ["host_id","user_id","owner_id","creator_id"],
+    ""
+   );
+
+  let profile=null;
+
+  if(hostId){
+
+   let result=
+    await supabaseClient
+     .from("profiles")
+     .select("*")
+     .eq("id",hostId)
+     .maybeSingle();
+
+   if(!result.data){
+
+    result=
+     await supabaseClient
+      .from("users")
+      .select("*")
+      .eq("id",hostId)
+      .maybeSingle();
+   }
+
+   profile=result.data;
+  }
+
+  const username=
+   getFirstValue(
+    profile,
+    ["username","user_name","name","display_name"],
+    "Live User"
+   );
+
+  const avatar=
+   getFirstValue(
+    profile,
+    ["avatar_url","avatar","profile_image","photo_url","image_url"],
+    ""
+   );
+
+  const title=
+   getFirstValue(
+    room,
+    ["title","name"],
+    "Live Room"
+   );
+
+  const flag=
+   getFirstValue(
+    room,
+    ["country_flag"],
+    "🔴"
+   );
+
+  const viewers=
+   getFirstValue(
+    room,
+    ["viewer_count","viewers"],
+    0
+   );
+
+  const card=
+   document.createElement("button");
+
+  card.className="liveCard";
+
+  card.onclick=()=>{
+   joinLiveRoom(room.id);
+  };
+
+  card.innerHTML=`
+
+   <div class="liveCardBg"></div>
+
+   <div class="liveCardContent">
+
+    <div class="liveCardAvatar">
+     ${
+      avatar
+      ?
+      '<img src="'+escapeHtml(avatar)+'" alt="">'
+      :
+      escapeHtml(
+       username.charAt(0).toUpperCase()
+      )
+     }
+    </div>
+
+    <div class="liveCardTitle">
+     ${escapeHtml(flag)} ${escapeHtml(title)}
+    </div>
+
+    <div class="liveCardUser">
+     ${escapeHtml(username)}
+    </div>
+
+    <div class="liveCardMeta">
+     <span class="cardLive">LIVE</span>
+     <span>👁 ${escapeHtml(viewers||"0")}</span>
+    </div>
+
+   </div>
+  `;
+
+  container.appendChild(card);
+ }
+}
+
+function filterLiveByCountry(code){
+
+ if(!liveRoomsCache.length){
+
+  loadLiveRooms();
+  return;
+ }
+
+ const filtered=
+  liveRoomsCache.filter(room=>
+   getFirstValue(
+    room,
+    ["country_code"],
+    ""
+   )===code
+  );
+
+ if(filtered.length){
+
+  renderLiveRooms(filtered);
+
+ }else{
+
+  renderLiveRooms([]);
+ }
+}
+
+function openLiveList(){
+
+ document.getElementById(
+  "liveListPanel"
+ ).style.display="flex";
+
+ loadLiveRooms();
+}
+
+function closeLiveList(){
+
+ document.getElementById(
+  "liveListPanel"
+ ).style.display="none";
+}
+
+function joinLiveRoom(id){
+
+ if(!id)return;
+
+ window.location.href=
+  "./live.html?id="+
+  encodeURIComponent(id);
 }
 
 async function shareLive(){
 
-  const url=window.location.href;
+ const url=
+  window.location.href;
 
-  try{
+ try{
 
-    if(navigator.share){
+  if(navigator.share){
 
-      await navigator.share({
-        title:document.title,
-        text:"Join my P2P Social Live",
-        url:url
-      });
+   await navigator.share({
+    title:document.title,
+    text:"Join my P2P Social Live",
+    url:url
+   });
 
-    }else if(navigator.clipboard){
+  }else if(navigator.clipboard){
 
-      await navigator.clipboard.writeText(url);
+   await navigator.clipboard.writeText(url);
 
-      showMessage("Live link copied.");
+   showMessage(
+    "Live link copied."
+   );
 
-    }else{
+  }else{
 
-      showMessage(url);
-    }
-
-  }catch(error){
-    console.error(error);
+   showMessage(url);
   }
+
+ }catch(error){
+
+  console.error(error);
+ }
+}
+
+async function forceFullscreen(){
+
+ try{
+
+  if(
+   !document.fullscreenElement &&
+   document.documentElement.requestFullscreen
+  ){
+
+   await document.documentElement
+    .requestFullscreen();
+  }
+
+ }catch(error){}
+}
+
+async function toggleFullscreen(){
+
+ try{
+
+  if(!document.fullscreenElement){
+
+   await document.documentElement
+    .requestFullscreen();
+
+  }else{
+
+   await document.exitFullscreen();
+  }
+
+ }catch(error){
+
+  showMessage(
+   "Fullscreen is not available."
+  );
+ }
 }
 
 function closeLive(){
 
-  if(isHost){
+ if(isHost){
 
-    if(confirm("End this Live?"))
-      stopLive();
+  const shouldStop=
+   confirm("End this Live?");
 
-    return;
+  if(shouldStop){
+
+   stopLive();
   }
 
-  stopCamera();
+  return;
+ }
 
-  if(liveChannel){
-    supabaseClient.removeChannel(liveChannel);
-    liveChannel=null;
-  }
+ if(liveChannel){
 
-  window.location.href="./index.html";
+  try{
+
+   liveChannel.send({
+    type:"broadcast",
+    event:"leave-peer",
+    payload:{
+     user_id:currentUser.id
+    }
+   });
+
+  }catch(e){}
+ }
+
+ stopCamera();
+
+ closePeerConnections();
+
+ if(liveChannel){
+
+  supabaseClient.removeChannel(
+   liveChannel
+  );
+
+  liveChannel=null;
+ }
+
+ window.location.href="./index.html";
 }
 
-document
-  .getElementById("createPanel")
-  .addEventListener("click",event=>{
-    if(event.target.id==="createPanel")
-      closeCreateLive();
-  });
-
-document
-  .getElementById("giftPanel")
-  .addEventListener("click",event=>{
-    if(event.target.id==="giftPanel")
-      closeGiftPanel();
-  });
-
-document
-  .getElementById("countryPanel")
-  .addEventListener("click",event=>{
-    if(event.target.id==="countryPanel")
-      closeCountryPanel();
-  });
-
-document.addEventListener("keydown",event=>{
-  if(event.key==="Escape"){
-    closeCreateLive();
-    closeGiftPanel();
-    closeCountryPanel();
+document.getElementById(
+ "createPanel"
+).addEventListener(
+ "click",
+ event=>{
+  if(
+   event.target.id==="createPanel"
+  ){
+   closeCreateLive();
   }
-});
+ }
+);
 
-window.addEventListener("beforeunload",()=>{
+document.getElementById(
+ "liveListPanel"
+).addEventListener(
+ "click",
+ event=>{
+  if(
+   event.target.id==="liveListPanel"
+  ){
+   closeLiveList();
+  }
+ }
+);
+
+document.getElementById(
+ "giftPanel"
+).addEventListener(
+ "click",
+ event=>{
+  if(
+   event.target.id==="giftPanel"
+  ){
+   closeGiftPanel();
+  }
+ }
+);
+
+document.addEventListener(
+ "keydown",
+ event=>{
+
+  if(event.key==="Escape"){
+
+   closeCreateLive();
+   closeLiveList();
+   closeGiftPanel();
+  }
+ }
+);
+
+window.addEventListener(
+ "beforeunload",
+ ()=>{
+
   stopCamera();
 
-  if(liveChannel)
-    supabaseClient.removeChannel(liveChannel);
-});
+  closePeerConnections();
+
+  if(liveChannel){
+
+   try{
+    supabaseClient.removeChannel(
+     liveChannel
+    );
+   }catch(e){}
+  }
+ }
+);
+
+supabaseClient.auth.onAuthStateChange(
+ async(event,session)=>{
+
+  if(
+   event==="SIGNED_OUT" ||
+   !session
+  ){
+
+   window.location.href=
+    "./login.html";
+  }
+ }
+);
 
 async function startApp(){
 
-  const loggedIn=await requireLogin();
+ const loggedIn=
+  await requireLogin();
 
-  if(!loggedIn) return;
+ if(!loggedIn)return;
 
-  await loadProfile();
+ await loadProfile();
 
-  updateLiveUser();
-  renderCountries();
-  fillCountrySelect();
-  renderGifts();
+ updateLiveUser();
 
-  document.getElementById("authScreen")
-    .style.display="none";
+ buildCountrySelectors();
 
-  document.getElementById("liveApp")
-    .style.display="block";
+ initializeSeats();
 
-  await loadLiveFromUrl();
+ document.getElementById(
+  "authScreen"
+ ).style.display="none";
 
-  if(currentLiveId)
-    await loadDiamondBalance();
+ document.getElementById(
+  "liveApp"
+ ).style.display="block";
 
-  await updateViewerCount();
+ await loadLiveFromUrl();
+
+ if(!currentLiveId){
+
+  if(canCreateLive()){
+
+   openCreateLive();
+
+  }else{
+
+   showMessage(
+    "Choose a Live room to join."
+   );
+  }
+ }
+
 }
 
-supabaseClient.auth.onAuthStateChange(
-  async(event,session)=>{
-
-    if(
-      event==="SIGNED_OUT"||
-      !session
-    ){
-      window.location.href="./login.html";
-    }
-
-  }
-);
-
 startApp();
-</script>
 
+</script>
 </body>
 </html>

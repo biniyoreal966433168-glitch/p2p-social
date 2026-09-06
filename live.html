@@ -1,601 +1,4609 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LIVE - Countries</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Live • P2P Social</title>
 
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    body {
-      font-family: Arial, sans-serif;
-      background: #05080f;
-      color: white;
-      padding-bottom: 85px;
-    }
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  font-family:Arial,sans-serif;
+}
 
-    /* HEADER */
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 18px 16px;
-    }
+html,body{
+  width:100%;
+  min-height:100%;
+}
 
-    .logo {
-      background: #ff174f;
-      padding: 13px 18px;
-      border-radius: 15px;
-      font-size: 22px;
-      font-weight: bold;
-      white-space: nowrap;
-    }
+body{
+  background:#f5f7fb;
+  color:#172033;
+  padding-bottom:85px;
+}
 
-    .search {
-      flex: 1;
-      background: #1a202d;
-      border: 1px solid #303849;
-      border-radius: 30px;
-      padding: 13px 16px;
-      color: #aaa;
-      font-size: 14px;
-    }
+button,input{
+  font-family:inherit;
+}
 
-    .icon {
-      font-size: 25px;
-    }
+button{
+  cursor:pointer;
+}
 
-    /* CATEGORIES */
-    .categories {
-      display: flex;
-      gap: 10px;
-      overflow-x: auto;
-      padding: 5px 16px 18px;
-    }
+button:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
 
-    .categories::-webkit-scrollbar {
-      display: none;
-    }
+/* HEADER */
 
-    .category {
-      background: #171d29;
-      padding: 12px 18px;
-      border-radius: 25px;
-      white-space: nowrap;
-      color: #ddd;
-    }
+header{
+  background:linear-gradient(135deg,#075e54,#087f73);
+  color:white;
+  padding:14px 18px;
+  border-radius:0 0 22px 22px;
+}
 
-    .category.active {
-      background: #ff174f;
-      color: white;
-    }
+.header-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
 
-    /* HERO */
-    .hero {
-      margin: 0 16px 25px;
-      height: 245px;
-      border-radius: 20px;
-      overflow: hidden;
-      position: relative;
-      background:
-        linear-gradient(90deg, rgba(0,0,0,.8), rgba(0,0,0,.15)),
-        url("https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?auto=format&fit=crop&w=1000&q=80")
-        center/cover;
-      border: 1px solid #303849;
-    }
+.back-btn{
+  border:none;
+  background:rgba(255,255,255,.15);
+  color:white;
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  font-size:25px;
+  flex-shrink:0;
+}
 
-    .hero-content {
-      position: absolute;
-      left: 20px;
-      bottom: 20px;
-    }
+.brand-header{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
 
-    .live-badge {
-      display: inline-block;
-      background: #ff174f;
-      padding: 7px 12px;
-      border-radius: 8px;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
+.brand-icon{
+  width:42px;
+  height:42px;
+  border-radius:13px;
+  background:linear-gradient(135deg,#064e46,#10a889);
+  position:relative;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  box-shadow:0 5px 14px rgba(0,0,0,.18);
+  flex-shrink:0;
+}
 
-    .viewers {
-      background: rgba(0,0,0,.65);
-      padding: 7px 10px;
-      border-radius: 8px;
-      margin-left: 5px;
-    }
+.brand-p-left{
+  position:absolute;
+  left:8px;
+  top:10px;
+  width:12px;
+  height:23px;
+  border:4px solid white;
+  border-right:0;
+  border-radius:8px 0 0 8px;
+}
 
-    .hero h1 {
-      font-size: 35px;
-      margin-bottom: 7px;
-    }
+.brand-p-right{
+  position:absolute;
+  right:8px;
+  top:10px;
+  width:12px;
+  height:23px;
+  border:4px solid white;
+  border-left:0;
+  border-radius:0 8px 8px 0;
+}
 
-    .hero p {
-      color: #ddd;
-      margin-bottom: 12px;
-    }
+.brand-center{
+  width:12px;
+  height:12px;
+  background:white;
+  border-radius:50%;
+  position:absolute;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:5;
+}
 
-    .watch {
-      background: white;
-      color: black;
-      border: none;
-      padding: 12px 22px;
-      border-radius: 25px;
-      font-weight: bold;
-      font-size: 15px;
-    }
+.brand-dot{
+  width:4px;
+  height:4px;
+  background:#087f73;
+  border-radius:50%;
+}
 
-    /* SECTION */
-    .section-title {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 16px 14px;
-    }
+.brand-text{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
 
-    .section-title h2 {
-      font-size: 23px;
-    }
+.brand-text h1{
+  font-size:18px;
+  line-height:1;
+  font-weight:800;
+  color:white;
+}
 
-    .see-all {
-      color: #aaa;
-    }
+.brand-text h1 span{
+  color:#b8fff1;
+}
 
-    /* COUNTRIES */
-    .countries {
-      display: flex;
-      gap: 10px;
-      overflow-x: auto;
-      padding: 0 16px 22px;
-    }
+.brand-text p{
+  margin-top:5px;
+  font-size:7px;
+  color:rgba(255,255,255,.78);
+  letter-spacing:.6px;
+}
 
-    .countries::-webkit-scrollbar {
-      display: none;
-    }
+/* SECTIONS */
 
-    .country {
-      min-width: 90px;
-      background: #101722;
-      border: 1px solid #263044;
-      border-radius: 15px;
-      padding: 13px 8px;
-      text-align: center;
-    }
+.section{
+  margin:16px;
+}
 
-    .country.active {
-      border-color: #ff174f;
-    }
+.section-title{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+}
 
-    .flag {
-      font-size: 32px;
-      margin-bottom: 7px;
-    }
+.section-title h2{
+  font-size:19px;
+}
 
-    .country-name {
-      font-size: 13px;
-    }
+.notice{
+  background:white;
+  border-radius:17px;
+  padding:15px;
+  box-shadow:0 3px 12px rgba(0,0,0,.06);
+  color:#596579;
+  font-size:13px;
+  line-height:1.5;
+}
 
-    /* LIVE GRID */
-    .live-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 13px;
-      padding: 0 16px;
-    }
+.notice strong{
+  color:#172033;
+}
 
-    .live-card {
-      background: #0d131d;
-      border-radius: 16px;
-      overflow: hidden;
-      border: 1px solid #222c3c;
-      cursor: pointer;
-      transition: .2s;
-    }
+/* CREATE LIVE */
 
-    .live-card:active {
-      transform: scale(.97);
-    }
+.create-live{
+  background:white;
+  border-radius:18px;
+  padding:16px;
+  box-shadow:0 4px 15px rgba(0,0,0,.07);
+}
 
-    .thumbnail {
-      height: 145px;
-      position: relative;
-      background-size: cover;
-      background-position: center;
-    }
+.create-live h3{
+  font-size:17px;
+  margin-bottom:7px;
+}
 
-    .thumb-1 {
-      background-image:
-        url("https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=600&q=80");
-    }
+.create-live p{
+  font-size:12px;
+  color:#596579;
+  line-height:1.5;
+  margin-bottom:12px;
+}
 
-    .thumb-2 {
-      background-image:
-        url("https://images.unsplash.com/photo-1533929736458-ca588d08c8be?auto=format&fit=crop&w=600&q=80");
-    }
+.create-row{
+  display:flex;
+  gap:8px;
+}
 
-    .thumb-3 {
-      background-image:
-        url("https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=600&q=80");
-    }
+.create-row input{
+  flex:1;
+  min-width:0;
+  border:1px solid #dfe4eb;
+  border-radius:10px;
+  padding:11px;
+  outline:none;
+}
 
-    .thumb-4 {
-      background-image:
-        url("https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=600&q=80");
-    }
+.create-row button{
+  border:none;
+  background:#087f73;
+  color:white;
+  padding:11px 15px;
+  border-radius:10px;
+  font-weight:bold;
+}
 
-    .thumb-5 {
-      background-image:
-        url("https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?auto=format&fit=crop&w=600&q=80");
-    }
+.premium-required{
+  margin-top:9px;
+  font-size:11px;
+  color:#7d3fc6;
+  font-weight:bold;
+}
 
-    .thumb-6 {
-      background-image:
-        url("https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=600&q=80");
-    }
+/* ROOMS */
 
-    .thumb-7 {
-      background-image:
-        url("https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=600&q=80");
-    }
+.rooms{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
 
-    .thumb-8 {
-      background-image:
-        url("https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=600&q=80");
-    }
+.room-card{
+  background:white;
+  border-radius:18px;
+  padding:15px;
+  box-shadow:0 3px 12px rgba(0,0,0,.06);
+}
 
-    .live-small {
-      position: absolute;
-      top: 9px;
-      left: 9px;
-      background: #ff174f;
-      padding: 6px 9px;
-      border-radius: 7px;
-      font-size: 11px;
-      font-weight: bold;
-    }
+.room-head{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
 
-    .viewer-count {
-      position: absolute;
-      top: 9px;
-      right: 9px;
-      background: rgba(0,0,0,.7);
-      padding: 6px 8px;
-      border-radius: 7px;
-      font-size: 11px;
-    }
+.room-host-avatar{
+  width:45px;
+  height:45px;
+  border-radius:50%;
+  object-fit:cover;
+  background:#dfeeea;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#087f73;
+  font-weight:bold;
+  flex-shrink:0;
+  overflow:hidden;
+}
 
-    .card-info {
-      padding: 10px;
-    }
+.room-main{
+  flex:1;
+  min-width:0;
+}
 
-    .card-info h3 {
-      font-size: 16px;
-      margin-bottom: 5px;
-    }
+.room-title{
+  font-size:15px;
+  font-weight:bold;
+  word-break:break-word;
+}
 
-    .card-info p {
-      color: #9da5b3;
-      font-size: 12px;
-      line-height: 1.4;
-    }
+.room-meta{
+  font-size:11px;
+  color:#8a93a1;
+  margin-top:3px;
+}
 
-    /* BOTTOM NAV */
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 75px;
-      background: rgba(8,12,19,.97);
-      border-top: 1px solid #242d3c;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      z-index: 100;
-    }
+.live-dot{
+  color:#e74c3c;
+  font-weight:bold;
+}
 
-    .nav-item {
-      color: #8f98a8;
-      text-align: center;
-      font-size: 11px;
-      min-width: 48px;
-    }
+.room-actions{
+  display:flex;
+  gap:7px;
+}
 
-    .nav-icon {
-      font-size: 22px;
-      display: block;
-      margin-bottom: 3px;
-    }
+.room-actions button{
+  border:none;
+  border-radius:9px;
+  padding:9px 11px;
+  font-weight:bold;
+  font-size:12px;
+}
 
-    .nav-item.active {
-      color: #ff174f;
-    }
+.join-btn{
+  background:#087f73;
+  color:white;
+}
 
-    .go-live {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      background: linear-gradient(135deg,#ff174f,#9c27ff);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      color: white;
-      flex-shrink: 0;
-    }
+.share-btn{
+  background:#edf7f5;
+  color:#087f73;
+}
 
-    /* DESKTOP */
-    @media (min-width: 700px) {
-      body {
-        max-width: 1100px;
-        margin: auto;
-      }
+.delete-room-btn{
+  background:#fdecec;
+  color:#c0392b;
+}
 
-      .live-grid {
-        grid-template-columns: repeat(4, 1fr);
-      }
+/* MINI 24 SEAT PREVIEW */
 
-      .thumbnail {
-        height: 180px;
-      }
+.mini-seats{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:6px;
+  margin-top:13px;
+}
 
-      .nav-item {
-        font-size: 12px;
-      }
-    }
-  </style>
+.mini-seat{
+  aspect-ratio:1;
+  border-radius:10px;
+  background:#f5f7fb;
+  border:1px solid #e6eaf0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:17px;
+  overflow:hidden;
+}
+
+.mini-seat img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+/* EMPTY */
+
+.empty{
+  background:white;
+  border-radius:16px;
+  padding:25px;
+  text-align:center;
+  color:#7b8492;
+}
+
+/* BOTTOM NAV */
+
+.bottom-nav{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  height:68px;
+  background:white;
+  border-top:1px solid #ddd;
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+  z-index:2000;
+}
+
+.nav-item{
+  text-align:center;
+  color:#777;
+  font-size:11px;
+  min-width:55px;
+}
+
+.nav-item span{
+  display:block;
+  font-size:22px;
+  margin-bottom:3px;
+}
+
+.nav-item.active{
+  color:#087f73;
+  font-weight:bold;
+}
+
+/* MODAL */
+
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.5);
+  z-index:3000;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+
+.modal.show{
+  display:flex;
+}
+
+.modal-box{
+  width:100%;
+  max-width:430px;
+  background:white;
+  border-radius:18px;
+  padding:20px;
+  max-height:90vh;
+  overflow-y:auto;
+}
+
+.modal-box h3{
+  margin-bottom:12px;
+}
+
+.modal-box p{
+  font-size:13px;
+  color:#596579;
+  line-height:1.5;
+  margin-bottom:15px;
+}
+
+.modal-buttons{
+  display:flex;
+  gap:8px;
+}
+
+.modal-buttons button{
+  flex:1;
+  border:none;
+  padding:11px;
+  border-radius:10px;
+  font-weight:bold;
+}
+
+.cancel-btn{
+  background:#edf0f4;
+  color:#172033;
+}
+
+.save-btn{
+  background:#087f73;
+  color:white;
+}
+
+/* =====================================================
+   FULL SCREEN LIVE ROOM
+===================================================== */
+
+.live-room{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:#081019;
+  color:white;
+  z-index:5000;
+  overflow:hidden;
+}
+
+.live-room.show{
+  display:block;
+}
+
+.live-stage{
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+}
+
+/* 24 SEATS */
+
+.remote-grid{
+  position:absolute;
+  inset:0;
+  padding:
+    78px
+    10px
+    165px;
+
+  display:grid;
+
+  grid-template-columns:
+    repeat(4,1fr);
+
+  grid-template-rows:
+    repeat(6,1fr);
+
+  gap:7px;
+
+  overflow:auto;
+}
+
+.seat{
+  position:relative;
+  min-height:90px;
+  border-radius:14px;
+  background:#121d2a;
+  border:1px solid rgba(255,255,255,.08);
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.seat video{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  background:#101923;
+}
+
+.seat-avatar-large{
+  width:58px;
+  height:58px;
+  border-radius:50%;
+  background:#dfeeea;
+  color:#087f73;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+  font-weight:bold;
+  overflow:hidden;
+}
+
+.seat-avatar-large img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.seat-name{
+  position:absolute;
+  left:6px;
+  right:6px;
+  bottom:6px;
+  padding:4px 6px;
+  border-radius:7px;
+  background:rgba(0,0,0,.58);
+  font-size:10px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.seat-badge{
+  position:absolute;
+  top:5px;
+  left:5px;
+  font-size:12px;
+}
+
+.seat-mic{
+  position:absolute;
+  right:5px;
+  top:5px;
+  background:rgba(0,0,0,.55);
+  border-radius:7px;
+  padding:3px 5px;
+  font-size:11px;
+}
+
+.empty-seat{
+  opacity:.55;
+}
+
+.empty-seat span{
+  font-size:25px;
+}
+
+/* LIVE TOP */
+
+.live-topbar{
+  position:absolute;
+  z-index:20;
+  top:0;
+  left:0;
+  right:0;
+  padding:
+    12px
+    10px
+    25px;
+
+  padding-top:
+    max(12px,env(safe-area-inset-top));
+
+  background:
+    linear-gradient(
+      rgba(0,0,0,.72),
+      transparent
+    );
+}
+
+.live-top-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.live-close{
+  width:40px;
+  height:40px;
+  border:none;
+  border-radius:50%;
+  background:rgba(255,255,255,.13);
+  color:white;
+  font-size:22px;
+}
+
+.live-title-wrap{
+  flex:1;
+  min-width:0;
+}
+
+.live-title{
+  font-weight:bold;
+  font-size:15px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.live-subtitle{
+  font-size:10px;
+  color:rgba(255,255,255,.72);
+  margin-top:2px;
+}
+
+.live-pill{
+  background:#e74c3c;
+  border-radius:8px;
+  padding:6px 8px;
+  font-size:10px;
+  font-weight:bold;
+}
+
+.fullscreen-btn{
+  border:none;
+  background:rgba(255,255,255,.13);
+  color:white;
+  border-radius:8px;
+  padding:8px;
+  font-size:17px;
+}
+
+/* CHAT */
+
+.live-chat{
+  position:absolute;
+  z-index:25;
+  left:10px;
+  right:90px;
+  bottom:85px;
+  max-height:190px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+  pointer-events:none;
+}
+
+.chat-message{
+  align-self:flex-start;
+  max-width:90%;
+  background:rgba(0,0,0,.52);
+  border-radius:12px;
+  padding:6px 9px;
+  margin-top:5px;
+  font-size:11px;
+  line-height:1.3;
+}
+
+.chat-message strong{
+  font-size:10px;
+}
+
+/* CHAT INPUT */
+
+.chat-input-row{
+  position:absolute;
+  z-index:30;
+  left:10px;
+  right:10px;
+  bottom:
+    max(10px,env(safe-area-inset-bottom));
+
+  display:flex;
+  gap:7px;
+}
+
+.chat-input{
+  flex:1;
+  min-width:0;
+  border:none;
+  outline:none;
+  border-radius:12px;
+  padding:11px 12px;
+  background:rgba(255,255,255,.13);
+  color:white;
+}
+
+.chat-input::placeholder{
+  color:rgba(255,255,255,.65);
+}
+
+.chat-send,
+.action-round{
+  border:none;
+  border-radius:12px;
+  background:#087f73;
+  color:white;
+  font-weight:bold;
+}
+
+.chat-send{
+  padding:0 13px;
+}
+
+/* RIGHT ACTIONS */
+
+.right-actions{
+  position:absolute;
+  z-index:30;
+  right:10px;
+  bottom:85px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.action-round{
+  width:42px;
+  height:42px;
+  background:rgba(255,255,255,.13);
+  font-size:18px;
+}
+
+.action-round.active{
+  background:#087f73;
+}
+
+.end-live{
+  background:#e74c3c;
+}
+
+/* LOCAL VIDEO */
+
+.host-video-wrap{
+  display:none;
+  position:absolute;
+  z-index:18;
+  left:14px;
+  bottom:145px;
+  width:105px;
+  height:145px;
+  border-radius:13px;
+  overflow:hidden;
+  background:#121d2a;
+  border:1px solid rgba(255,255,255,.15);
+}
+
+.host-video-wrap.show{
+  display:block;
+}
+
+#localVideo{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.host-label{
+  position:absolute;
+  left:5px;
+  right:5px;
+  bottom:5px;
+  background:rgba(0,0,0,.55);
+  padding:4px;
+  border-radius:6px;
+  font-size:10px;
+}
+
+/* REACTIONS */
+
+.reaction-layer{
+  position:absolute;
+  inset:0;
+  z-index:24;
+  pointer-events:none;
+}
+
+.float-heart{
+  position:absolute;
+  bottom:80px;
+  font-size:25px;
+  animation:floatHeart 2s ease-out forwards;
+}
+
+@keyframes floatHeart{
+  0%{
+    transform:translateY(0) scale(.8);
+    opacity:0;
+  }
+
+  15%{
+    opacity:1;
+  }
+
+  100%{
+    transform:translateY(-220px) scale(1.5);
+    opacity:0;
+  }
+}
+
+/* LOADING */
+
+.room-loading{
+  position:absolute;
+  z-index:40;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,.5);
+  font-weight:bold;
+}
+
+.room-loading.hidden{
+  display:none;
+}
+
+/* MOBILE */
+
+@media(max-width:650px){
+
+  .remote-grid{
+    grid-template-columns:repeat(3,1fr);
+
+    grid-template-rows:
+      repeat(8,1fr);
+
+    padding-top:76px;
+  }
+
+  .seat{
+    min-height:95px;
+  }
+
+}
+
+@media(max-width:420px){
+
+  header{
+    padding:12px;
+  }
+
+  .section{
+    margin-left:12px;
+    margin-right:12px;
+  }
+
+  .brand-icon{
+    width:38px;
+    height:38px;
+  }
+
+  .brand-p-left,
+  .brand-p-right{
+    top:9px;
+    height:20px;
+  }
+
+  .brand-p-left{
+    left:7px;
+  }
+
+  .brand-p-right{
+    right:7px;
+  }
+
+  .brand-center{
+    width:10px;
+    height:10px;
+  }
+
+  .brand-dot{
+    width:3px;
+    height:3px;
+  }
+
+  .brand-text h1{
+    font-size:15px;
+  }
+
+  .brand-text p{
+    font-size:6px;
+  }
+
+  .create-row{
+    flex-direction:column;
+  }
+
+  .create-row input,
+  .create-row button{
+    width:100%;
+  }
+
+  .mini-seats{
+    grid-template-columns:repeat(6,1fr);
+  }
+
+  .remote-grid{
+    grid-template-columns:repeat(3,1fr);
+    grid-template-rows:repeat(8,1fr);
+    gap:5px;
+    padding-left:6px;
+    padding-right:6px;
+  }
+
+  .seat{
+    border-radius:10px;
+    min-height:92px;
+  }
+
+  .seat-avatar-large{
+    width:45px;
+    height:45px;
+    font-size:18px;
+  }
+
+}
+</style>
 </head>
 
 <body>
 
-  <!-- HEADER -->
-  <header class="header">
-    <div class="logo">▶ LIVE</div>
-    <input
-      class="search"
-      placeholder="Search countries, people, or topics..."
+<header>
+
+  <div class="header-row">
+
+    <button
+      class="back-btn"
+      onclick="goHome()"
     >
-    <div class="icon">🔔</div>
-    <div class="icon">👤</div>
-  </header>
+      ‹
+    </button>
 
+    <div class="brand-header">
 
-  <!-- CATEGORIES -->
-  <div class="categories">
-    <div class="category active">🌍 Countries</div>
-    <div class="category">🔥 Trending</div>
-    <div class="category">🎵 Music</div>
-    <div class="category">🎮 Gaming</div>
-    <div class="category">👤 People</div>
-    <div class="category">▦ More</div>
+      <div class="brand-icon">
+
+        <div class="brand-p-left"></div>
+
+        <div class="brand-p-right"></div>
+
+        <div class="brand-center">
+          <div class="brand-dot"></div>
+        </div>
+
+      </div>
+
+      <div class="brand-text">
+
+        <h1>
+          P2P <span>Social</span>
+        </h1>
+
+        <p>
+          CONNECT • TRADE • SHARE
+        </p>
+
+      </div>
+
+    </div>
+
   </div>
 
+</header>
 
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-content">
 
-      <span class="live-badge">● LIVE</span>
-      <span class="viewers">👁 12.4K</span>
+<!-- LIVE INFORMATION -->
 
-      <h1>Ethiopia Live 🇪🇹</h1>
+<section class="section">
 
-      <p>Explore Addis Ababa and all over Ethiopia</p>
+  <div class="notice">
 
-      <button class="watch" onclick="watchLive()">
-        Watch Now →
+    <strong>🔴 Live Rooms</strong><br>
+
+    Join a live room and view all
+    <strong>24 seats</strong>.
+
+    Open a room full-screen to see
+    the complete live room.
+
+  </div>
+
+</section>
+
+
+<!-- CREATE LIVE -->
+
+<section class="section">
+
+  <div class="section-title">
+
+    <h2>
+      🔴 Create Live
+    </h2>
+
+  </div>
+
+  <div class="create-live">
+
+    <h3>
+      Start your own live room
+    </h3>
+
+    <p>
+      Create a live room with up to
+      <strong>24 seats</strong>.
+      Live creation is available only
+      to 🟣 Premium Max members.
+    </p>
+
+    <div class="create-row">
+
+      <input
+        id="roomTitle"
+        maxlength="80"
+        placeholder="Live room title"
+      >
+
+      <button
+        id="createRoomButton"
+        onclick="createLiveRoom()"
+      >
+        🔴 Go Live
       </button>
 
     </div>
-  </section>
+
+    <div
+      id="premiumRequired"
+      class="premium-required"
+    >
+      Checking Premium Max access...
+    </div>
+
+  </div>
+
+</section>
 
 
-  <!-- TOP COUNTRIES -->
+<!-- LIVE ROOMS -->
+
+<section class="section">
+
   <div class="section-title">
-    <h2>Top Countries</h2>
-    <span class="see-all">See All ›</span>
+
+    <h2>
+      🔴 Live Now
+    </h2>
+
+    <button
+      class="view-comments"
+      onclick="loadLiveRooms()"
+    >
+      Refresh
+    </button>
+
   </div>
 
-  <div class="countries">
+  <div
+    id="roomsList"
+    class="rooms"
+  >
 
-    <div class="country active">
-      <div class="flag">🇪🇹</div>
-      <div class="country-name">Ethiopia</div>
-    </div>
-
-    <div class="country">
-      <div class="flag">🇺🇸</div>
-      <div class="country-name">USA</div>
-    </div>
-
-    <div class="country">
-      <div class="flag">🇹🇷</div>
-      <div class="country-name">Turkey</div>
-    </div>
-
-    <div class="country">
-      <div class="flag">🇬🇧</div>
-      <div class="country-name">UK</div>
-    </div>
-
-    <div class="country">
-      <div class="flag">🇰🇪</div>
-      <div class="country-name">Kenya</div>
-    </div>
-
-    <div class="country">
-      <div class="flag">🇮🇳</div>
-      <div class="country-name">India</div>
-    </div>
-
-    <div class="country">
-      <div class="flag">🇸🇦</div>
-      <div class="country-name">Saudi Arabia</div>
+    <div class="empty">
+      Loading live rooms...
     </div>
 
   </div>
 
+</section>
 
-  <!-- LIVE STREAMS -->
-  <div class="section-title">
-    <h2>Live Now</h2>
-    <span class="see-all">See All ›</span>
+
+<!-- BOTTOM NAV -->
+
+<nav class="bottom-nav">
+
+  <div
+    class="nav-item"
+    onclick="goHome()"
+  >
+    <span>🏠</span>
+    Home
   </div>
 
-  <div class="live-grid">
+  <div
+    class="nav-item active"
+  >
+    <span>🔴</span>
+    Live
+  </div>
 
-    <div class="live-card" onclick="openStream('Ethiopia')">
-      <div class="thumbnail thumb-1">
-        <span class="live-small">● LIVE</span>
-        <span class="viewer-count">👁 12.4K</span>
-      </div>
-      <div class="card-info">
-        <h3>Ethiopia 🇪🇹</h3>
-        <p>🏙 Addis Ababa — City Life</p>
-      </div>
-    </div>
+  <div
+    class="nav-item"
+    onclick="openWallet()"
+  >
+    <span>🔄</span>
+    P2P
+  </div>
 
+  <div
+    class="nav-item"
+    onclick="openMessages()"
+  >
+    <span>💬</span>
+    Messages
+  </div>
 
-    <div class="live-card" onclick="openStream('USA')">
-      <div class="thumbnail thumb-2">
-        <span class="live-small">● LIVE</span>
-        <span class="viewer-count">👁 18.7K</span>
-      </div>
-      <div class="card-info">
-        <h3>USA 🇺🇸</h3>
-        <p>🏙 New York — Street Vibes</p>
-      </div>
-    </div>
+  <div
+    class="nav-item"
+    onclick="openProfile()"
+  >
+    <span>👤</span>
+    Profile
+  </div>
 
-
-    <div class="live-card" onclick="openStream('Turkey')">
-      <div class="thumbnail thumb-3">
-        <span class="live-small">● LIVE</span>
-        <span class="viewer-count">👁 9.3K</span>
-      </div>
-      <div class="card-info">
-        <h3>Turkey 🇹🇷</h3>
-        <p>📷 Istanbul — Beautiful Views</p>
-      </div>
-    </div>
+</nav>
 
 
-    <div class="live-card" onclick="openStream('UK')">
-      <div class="thumbnail thumb-4">
-        <span class="live-small">● LIVE</span>
-        <span class="viewer-count">👁 6.8K</span>
-      </div>
-      <div class="card-info">
-        <h3>UK 🇬🇧</h3>
-        <p>🚶 London — City Walk</p>
-      </div>
-    </div>
+<!-- LOGIN / ACCESS MODAL -->
 
+<div
+  id="accessModal"
+  class="modal"
+>
 
-    <div class="live-card" onclick="openStream('Kenya')">
-      <div class="thumbnail thumb-5">
-        <span class="live-small">● LIVE</span>
-        <span class="viewer-count">👁 5.2K</span>
-      </div>
-      <div class="card-info">
-        <h3>Kenya 🇰🇪</h3>
-        <p>🦁 Safari & Wildlife</p>
-      </div>
-    </div>
+  <div class="modal-box">
 
+    <h3>
+      🔒 Premium Max Required
+    </h3>
 
-    <div class="live-card" onclick="openStream('India')">
-      <div class="thumbnail thumb-6">
-        <span class="live-small">● LIVE</span>
-        <span class="viewer-count">👁 7.6K</span>
-      </div>
-      <div class="card-info">
-        <h3>India 🇮🇳</h3>
-        <p>🏛 Heritage & Culture</p>
-      </div>
-    </div>
+    <p>
+      Creating a live room is available
+      only for 🟣 Premium Max users.
+      You can still join and watch
+      existing live rooms.
+    </p>
 
+    <div class="modal-buttons">
 
-    <div class="live-card" onclick="openStream('Saudi Arabia')">
-      <div class="thumbnail thumb-7">
-        <span class="live-small">● LIVE</span>
-        <span class="viewer-count">👁 4.1K</span>
-      </div>
-      <div class="card-info">
-        <h3>Saudi Arabia 🇸🇦</h3>
-        <p>🕌 Mecca — Holy Place</p>
-      </div>
-    </div>
+      <button
+        class="cancel-btn"
+        onclick="closeAccessModal()"
+      >
+        Close
+      </button>
 
+      <button
+        class="save-btn"
+        onclick="openProfilePremium()"
+      >
+        ⭐ Premium
+      </button>
 
-    <div class="live-card" onclick="openStream('France')">
-      <div class="thumbnail thumb-8">
-        <span class="live-small">● LIVE</span>
-        <span class="viewer-count">👁 5.9K</span>
-      </div>
-      <div class="card-info">
-        <h3>France 🇫🇷</h3>
-        <p>❤️ Paris — City Life</p>
-      </div>
     </div>
 
   </div>
 
+</div>
 
-  <!-- BOTTOM NAVIGATION -->
-  <nav class="bottom-nav">
 
-    <div class="nav-item">
-      <span class="nav-icon">🏠</span>
-      Home
+<!-- =====================================================
+     FULL SCREEN LIVE ROOM
+===================================================== -->
+
+<div
+  id="liveRoom"
+  class="live-room"
+>
+
+  <div class="live-stage">
+
+
+    <!-- TOP BAR -->
+
+    <div class="live-topbar">
+
+      <div class="live-top-row">
+
+        <button
+          class="live-close"
+          onclick="leaveLiveRoom()"
+          title="Close"
+        >
+          ×
+        </button>
+
+        <div class="live-title-wrap">
+
+          <div
+            id="liveRoomTitle"
+            class="live-title"
+          >
+            Live Room
+          </div>
+
+          <div
+            id="liveRoomSubtitle"
+            class="live-subtitle"
+          >
+            24 seats
+          </div>
+
+        </div>
+
+        <div
+          id="livePill"
+          class="live-pill"
+        >
+          🔴 LIVE
+        </div>
+
+        <button
+          class="fullscreen-btn"
+          onclick="toggleFullscreen()"
+          title="Full screen"
+        >
+          ⛶
+        </button>
+
+      </div>
+
     </div>
 
-    <div class="nav-item active">
-      <span class="nav-icon">🔴</span>
-      Live
+
+    <!-- 24 SEATS -->
+
+    <div
+      id="remoteGrid"
+      class="remote-grid"
+    >
     </div>
 
-    <div class="go-live" onclick="goLive()">+</div>
 
-    <div class="nav-item">
-      <span class="nav-icon">🔄</span>
-      P2P
+    <!-- LOCAL CAMERA -->
+
+    <div
+      id="hostVideoWrap"
+      class="host-video-wrap"
+    >
+
+      <video
+        id="localVideo"
+        autoplay
+        muted
+        playsinline
+      ></video>
+
+      <div
+        id="hostLabel"
+        class="host-label"
+      >
+        You
+      </div>
+
     </div>
 
-    <div class="nav-item">
-      <span class="nav-icon">💬</span>
-      Messages
+
+    <!-- CHAT -->
+
+    <div
+      id="liveChat"
+      class="live-chat"
+    >
     </div>
 
-    <div class="nav-item">
-      <span class="nav-icon">👤</span>
-      Profile
+
+    <!-- REACTIONS -->
+
+    <div
+      id="reactionLayer"
+      class="reaction-layer"
+    >
     </div>
 
-  </nav>
+
+    <!-- RIGHT CONTROLS -->
+
+    <div class="right-actions">
+
+      <button
+        id="micButton"
+        class="action-round"
+        onclick="toggleMicrophone()"
+        title="Microphone"
+      >
+        🎤
+      </button>
+
+      <button
+        id="cameraButton"
+        class="action-round"
+        onclick="toggleCamera()"
+        title="Camera"
+      >
+        📹
+      </button>
+
+      <button
+        class="action-round"
+        onclick="sendReaction()"
+        title="Like"
+      >
+        ❤️
+      </button>
+
+      <button
+        class="action-round"
+        onclick="shareCurrentRoom()"
+        title="Share"
+      >
+        ↗️
+      </button>
+
+      <button
+        id="endLiveButton"
+        class="action-round end-live"
+        onclick="endLiveRoom()"
+        title="End Live"
+      >
+        🛑
+      </button>
+
+    </div>
 
 
-  <script>
+    <!-- CHAT INPUT -->
 
-    function watchLive() {
-      alert("Opening Ethiopia LIVE...");
+    <div class="chat-input-row">
+
+      <input
+        id="chatInput"
+        class="chat-input"
+        maxlength="300"
+        placeholder="Write a comment..."
+        onkeydown="
+          if(event.key==='Enter'){
+            event.preventDefault();
+            sendLiveChat();
+          }
+        "
+      >
+
+      <button
+        class="chat-send"
+        onclick="sendLiveChat()"
+      >
+        Send
+      </button>
+
+    </div>
+
+
+    <!-- ROOM LOADING -->
+
+    <div
+      id="roomLoading"
+      class="room-loading hidden"
+    >
+      Joining live room...
+    </div>
+
+  </div>
+
+</div>
+
+
+<script>
+
+/* =====================================================
+   SUPABASE
+===================================================== */
+
+const SUPABASE_URL =
+"https://mbsvuwrgigqfporxwpfr.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+"sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
+
+const supabaseClient =
+window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
+
+
+/* =====================================================
+   GLOBAL STATE
+===================================================== */
+
+let currentSession = null;
+
+let currentProfile = null;
+
+let liveRooms = [];
+
+let currentRoom = null;
+
+let currentRoomChannel = null;
+
+let currentRoomPresenceChannel = null;
+
+let localStream = null;
+
+let localPeerConnections = {};
+
+let remoteStreams = {};
+
+let roomMessages = [];
+
+let cameraEnabled = false;
+
+let microphoneEnabled = false;
+
+let isRoomHost = false;
+
+let roomPresence = {};
+
+let realtimeStarted = false;
+
+
+/* =====================================================
+   START
+===================================================== */
+
+async function startApp(){
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .auth
+      .getSession();
+
+  if(error){
+
+    console.error(error);
+
+    showLogin();
+
+    return;
+
+  }
+
+  currentSession =
+    data.session;
+
+  if(!currentSession){
+
+    showLogin();
+
+    return;
+
+  }
+
+  await loadProfile();
+
+  await loadLiveRooms();
+
+  startLiveRealtime();
+
+}
+
+
+/* =====================================================
+   LOGIN
+===================================================== */
+
+function showLogin(){
+
+  alert(
+    "Please login first."
+  );
+
+  window.location.href =
+    "login.html";
+
+}
+
+
+/* =====================================================
+   LOAD PROFILE
+===================================================== */
+
+async function loadProfile(){
+
+  if(!currentSession)return;
+
+  const user =
+    currentSession.user;
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("profiles")
+      .select("*")
+      .eq(
+        "id",
+        user.id
+      )
+      .maybeSingle();
+
+  if(error){
+
+    console.error(
+      "Profile error:",
+      error
+    );
+
+  }
+
+  currentProfile =
+    data || {};
+
+  updatePremiumAccess();
+
+}
+
+
+/* =====================================================
+   PREMIUM NORMALIZE
+===================================================== */
+
+function normalizePremiumPlan(){
+
+  const raw =
+    String(
+      currentProfile?.premium_plan ||
+      currentProfile?.premium ||
+      currentProfile?.subscription_plan ||
+      "free"
+    )
+    .trim()
+    .toLowerCase();
+
+  if(
+    raw === "premium max" ||
+    raw === "premium_max" ||
+    raw === "max"
+  ){
+
+    return "premium_max";
+
+  }
+
+  if(
+    raw === "premium+" ||
+    raw === "premium plus" ||
+    raw === "premium_plus" ||
+    raw === "plus"
+  ){
+
+    return "premium_plus";
+
+  }
+
+  if(
+    raw === "premium" ||
+    raw === "green"
+  ){
+
+    return "premium";
+
+  }
+
+  return "free";
+
+}
+
+
+/* =====================================================
+   PREMIUM MAX ACCESS
+===================================================== */
+
+function isPremiumMax(){
+
+  return (
+    normalizePremiumPlan() ===
+    "premium_max"
+  );
+
+}
+
+
+/* =====================================================
+   UPDATE PREMIUM ACCESS
+===================================================== */
+
+function updatePremiumAccess(){
+
+  const label =
+    document.getElementById(
+      "premiumRequired"
+    );
+
+  const button =
+    document.getElementById(
+      "createRoomButton"
+    );
+
+  if(!label || !button)return;
+
+  if(isPremiumMax()){
+
+    label.textContent =
+      "🟣 Premium Max active — Live creation enabled.";
+
+    button.disabled =
+      false;
+
+  }else{
+
+    label.textContent =
+      "🔒 Live creation requires 🟣 Premium Max.";
+
+    button.disabled =
+      false;
+
+  }
+
+}
+
+
+/* =====================================================
+   CREATE LIVE ROOM
+===================================================== */
+
+async function createLiveRoom(){
+
+  if(!currentSession){
+
+    showLogin();
+
+    return;
+
+  }
+
+  if(!isPremiumMax()){
+
+    openAccessModal();
+
+    return;
+
+  }
+
+  const input =
+    document.getElementById(
+      "roomTitle"
+    );
+
+  const button =
+    document.getElementById(
+      "createRoomButton"
+    );
+
+  let title =
+    input.value.trim();
+
+  if(!title){
+
+    title =
+      currentProfile?.username
+      ? currentProfile.username +
+        "'s Live"
+      : "P2P Social Live";
+
+  }
+
+  if(title.length > 80){
+
+    alert(
+      "Live title is too long."
+    );
+
+    return;
+
+  }
+
+  button.disabled =
+    true;
+
+  button.textContent =
+    "Creating...";
+
+
+  /*
+   * Expected Supabase table:
+   *
+   * live_rooms
+   *
+   * id
+   * host_id
+   * title
+   * status
+   * max_seats
+   * created_at
+   * ended_at
+   */
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("live_rooms")
+      .insert({
+
+        host_id:
+          currentSession.user.id,
+
+        title:
+          title,
+
+        status:
+          "live",
+
+        max_seats:
+          24
+
+      })
+      .select()
+      .single();
+
+
+  button.disabled =
+    false;
+
+  button.textContent =
+    "🔴 Go Live";
+
+
+  if(error){
+
+    console.error(
+      "Create live error:",
+      error
+    );
+
+    alert(
+      "Could not create live room:\n\n" +
+      error.message +
+      "\n\nMake sure the live_rooms table exists."
+    );
+
+    return;
+
+  }
+
+
+  input.value =
+    "";
+
+  await loadLiveRooms();
+
+  joinLiveRoom(data.id);
+
+}
+
+
+/* =====================================================
+   LOAD LIVE ROOMS
+===================================================== */
+
+async function loadLiveRooms(){
+
+  const list =
+    document.getElementById(
+      "roomsList"
+    );
+
+  list.innerHTML = `
+    <div class="empty">
+      Loading live rooms...
+    </div>
+  `;
+
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("live_rooms")
+      .select(`
+        id,
+        host_id,
+        title,
+        status,
+        max_seats,
+        created_at
+      `)
+      .eq(
+        "status",
+        "live"
+      )
+      .order(
+        "created_at",
+        {
+          ascending:false
+        }
+      );
+
+
+  if(error){
+
+    console.error(
+      "Live rooms error:",
+      error
+    );
+
+    list.innerHTML = `
+      <div class="empty">
+        Could not load live rooms.<br><br>
+        <small>
+          ${escapeHtml(error.message)}
+        </small>
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  liveRooms =
+    data || [];
+
+
+  if(!liveRooms.length){
+
+    list.innerHTML = `
+      <div class="empty">
+        🔴 No live rooms right now.
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  const hostIds =
+    [
+      ...new Set(
+        liveRooms.map(
+          room =>
+            room.host_id
+        )
+      )
+    ];
+
+
+  let profiles = {};
+
+
+  if(hostIds.length){
+
+    const {
+      data:hostProfiles
+    } =
+      await supabaseClient
+        .from("profiles")
+        .select(
+          "id,username,avatar_url,premium_plan"
+        )
+        .in(
+          "id",
+          hostIds
+        );
+
+
+    (hostProfiles || [])
+      .forEach(
+        profile => {
+
+          profiles[
+            profile.id
+          ] =
+            profile;
+
+        }
+      );
+
+  }
+
+
+  list.innerHTML =
+    "";
+
+
+  liveRooms.forEach(
+    room => {
+
+      const host =
+        profiles[
+          room.host_id
+        ] || {};
+
+      const username =
+        host.username ||
+        "User";
+
+      const avatar =
+        host.avatar_url ||
+        "";
+
+      const initial =
+        username
+          .charAt(0)
+          .toUpperCase();
+
+      const isMine =
+        room.host_id ===
+        currentSession?.user?.id;
+
+
+      const card =
+        document.createElement(
+          "div"
+        );
+
+      card.className =
+        "room-card";
+
+
+      card.innerHTML = `
+
+        <div class="room-head">
+
+          ${
+            avatar
+            ?
+            `
+            <img
+              class="room-host-avatar"
+              src="${escapeHtml(avatar)}"
+              alt="Profile"
+            >
+            `
+            :
+            `
+            <div class="room-host-avatar">
+              ${escapeHtml(initial)}
+            </div>
+            `
+          }
+
+          <div class="room-main">
+
+            <div class="room-title">
+
+              🔴
+              ${escapeHtml(room.title || "Live Room")}
+
+            </div>
+
+            <div class="room-meta">
+
+              Host:
+              ${escapeHtml(username)}
+
+              ·
+
+              <span class="live-dot">
+                LIVE
+              </span>
+
+              ·
+
+              24 seats
+
+            </div>
+
+          </div>
+
+          <div class="room-actions">
+
+            <button
+              class="join-btn"
+              onclick="joinLiveRoom('${escapeJs(room.id)}')"
+            >
+              👀 Join
+            </button>
+
+            <button
+              class="share-btn"
+              onclick="shareRoom('${escapeJs(room.id)}')"
+            >
+              ↗️
+            </button>
+
+            ${
+              isMine
+              ?
+              `
+              <button
+                class="delete-room-btn"
+                onclick="endRoomFromList('${escapeJs(room.id)}')"
+              >
+                🛑
+              </button>
+              `
+              :
+              ""
+            }
+
+          </div>
+
+        </div>
+
+
+        <div
+          class="mini-seats"
+          id="mini-seats-${escapeHtml(room.id)}"
+        >
+
+          ${renderMiniSeats()}
+
+        </div>
+
+      `;
+
+
+      list.appendChild(
+        card
+      );
+
+
+      loadRoomSeatPreview(
+        room.id
+      );
+
+    }
+  );
+
+}
+
+
+/* =====================================================
+   MINI EMPTY SEATS
+===================================================== */
+
+function renderMiniSeats(){
+
+  let html = "";
+
+  for(
+    let i = 0;
+    i < 24;
+    i++
+  ){
+
+    html += `
+      <div class="mini-seat">
+        🪑
+      </div>
+    `;
+
+  }
+
+  return html;
+
+}
+
+
+/* =====================================================
+   LOAD ROOM SEAT PREVIEW
+===================================================== */
+
+async function loadRoomSeatPreview(
+  roomId
+){
+
+  const container =
+    document.getElementById(
+      "mini-seats-" +
+      roomId
+    );
+
+  if(!container)return;
+
+
+  const channel =
+    supabaseClient.channel(
+      "preview-" +
+      roomId
+    );
+
+
+  let people = [];
+
+
+  try{
+
+    const status =
+      await channel.subscribe();
+
+
+    if(
+      status ===
+      "SUBSCRIBED"
+    ){
+
+      const presence =
+        await channel
+          .track({
+            preview:true
+          })
+          .catch(
+            () => {}
+          );
+
     }
 
-    function openStream(country) {
-      alert("Opening " + country + " LIVE...");
+
+  }catch(error){
+
+    console.log(error);
+
+  }
+
+
+  setTimeout(
+    async () => {
+
+      try{
+
+        const state =
+          channel.presenceState();
+
+        Object.values(
+          state
+        ).forEach(
+          entries => {
+
+            entries.forEach(
+              item => {
+
+                if(
+                  item.preview
+                )return;
+
+                people.push(
+                  item
+                );
+
+              }
+            );
+
+          }
+        );
+
+
+        if(people.length){
+
+          const cells =
+            container
+              .querySelectorAll(
+                ".mini-seat"
+              );
+
+          people
+            .slice(0,24)
+            .forEach(
+              (person,index) => {
+
+                const cell =
+                  cells[index];
+
+                if(!cell)return;
+
+                if(
+                  person.avatar
+                ){
+
+                  cell.innerHTML =
+                    `
+                    <img
+                      src="${escapeHtml(person.avatar)}"
+                      alt=""
+                    >
+                    `;
+
+                }else{
+
+                  cell.textContent =
+                    (
+                      person.username ||
+                      "U"
+                    )
+                    .charAt(0)
+                    .toUpperCase();
+
+                }
+
+              }
+            );
+
+        }
+
+      }catch(error){
+
+        console.log(error);
+
+      }
+
+      try{
+
+        await supabaseClient.removeChannel(
+          channel
+        );
+
+      }catch(error){}
+
+    },
+    500
+  );
+
+}
+
+
+/* =====================================================
+   JOIN LIVE ROOM
+===================================================== */
+
+async function joinLiveRoom(
+  roomId
+){
+
+  if(!currentSession){
+
+    showLogin();
+
+    return;
+
+  }
+
+
+  const room =
+    liveRooms.find(
+      item =>
+        String(item.id) ===
+        String(roomId)
+    );
+
+
+  if(!room){
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient
+        .from("live_rooms")
+        .select("*")
+        .eq(
+          "id",
+          roomId
+        )
+        .maybeSingle();
+
+
+    if(error || !data){
+
+      alert(
+        "Live room is no longer available."
+      );
+
+      await loadLiveRooms();
+
+      return;
+
     }
 
-    function goLive() {
-      alert("Create your LIVE stream");
+    currentRoom =
+      data;
+
+  }else{
+
+    currentRoom =
+      room;
+
+  }
+
+
+  isRoomHost =
+    currentRoom.host_id ===
+    currentSession.user.id;
+
+
+  document.getElementById(
+    "liveRoom"
+  ).classList.add(
+    "show"
+  );
+
+
+  document.getElementById(
+    "liveRoomTitle"
+  ).textContent =
+    currentRoom.title ||
+    "Live Room";
+
+
+  document.getElementById(
+    "liveRoomSubtitle"
+  ).textContent =
+    "24 seats";
+
+
+  document.getElementById(
+    "roomLoading"
+  ).classList.remove(
+    "hidden"
+  );
+
+
+  document.getElementById(
+    "endLiveButton"
+  ).style.display =
+    isRoomHost
+    ? "block"
+    : "none";
+
+
+  renderEmpty24Seats();
+
+
+  await setupRoomRealtime();
+
+
+  document.getElementById(
+    "roomLoading"
+  ).classList.add(
+    "hidden"
+  );
+
+
+  if(isRoomHost){
+
+    await startLocalMedia();
+
+  }
+
+
+  updateRoomControls();
+
+}
+
+
+/* =====================================================
+   RENDER 24 SEATS
+===================================================== */
+
+function renderEmpty24Seats(){
+
+  const grid =
+    document.getElementById(
+      "remoteGrid"
+    );
+
+  grid.innerHTML =
+    "";
+
+
+  for(
+    let i = 0;
+    i < 24;
+    i++
+  ){
+
+    const seat =
+      document.createElement(
+        "div"
+      );
+
+    seat.className =
+      "seat empty-seat";
+
+    seat.id =
+      "seat-" +
+      i;
+
+    seat.innerHTML = `
+      <span>🪑</span>
+
+      <div
+        class="seat-name"
+        id="seat-name-${i}"
+      >
+        Seat ${i + 1}
+      </div>
+
+      <div
+        class="seat-mic"
+        id="seat-mic-${i}"
+      >
+        🔇
+      </div>
+    `;
+
+    grid.appendChild(
+      seat
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   SETUP ROOM REALTIME
+===================================================== */
+
+async function setupRoomRealtime(){
+
+  cleanupRoomChannels();
+
+
+  currentRoomPresenceChannel =
+    supabaseClient.channel(
+      "live-presence-" +
+      currentRoom.id,
+      {
+        config:{
+          presence:{
+            key:
+              currentSession.user.id
+          }
+        }
+      }
+    );
+
+
+  currentRoomChannel =
+    supabaseClient.channel(
+      "live-room-" +
+      currentRoom.id
+    );
+
+
+  currentRoomChannel
+    .on(
+      "broadcast",
+      {
+        event:"chat"
+      },
+      payload => {
+
+        if(
+          payload?.payload
+        ){
+
+          addChatMessage(
+            payload.payload
+          );
+
+        }
+
+      }
+    )
+    .on(
+      "broadcast",
+      {
+        event:"reaction"
+      },
+      payload => {
+
+        showFloatingHeart();
+
+      }
+    )
+    .on(
+      "broadcast",
+      {
+        event:"signal"
+      },
+      async payload => {
+
+        await handleSignal(
+          payload.payload
+        );
+
+      }
+    )
+    .on(
+      "broadcast",
+      {
+        event:"room-ended"
+      },
+      () => {
+
+        alert(
+          "This live room has ended."
+        );
+
+        leaveLiveRoom();
+
+      }
+    );
+
+
+  currentRoomPresenceChannel
+    .on(
+      "presence",
+      {
+        event:"sync"
+      },
+      () => {
+
+        refreshRoomPresence();
+
+      }
+    )
+    .on(
+      "presence",
+      {
+        event:"join"
+      },
+      () => {
+
+        refreshRoomPresence();
+
+      }
+    )
+    .on(
+      "presence",
+      {
+        event:"leave"
+      },
+      () => {
+
+        refreshRoomPresence();
+
+      }
+    );
+
+
+  await currentRoomChannel
+    .subscribe();
+
+
+  await currentRoomPresenceChannel
+    .subscribe(
+      async status => {
+
+        if(
+          status ===
+          "SUBSCRIBED"
+        ){
+
+          await currentRoomPresenceChannel
+            .track({
+
+              user_id:
+                currentSession.user.id,
+
+              username:
+                currentProfile?.username ||
+                currentSession.user.email
+                  ?.split("@")[0] ||
+                "User",
+
+              avatar:
+                currentProfile?.avatar_url ||
+                "",
+
+              premium:
+                normalizePremiumPlan(),
+
+              host:
+                isRoomHost,
+
+              mic:
+                microphoneEnabled,
+
+              camera:
+                cameraEnabled
+
+            });
+
+        }
+
+      }
+    );
+
+}
+
+
+/* =====================================================
+   REFRESH PRESENCE
+===================================================== */
+
+function refreshRoomPresence(){
+
+  if(
+    !currentRoomPresenceChannel
+  )return;
+
+
+  const state =
+    currentRoomPresenceChannel
+      .presenceState();
+
+
+  roomPresence =
+    {};
+
+
+  const people = [];
+
+
+  Object.keys(state)
+    .forEach(
+      key => {
+
+        const entries =
+          state[key] || [];
+
+
+        const person =
+          entries[0];
+
+
+        if(person){
+
+          roomPresence[
+            key
+          ] =
+            person;
+
+          people.push(
+            person
+          );
+
+        }
+
+      }
+    );
+
+
+  renderRoomPeople(
+    people
+  );
+
+
+}
+
+
+/* =====================================================
+   RENDER PEOPLE INTO 24 SEATS
+===================================================== */
+
+function renderRoomPeople(
+  people
+){
+
+  const limited =
+    people.slice(
+      0,
+      24
+    );
+
+
+  for(
+    let i = 0;
+    i < 24;
+    i++
+  ){
+
+    const seat =
+      document.getElementById(
+        "seat-" +
+        i
+      );
+
+    if(!seat)continue;
+
+
+    const person =
+      limited[i];
+
+
+    if(!person){
+
+      seat.className =
+        "seat empty-seat";
+
+      seat.innerHTML = `
+        <span>🪑</span>
+
+        <div
+          class="seat-name"
+          id="seat-name-${i}"
+        >
+          Seat ${i + 1}
+        </div>
+
+        <div
+          class="seat-mic"
+        >
+          🔇
+        </div>
+      `;
+
+      continue;
+
     }
 
-  </script>
+
+    seat.className =
+      "seat";
+
+
+    const username =
+      person.username ||
+      "User";
+
+
+    const initial =
+      username
+        .charAt(0)
+        .toUpperCase();
+
+
+    const avatar =
+      person.avatar ||
+      "";
+
+
+    seat.innerHTML = `
+
+      <div
+        class="seat-avatar-large"
+      >
+
+        ${
+          avatar
+          ?
+          `
+          <img
+            src="${escapeHtml(avatar)}"
+            alt="Profile"
+          >
+          `
+          :
+          escapeHtml(initial)
+        }
+
+      </div>
+
+
+      <div class="seat-badge">
+
+        ${
+          person.host
+          ? "👑"
+          : ""
+        }
+
+      </div>
+
+
+      <div
+        class="seat-mic"
+      >
+
+        ${
+          person.mic
+          ? "🎤"
+          : "🔇"
+        }
+
+      </div>
+
+
+      <div class="seat-name">
+
+        ${escapeHtml(username)}
+
+      </div>
+
+    `;
+
+
+  }
+
+
+  document.getElementById(
+    "liveRoomSubtitle"
+  ).textContent =
+    limited.length +
+    "/24 seats";
+
+}
+
+
+/* =====================================================
+   START LOCAL MEDIA
+===================================================== */
+
+async function startLocalMedia(){
+
+  if(!isRoomHost)return;
+
+
+  try{
+
+    localStream =
+      await navigator.mediaDevices
+        .getUserMedia({
+
+          video:true,
+
+          audio:true
+
+        });
+
+
+    cameraEnabled =
+      true;
+
+    microphoneEnabled =
+      true;
+
+
+    const video =
+      document.getElementById(
+        "localVideo"
+      );
+
+    video.srcObject =
+      localStream;
+
+
+    document.getElementById(
+      "hostVideoWrap"
+    ).classList.add(
+      "show"
+    );
+
+
+    await updatePresence();
+
+
+    /*
+     * WebRTC connections can be
+     * established through the
+     * Supabase broadcast signaling
+     * channel below.
+     */
+
+    refreshRoomPresence();
+
+
+  }catch(error){
+
+    console.error(
+      "Camera/microphone error:",
+      error
+    );
+
+
+    alert(
+      "Camera or microphone permission was not granted.\n\n" +
+      error.message
+    );
+
+
+    cameraEnabled =
+      false;
+
+    microphoneEnabled =
+      false;
+
+
+    updateRoomControls();
+
+  }
+
+}
+
+
+/* =====================================================
+   TOGGLE MICROPHONE
+===================================================== */
+
+async function toggleMicrophone(){
+
+  if(!localStream){
+
+    if(isRoomHost){
+
+      await startLocalMedia();
+
+    }
+
+    return;
+
+  }
+
+
+  const tracks =
+    localStream.getAudioTracks();
+
+
+  if(!tracks.length)return;
+
+
+  microphoneEnabled =
+    !microphoneEnabled;
+
+
+  tracks.forEach(
+    track => {
+
+      track.enabled =
+        microphoneEnabled;
+
+    }
+  );
+
+
+  await updatePresence();
+
+  updateRoomControls();
+
+}
+
+
+/* =====================================================
+   TOGGLE CAMERA
+===================================================== */
+
+async function toggleCamera(){
+
+  if(!localStream){
+
+    if(isRoomHost){
+
+      await startLocalMedia();
+
+    }
+
+    return;
+
+  }
+
+
+  const tracks =
+    localStream.getVideoTracks();
+
+
+  if(!tracks.length)return;
+
+
+  cameraEnabled =
+    !cameraEnabled;
+
+
+  tracks.forEach(
+    track => {
+
+      track.enabled =
+        cameraEnabled;
+
+    }
+  );
+
+
+  await updatePresence();
+
+  updateRoomControls();
+
+}
+
+
+/* =====================================================
+   UPDATE CONTROLS
+===================================================== */
+
+function updateRoomControls(){
+
+  const mic =
+    document.getElementById(
+      "micButton"
+    );
+
+  const camera =
+    document.getElementById(
+      "cameraButton"
+    );
+
+
+  mic.classList.toggle(
+    "active",
+    microphoneEnabled
+  );
+
+
+  camera.classList.toggle(
+    "active",
+    cameraEnabled
+  );
+
+
+  mic.textContent =
+    microphoneEnabled
+    ? "🎤"
+    : "🔇";
+
+
+  camera.textContent =
+    cameraEnabled
+    ? "📹"
+    : "🚫";
+
+
+  if(
+    !isRoomHost
+  ){
+
+    mic.style.display =
+      "none";
+
+    camera.style.display =
+      "none";
+
+  }else{
+
+    mic.style.display =
+      "block";
+
+    camera.style.display =
+      "block";
+
+  }
+
+}
+
+
+/* =====================================================
+   UPDATE PRESENCE
+===================================================== */
+
+async function updatePresence(){
+
+  if(
+    !currentRoomPresenceChannel ||
+    !currentSession
+  )return;
+
+
+  try{
+
+    await currentRoomPresenceChannel
+      .track({
+
+        user_id:
+          currentSession.user.id,
+
+        username:
+          currentProfile?.username ||
+          "User",
+
+        avatar:
+          currentProfile?.avatar_url ||
+          "",
+
+        premium:
+          normalizePremiumPlan(),
+
+        host:
+          isRoomHost,
+
+        mic:
+          microphoneEnabled,
+
+        camera:
+          cameraEnabled
+
+      });
+
+  }catch(error){
+
+    console.error(
+      "Presence update error:",
+      error
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   CHAT
+===================================================== */
+
+async function sendLiveChat(){
+
+  if(
+    !currentRoom ||
+    !currentRoomChannel
+  )return;
+
+
+  const input =
+    document.getElementById(
+      "chatInput"
+    );
+
+
+  const message =
+    input.value.trim();
+
+
+  if(!message)return;
+
+
+  const payload = {
+
+    user_id:
+      currentSession.user.id,
+
+    username:
+      currentProfile?.username ||
+      "User",
+
+    message:
+      message,
+
+    created_at:
+      new Date().toISOString()
+
+  };
+
+
+  addChatMessage(
+    payload
+  );
+
+
+  input.value =
+    "";
+
+
+  try{
+
+    await currentRoomChannel
+      .send({
+
+        type:"broadcast",
+
+        event:"chat",
+
+        payload:payload
+
+      });
+
+  }catch(error){
+
+    console.error(
+      "Chat error:",
+      error
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   ADD CHAT MESSAGE
+===================================================== */
+
+function addChatMessage(
+  payload
+){
+
+  if(!payload)return;
+
+
+  const chat =
+    document.getElementById(
+      "liveChat"
+    );
+
+
+  const row =
+    document.createElement(
+      "div"
+    );
+
+
+  row.className =
+    "chat-message";
+
+
+  row.innerHTML = `
+
+    <strong>
+      ${escapeHtml(
+        payload.username ||
+        "User"
+      )}
+    </strong>
+
+    ${escapeHtml(
+      payload.message ||
+      ""
+    )}
+
+  `;
+
+
+  chat.appendChild(
+    row
+  );
+
+
+  while(
+    chat.children.length >
+    12
+  ){
+
+    chat.removeChild(
+      chat.firstChild
+    );
+
+  }
+
+
+  setTimeout(
+    () => {
+
+      if(row.parentNode){
+
+        row.remove();
+
+      }
+
+    },
+    15000
+  );
+
+}
+
+
+/* =====================================================
+   REACTION
+===================================================== */
+
+async function sendReaction(){
+
+  showFloatingHeart();
+
+
+  if(
+    currentRoomChannel
+  ){
+
+    try{
+
+      await currentRoomChannel
+        .send({
+
+          type:"broadcast",
+
+          event:"reaction",
+
+          payload:{
+            user_id:
+              currentSession.user.id
+          }
+
+        });
+
+    }catch(error){
+
+      console.error(error);
+
+    }
+
+  }
+
+}
+
+
+/* =====================================================
+   FLOATING HEART
+===================================================== */
+
+function showFloatingHeart(){
+
+  const layer =
+    document.getElementById(
+      "reactionLayer"
+    );
+
+
+  const heart =
+    document.createElement(
+      "div"
+    );
+
+
+  heart.className =
+    "float-heart";
+
+
+  heart.textContent =
+    "❤️";
+
+
+  heart.style.left =
+    (
+      20 +
+      Math.random() * 65
+    ) +
+    "%";
+
+
+  layer.appendChild(
+    heart
+  );
+
+
+  setTimeout(
+    () => {
+
+      heart.remove();
+
+    },
+    2100
+  );
+
+}
+
+
+/* =====================================================
+   WEBRTC SIGNALING
+===================================================== */
+
+async function createPeerConnection(
+  peerId,
+  initiator
+){
+
+  if(
+    localPeerConnections[
+      peerId
+    ]
+  ){
+
+    return localPeerConnections[
+      peerId
+    ];
+
+  }
+
+
+  const pc =
+    new RTCPeerConnection({
+
+      iceServers:[
+
+        {
+          urls:
+            "stun:stun.l.google.com:19302"
+        },
+
+        {
+          urls:
+            "stun:stun1.l.google.com:19302"
+        }
+
+      ]
+
+    });
+
+
+  localPeerConnections[
+    peerId
+  ] =
+    pc;
+
+
+  if(localStream){
+
+    localStream
+      .getTracks()
+      .forEach(
+        track => {
+
+          pc.addTrack(
+            track,
+            localStream
+          );
+
+        }
+      );
+
+  }
+
+
+  pc.onicecandidate =
+    async event => {
+
+      if(
+        !event.candidate ||
+        !currentRoomChannel
+      )return;
+
+
+      await currentRoomChannel
+        .send({
+
+          type:"broadcast",
+
+          event:"signal",
+
+          payload:{
+
+            type:"ice",
+
+            from:
+              currentSession.user.id,
+
+            to:
+              peerId,
+
+            candidate:
+              event.candidate
+
+          }
+
+        });
+
+    };
+
+
+  pc.ontrack =
+    event => {
+
+      const stream =
+        event.streams[0];
+
+
+      if(!stream)return;
+
+
+      remoteStreams[
+        peerId
+      ] =
+        stream;
+
+
+      attachRemoteVideo(
+        peerId,
+        stream
+      );
+
+    };
+
+
+  pc.onconnectionstatechange =
+    () => {
+
+      if(
+        [
+          "failed",
+          "closed",
+          "disconnected"
+        ].includes(
+          pc.connectionState
+        )
+      ){
+
+        removePeer(
+          peerId
+        );
+
+      }
+
+    };
+
+
+  if(initiator){
+
+    const offer =
+      await pc.createOffer();
+
+
+    await pc.setLocalDescription(
+      offer
+    );
+
+
+    await currentRoomChannel
+      .send({
+
+        type:"broadcast",
+
+        event:"signal",
+
+        payload:{
+
+          type:"offer",
+
+          from:
+            currentSession.user.id,
+
+          to:
+            peerId,
+
+          offer:
+            offer
+
+        }
+
+      });
+
+  }
+
+
+  return pc;
+
+}
+
+
+/* =====================================================
+   SIGNAL HANDLER
+===================================================== */
+
+async function handleSignal(
+  signal
+){
+
+  if(!signal)return;
+
+
+  if(
+    signal.to &&
+    signal.to !==
+    currentSession.user.id
+  ){
+
+    return;
+
+  }
+
+
+  if(
+    signal.from ===
+    currentSession.user.id
+  ){
+
+    return;
+
+  }
+
+
+  if(
+    signal.type ===
+    "offer"
+  ){
+
+    const pc =
+      await createPeerConnection(
+        signal.from,
+        false
+      );
+
+
+    await pc.setRemoteDescription(
+      new RTCSessionDescription(
+        signal.offer
+      )
+    );
+
+
+    const answer =
+      await pc.createAnswer();
+
+
+    await pc.setLocalDescription(
+      answer
+    );
+
+
+    await currentRoomChannel
+      .send({
+
+        type:"broadcast",
+
+        event:"signal",
+
+        payload:{
+
+          type:"answer",
+
+          from:
+            currentSession.user.id,
+
+          to:
+            signal.from,
+
+          answer:
+            answer
+
+        }
+
+      });
+
+  }
+
+
+  else if(
+    signal.type ===
+    "answer"
+  ){
+
+    const pc =
+      localPeerConnections[
+        signal.from
+      ];
+
+
+    if(!pc)return;
+
+
+    await pc.setRemoteDescription(
+      new RTCSessionDescription(
+        signal.answer
+      )
+    );
+
+  }
+
+
+  else if(
+    signal.type ===
+    "ice"
+  ){
+
+    const pc =
+      localPeerConnections[
+        signal.from
+      ];
+
+
+    if(!pc)return;
+
+
+    try{
+
+      await pc.addIceCandidate(
+        new RTCIceCandidate(
+          signal.candidate
+        )
+      );
+
+    }catch(error){
+
+      console.error(
+        "ICE error:",
+        error
+      );
+
+    }
+
+  }
+
+}
+
+
+/* =====================================================
+   ATTACH REMOTE VIDEO
+===================================================== */
+
+function attachRemoteVideo(
+  peerId,
+  stream
+){
+
+  /*
+   * The visible 24-seat grid is
+   * driven by presence.
+   *
+   * This video is placed into the
+   * matching participant seat.
+   */
+
+  const state =
+    currentRoomPresenceChannel
+      ?.presenceState() || {};
+
+
+  let index =
+    0;
+
+
+  const people = [];
+
+
+  Object.keys(state)
+    .forEach(
+      key => {
+
+        const entries =
+          state[key] || [];
+
+
+        const person =
+          entries[0];
+
+
+        if(person){
+
+          people.push(
+            {
+              key:key,
+              person:person
+            }
+          );
+
+        }
+
+      }
+    );
+
+
+  const position =
+    people.findIndex(
+      item =>
+        item.key ===
+        peerId
+    );
+
+
+  if(position < 0)return;
+
+
+  index =
+    position;
+
+
+  const seat =
+    document.getElementById(
+      "seat-" +
+      index
+    );
+
+
+  if(!seat)return;
+
+
+  const oldVideo =
+    seat.querySelector(
+      "video"
+    );
+
+
+  if(oldVideo){
+
+    oldVideo.srcObject =
+      stream;
+
+    return;
+
+  }
+
+
+  const video =
+    document.createElement(
+      "video"
+    );
+
+
+  video.autoplay =
+    true;
+
+  video.playsInline =
+    true;
+
+  video.srcObject =
+    stream;
+
+
+  const person =
+    people[index].person;
+
+
+  seat.innerHTML =
+    "";
+
+
+  seat.appendChild(
+    video
+  );
+
+
+  const name =
+    document.createElement(
+      "div"
+    );
+
+  name.className =
+    "seat-name";
+
+  name.textContent =
+    person.username ||
+    "User";
+
+
+  seat.appendChild(
+    name
+  );
+
+
+  const mic =
+    document.createElement(
+      "div"
+    );
+
+  mic.className =
+    "seat-mic";
+
+  mic.textContent =
+    person.mic
+    ? "🎤"
+    : "🔇";
+
+
+  seat.appendChild(
+    mic
+  );
+
+}
+
+
+/* =====================================================
+   REMOVE PEER
+===================================================== */
+
+function removePeer(
+  peerId
+){
+
+  const pc =
+    localPeerConnections[
+      peerId
+    ];
+
+
+  if(pc){
+
+    try{
+
+      pc.close();
+
+    }catch(error){}
+
+  }
+
+
+  delete localPeerConnections[
+    peerId
+  ];
+
+
+  delete remoteStreams[
+    peerId
+  ];
+
+}
+
+
+/* =====================================================
+   CLEANUP ROOM CHANNELS
+===================================================== */
+
+function cleanupRoomChannels(){
+
+  Object.keys(
+    localPeerConnections
+  )
+  .forEach(
+    peerId => {
+
+      try{
+
+        localPeerConnections[
+          peerId
+        ].close();
+
+      }catch(error){}
+
+    }
+  );
+
+
+  localPeerConnections =
+    {};
+
+  remoteStreams =
+    {};
+
+
+  if(
+    currentRoomChannel
+  ){
+
+    supabaseClient.removeChannel(
+      currentRoomChannel
+    );
+
+    currentRoomChannel =
+      null;
+
+  }
+
+
+  if(
+    currentRoomPresenceChannel
+  ){
+
+    supabaseClient.removeChannel(
+      currentRoomPresenceChannel
+    );
+
+    currentRoomPresenceChannel =
+      null;
+
+  }
+
+}
+
+
+/* =====================================================
+   LEAVE ROOM
+===================================================== */
+
+async function leaveLiveRoom(){
+
+  stopLocalMedia();
+
+  cleanupRoomChannels();
+
+
+  currentRoom =
+    null;
+
+  isRoomHost =
+    false;
+
+
+  document.getElementById(
+    "liveRoom"
+  ).classList.remove(
+    "show"
+  );
+
+
+  document.getElementById(
+    "liveChat"
+  ).innerHTML =
+    "";
+
+
+  await loadLiveRooms();
+
+}
+
+
+/* =====================================================
+   STOP MEDIA
+===================================================== */
+
+function stopLocalMedia(){
+
+  if(!localStream)return;
+
+
+  localStream
+    .getTracks()
+    .forEach(
+      track => {
+
+        track.stop();
+
+      }
+    );
+
+
+  localStream =
+    null;
+
+
+  cameraEnabled =
+    false;
+
+  microphoneEnabled =
+    false;
+
+
+  const video =
+    document.getElementById(
+      "localVideo"
+    );
+
+
+  if(video){
+
+    video.srcObject =
+      null;
+
+  }
+
+
+  document.getElementById(
+    "hostVideoWrap"
+  ).classList.remove(
+    "show"
+  );
+
+}
+
+
+/* =====================================================
+   END LIVE ROOM
+===================================================== */
+
+async function endLiveRoom(){
+
+  if(
+    !currentRoom ||
+    !isRoomHost
+  ){
+
+    return;
+
+  }
+
+
+  const confirmed =
+    confirm(
+      "End this live room?"
+    );
+
+
+  if(!confirmed)return;
+
+
+  const {
+    error
+  } =
+    await supabaseClient
+      .from("live_rooms")
+      .update({
+
+        status:
+          "ended",
+
+        ended_at:
+          new Date().toISOString()
+
+      })
+      .eq(
+        "id",
+        currentRoom.id
+      )
+      .eq(
+        "host_id",
+        currentSession.user.id
+      );
+
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Could not end live room:\n\n" +
+      error.message
+    );
+
+    return;
+
+  }
+
+
+  if(
+    currentRoomChannel
+  ){
+
+    try{
+
+      await currentRoomChannel
+        .send({
+
+          type:"broadcast",
+
+          event:"room-ended",
+
+          payload:{
+            room_id:
+              currentRoom.id
+          }
+
+        });
+
+    }catch(error){}
+
+  }
+
+
+  await leaveLiveRoom();
+
+}
+
+
+/* =====================================================
+   END FROM LIST
+===================================================== */
+
+async function endRoomFromList(
+  roomId
+){
+
+  const confirmed =
+    confirm(
+      "End this live room?"
+    );
+
+
+  if(!confirmed)return;
+
+
+  const {
+    error
+  } =
+    await supabaseClient
+      .from("live_rooms")
+      .update({
+
+        status:
+          "ended",
+
+        ended_at:
+          new Date().toISOString()
+
+      })
+      .eq(
+        "id",
+        roomId
+      )
+      .eq(
+        "host_id",
+        currentSession.user.id
+      );
+
+
+  if(error){
+
+    alert(
+      "Could not end room:\n\n" +
+      error.message
+    );
+
+    return;
+
+  }
+
+
+  await loadLiveRooms();
+
+}
+
+
+/* =====================================================
+   SHARE ROOM
+===================================================== */
+
+async function shareRoom(
+  roomId
+){
+
+  const url =
+    window.location.origin +
+    window.location.pathname +
+    "?room=" +
+    encodeURIComponent(
+      roomId
+    );
+
+
+  if(navigator.share){
+
+    try{
+
+      await navigator.share({
+
+        title:
+          "P2P Social Live",
+
+        text:
+          "Join this live room.",
+
+        url:url
+
+      });
+
+    }catch(error){
+
+      console.log(error);
+
+    }
+
+    return;
+
+  }
+
+
+  try{
+
+    await navigator.clipboard.writeText(
+      url
+    );
+
+    alert(
+      "Live room link copied."
+    );
+
+  }catch(error){
+
+    alert(url);
+
+  }
+
+}
+
+
+/* =====================================================
+   SHARE CURRENT ROOM
+===================================================== */
+
+function shareCurrentRoom(){
+
+  if(
+    currentRoom
+  ){
+
+    shareRoom(
+      currentRoom.id
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   FULL SCREEN
+===================================================== */
+
+async function toggleFullscreen(){
+
+  const room =
+    document.getElementById(
+      "liveRoom"
+    );
+
+
+  try{
+
+    if(
+      !document.fullscreenElement
+    ){
+
+      await room.requestFullscreen();
+
+    }else{
+
+      await document.exitFullscreen();
+
+    }
+
+  }catch(error){
+
+    console.error(
+      "Fullscreen error:",
+      error
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   ACCESS MODAL
+===================================================== */
+
+function openAccessModal(){
+
+  document.getElementById(
+    "accessModal"
+  ).classList.add(
+    "show"
+  );
+
+}
+
+
+function closeAccessModal(){
+
+  document.getElementById(
+    "accessModal"
+  ).classList.remove(
+    "show"
+  );
+
+}
+
+
+function openProfilePremium(){
+
+  closeAccessModal();
+
+  window.location.href =
+    "profile.html";
+
+}
+
+
+/* =====================================================
+   REALTIME LIVE ROOM LIST
+===================================================== */
+
+function startLiveRealtime(){
+
+  if(realtimeStarted)return;
+
+  realtimeStarted =
+    true;
+
+
+  const channel =
+    supabaseClient
+      .channel(
+        "live-rooms-global"
+      )
+      .on(
+        "postgres_changes",
+        {
+          event:"*",
+          schema:"public",
+          table:"live_rooms"
+        },
+        () => {
+
+          loadLiveRooms();
+
+        }
+      )
+      .subscribe();
+
+
+  window.liveGlobalChannel =
+    channel;
+
+}
+
+
+/* =====================================================
+   NAVIGATION
+===================================================== */
+
+function goHome(){
+
+  window.location.href =
+    "index.html";
+
+}
+
+
+function openWallet(){
+
+  window.location.href =
+    "wallet.html";
+
+}
+
+
+function openMessages(){
+
+  window.location.href =
+    "message.html";
+
+}
+
+
+function openProfile(){
+
+  window.location.href =
+    "profile.html";
+
+}
+
+
+/* =====================================================
+   LOGOUT
+===================================================== */
+
+async function logout(){
+
+  const confirmed =
+    confirm(
+      "Do you want to log out?"
+    );
+
+
+  if(!confirmed)return;
+
+
+  const {
+    error
+  } =
+    await supabaseClient
+      .auth
+      .signOut();
+
+
+  if(error){
+
+    alert(
+      "Logout failed:\n\n" +
+      error.message
+    );
+
+    return;
+
+  }
+
+
+  window.location.href =
+    "login.html";
+
+}
+
+
+/* =====================================================
+   ESCAPE HTML
+===================================================== */
+
+function escapeHtml(
+  text
+){
+
+  const div =
+    document.createElement(
+      "div"
+    );
+
+
+  div.textContent =
+    text == null
+    ? ""
+    : String(text);
+
+
+  return div.innerHTML;
+
+}
+
+
+/* =====================================================
+   ESCAPE JS
+===================================================== */
+
+function escapeJs(
+  text
+){
+
+  return String(
+    text || ""
+  )
+  .replace(
+    /\\/g,
+    "\\\\"
+  )
+  .replace(
+    /'/g,
+    "\\'"
+  )
+  .replace(
+    /"/g,
+    '\\"'
+  );
+
+}
+
+
+/* =====================================================
+   AUTH LISTENER
+===================================================== */
+
+supabaseClient.auth.onAuthStateChange(
+  function(
+    event,
+    session
+  ){
+
+    currentSession =
+      session;
+
+
+    if(!session){
+
+      window.location.href =
+        "login.html";
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   URL ROOM AUTO JOIN
+===================================================== */
+
+function checkRoomUrl(){
+
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+
+
+  const roomId =
+    params.get(
+      "room"
+    );
+
+
+  if(
+    roomId &&
+    currentSession
+  ){
+
+    setTimeout(
+      () => {
+
+        joinLiveRoom(
+          roomId
+        );
+
+      },
+      500
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   RUN
+===================================================== */
+
+startApp()
+  .then(
+    () => {
+
+      checkRoomUrl();
+
+    }
+  );
+
+</script>
 
 </body>
 </html>

@@ -1,0 +1,160 @@
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { TronWeb } from "npm:tronweb@6";
+
+const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const depositPrivateKey = Deno.env.get("TRON_DEPOSIT_PRIVATE_KEY");
+
+const supabase = createClient(
+  supabaseUrl,
+  serviceRoleKey,
+);
+
+const tronWeb = new TronWeb({
+  fullHost: "https://api.trongrid.io",
+  privateKey: depositPrivateKey || undefined,
+});
+
+Deno.serve(async (req) => {
+  try {
+    if (req.method !== "POST") {
+      return new Response(
+        JSON.stringify({ error: "POST required" }),
+        {
+          status: 405,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const authHeader = req.headers.get("Authorization");
+
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Missing authorization" }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const userClient = createClient(
+      supabaseUrl,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      {
+        global: {
+          headers: {
+            Authorization: authHeader,
+          },
+        },
+      },
+    );
+
+    const {
+      data: { user },
+      error: userError,
+    } = await userClient.auth.getUser();
+
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    // Check whether this user already has a deposit address.
+    const { data: existingWallet, error: existingError } =
+      await supabase
+        .from("wallets")
+        .select("id, address, network, token, status")
+        .eq("user_id", user.id)
+        .eq("network", "TRON")
+        .eq("token", "USDT")
+        .maybeSingle();
+
+    if (existingError) {
+      throw existingError;
+    }
+
+    if (existingWallet) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          wallet: existingWallet,
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    /*
+      IMPORTANT:
+      Do NOT generate a random address here for production.
+
+      A real deposit system needs a secure wallet derivation/custody
+      system that creates a unique address for each user and allows
+      the backend to monitor and eventually sweep those deposits.
+    */
+
+    if (!depositPrivateKey) {
+      return new Response(
+        JSON.stringify({
+          error: "Deposit wallet is not configured yet",
+          code: "DEPOSIT_WALLET_NOT_CONFIGURED",
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const baseAddress = tronWeb.address.fromPrivateKey(
+      depositPrivateKey,
+    );
+
+    if (!baseAddress) {
+      throw new Error("Could not derive deposit wallet address");
+    }
+
+    /*
+      TEMPORARY SAFETY STOP:
+
+      Do not assign the same platform address to every user.
+      We will replace this with deterministic/unique deposit-address
+      derivation before accepting real deposits.
+    */
+
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: "Unique deposit-address derivation is not configured yet",
+        platformAddress: baseAddress,
+      }),
+      {
+        status: 409,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  } catch (error) {
+    console.error("create-deposit-address error:", error);
+
+    return new Response(
+      JSON.stringify({
+        error: error instanceof Error
+          ? error.message
+          : "Internal server error",
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  }
+});

@@ -1,5555 +1,4519 @@
 index.html
 
-<!DOCTYPE html>  <html lang="en">      <head>      
-<meta charset="UTF-8">      
-<meta name="viewport" content="width=device-width,initial-scale=1.0">  <meta name="theme-color" content="#087f73">      
-<meta name="mobile-web-app-capable" content="yes">      
-<meta name="apple-mobile-web-app-capable" content="yes">      
-<meta name="apple-mobile-web-app-status-bar-style" content="default">      
-<meta name="apple-mobile-web-app-title" content="P2P Social">  <link rel="manifest" href="./manifest.json">      
-<link rel="icon" href="./p2p-logo.svg" type="image/svg+xml">  <title>P2P Social</title>  <style>      *{
-box-sizing:border-box;
-margin:0;
-padding:0;
-font-family:Arial,sans-serif;
-}
-
-html,body{
-min-height:100%;
-}
-
-body{
-background:#f5f7fb;
-color:#172033;
-padding-bottom:78px;
-}
-
-button{
-font-family:Arial,sans-serif;
-}
-
-button:active{
-transform:scale(.97);
-}
-
-#app{
-display:none;
-}
-
-/* =====================================================
-AUTH
-===================================================== */
-
-#checkingAuth{
-position:fixed;
-inset:0;
-background:#075e54;
-color:white;
-display:flex;
-align-items:center;
-justify-content:center;
-flex-direction:column;
-gap:12px;
-z-index:99999;
-}
-
-.auth-logo{
-width:62px;
-height:62px;
-border-radius:18px;
-background:#087f73;
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:30px;
-box-shadow:0 8px 25px rgba(0,0,0,.2);
-}
-
-.auth-loading{
-font-size:14px;
-opacity:.9;
-}
-
-/* =====================================================
-HEADER
-===================================================== */
-
-header{
-background:linear-gradient(135deg,#075e54,#087f73);
-color:white;
-padding:18px;
-border-radius:0 0 22px 22px;
-}
-
-.top{
-display:flex;
-align-items:center;
-justify-content:space-between;
-gap:10px;
-}
-
-.logo-area{
-display:flex;
-align-items:center;
-gap:10px;
-min-width:0;
-}
-
-.logo{
-width:45px;
-height:45px;
-border-radius:14px;
-background:linear-gradient(135deg,#064e46,#10a889);
-position:relative;
-display:flex;
-justify-content:center;
-align-items:center;
-flex-shrink:0;
-box-shadow:0 6px 15px rgba(0,0,0,.18);
-}
-
-.logo .p-left{
-position:absolute;
-left:8px;
-top:10px;
-width:13px;
-height:25px;
-border:4px solid white;
-border-right:0;
-border-radius:8px 0 0 8px;
-}
-
-.logo .p-right{
-position:absolute;
-right:8px;
-top:10px;
-width:13px;
-height:25px;
-border:4px solid white;
-border-left:0;
-border-radius:0 8px 8px 0;
-}
-
-.logo .center{
-width:12px;
-height:12px;
-background:white;
-border-radius:50%;
-position:absolute;
-z-index:5;
-}
-
-.logo .dot{
-width:4px;
-height:4px;
-background:#087f73;
-border-radius:50%;
-position:absolute;
-top:4px;
-left:4px;
-}
-
-.brand{
-font-size:21px;
-font-weight:bold;
-white-space:nowrap;
-}
-
-.brand span{
-color:#b9fff1;
-}
-
-.top-actions{
-display:flex;
-align-items:center;
-gap:6px;
-}
-
-.auth-btn{
-border:none;
-border-radius:9px;
-padding:8px 10px;
-font-size:12px;
-font-weight:bold;
-cursor:pointer;
-}
-
-.logout-btn{
-background:#e74c3c;
-color:white;
-}
-
-.notification-wrap{
-position:relative;
-}
-
-.notification{
-width:38px;
-height:38px;
-border:none;
-background:transparent;
-color:white;
-font-size:23px;
-cursor:pointer;
-position:relative;
-}
-
-.notification-badge{
-position:absolute;
-top:-2px;
-right:-2px;
-min-width:18px;
-height:18px;
-padding:0 5px;
-border-radius:20px;
-background:#e74c3c;
-color:white;
-font-size:10px;
-font-weight:bold;
-display:none;
-align-items:center;
-justify-content:center;
-border:2px solid #087f73;
-}
-
-.notification-panel{
-display:none;
-position:absolute;
-right:0;
-top:45px;
-width:330px;
-max-width:calc(100vw - 24px);
-background:white;
-color:#172033;
-border-radius:16px;
-box-shadow:0 10px 35px rgba(0,0,0,.2);
-overflow:hidden;
-z-index:3000;
-}
-
-.notification-panel.open{
-display:block;
-}
-
-.notification-header{
-display:flex;
-align-items:center;
-justify-content:space-between;
-padding:14px;
-border-bottom:1px solid #edf0f4;
-}
-
-.mark-all{
-border:none;
-background:none;
-color:#087f73;
-font-size:11px;
-font-weight:bold;
-cursor:pointer;
-}
-
-.notification-list{
-max-height:380px;
-overflow-y:auto;
-}
-
-.notification-item{
-display:flex;
-gap:10px;
-padding:12px 14px;
-border-bottom:1px solid #f0f2f5;
-cursor:pointer;
-}
-
-.notification-item.unread{
-background:#edf9f6;
-}
-
-.notification-icon{
-width:38px;
-height:38px;
-border-radius:50%;
-background:#dff3ee;
-display:flex;
-align-items:center;
-justify-content:center;
-flex-shrink:0;
-font-size:18px;
-}
-
-.notification-content{
-min-width:0;
-flex:1;
-}
-
-.notification-title{
-font-weight:bold;
-font-size:13px;
-}
-
-.notification-body{
-font-size:12px;
-color:#687386;
-margin-top:3px;
-line-height:1.4;
-}
-
-.notification-time{
-font-size:10px;
-color:#9299a5;
-margin-top:5px;
-}
-
-.no-notifications{
-padding:30px 15px;
-text-align:center;
-color:#858d99;
-font-size:13px;
-}
-
-.user-info{
-display:flex;
-align-items:center;
-gap:5px;
-margin-top:12px;
-font-size:13px;
-}
-
-.premium-user-badge{
-font-size:13px;
-font-weight:bold;
-}
-
-.search{
-margin-top:18px;
-background:white;
-color:#172033;
-border-radius:14px;
-padding:12px 15px;
-display:flex;
-align-items:center;
-gap:10px;
-}
-
-.search input{
-border:none;
-outline:none;
-width:100%;
-font-size:15px;
-}
-
-/* =====================================================
-PREMIUM QUICK CARD
-===================================================== */
-
-.premium-summary{
-margin:16px 18px 0;
-background:white;
-border-radius:18px;
-padding:16px;
-box-shadow:0 4px 15px rgba(0,0,0,.06);
-}
-
-.premium-summary-top{
-display:flex;
-align-items:center;
-justify-content:space-between;
-gap:10px;
-}
-
-.premium-summary-title{
-font-size:17px;
-font-weight:bold;
-}
-
-.premium-current{
-padding:6px 10px;
-border-radius:20px;
-background:#f1f3f6;
-font-size:11px;
-font-weight:bold;
-}
-
-.premium-summary-text{
-color:#687386;
-font-size:12px;
-line-height:1.5;
-margin-top:8px;
-}
-
-.premium-detail-btn{
-width:100%;
-margin-top:12px;
-border:none;
-border-radius:10px;
-padding:11px;
-background:#087f73;
-color:white;
-font-weight:bold;
-cursor:pointer;
-}
-
-/* =====================================================
-WALLET
-===================================================== */
-
-.wallet{
-margin:18px;
-background:linear-gradient(135deg,#172033,#29364f);
-color:white;
-border-radius:20px;
-padding:20px;
-box-shadow:0 8px 25px rgba(0,0,0,.12);
-}
-
-.wallet-title{
-font-size:14px;
-opacity:.8;
-}
-
-.wallet-balance{
-font-size:28px;
-font-weight:bold;
-margin:8px 0;
-}
-
-.wallet-balance-label{
-font-size:11px;
-opacity:.7;
-}
-
-.wallet-row{
-display:flex;
-justify-content:space-between;
-margin-top:15px;
-font-size:14px;
-}
-
-.wallet-row strong{
-font-size:15px;
-}
-
-.wallet-buttons{
-display:flex;
-gap:10px;
-margin-top:18px;
-}
-
-.wallet-buttons button{
-flex:1;
-border:none;
-padding:11px;
-border-radius:10px;
-cursor:pointer;
-font-weight:bold;
-}
-
-.deposit{
-background:#16a085;
-color:white;
-}
-
-.wallet-button{
-background:white;
-color:#172033;
-}
-
-/* =====================================================
-SECTIONS
-===================================================== */
-
-section{
-padding:5px 18px 18px;
-}
-
-.section-title{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:12px;
-}
-
-.section-title h2,
-.posts-title h2{
-font-size:19px;
-}
-
-.see-all{
-color:#087f73;
-font-size:13px;
-font-weight:bold;
-cursor:pointer;
-}
-
-/* =====================================================
-LIVE
-===================================================== */
-
-.live-container{
-display:flex;
-gap:14px;
-overflow-x:auto;
-padding-bottom:5px;
-}
-
-.live-card{
-min-width:125px;
-background:white;
-border-radius:15px;
-overflow:hidden;
-box-shadow:0 3px 12px rgba(0,0,0,.07);
-cursor:pointer;
-}
-
-.live-image{
-height:125px;
-background:linear-gradient(135deg,#ff6b6b,#6c5ce7);
-position:relative;
-display:flex;
-justify-content:center;
-align-items:center;
-font-size:45px;
-}
-
-.live-badge{
-position:absolute;
-top:8px;
-left:8px;
-background:#e74c3c;
-color:white;
-padding:4px 7px;
-border-radius:6px;
-font-size:10px;
-font-weight:bold;
-}
-
-.viewers{
-position:absolute;
-bottom:7px;
-right:7px;
-background:rgba(0,0,0,.6);
-color:white;
-padding:4px 7px;
-border-radius:8px;
-font-size:10px;
-}
-
-.live-name{
-padding:10px;
-font-size:13px;
-font-weight:bold;
-}
-
-/* =====================================================
+<!DOCTYPE html>  <html lang="en">  
+<head>  
+<meta charset="UTF-8">  
+<meta name="viewport" content="width=device-width, initial-scale=1.0">  <meta name="theme-color" content="#087f73">  
+<meta name="mobile-web-app-capable" content="yes">  
+<meta name="apple-mobile-web-app-capable" content="yes">  
+<meta name="apple-mobile-web-app-status-bar-style" content="default">  
+<meta name="apple-mobile-web-app-title" content="P2P Social">  <link rel="manifest" href="./manifest.json">  
+<link rel="icon" href="./p2p-logo.svg" type="image/svg+xml">  <title>P2P Social</title>  <style>  
+  
+*{  
+  box-sizing:border-box;  
+  margin:0;  
+  padding:0;  
+  font-family:Arial,sans-serif;  
+}  
+  
+body{  
+  background:#f5f7fb;  
+  color:#172033;  
+  padding-bottom:75px;  
+}  
+  
+/* =========================  
+   HEADER  
+========================= */  
+  
+header{  
+  background:linear-gradient(135deg,#075e54,#087f73);  
+  color:white;  
+  padding:18px;  
+  border-radius:0 0 22px 22px;  
+}  
+  
+.top{  
+  display:flex;  
+  align-items:center;  
+  justify-content:space-between;  
+  gap:10px;  
+}  
+  
+.logo-area{  
+  display:flex;  
+  align-items:center;  
+  gap:10px;  
+  min-width:0;  
+}  
+  
+.logo{  
+  width:45px;  
+  height:45px;  
+  border-radius:14px;  
+  background:linear-gradient(135deg,#064e46,#10a889);  
+  position:relative;  
+  display:flex;  
+  justify-content:center;  
+  align-items:center;  
+  flex-shrink:0;  
+  box-shadow:0 6px 15px rgba(0,0,0,.18);  
+}  
+  
+.logo .p-left{  
+  position:absolute;  
+  left:8px;  
+  top:10px;  
+  width:13px;  
+  height:25px;  
+  border:4px solid white;  
+  border-right:0;  
+  border-radius:8px 0 0 8px;  
+}  
+  
+.logo .p-right{  
+  position:absolute;  
+  right:8px;  
+  top:10px;  
+  width:13px;  
+  height:25px;  
+  border:4px solid white;  
+  border-left:0;  
+  border-radius:0 8px 8px 0;  
+}  
+  
+.logo .center{  
+  width:12px;  
+  height:12px;  
+  background:white;  
+  border-radius:50%;  
+  position:absolute;  
+  display:flex;  
+  justify-content:center;  
+  align-items:center;  
+  z-index:5;  
+}  
+  
+.logo .dot{  
+  width:4px;  
+  height:4px;  
+  background:#087f73;  
+  border-radius:50%;  
+}  
+  
+.brand{  
+  font-size:21px;  
+  font-weight:bold;  
+  white-space:nowrap;  
+}  
+  
+.brand span{  
+  color:#b9fff1;  
+}  
+  
+.top-actions{  
+  display:flex;  
+  align-items:center;  
+  gap:6px;  
+}  
+  
+.auth-btn{  
+  border:none;  
+  border-radius:9px;  
+  padding:8px 10px;  
+  font-size:12px;  
+  font-weight:bold;  
+  cursor:pointer;  
+}  
+  
+.login-btn{  
+  background:white;  
+  color:#087f73;  
+}  
+  
+.register-btn{  
+  background:#16a085;  
+  color:white;  
+  border:1px solid rgba(255,255,255,.7);  
+}  
+  
+.logout-btn{  
+  background:#e74c3c;  
+  color:white;  
+  display:none;  
+}  
+  
+/* =========================  
+   NOTIFICATIONS  
+========================= */  
+  
+.notification-wrap{  
+  position:relative;  
+}  
+  
+.notification{  
+  width:38px;  
+  height:38px;  
+  border:none;  
+  background:transparent;  
+  color:white;  
+  font-size:23px;  
+  cursor:pointer;  
+  display:flex;  
+  align-items:center;  
+  justify-content:center;  
+  position:relative;  
+}  
+  
+.notification-badge{  
+  position:absolute;  
+  top:-2px;  
+  right:-2px;  
+  min-width:18px;  
+  height:18px;  
+  padding:0 5px;  
+  border-radius:20px;  
+  background:#e74c3c;  
+  color:white;  
+  font-size:10px;  
+  font-weight:bold;  
+  display:none;  
+  align-items:center;  
+  justify-content:center;  
+  border:2px solid #087f73;  
+}  
+  
+.notification-panel{  
+  display:none;  
+  position:absolute;  
+  right:0;  
+  top:45px;  
+  width:330px;  
+  max-width:calc(100vw - 24px);  
+  background:white;  
+  color:#172033;  
+  border-radius:16px;  
+  box-shadow:0 10px 35px rgba(0,0,0,.2);  
+  overflow:hidden;  
+  z-index:3000;  
+}  
+  
+.notification-panel.open{  
+  display:block;  
+}  
+  
+.notification-header{  
+  display:flex;  
+  align-items:center;  
+  justify-content:space-between;  
+  padding:14px;  
+  border-bottom:1px solid #edf0f4;  
+}  
+  
+.mark-all{  
+  border:none;  
+  background:none;  
+  color:#087f73;  
+  font-size:11px;  
+  font-weight:bold;  
+  cursor:pointer;  
+}  
+  
+.notification-list{  
+  max-height:380px;  
+  overflow-y:auto;  
+}  
+  
+.notification-item{  
+  display:flex;  
+  gap:10px;  
+  padding:12px 14px;  
+  border-bottom:1px solid #f0f2f5;  
+  cursor:pointer;  
+}  
+  
+.notification-item.unread{  
+  background:#edf9f6;  
+}  
+  
+.notification-icon{  
+  width:38px;  
+  height:38px;  
+  border-radius:50%;  
+  background:#dff3ee;  
+  display:flex;  
+  align-items:center;  
+  justify-content:center;  
+  flex-shrink:0;  
+  font-size:18px;  
+}  
+  
+.notification-content{  
+  min-width:0;  
+  flex:1;  
+}  
+  
+.notification-title{  
+  font-weight:bold;  
+  font-size:13px;  
+}  
+  
+.notification-body{  
+  font-size:12px;  
+  color:#687386;  
+  margin-top:3px;  
+  line-height:1.4;  
+}  
+  
+.notification-time{  
+  font-size:10px;  
+  color:#9299a5;  
+  margin-top:5px;  
+}  
+  
+.no-notifications{  
+  padding:30px 15px;  
+  text-align:center;  
+  color:#858d99;  
+  font-size:13px;  
+}  
+  
+/* =========================  
+   USER  
+========================= */  
+  
+.user-info{  
+  display:none;  
+  margin-top:12px;  
+  font-size:13px;  
+}  
+  
+/* =========================  
+   SEARCH  
+========================= */  
+  
+.search{  
+  margin-top:18px;  
+  background:white;  
+  color:#172033;  
+  border-radius:14px;  
+  padding:12px 15px;  
+  display:flex;  
+  align-items:center;  
+  gap:10px;  
+}  
+  
+.search input{  
+  border:none;  
+  outline:none;  
+  width:100%;  
+  font-size:15px;  
+}  
+  
+/* =========================  
+   WALLET  
+========================= */  
+  
+.wallet{  
+  margin:18px;  
+  background:linear-gradient(135deg,#172033,#29364f);  
+  color:white;  
+  border-radius:20px;  
+  padding:20px;  
+  box-shadow:0 8px 25px rgba(0,0,0,.12);  
+}  
+  
+.wallet-title{  
+  font-size:14px;  
+  opacity:.8;  
+}  
+  
+.wallet-balance{  
+  font-size:28px;  
+  font-weight:bold;  
+  margin:8px 0;  
+}  
+  
+.wallet-row{  
+  display:flex;  
+  justify-content:space-between;  
+  margin-top:15px;  
+  font-size:14px;  
+}  
+  
+.wallet-buttons{  
+  display:flex;  
+  gap:10px;  
+  margin-top:18px;  
+}  
+  
+.wallet-buttons button{  
+  flex:1;  
+  border:none;  
+  padding:11px;  
+  border-radius:10px;  
+  cursor:pointer;  
+  font-weight:bold;  
+}  
+  
+.deposit{  
+  background:#16a085;  
+  color:white;  
+}  
+  
+.withdraw{  
+  background:white;  
+  color:#172033;  
+}  
+  
+/* =========================  
+   SECTIONS  
+========================= */  
+  
+section{  
+  padding:5px 18px 18px;  
+}  
+  
+.section-title{  
+  display:flex;  
+  justify-content:space-between;  
+  align-items:center;  
+  margin-bottom:12px;  
+}  
+  
+.section-title h2{  
+  font-size:19px;  
+}  
+  
+.see-all{  
+  color:#087f73;  
+  font-size:13px;  
+  font-weight:bold;  
+  cursor:pointer;  
+}  
+  
+/* =========================  
+   LIVE  
+========================= */  
+  
+.live-container{  
+  display:flex;  
+  gap:14px;  
+  overflow-x:auto;  
+  padding-bottom:5px;  
+}  
+  
+.live-card{  
+  min-width:125px;  
+  background:white;  
+  border-radius:15px;  
+  overflow:hidden;  
+  box-shadow:0 3px 12px rgba(0,0,0,.07);  
+  cursor:pointer;  
+}  
+  
+.live-image{  
+  height:125px;  
+  background:linear-gradient(135deg,#ff6b6b,#6c5ce7);  
+  position:relative;  
+  display:flex;  
+  justify-content:center;  
+  align-items:center;  
+  font-size:45px;  
+}  
+  
+.live-badge{  
+  position:absolute;  
+  top:8px;  
+  left:8px;  
+  background:#e74c3c;  
+  color:white;  
+  padding:4px 7px;  
+  border-radius:6px;  
+  font-size:10px;  
+  font-weight:bold;  
+}  
+  
+.viewers{  
+  position:absolute;  
+  bottom:7px;  
+  right:7px;  
+  background:rgba(0,0,0,.6);  
+  color:white;  
+  padding:4px 7px;  
+  border-radius:8px;  
+  font-size:10px;  
+}  
+  
+.live-name{  
+  padding:10px;  
+  font-size:13px;  
+  font-weight:bold;  
+}  
+  
+/* =========================  
+   REAL P2P AVAILABLE OFFERS  
+========================= */  
+  
+.p2p-offers{  
+  display:flex;  
+  flex-direction:column;  
+  gap:12px;  
+}  
+  
+.p2p-card{  
+  background:white;  
+  border-radius:16px;  
+  padding:16px;  
+  box-shadow:0 3px 12px rgba(0,0,0,.06);  
+}  
+  
+.p2p-card-header{  
+  display:flex;  
+  justify-content:space-between;  
+  align-items:center;  
+  gap:10px;  
+}  
+  
+.seller{  
+  display:flex;  
+  align-items:center;  
+  gap:9px;  
+  min-width:0;  
+}  
+  
+.avatar{  
+  width:40px;  
+  height:40px;  
+  border-radius:50%;  
+  background:#dfeeea;  
+  display:flex;  
+  align-items:center;  
+  justify-content:center;  
+  font-weight:bold;  
+  color:#087f73;  
+  flex-shrink:0;  
+  overflow:hidden;  
+}  
+  
+.avatar img{  
+  width:100%;  
+  height:100%;  
+  object-fit:cover;  
+}  
+  
+.username{  
+  font-weight:bold;  
+  font-size:14px;  
+  overflow:hidden;  
+  text-overflow:ellipsis;  
+  white-space:nowrap;  
+}  
+  
+.online{  
+  color:#16a085;  
+  font-size:11px;  
+  margin-top:3px;  
+}  
+  
+.rate{  
+  text-align:right;  
+  flex-shrink:0;  
+}  
+  
+.rate strong{  
+  display:block;  
+  font-size:17px;  
+}  
+  
+.rate small{  
+  color:#777;  
+}  
+  
+.trade-info{  
+  display:flex;  
+  justify-content:space-between;  
+  gap:10px;  
+  margin:15px 0;  
+  font-size:13px;  
+}  
+  
+.trade-info span{  
+  min-width:0;  
+}  
+  
+.buy-btn,  
+.sell-btn{  
+  width:100%;  
+  border:none;  
+  padding:12px;  
+  border-radius:10px;  
+  font-weight:bold;  
+  cursor:pointer;  
+}  
+  
+.buy-btn{  
+  background:#087f73;  
+  color:white;  
+}  
+  
+.sell-btn{  
+  background:#eaf7f4;  
+  color:#087f73;  
+}  
+  
+.offer-type{  
+  display:inline-block;  
+  margin-bottom:8px;  
+  padding:4px 7px;  
+  border-radius:6px;  
+  background:#eaf7f4;  
+  color:#087f73;  
+  font-size:10px;  
+  font-weight:bold;  
+}  
+  
+.no-offers{  
+  background:white;  
+  border-radius:16px;  
+  padding:25px 18px;  
+  text-align:center;  
+  color:#7b8492;  
+  box-shadow:0 3px 12px rgba(0,0,0,.05);  
+}  
+  
+.no-offers-icon{  
+  font-size:32px;  
+  margin-bottom:8px;  
+}  
+  
+.no-offers strong{  
+  display:block;  
+  color:#172033;  
+  margin-bottom:5px;  
+}  
+  
+.no-offers small{  
+  font-size:12px;  
+}  
+  
+/* =========================  
+   POSTS  
+========================= */  
+  
+.posts-section{  
+  padding-top:0;  
+}  
+  
+.posts-title{  
+  display:flex;  
+  justify-content:space-between;  
+  align-items:center;  
+  margin-bottom:12px;  
+}  
+  
+.posts-title h2{  
+  font-size:19px;  
+}  
+  
+.create-post-btn{  
+  border:none;  
+  background:#087f73;  
+  color:white;  
+  padding:9px 12px;  
+  border-radius:10px;  
+  font-weight:bold;  
+  cursor:pointer;  
+}  
+  
+.posts-feed{  
+  display:flex;  
+  flex-direction:column;  
+  gap:12px;  
+}  
+  
+.post-card{  
+  background:white;  
+  border-radius:16px;  
+  padding:16px;  
+  box-shadow:0 3px 12px rgba(0,0,0,.06);  
+}  
+  
+.post-header{  
+  display:flex;  
+  align-items:center;  
+  gap:10px;  
+  cursor:pointer;  
+}  
+  
+.post-avatar{  
+  width:42px;  
+  height:42px;  
+  border-radius:50%;  
+  object-fit:cover;  
+  background:#dfeeea;  
+  display:flex;  
+  align-items:center;  
+  justify-content:center;  
+  color:#087f73;  
+  font-weight:bold;  
+  flex-shrink:0;  
+}  
+  
+.post-user-info{  
+  flex:1;  
+  min-width:0;  
+}  
+  
+.post-name{  
+  font-weight:bold;  
+  font-size:14px;  
+  overflow:hidden;  
+  text-overflow:ellipsis;  
+}  
+  
+.post-handle{  
+  color:#7a8494;  
+  font-size:12px;  
+  margin-top:3px;  
+}  
+  
+.post-time{  
+  color:#8a93a1;  
+  font-size:11px;  
+  white-space:nowrap;  
+}  
+  
+.post-menu{  
+  border:none;  
+  background:none;  
+  font-size:18px;  
+  cursor:pointer;  
+}  
+  
+.post-content{  
+  margin-top:13px;  
+  color:#303b4d;  
+  font-size:14px;  
+  line-height:1.55;  
+  white-space:pre-wrap;  
+  word-break:break-word;  
+}  
+  
+.post-actions{  
+  display:flex;  
+  gap:18px;  
+  margin-top:15px;  
+  padding-top:12px;  
+  border-top:1px solid #edf0f4;  
+}  
+  
+.post-action{  
+  border:none;  
+  background:transparent;  
+  color:#687386;  
+  cursor:pointer;  
+  font-size:13px;  
+}  
+  
+.post-action.liked{  
+  color:#e74c3c;  
+  font-weight:bold;  
+}  
+  
+/* =========================  
+   COMMENTS  
+========================= */  
+  
+.comments-box{  
+  margin-top:12px;  
+  border-top:1px solid #edf0f4;  
+  padding-top:10px;  
+}  
+  
+.comment{  
+  display:flex;  
+  gap:8px;  
+  margin-bottom:9px;  
+}  
+  
+.comment-avatar{  
+  width:32px;  
+  height:32px;  
+  border-radius:50%;  
+  background:#dfeeea;  
+  display:flex;  
+  justify-content:center;  
+  align-items:center;  
+  color:#087f73;  
+  font-weight:bold;  
+  flex-shrink:0;  
+  overflow:hidden;  
+}  
+  
+.comment-avatar img{  
+  width:100%;  
+  height:100%;  
+  object-fit:cover;  
+}  
+  
+.comment-body{  
+  background:#f5f7fb;  
+  border-radius:12px;  
+  padding:8px 10px;  
+  flex:1;  
+  position:relative;  
+}  
+  
+.comment-name{  
+  font-size:12px;  
+  font-weight:bold;  
+  padding-right:20px;  
+}  
+  
+.comment-text{  
+  font-size:13px;  
+  color:#303b4d;  
+  margin-top:3px;  
+  white-space:pre-wrap;  
+  word-break:break-word;  
+}  
+  
+.comment-delete{  
+  position:absolute;  
+  top:6px;  
+  right:7px;  
+  border:none;  
+  background:none;  
+  color:#e74c3c;  
+  font-size:11px;  
+  cursor:pointer;  
+}  
+  
+.comment-input-row{  
+  display:flex;  
+  gap:7px;  
+  margin-top:10px;  
+}  
+  
+.comment-input{  
+  flex:1;  
+  border:1px solid #dfe4eb;  
+  border-radius:10px;  
+  padding:9px 11px;  
+  outline:none;  
+  font-size:13px;  
+}  
+  
+.comment-send{  
+  border:none;  
+  background:#087f73;  
+  color:white;  
+  border-radius:10px;  
+  padding:0 13px;  
+  cursor:pointer;  
+  font-weight:bold;  
+}  
+  
+.view-comments{  
+  border:none;  
+  background:none;  
+  color:#087f73;  
+  font-size:12px;  
+  font-weight:bold;  
+  cursor:pointer;  
+  margin-bottom:5px;  
+}  
+  
+.no-posts,  
+.loading-posts{  
+  background:white;  
+  border-radius:16px;  
+  padding:25px;  
+  text-align:center;  
+  color:#7b8492;  
+  box-shadow:0 3px 12px rgba(0,0,0,.05);  
+}  
+  
+/* =========================  
+   LOAD MORE  
+========================= */  
+  
+.load-more{  
+  width:100%;  
+  margin-top:5px;  
+  border:none;  
+  background:white;  
+  color:#087f73;  
+  padding:13px;  
+  border-radius:12px;  
+  font-weight:bold;  
+  cursor:pointer;  
+  box-shadow:0 3px 12px rgba(0,0,0,.05);  
+}  
+  
+.load-more:disabled{  
+  color:#999;  
+  cursor:not-allowed;  
+}  
+  
+/* =========================  
+   CREATE POST MODAL  
+========================= */  
+  
+.modal{  
+  display:none;  
+  position:fixed;  
+  inset:0;  
+  background:rgba(0,0,0,.55);  
+  z-index:2000;  
+  align-items:center;  
+  justify-content:center;  
+  padding:20px;  
+}  
+  
+.modal-content{  
+  width:100%;  
+  max-width:450px;  
+  background:white;  
+  border-radius:18px;  
+  padding:20px;  
+}  
+  
+.modal-header{  
+  display:flex;  
+  justify-content:space-between;  
+  align-items:center;  
+  margin-bottom:15px;  
+}  
+  
+.modal-header h3{  
+  font-size:19px;  
+}  
+  
+.close-modal{  
+  border:none;  
+  background:none;  
+  font-size:25px;  
+  cursor:pointer;  
+}  
+  
+.post-textarea{  
+  width:100%;  
+  min-height:130px;  
+  resize:vertical;  
+  border:1px solid #dfe4eb;  
+  border-radius:12px;  
+  padding:12px;  
+  outline:none;  
+  font-size:14px;  
+}  
+  
+.visibility-label{  
+  display:block;  
+  margin:12px 0 6px;  
+  font-size:13px;  
+  font-weight:bold;  
+}  
+  
+.visibility-select{  
+  width:100%;  
+  border:1px solid #dfe4eb;  
+  border-radius:10px;  
+  padding:11px;  
+  background:white;  
+}  
+  
+.publish-btn{  
+  width:100%;  
+  margin-top:14px;  
+  border:none;  
+  background:#087f73;  
+  color:white;  
+  padding:12px;  
+  border-radius:10px;  
+  font-weight:bold;  
+  cursor:pointer;  
+}  
+  
+/* =========================  
+   BOTTOM NAV  
+========================= */  
+  
+.bottom-nav{  
+  position:fixed;  
+  bottom:0;  
+  left:0;  
+  right:0;  
+  height:68px;  
+  background:white;  
+  border-top:1px solid #ddd;  
+  display:flex;  
+  justify-content:space-around;  
+  align-items:center;  
+  z-index:1000;  
+}  
+  
+.nav-item{  
+  text-align:center;  
+  color:#777;  
+  font-size:11px;  
+  cursor:pointer;  
+}  
+  
+.nav-item span{  
+  display:block;  
+  font-size:22px;  
+  margin-bottom:3px;  
+}  
+  
+.nav-item.active{  
+  color:#087f73;  
+  font-weight:bold;  
+}  
+  
+button:active{  
+  transform:scale(.97);  
+}  
+  
+/* =========================  
+   MOBILE  
+========================= */  
+  
+@media(max-width:450px){  
+  
+  header{  
+    padding:16px 12px;  
+  }  
+  
+  .logo{  
+    width:43px;  
+    height:43px;  
+    border-radius:13px;  
+  }  
+  
+  .logo .p-left,  
+  .logo .p-right{  
+    top:9px;  
+    height:24px;  
+  }  
+  
+  .logo .p-left{  
+    left:8px;  
+  }  
+  
+  .logo .p-right{  
+    right:8px;  
+  }  
+  
+  .brand{  
+    font-size:19px;  
+  }  
+  
+  .auth-btn{  
+    padding:7px 8px;  
+    font-size:11px;  
+  }  
+  
+  .notification{  
+    font-size:21px;  
+  }  
+  
+  .wallet{  
+    margin:16px 12px;  
+  }  
+  
+  .wallet-balance{  
+    font-size:27px;  
+  }  
+  
+  .post-actions{  
+    gap:12px;  
+  }  
+  
+  .post-action{  
+    font-size:12px;  
+  }  
+  
+  .trade-info{  
+    flex-direction:column;  
+    gap:7px;  
+  }  
+  
+  .p2p-card-header{  
+    align-items:flex-start;  
+  }  
+  
+}  
+  
+</style>  </head>  <body>  <!-- =========================  
+     HEADER  
+========================= -->  <header>    <div class="top">  <div class="logo-area">  
+
+  <div class="logo" aria-label="P2P Social Logo">  
+
+    <div class="p-left"></div>  
+    <div class="p-right"></div>  
+
+    <div class="center">  
+      <div class="dot"></div>  
+    </div>  
+
+  </div>  
+
+  <div class="brand">  
+    P2P <span>Social</span>  
+  </div>  
+
+</div>  
+
+<div class="top-actions">  
+
+  <button  
+    id="loginBtn"  
+    class="auth-btn login-btn"  
+    onclick="openLogin()">  
+    Login  
+  </button>  
+
+  <button  
+    id="registerBtn"  
+    class="auth-btn register-btn"  
+    onclick="openRegister()">  
+    Register  
+  </button>  
+
+  <button  
+    id="logoutBtn"  
+    class="auth-btn logout-btn"  
+    onclick="logout()">  
+    Logout  
+  </button>  
+
+  <div class="notification-wrap">  
+
+    <button  
+      id="notificationButton"  
+      class="notification"  
+      onclick="toggleNotificationPanel(event)"  
+      aria-label="Notifications">  
+
+      🔔  
+
+      <span  
+        id="notificationBadge"  
+        class="notification-badge">  
+        0  
+      </span>  
+
+    </button>  
+
+    <div  
+      id="notificationPanel"  
+      class="notification-panel">  
+
+      <div class="notification-header">  
+
+        <strong>  
+          Notifications  
+        </strong>  
+
+        <button  
+          class="mark-all"  
+          onclick="markAllNotificationsRead()">  
+          Mark all read  
+        </button>  
+
+      </div>  
+
+      <div  
+        id="notificationList"  
+        class="notification-list">  
+
+        <div class="no-notifications">  
+          No notifications yet.  
+        </div>  
+
+      </div>  
+
+    </div>  
+
+  </div>  
+
+</div>
+
+  </div>    <div id="userInfo" class="user-info">  Logged in as:  
+<strong id="usernameDisplay"></strong>
+
+  </div>    <div class="search">  🔎  
+
+<input  
+  type="text"  
+  id="searchInput"  
+  placeholder="Search users, live rooms...">
+
+  </div>  </header>  <!-- =========================  
+     WALLET  
+========================= -->  <div class="wallet">    <div class="wallet-title">  
+    Total Wallet Balance  
+  </div>    <div  
+    class="wallet-balance"  
+    id="balanceDisplay">  
+    0 ETB  
+  </div>    <div class="wallet-row">  <span>🇪🇹 ETB</span>  
+
+<strong id="etbDisplay">  
+  0.00  
+</strong>
+
+  </div>    <div class="wallet-row">  <span>💵 USDT</span>  
+
+<strong id="usdtDisplay">  
+  0.00  
+</strong>
+
+  </div>    <div class="wallet-buttons">  <button  
+  class="deposit"  
+  onclick="openDeposit()">  
+  Deposit  
+</button>  
+
+<button  
+  class="withdraw"  
+  onclick="openWallet()">  
+  Wallet  
+</button>
+
+  </div>  </div>  <!-- =========================  
+     LIVE  
+========================= -->  <section>    <div class="section-title">  <h2>  
+  🔴 Live Now  
+</h2>  
+
+<span  
+  class="see-all"  
+  onclick="openLive()">  
+  See all  
+</span>
+
+  </div>    <div class="live-container">  <div  
+  class="live-card"  
+  onclick="openLive()">  
+
+  <div class="live-image">  
+
+    👩  
+
+    <span class="live-badge">  
+      LIVE  
+    </span>  
+
+    <span class="viewers">  
+      1.2K  
+    </span>  
+
+  </div>  
+
+  <div class="live-name">  
+    Hana Live  
+  </div>  
+
+</div>  
+
+<div  
+  class="live-card"  
+  onclick="openLive()">  
+
+  <div class="live-image">  
+
+    👨  
+
+    <span class="live-badge">  
+      LIVE  
+    </span>  
+
+    <span class="viewers">  
+      856  
+    </span>  
+
+  </div>  
+
+  <div class="live-name">  
+    Dawit Live  
+  </div>  
+
+</div>  
+
+<div  
+  class="live-card"  
+  onclick="openLive()">  
+
+  <div class="live-image">  
+
+    👩‍🦱  
+
+    <span class="live-badge">  
+      LIVE  
+    </span>  
+
+    <span class="viewers">  
+      543  
+    </span>  
+
+  </div>  
+
+  <div class="live-name">  
+    Meron Live  
+  </div>  
+
+</div>
+
+  </div>  </section>  <!-- =========================  
+     AVAILABLE P2P OFFERS  
+========================= -->  <section>    <div class="section-title">  <h2>  
+  🔄 Available Offers  
+</h2>  
+
+<span  
+  class="see-all"  
+  onclick="openWallet()">  
+  See all  
+</span>
+
+  </div>    <div  
+    id="p2pOffersContainer"  
+    class="p2p-offers">  <div class="no-offers">  
+
+  <div class="no-offers-icon">  
+    🔄  
+  </div>  
+
+  <strong>  
+    Loading available offers...  
+  </strong>  
+
+  <small>  
+    Please wait.  
+  </small>  
+
+</div>
+
+  </div>  </section>  <!-- =========================  
+     POSTS  
+========================= -->  <section class="posts-section">    <div class="posts-title">  <h2>  
+  📝 Public Posts  
+</h2>  
+
+<div  
+  style="display:flex;gap:7px;align-items:center;">  
+
+  <span  
+    class="see-all"  
+    onclick="loadPosts(true)">  
+    🔀 Shuffle  
+  </span>  
+
+  <button  
+    class="create-post-btn"  
+    onclick="openCreatePost()">  
+    + Post  
+  </button>  
+
+</div>
+
+  </div>    <div  
+    id="postsFeed"  
+    class="posts-feed">  <div class="loading-posts">  
+  Loading public posts...  
+</div>
+
+  </div>  <button  
+id="loadMoreBtn"  
+class="load-more"  
+onclick="loadMorePosts()"  
+style="display:none;">
+
+➕ Load more posts
+
+  </button>  </section>  <!-- =========================  
+     CREATE POST MODAL  
+========================= -->  <div  
+  id="createPostModal"  
+  class="modal">    <div class="modal-content">  <div class="modal-header">  
+
+  <h3>  
+    Create Post  
+  </h3>  
+
+  <button  
+    class="close-modal"  
+    onclick="closeCreatePost()">  
+    ×  
+  </button>  
+
+</div>  
+
+<textarea  
+  id="postContentInput"  
+  class="post-textarea"  
+  maxlength="5000"  
+  placeholder="What's on your mind?"></textarea>  
+
+<label class="visibility-label">  
+  Post visibility  
+</label>  
+
+<select  
+  id="postVisibility"  
+  class="visibility-select">  
+
+  <option value="public">  
+    🌍 Public  
+  </option>  
+
+  <option value="private">  
+    🔒 Private  
+  </option>  
+
+</select>  
+
+<button  
+  id="publishPostBtn"  
+  class="publish-btn"  
+  onclick="createPost()">  
+
+  Publish Post  
+
+</button>
+
+  </div>  </div>  <!-- =========================  
+     BOTTOM NAVIGATION  
+========================= -->  <nav class="bottom-nav">    <div  
+    class="nav-item active"  
+    onclick="window.scrollTo({top:0,behavior:'smooth'})">  <span>🏠</span>  
+Home
+
+  </div>    <div  
+    class="nav-item"  
+    onclick="openLive()">  <span>🔴</span>  
+Live
+
+  </div>    <div  
+    class="nav-item"  
+    onclick="openWallet()">  <span>🔄</span>  
 P2P
-===================================================== */
 
-.p2p-header-actions{
-display:flex;
-align-items:center;
-gap:8px;
-}
+  </div>    <div  
+    class="nav-item"  
+    onclick="openMessages()">  <span>💬</span>  
+Messages
 
-.create-offer-btn,
-.refresh-btn{
-border:none;
-border-radius:9px;
-padding:8px 10px;
-cursor:pointer;
-font-weight:bold;
-font-size:11px;
-}
+  </div>    <div  
+    class="nav-item"  
+    onclick="openProfile()">  <span>👤</span>  
+Profile
 
-.create-offer-btn{
-background:#087f73;
-color:white;
-}
-
-.refresh-btn{
-background:#eaf7f4;
-color:#087f73;
-}
-
-.p2p-offers{
-display:flex;
-flex-direction:column;
-gap:12px;
-}
-
-.p2p-card{
-background:white;
-border-radius:16px;
-padding:16px;
-box-shadow:0 3px 12px rgba(0,0,0,.06);
-position:relative;
-}
-
-.pin-label{
-position:absolute;
-top:10px;
-right:10px;
-font-size:10px;
-background:#fff4d6;
-color:#9a6b00;
-padding:4px 7px;
-border-radius:7px;
-font-weight:bold;
-}
-
-.p2p-card-header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-gap:10px;
-}
-
-.seller{
-display:flex;
-align-items:center;
-gap:9px;
-min-width:0;
-}
-
-.avatar{
-width:40px;
-height:40px;
-border-radius:50%;
-background:#dfeeea;
-display:flex;
-align-items:center;
-justify-content:center;
-font-weight:bold;
-color:#087f73;
-flex-shrink:0;
-overflow:hidden;
-}
-
-.avatar img{
-width:100%;
-height:100%;
-object-fit:cover;
-}
-
-.username{
-font-weight:bold;
-font-size:14px;
-overflow:hidden;
-text-overflow:ellipsis;
-white-space:nowrap;
-}
-
-.online{
-color:#16a085;
-font-size:11px;
-margin-top:3px;
-}
-
-.rate{
-text-align:right;
-flex-shrink:0;
-}
-
-.rate strong{
-display:block;
-font-size:17px;
-}
-
-.rate small{
-color:#777;
-}
-
-.trade-info{
-display:flex;
-justify-content:space-between;
-gap:10px;
-margin:15px 0;
-font-size:13px;
-}
-
-.buy-btn{
-width:100%;
-border:none;
-padding:12px;
-border-radius:10px;
-font-weight:bold;
-cursor:pointer;
-background:#087f73;
-color:white;
-}
-
-.offer-type{
-display:inline-block;
-margin-bottom:8px;
-padding:4px 7px;
-border-radius:6px;
-background:#eaf7f4;
-color:#087f73;
-font-size:10px;
-font-weight:bold;
-}
-
-.no-offers,
-.no-posts,
-.loading-posts{
-background:white;
-border-radius:16px;
-padding:25px 18px;
-text-align:center;
-color:#7b8492;
-box-shadow:0 3px 12px rgba(0,0,0,.05);
-}
-
-.no-offers-icon{
-font-size:32px;
-margin-bottom:8px;
-}
-
-.no-offers strong{
-display:block;
-color:#172033;
-margin-bottom:5px;
-}
-
-/* =====================================================
-POSTS
-===================================================== */
-
-.posts-section{
-padding-top:0;
-}
-
-.posts-title{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:12px;
-}
-
-.create-post-btn{
-border:none;
-background:#087f73;
-color:white;
-padding:9px 12px;
-border-radius:10px;
-font-weight:bold;
-cursor:pointer;
-}
-
-.posts-feed{
-display:flex;
-flex-direction:column;
-gap:12px;
-}
-
-.post-card{
-background:white;
-border-radius:16px;
-padding:16px;
-box-shadow:0 3px 12px rgba(0,0,0,.06);
-position:relative;
-}
-
-.post-pin{
-display:inline-block;
-margin-bottom:9px;
-background:#fff4d6;
-color:#9a6b00;
-border-radius:7px;
-padding:5px 8px;
-font-size:10px;
-font-weight:bold;
-}
-
-.post-header{
-display:flex;
-align-items:center;
-gap:10px;
-cursor:pointer;
-}
-
-.post-avatar{
-width:42px;
-height:42px;
-border-radius:50%;
-object-fit:cover;
-background:#dfeeea;
-display:flex;
-align-items:center;
-justify-content:center;
-color:#087f73;
-font-weight:bold;
-flex-shrink:0;
-overflow:hidden;
-}
-
-.post-avatar img{
-width:100%;
-height:100%;
-object-fit:cover;
-}
-
-.post-user-info{
-flex:1;
-min-width:0;
-}
-
-.post-name{
-font-weight:bold;
-font-size:14px;
-overflow:hidden;
-text-overflow:ellipsis;
-}
-
-.post-handle{
-color:#7a8494;
-font-size:12px;
-margin-top:3px;
-}
-
-.post-time{
-color:#8a93a1;
-font-size:11px;
-white-space:nowrap;
-}
-
-.post-menu{
-border:none;
-background:none;
-font-size:18px;
-cursor:pointer;
-}
-
-.post-content{
-margin-top:13px;
-color:#303b4d;
-font-size:14px;
-line-height:1.55;
-white-space:pre-wrap;
-word-break:break-word;
-}
-
-.post-media{
-margin-top:13px;
-border-radius:13px;
-overflow:hidden;
-background:#edf0f4;
-}
-
-.post-media img,
-.post-media video{
-width:100%;
-max-height:500px;
-object-fit:cover;
-display:block;
-}
-
-.post-type-label{
-display:inline-block;
-margin-top:10px;
-background:#edf8f5;
-color:#087f73;
-padding:4px 7px;
-border-radius:6px;
-font-size:10px;
-font-weight:bold;
-}
-
-.post-actions{
-display:flex;
-gap:18px;
-margin-top:15px;
-padding-top:12px;
-border-top:1px solid #edf0f4;
-flex-wrap:wrap;
-}
-
-.post-action{
-border:none;
-background:transparent;
-color:#687386;
-cursor:pointer;
-font-size:13px;
-}
-
-.post-action.liked{
-color:#e74c3c;
-font-weight:bold;
-}
-
-/* =====================================================
-COMMENTS
-===================================================== */
-
-.comments-box{
-margin-top:12px;
-border-top:1px solid #edf0f4;
-padding-top:10px;
-}
-
-.comment{
-display:flex;
-gap:8px;
-margin-bottom:9px;
-}
-
-.comment-avatar{
-width:32px;
-height:32px;
-border-radius:50%;
-background:#dfeeea;
-display:flex;
-justify-content:center;
-align-items:center;
-color:#087f73;
-font-weight:bold;
-flex-shrink:0;
-overflow:hidden;
-}
-
-.comment-avatar img{
-width:100%;
-height:100%;
-object-fit:cover;
-}
-
-.comment-body{
-background:#f5f7fb;
-border-radius:12px;
-padding:8px 10px;
-flex:1;
-position:relative;
-}
-
-.comment-name{
-font-size:12px;
-font-weight:bold;
-padding-right:20px;
-}
-
-.comment-text{
-font-size:13px;
-color:#303b4d;
-margin-top:3px;
-white-space:pre-wrap;
-word-break:break-word;
-}
-
-.comment-delete{
-position:absolute;
-top:6px;
-right:7px;
-border:none;
-background:none;
-color:#e74c3c;
-font-size:11px;
-cursor:pointer;
-}
-
-.comment-input-row{
-display:flex;
-gap:7px;
-margin-top:10px;
-}
-
-.comment-input{
-flex:1;
-border:1px solid #dfe4eb;
-border-radius:10px;
-padding:9px 11px;
-outline:none;
-font-size:13px;
-}
-
-.comment-send{
-border:none;
-background:#087f73;
-color:white;
-border-radius:10px;
-padding:0 13px;
-cursor:pointer;
-font-weight:bold;
-}
-
-.load-more{
-width:100%;
-margin-top:5px;
-border:none;
-background:white;
-color:#087f73;
-padding:13px;
-border-radius:12px;
-font-weight:bold;
-cursor:pointer;
-box-shadow:0 3px 12px rgba(0,0,0,.05);
-}
-
-/* =====================================================
-MODALS
-===================================================== */
-
-.modal{
-display:none;
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.55);
-z-index:5000;
-align-items:center;
-justify-content:center;
-padding:20px;
-}
-
-.modal-content{
-width:100%;
-max-width:500px;
-max-height:90vh;
-overflow-y:auto;
-background:white;
-border-radius:18px;
-padding:20px;
-}
-
-.modal-header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:15px;
-}
-
-.modal-header h3{
-font-size:19px;
-}
-
-.close-modal{
-border:none;
-background:none;
-font-size:25px;
-cursor:pointer;
-}
-
-/* =====================================================
-PREMIUM MODAL
-===================================================== */
-
-.premium-intro{
-color:#687386;
-font-size:13px;
-line-height:1.5;
-margin-bottom:15px;
-}
-
-.premium-plan{
-border:1px solid #e4e8ed;
-border-radius:15px;
-padding:15px;
-margin-bottom:12px;
-}
-
-.premium-plan.green{
-border-left:5px solid #16a085;
-}
-
-.premium-plan.blue{
-border-left:5px solid #3498db;
-}
-
-.premium-plan.purple{
-border-left:5px solid #8e44ad;
-}
-
-.plan-title{
-font-size:16px;
-font-weight:bold;
-}
-
-.plan-description{
-color:#687386;
-font-size:12px;
-line-height:1.5;
-margin-top:6px;
-}
-
-.plan-prices{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:7px;
-margin-top:10px;
-}
-
-.plan-price{
-background:#f6f8fa;
-padding:8px;
-border-radius:8px;
-font-size:11px;
-font-weight:bold;
-}
-
-.premium-rules{
-margin-top:15px;
-}
-
-.premium-rules h4{
-margin-bottom:8px;
-}
-
-.rule{
-display:flex;
-gap:8px;
-margin:8px 0;
-color:#4d5869;
-font-size:12px;
-line-height:1.45;
-}
-
-.rule-icon{
-flex-shrink:0;
-}
-
-.threshold-box{
-background:#f7f3ff;
-border:1px solid #e3d6ff;
-border-radius:13px;
-padding:13px;
-margin-top:14px;
-}
-
-.threshold-box strong{
-color:#7137a8;
-}
-
-.info-box{
-background:#f5f7fb;
-border-radius:12px;
-padding:13px;
-margin-top:10px;
-font-size:12px;
-color:#596477;
-line-height:1.5;
-}
-
-/* =====================================================
-CREATE POST
-===================================================== */
-
-.post-textarea{
-width:100%;
-min-height:130px;
-resize:vertical;
-border:1px solid #dfe4eb;
-border-radius:12px;
-padding:12px;
-outline:none;
-font-size:14px;
-}
-
-.visibility-label{
-display:block;
-margin:12px 0 6px;
-font-size:13px;
-font-weight:bold;
-}
-
-.visibility-select,
-.media-type-select{
-width:100%;
-border:1px solid #dfe4eb;
-border-radius:10px;
-padding:11px;
-background:white;
-}
-
-.media-section{
-margin-top:12px;
-}
-
-.media-label{
-display:block;
-font-size:13px;
-font-weight:bold;
-margin-bottom:7px;
-}
-
-.media-note{
-font-size:11px;
-color:#7a8494;
-margin-top:6px;
-line-height:1.4;
-}
-
-.media-input{
-width:100%;
-border:1px solid #dfe4eb;
-border-radius:10px;
-padding:10px;
-}
-
-.media-preview{
-margin-top:10px;
-border-radius:10px;
-overflow:hidden;
-background:#f1f3f6;
-}
-
-.media-preview img,
-.media-preview video{
-width:100%;
-max-height:280px;
-display:block;
-object-fit:cover;
-}
-
-.locked-feature{
-background:#f7f8fa;
-border:1px dashed #ccd2da;
-border-radius:11px;
-padding:12px;
-color:#687386;
-font-size:12px;
-line-height:1.45;
-}
-
-.publish-btn{
-width:100%;
-margin-top:14px;
-border:none;
-background:#087f73;
-color:white;
-padding:12px;
-border-radius:10px;
-font-weight:bold;
-cursor:pointer;
-}
-
-/* =====================================================
-BOTTOM NAV
-===================================================== */
-
-.bottom-nav{
-position:fixed;
-bottom:0;
-left:0;
-right:0;
-height:68px;
-background:white;
-border-top:1px solid #ddd;
-display:flex;
-justify-content:space-around;
-align-items:center;
-z-index:1000;
-}
-
-.nav-item{
-text-align:center;
-color:#777;
-font-size:11px;
-cursor:pointer;
-}
-
-.nav-item span{
-display:block;
-font-size:22px;
-margin-bottom:3px;
-}
-
-.nav-item.active{
-color:#087f73;
-font-weight:bold;
-}
-
-/* =====================================================
-MOBILE
-===================================================== */
-
-@media(max-width:450px){
-
-header{
-padding:16px 12px;
-}
-
-.brand{
-font-size:19px;
-}
-
-.wallet{
-margin:16px 12px;
-}
-
-.premium-summary{
-margin:14px 12px 0;
-}
-
-.wallet-balance{
-font-size:27px;
-}
-
-.post-actions{
-gap:12px;
-}
-
-.post-action{
-font-size:12px;
-}
-
-.trade-info{
-flex-direction:column;
-gap:7px;
-}
-
-.notification-panel{
-right:-45px;
-}
-
-.plan-prices{
-grid-template-columns:1fr;
-}
-
-}
-
-</style>  </head>  <body>  <!-- =====================================================      
-AUTH CHECK      
-===================================================== -->  <div id="checkingAuth">    <div class="auth-logo">
-P2P
-
-  </div>    <div>      
-    <strong>P2P Social</strong>      
-  </div>    <div class="auth-loading">      
-    Checking login...      
-  </div>  </div>  <!-- =====================================================      
-     APP      
-===================================================== -->  <div id="app">  <header>    <div class="top">  <div class="logo-area">        <div class="logo">      
-    <div class="p-left"></div>      
-    <div class="p-right"></div>      <div class="center">      
-  <div class="dot"></div>      
-</div>
-
-  </div>        <div class="brand">      
-    P2P <span>Social</span>      
-  </div>      </div>      <div class="top-actions">      <button      
-id="logoutBtn"      
-class="auth-btn logout-btn"      
-onclick="logout()">
-Logout
-</button>
-
-  <div class="notification-wrap">      <button      
-  id="notificationButton"      
-  class="notification"      
-  onclick="toggleNotificationPanel(event)">      
-  🔔      
-
-  <span      
-    id="notificationBadge"      
-    class="notification-badge">      
-    0      
-  </span>      
-
-</button>      
-
-<div      
-  id="notificationPanel"      
-  class="notification-panel">      
-
-  <div class="notification-header">      
-
-    <strong>      
-      Notifications      
-    </strong>      
-
-    <button      
-      class="mark-all"      
-      onclick="markAllNotificationsRead()">      
-      Mark all read      
-    </button>      
-
-  </div>      
-
-  <div      
-    id="notificationList"      
-    class="notification-list">      
-
-    <div class="no-notifications">      
-      Loading notifications...      
-    </div>      
-
-  </div>      
-
-</div>
-
-  </div>      </div>      </div>    <div class="user-info">  Logged in as:      <strong id="usernameDisplay">      
-  User      
-</strong>      <span      
-id="headerPremiumBadge"      
-class="premium-user-badge">
-</span>
-
-  </div>    <div class="search">  🔎      <input      
-type="text"      
-id="searchInput"      
-placeholder="Search users, live rooms...">
-
-  </div>  </header>  <!-- =====================================================      
-     PREMIUM SUMMARY      
-===================================================== -->  <div class="premium-summary">    <div class="premium-summary-top">  <div class="premium-summary-title">      
-  Premium Membership      
-</div>      <div      
-  id="currentPremiumLabel"      
-  class="premium-current">      
-  Free      
-</div>      </div>    <div class="premium-summary-text">  Unlock picture posts, video posts, promotion,      
-and Live depending on your membership level.      </div>  <button      
-class="premium-detail-btn"      
-onclick="openPremiumDetails()">    ⭐ View Premium Details
-
-</button>  </div>  <!-- =====================================================      
-WALLET      
-===================================================== -->  <div class="wallet">    <div class="wallet-title">
-Total Wallet Balance
-
-  </div>    <div      
-    id="balanceDisplay"      
-    class="wallet-balance">      
-    0.00 USDT      
-  </div>    <div class="wallet-balance-label">      
-    USDT and 💎 Diamond are separate balances      
-  </div>    <div class="wallet-row">  <span>      
-  💵 USDT      
-</span>      <strong id="usdtDisplay">      
-  0.00      
-</strong>      </div>    <div class="wallet-row">  <span>      
-  💎 Diamond      
-</span>      <strong id="diamondDisplay">      
-  0      
-</strong>      </div>    <div class="wallet-buttons">  <button      
-  class="deposit"      
-  onclick="openDeposit()">      
-  💎 Send      
-</button>      <button      
-class="wallet-button"      
-onclick="openWallet()">
-🟢 Buy / 🤝 Trade
-</button>
-
-  </div>  </div>  <!-- =====================================================      
-     LIVE      
-===================================================== -->  <section>    <div class="section-title">  <h2>      
-  🔴 Top Live      
-</h2>      <span      
-class="see-all"      
-onclick="openLive()">
-See all 10
-</span>
-
-  </div>    <div class="live-container">  <div      
-  class="live-card"      
-  onclick="openLive()">        <div class="live-image">      👩      
-
-<span class="live-badge">      
-  LIVE      
-</span>      
-
-<span class="viewers">      
-  ***      
-</span>
-
-  </div>        <div class="live-name">      
-    🟣Premium Max    
-  </div>      </div>      <div      
-  class="live-card"      
-  onclick="openLive()">        <div class="live-image">      👨      
-
-<span class="live-badge">      
-  LIVE      
-</span>      
-
-<span class="viewers">      
-  ***      
-</span>
-
-  </div>        <div class="live-name">      
-    🟣Premium Max      
-  </div>      </div>      <div      
-  class="live-card"      
-  onclick="openLive()">        <div class="live-image">      👩‍🦱      
-
-<span class="live-badge">      
-  LIVE      
-</span>      
-
-<span class="viewers">      
-  ***      
-</span>
-
-  </div>        <div class="live-name">      
-    🟣Premium Max      
-  </div>      </div>      </div>  </section>  <!-- =====================================================      
-     P2P      
-===================================================== -->  <section>    <div class="section-title">  <h2>      
-  🔄 Available Offers      
-</h2>      <div class="p2p-header-actions">      <button      
-class="create-offer-btn"      
-onclick="createOffer()">
-+ Create Offer
-</button>
-
-<button      
-class="refresh-btn"      
-onclick="loadAvailableOffers()">
-🔃
-</button>
-
-</div>      </div>    <div      
-    id="p2pOffersContainer"      
-    class="p2p-offers">  <div class="no-offers">        <div class="no-offers-icon">      
-    🔄      
-  </div>        <strong>      
-    Loading available offers...      
-  </strong>        <small>      
-    Please wait.      
-  </small>      </div>      </div>  </section>  <!-- =====================================================      
-     POSTS      
-===================================================== -->  <section class="posts-section">    <div class="posts-title">  <h2>      
-  📝 Public Posts      
-</h2>      <div      
-  style="      
-    display:flex;      
-    gap:7px;      
-    align-items:center;      
-  ">      <span      
-class="see-all"      
-onclick="loadPosts(true)">
-🔃 Refresh
-</span>
-
-<button      
-class="create-post-btn"      
-onclick="openCreatePost()">
-+ Post
-</button>
-
-</div>      </div>    <div      
-    id="postsFeed"      
-    class="posts-feed">  <div class="loading-posts">      
-  Loading public posts...      
-</div>      </div>  <button      
-id="loadMoreBtn"      
-class="load-more"      
-onclick="loadMorePosts()"      
-style="display:none;">    ➕ Load more posts
-
-</button>  </section>  <!-- =====================================================      
-PREMIUM DETAILS MODAL      
-===================================================== -->  <div      
-id="premiumModal"      
-class="modal">    <div class="modal-content">  <div class="modal-header">
-
-  <h3>      
-    ⭐ Premium Membership      
-  </h3>      <button      
-class="close-modal"      
-onclick="closePremiumDetails()">
-×
-</button>
-
-</div>      <div class="premium-intro">      Choose the membership level that matches
-how you want to use P2P Social.
-
-</div>      <!-- FREE -->      <div class="premium-plan">        <div class="plan-title">      
-    ⚪ Free      
-  </div>        <div class="plan-description">      + Post text, comment, like, P2P trade      
-and other basic social features.
-
-  </div>      </div>      <!-- PREMIUM -->      <div class="premium-plan green">        <div class="plan-title">      
-    🟢 Premium      
-  </div>        <div class="plan-description">      + Picture posts<br>      
-+ Promote inside photo<br>      
-+ All Free features
-
-  </div>        <div class="plan-prices">      <div class="plan-price">      
-  1 Month — 2 USDT      
-</div>      
-
-<div class="plan-price">      
-  3 Months — 6 USDT      
-</div>      
-
-<div class="plan-price">      
-  6 Months — 12 USDT      
-</div>      
-
-<div class="plan-price">      
-  1 Year — 24 USDT      
-</div>
-
-  </div>      </div>      <!-- PREMIUM PLUS -->      <div class="premium-plan blue">        <div class="plan-title">      
-    🔵 Premium+      
-  </div>        <div class="plan-description">      + Video posts<br>      
-+ Promote inside video<br>      
-+ Picture-post features<br>      
-+ All Free features
-
-  </div>        <div class="plan-prices">      <div class="plan-price">      
-  1 Month — 5.42 USDT      
-</div>      
-
-<div class="plan-price">      
-  3 Months — 16.26 USDT      
-</div>      
-
-<div class="plan-price">      
-  6 Months — 32.52 USDT      
-</div>      
-
-<div class="plan-price">      
-  1 Year — 65.04 USDT      
-</div>
-
-  </div>      </div>      <!-- PREMIUM MAX -->      <div class="premium-plan purple">        <div class="plan-title">      
-    🟣 Premium Max      
-  </div>        <div class="plan-description">      + Picture posts<br>      
-+ Promote inside photo<br>      
-+ Video posts<br>      
-+ Promote inside video<br>      
-+ Create Live rooms<br>      
-+ Premium+ features
-
-  </div>        <div class="plan-prices">      <div class="plan-price">      
-  1 Month — 108.5 USDT      
-</div>      
-
-<div class="plan-price">      
-  3 Months — 325.5 USDT      
-</div>      
-
-<div class="plan-price">      
-  6 Months — 651 USDT      
-</div>      
-
-<div class="plan-price">      
-  1 Year — 1,302 USDT      
-</div>
-
-  </div>      </div>      <!-- THRESHOLDS -->      <div class="threshold-box">        <strong>      
-    🟣 Premium Max — Level 3+      
-  </strong>        <div      
-    style="      
-      margin-top:6px;      
-      font-size:12px;      
-      color:#5d5570;      
-      line-height:1.5;      
-    ">      Premium Max Live creation is intended for      
-Level 3+ accounts. The account level should      
-be checked by the platform before a Live room      
-is created.
-
-  </div>      </div>      <!-- PIN RULES -->      <div class="premium-rules">        <h4>      
-    📌 Pinned-item rules      
-  </h4>        <div class="rule">      <span class="rule-icon">      
-  📌      
-</span>      
-
-<span>      
-  Available Offers show up to 5 offers initially.      
-</span>
-
-  </div>        <div class="rule">      <span class="rule-icon">      
-  ⭐      
-</span>      
-
-<span>      
-  Admin can pin up to 3 offers.      
-</span>
-
-  </div>        <div class="rule">      <span class="rule-icon">      
-  💳      
-</span>      
-
-<span>      
-  Additional paid promotion can be used      
-  according to the platform's promotion rules.      
-</span>
-
-  </div>        <div class="rule">      <span class="rule-icon">      
-  📝      
-</span>      
-
-<span>      
-  Public Posts initially show up to 10 posts.      
-</span>
-
-  </div>        <div class="rule">      <span class="rule-icon">      
-  📌      
-</span>      
-
-<span>      
-  Admin can pin up to 3 posts.      
-</span>
-
-  </div>      </div>      <!-- LIVE EARNINGS -->      <div class="premium-rules">        <h4>      
-    🔴 Live-room earning rules      
-  </h4>        <div class="info-box">      Premium Max users can create Live rooms.      
-Viewer gifts/earnings should be recorded      
-separately from USDT wallet funds and should      
-follow the platform's Live earning and      
-settlement rules.
-
-  </div>      </div>      <!-- DISPUTES -->      <div class="premium-rules">        <h4>      
-    ⚖️ P2P dispute rules      
-  </h4>        <div class="info-box">      A disputed P2P order should remain protected      
-until the dispute process is completed.      
-Funds should not be released simply because      
-one side reports completion. Evidence,      
-payment status and admin resolution should      
-be checked before final settlement.
-
-  </div>      </div>      </div>  </div>  <!-- =====================================================      
-     CREATE POST MODAL      
-===================================================== -->  <div      
-  id="createPostModal"      
-  class="modal">    <div class="modal-content">  <div class="modal-header">        <h3>      
-    Create Post      
-  </h3>      <button      
-class="close-modal"      
-onclick="closeCreatePost()">
-×
-</button>
-
-</div>      <textarea      
-  id="postContentInput"      
-  class="post-textarea"      
-  maxlength="5000"      
-  placeholder="What's on your mind?"></textarea>      <label class="visibility-label">      
-  Post visibility      
-</label>      <select      
-id="postVisibility"      
-class="visibility-select">
-
-  <option value="public">      
-    🌍 Public      
-  </option>        <option value="private">      
-    🔒 Private      
-  </option>      </select>      <div class="media-section">        <label class="media-label">      
-    Post type      
-  </label>      <select      
-id="mediaType"      
-class="media-type-select"      
-onchange="updateMediaControls()">
-
-<option value="text">      
-  📝 Text      
-</option>      
-
-<option value="image">      
-  🖼️ Picture      
-</option>      
-
-<option value="video">      
-  🎥 Video      
-</option>
-
-  </select>      </div>      <div      
-  id="mediaControls"      
-  class="media-section">      
-</div>      <div      
-  id="promotionNotice"      
-  class="media-section">      
-</div>      <button      
-id="publishPostBtn"      
-class="publish-btn"      
-onclick="createPost()">
-
-Publish Post
-
-</button>      </div>  </div>  <!-- =====================================================      
-     BOTTOM NAV      
-===================================================== -->  <nav class="bottom-nav">    <div      
-    class="nav-item active"      
-    onclick="goHome()">  <span>      
-  🏠      
-</span>      Home
-
-  </div>    <div      
-    class="nav-item"      
-    onclick="openLive()">  <span>      
-  🔴      
-</span>      Live
-
-  </div>    <div      
-    class="nav-item"      
-    onclick="openWallet()">  <span>      
-  🔄      
-</span>      P2P
-
-  </div>    <div      
-    class="nav-item"      
-    onclick="openMessages()">  <span>      
-  💬      
-</span>      Messages
-
-  </div>    <div      
-    class="nav-item"      
-    onclick="openProfile()">  <span>      
-  👤      
-</span>      Profile
-
-  </div>  </nav>  </div>  <!-- =====================================================      
-     SUPABASE      
-===================================================== -->  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <script>      /* =====================================================
-SUPABASE
-===================================================== */
-
-const SUPABASE_URL =
-"https://mbsvuwrgigqfporxwpfr.supabase.co";
-
-const SUPABASE_PUBLISHABLE_KEY =
-"sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
-
-const supabaseClient =
-window.supabase.createClient(
-SUPABASE_URL,
-SUPABASE_PUBLISHABLE_KEY
-);
-
-/* =====================================================
-GLOBAL STATE
-===================================================== */
-
-let currentSession = null;
-
-let currentProfile = null;
-
-let currentPremiumTier = "free";
-
-let currentLevel = 0;
-
-let isAdmin = false;
-
-let allPosts = [];
-
-let displayedPostCount = 10;
-
-let commentsOpen = {};
-
-let notificationChannel = null;
-
-/*
-Premium Max requirement.
-Change this constant if your database uses
-another Level 3+ definition.
-*/
-const PREMIUM_MAX_MIN_LEVEL = 3;
-
-/*
-Display limits.
-*/
-const TOP_LIVE_LIMIT = 10;
-
-const AVAILABLE_OFFERS_LIMIT = 5;
-
-const INITIAL_POST_LIMIT = 10;
-
-const ADMIN_PIN_LIMIT = 3;
-
-/* =====================================================
-LOGIN PROTECTION
-===================================================== */
-
-async function startApp(){
-
-try{
-
-const {      
-  data,      
-  error      
-} =      
-await supabaseClient.auth.getSession();      
+  </div>  </nav>  <!-- =========================  
+     SUPABASE  
+========================= -->  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <script>  
+  
+const SUPABASE_URL =  
+"https://mbsvuwrgigqfporxwpfr.supabase.co";  
+  
+const SUPABASE_PUBLISHABLE_KEY =  
+"sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";  
+  
+const supabaseClient =  
+window.supabase.createClient(  
+  SUPABASE_URL,  
+  SUPABASE_PUBLISHABLE_KEY  
+);  
+  
+let currentSession = null;  
+let allPosts = [];  
+let displayedPostCount = 10;  
+let commentsOpen = {};  
+let notificationChannel = null;  
+  
+/* ================================  
+   AUTH  
+================================ */  
+  
+async function checkLogin(){  
+  
+  const {data,error} =  
+    await supabaseClient.auth.getSession();  
+  
+  if(error){  
+    console.error(error);  
+    return;  
+  }  
+  
+  currentSession =  
+    data.session;  
+  
+  await updateAuthUI();  
+  
+}  
+  
+async function updateAuthUI(){  
+  
+  const loginBtn =  
+    document.getElementById("loginBtn");  
+  
+  const registerBtn =  
+    document.getElementById("registerBtn");  
+  
+  const logoutBtn =  
+    document.getElementById("logoutBtn");  
+  
+  const userInfo =  
+    document.getElementById("userInfo");  
+  
+  const usernameDisplay =  
+    document.getElementById("usernameDisplay");  
+  
+  if(!currentSession){  
+  
+    loginBtn.style.display="block";  
+    registerBtn.style.display="block";  
+    logoutBtn.style.display="none";  
+    userInfo.style.display="none";  
+  
+    document.getElementById(  
+      "balanceDisplay"  
+    ).textContent="0 ETB";  
+  
+    document.getElementById(  
+      "etbDisplay"  
+    ).textContent="0.00";  
+  
+    document.getElementById(  
+      "usdtDisplay"  
+    ).textContent="0.00";  
+  
+    resetNotifications();  
+  
+    return;  
+  
+  }  
+  
+  loginBtn.style.display="none";  
+  registerBtn.style.display="none";  
+  logoutBtn.style.display="block";  
+  userInfo.style.display="block";  
+  
+  const user =  
+    currentSession.user;  
+  
+  let username =  
+    user.user_metadata?.username ||  
+    user.email?.split("@")[0] ||  
+    "User";  
+  
+  usernameDisplay.textContent =  
+    username;  
+  
+  const {  
+    data:profile,  
+    error:profileError  
+  } =  
+    await supabaseClient  
+      .from("profiles")  
+      .select(  
+        "username,balance,avatar_url"  
+      )  
+      .eq("id",user.id)  
+      .maybeSingle();  
+  
+  if(profileError){  
+    console.error(profileError);  
+  }  
+  
+  if(profile){  
+  
+    if(profile.username){  
+      usernameDisplay.textContent =  
+        profile.username;  
+    }  
+  
+    const balance =  
+      Number(profile.balance)||0;  
+  
+    document.getElementById(  
+      "balanceDisplay"  
+    ).textContent =  
+      balance.toLocaleString()+" ETB";  
+  
+    document.getElementById(  
+      "etbDisplay"  
+    ).textContent =  
+      balance.toLocaleString(  
+        undefined,  
+        {  
+          minimumFractionDigits:2,  
+          maximumFractionDigits:2  
+        }  
+      );  
+  
+  }  
+  
+}  
+  
+/* ================================  
+   AVAILABLE P2P OFFERS  
+=============================== */  
+  
+/*  
+  This function tries the common P2P offer table names.  
+  
+  Expected offer fields can include:  
+  
+  id  
+  user_id  
+  type / trade_type  
+  side  
+  rate / price  
+  amount / available_amount  
+  min_amount  
+  max_amount  
+  status  
+  is_active  
+  
+  If your wallet/P2P SQL uses different names,  
+  this function will safely show no offers rather  
+  than displaying fake users.  
+*/  
+  
+async function loadAvailableOffers(){  
+  
+  const container =  
+    document.getElementById(  
+      "p2pOffersContainer"  
+    );  
+  
+  if(!container)return;  
+  
+  container.innerHTML=`  
+    <div class="no-offers">  
+      <div class="no-offers-icon">  
+        🔄  
+      </div>  
+      <strong>  
+        Loading available offers...  
+      </strong>  
+      <small>  
+        Please wait.  
+      </small>  
+    </div>  
+  `;  
+  
+  /*  
+    First try the table used by the current  
+    P2P order system.  
+  */  
+  
+  let result =  
+    await supabaseClient  
+      .from("p2p_offers")  
+      .select("*")  
+      .limit(50);  
+  
+  /*  
+    If p2p_offers does not exist, try offers.  
+  */  
+  
+  if(result.error){  
+  
+    result =  
+      await supabaseClient  
+        .from("offers")  
+        .select("*")  
+        .limit(50);  
+  
+  }  
+  
+  /*  
+    If neither table can be read, do not create  
+    fake offers. Show an empty state.  
+  */  
+  
+  if(result.error){  
+  
+    console.log(  
+      "Available P2P offers are not available:",  
+      result.error.message  
+    );  
+  
+    renderNoOffers();  
+  
+    return;  
+  
+  }  
+  
+  const offers =  
+    (result.data||[])  
+      .filter(  
+        offer =>  
+          isOfferAvailable(offer)  
+      );  
+  
+  if(!offers.length){  
+  
+    renderNoOffers();  
+  
+    return;  
+  
+  }  
+  
+  await renderAvailableOffers(  
+    offers  
+  );  
+  
+}  
+  
+function isOfferAvailable(offer){  
+  
+  if(!offer){  
+    return false;  
+  }  
+  
+  /*  
+    Status checks.  
+  */  
+  
+  const status =  
+    String(  
+      offer.status ??  
+      ""  
+    )  
+      .toLowerCase()  
+      .trim();  
+  
+  if(  
+    status &&  
+    [  
+      "closed",  
+      "cancelled",  
+      "canceled",  
+      "completed",  
+      "inactive",  
+      "disabled",  
+      "sold"  
+    ].includes(status)  
+  ){  
+  
+    return false;  
+  
+  }  
+  
+  if(  
+    offer.is_active === false ||  
+    offer.active === false  
+  ){  
+  
+    return false;  
+  
+  }  
+  
+  /*  
+    Amount checks.  
+  
+    If the database has an available amount,  
+    it must be greater than zero.  
+  
+    If no amount field exists, we do not reject  
+    the offer only because the field is missing.  
+  */  
+  
+  const amountValue =  
+    getFirstValue(  
+      offer,  
+      [  
+        "available_amount",  
+        "available",  
+        "remaining_amount",  
+        "amount"  
+      ]  
+    );  
+  
+  if(  
+    amountValue !== null &&  
+    amountValue !== undefined &&  
+    amountValue !== ""  
+  ){  
+  
+    const amount =  
+      Number(amountValue);  
+  
+    if(  
+      !Number.isNaN(amount) &&  
+      amount <= 0  
+    ){  
+  
+      return false;  
+  
+    }  
+  
+  }  
+  
+  return true;  
+  
+}  
+  
+async function renderAvailableOffers(  
+  offers  
+){  
+  
+  const container =  
+    document.getElementById(  
+      "p2pOffersContainer"  
+    );  
+  
+  if(!container)return;  
+  
+  const userIds =  
+    [  
+      ...new Set(  
+        offers  
+          .map(  
+            offer =>  
+              offer.user_id ||  
+              offer.seller_id ||  
+              offer.owner_id ||  
+              offer.created_by  
+          )  
+          .filter(Boolean)  
+      )  
+    ];  
+  
+  let profiles=[];  
+  
+  if(userIds.length){  
+  
+    const result =  
+      await supabaseClient  
+        .from("profiles")  
+        .select(  
+          "id,username,avatar_url"  
+        )  
+        .in(  
+          "id",  
+          userIds  
+        );  
+  
+    if(!result.error){  
+  
+      profiles =  
+        result.data||[];  
+  
+    }  
+  
+  }  
+  
+  const profileMap={};  
+  
+  profiles.forEach(  
+    profile=>{  
+  
+      profileMap[  
+        profile.id  
+      ]=profile;  
+  
+    }  
+  );  
+  
+  container.innerHTML="";  
+  
+  offers  
+    .slice(0,5)  
+    .forEach(  
+      offer=>{  
+  
+        const card =  
+          createOfferCard(  
+            offer,  
+            profileMap  
+          );  
+  
+        container.appendChild(  
+          card  
+        );  
+  
+      }  
+    );  
+  
+}  
+  
+function createOfferCard(  
+  offer,  
+  profileMap  
+){  
+  
+  const card =  
+    document.createElement(  
+      "div"  
+    );  
+  
+  card.className =  
+    "p2p-card";  
+  
+  const userId =  
+    offer.user_id ||  
+    offer.seller_id ||  
+    offer.owner_id ||  
+    offer.created_by ||  
+    "";  
+  
+  const profile =  
+    profileMap[userId]||{};  
+  
+  const username =  
+    profile.username ||  
+    offer.username ||  
+    offer.seller_username ||  
+    "Available trader";  
+  
+  const avatarUrl =  
+    profile.avatar_url ||  
+    offer.avatar_url ||  
+    "";  
+  
+  const initial =  
+    username  
+      .charAt(0)  
+      .toUpperCase() ||  
+    "U";  
+  
+  const typeRaw =  
+    getFirstValue(  
+      offer,  
+      [  
+        "type",  
+        "trade_type",  
+        "side",  
+        "offer_type"  
+      ]  
+    );  
+  
+  const type =  
+    String(  
+      typeRaw ||  
+      "buy"  
+    )  
+      .toLowerCase();  
+  
+  const rate =  
+    getFirstValue(  
+      offer,  
+      [  
+        "rate",  
+        "price",  
+        "exchange_rate",  
+        "price_per_usdt"  
+      ]  
+    );  
+  
+  const amount =  
+    getFirstValue(  
+      offer,  
+      [  
+        "available_amount",  
+        "available",  
+        "remaining_amount",  
+        "amount"  
+      ]  
+    );  
+  
+  const min =  
+    getFirstValue(  
+      offer,  
+      [  
+        "min_amount",  
+        "minimum_amount",  
+        "min"  
+      ]  
+    );  
+  
+  const max =  
+    getFirstValue(  
+      offer,  
+      [  
+        "max_amount",  
+        "maximum_amount",  
+        "max"  
+      ]  
+    );  
+  
+  const normalizedType =  
+    type.includes("sell")  
+    ? "sell"  
+    : "buy";  
+  
+  const buttonText =  
+    normalizedType==="sell"  
+    ? "Buy USDT"  
+    : "Buy USDT";  
+  
+  const offerLabel =  
+    normalizedType==="sell"  
+    ? "SELL USDT"  
+    : "BUY USDT";  
+  
+  card.innerHTML=`  
+  
+    <div class="offer-type">  
+      ${escapeHtml(offerLabel)}  
+    </div>  
+  
+    <div class="p2p-card-header">  
+  
+      <div class="seller">  
+  
+        ${  
+          avatarUrl  
+          ?  
+          `  
+          <div class="avatar">  
+            <img  
+              src="${escapeHtml(avatarUrl)}"  
+              alt="Profile">  
+          </div>  
+          `  
+          :  
+          `  
+          <div class="avatar">  
+            ${escapeHtml(initial)}  
+          </div>  
+          `  
+        }  
+  
+        <div>  
+  
+          <div class="username">  
+            ${escapeHtml(username)}  
+          </div>  
+  
+          <div class="online">  
+            ● Available  
+          </div>  
+  
+        </div>  
+  
+      </div>  
+  
+      ${  
+        rate !== null &&  
+        rate !== undefined &&  
+        rate !== ""  
+        ?  
+        `  
+        <div class="rate">  
+  
+          <strong>  
+            ${escapeHtml(  
+              formatNumber(rate)  
+            )} ETB  
+          </strong>  
+  
+          <small>  
+            1 USDT  
+          </small>  
+  
+        </div>  
+        `  
+        :  
+        ""  
+      }  
+  
+    </div>  
+  
+    <div class="trade-info">  
+  
+      ${  
+        amount !== null &&  
+        amount !== undefined &&  
+        amount !== ""  
+        ?  
+        `  
+        <span>  
+          Available:  
+          <strong>  
+            ${escapeHtml(  
+              formatNumber(amount)  
+            )} USDT  
+          </strong>  
+        </span>  
+        `  
+        :  
+        `  
+        <span>  
+          Available offer  
+        </span>  
+        `  
+      }  
+  
+      ${  
+        min !== null &&  
+        min !== undefined &&  
+        min !== ""  
+        ?  
+        `  
+        <span>  
+          Min:  
+          ${escapeHtml(  
+            formatNumber(min)  
+          )} ETB  
+        </span>  
+        `  
+        :  
+        ""  
+      }  
+  
+      ${  
+        max !== null &&  
+        max !== undefined &&  
+        max !== ""  
+        ?  
+        `  
+        <span>  
+          Max:  
+          ${escapeHtml(  
+            formatNumber(max)  
+          )} ETB  
+        </span>  
+        `  
+        :  
+        ""  
+      }  
+  
+    </div>  
+  
+    <button  
+      class="buy-btn"  
+      onclick="openP2POffer(  
+        '${escapeJs(offer.id)}'  
+      )">  
+  
+      ${buttonText}  
+  
+    </button>  
+  
+  `;  
+  
+  return card;  
+  
+}  
+  
+function renderNoOffers(){  
+  
+  const container =  
+    document.getElementById(  
+      "p2pOffersContainer"  
+    );  
+  
+  if(!container)return;  
+  
+  container.innerHTML=`  
+  
+    <div class="no-offers">  
+  
+      <div class="no-offers-icon">  
+        🔄  
+      </div>  
+  
+      <strong>  
+        No available offers yet.  
+      </strong>  
+  
+      <small>  
+        Available P2P offers will appear here  
+        when traders create them.  
+      </small>  
+  
+    </div>  
+  
+  `;  
+  
+}  
+  
+function openP2POffer(  
+  offerId  
+){  
+  
+  if(!currentSession){  
+  
+    alert(  
+      "Please login first."  
+    );  
+  
+    openLogin();  
+    return;  
+  
+  }  
+  
+  /*  
+    Send the user to the P2P wallet/order page.  
+  */  
+  
+  window.location.href =  
+    "p2p-order.html?offer="+  
+    encodeURIComponent(  
+      offerId  
+    );  
+  
+}  
+  
+function getFirstValue(  
+  object,  
+  keys  
+){  
+  
+  for(  
+    const key of keys  
+  ){  
+  
+    if(  
+      Object.prototype.hasOwnProperty.call(  
+        object,  
+        key  
+      )  
+    ){  
+  
+      if(  
+        object[key] !== null &&  
+        object[key] !== undefined &&  
+        object[key] !== ""  
+      ){  
+  
+        return object[key];  
+  
+      }  
+  
+    }  
+  
+  }  
+  
+  return null;  
+  
+}  
+  
+function formatNumber(  
+  value  
+){  
+  
+  const number =  
+    Number(value);  
+  
+  if(  
+    Number.isNaN(number)  
+  ){  
+  
+    return String(  
+      value  
+    );  
+  
+  }  
+  
+  return number.toLocaleString(  
+    undefined,  
+    {  
+      maximumFractionDigits:8  
+    }  
+  );  
+  
+}  
+  
+/* ================================  
+   NOTIFICATIONS  
+================================ */  
+  
+async function loadNotifications(){  
+  
+  if(!currentSession){  
+  
+    resetNotifications();  
+  
+    return;  
+  
+  }  
+  
+  const {  
+    data,  
+    error  
+  } =  
+    await supabaseClient  
+      .from("notifications")  
+      .select(`  
+        id,  
+        user_id,  
+        type,  
+        title,  
+        body,  
+        link,  
+        is_read,  
+        created_at  
+      `)  
+      .eq(  
+        "user_id",  
+        currentSession.user.id  
+      )  
+      .order(  
+        "created_at",  
+        {ascending:false}  
+      )  
+      .limit(50);  
+  
+  if(error){  
+  
+    console.error(  
+      "Notification loading error:",  
+      error  
+    );  
+  
+    return;  
+  
+  }  
+  
+  renderNotifications(  
+    data||[]  
+  );  
+  
+}  
+  
+function renderNotifications(  
+  notifications  
+){  
+  
+  const list =  
+    document.getElementById(  
+      "notificationList"  
+    );  
+  
+  const badge =  
+    document.getElementById(  
+      "notificationBadge"  
+    );  
+  
+  if(!notifications.length){  
+  
+    list.innerHTML=`  
+      <div class="no-notifications">  
+        🔔 No notifications yet.  
+      </div>  
+    `;  
+  
+    badge.style.display="none";  
+  
+    return;  
+  
+  }  
+  
+  const unreadCount =  
+    notifications.filter(  
+      n=>!n.is_read  
+    ).length;  
+  
+  if(unreadCount>0){  
+  
+    badge.textContent =  
+      unreadCount>99  
+      ? "99+"  
+      : unreadCount;  
+  
+    badge.style.display="flex";  
+  
+  }else{  
+  
+    badge.style.display="none";  
+  
+  }  
+  
+  list.innerHTML="";  
+  
+  notifications.forEach(  
+    notification=>{  
+  
+      const item =  
+        document.createElement("div");  
+  
+      item.className =  
+        "notification-item"+  
+        (  
+          notification.is_read  
+          ? ""  
+          : " unread"  
+        );  
+  
+      item.innerHTML=`  
+  
+        <div class="notification-icon">  
+          ${notificationIcon(  
+            notification.type  
+          )}  
+        </div>  
+  
+        <div class="notification-content">  
+  
+          <div class="notification-title">  
+            ${escapeHtml(  
+              notification.title||  
+              "Notification"  
+            )}  
+          </div>  
+  
+          <div class="notification-body">  
+            ${escapeHtml(  
+              notification.body||""  
+            )}  
+          </div>  
+  
+          <div class="notification-time">  
+            ${escapeHtml(  
+              formatPostTime(  
+                notification.created_at  
+              )  
+            )}  
+          </div>  
+  
+        </div>  
+  
+      `;  
+  
+      item.addEventListener(  
+        "click",  
+        async()=>{  
+  
+          if(!notification.is_read){  
+  
+            await markNotificationRead(  
+              notification.id  
+            );  
+  
+          }  
+  
+          if(notification.link){  
+  
+            window.location.href =  
+              notification.link;  
+  
+          }else{  
+  
+            window.location.href =  
+              "message.html";  
+  
+          }  
+  
+        }  
+      );  
+  
+      list.appendChild(item);  
+  
+    }  
+  );  
+  
+}  
+  
+function notificationIcon(type){  
+  
+  switch(type){  
+  
+    case "message":  
+      return "💬";  
+  
+    case "like":  
+      return "❤️";  
+  
+    case "comment":  
+      return "💬";  
+  
+    case "follow":  
+      return "👤";  
+  
+    case "wallet":  
+      return "💰";  
+  
+    case "deposit":  
+      return "💵";  
+  
+    case "withdraw":  
+      return "🏦";  
+  
+    case "trade":  
+      return "🔄";  
+  
+    default:  
+      return "🔔";  
+  
+  }  
+  
+}  
+  
+async function markNotificationRead(  
+  id  
+){  
+  
+  if(!currentSession)return;  
+  
+  await supabaseClient  
+    .from("notifications")  
+    .update({  
+      is_read:true  
+    })  
+    .eq(  
+      "id",  
+      id  
+    )  
+    .eq(  
+      "user_id",  
+      currentSession.user.id  
+    );  
+  
+  await loadNotifications();  
+  
+}  
+  
+async function markAllNotificationsRead(){  
+  
+  if(!currentSession)return;  
+  
+  const {error} =  
+    await supabaseClient  
+      .from("notifications")  
+      .update({  
+        is_read:true  
+      })  
+      .eq(  
+        "user_id",  
+        currentSession.user.id  
+      )  
+      .eq(  
+        "is_read",  
+        false  
+      );  
+  
+  if(error){  
+  
+    alert(  
+      "Could not mark notifications as read."  
+    );  
+  
+    return;  
+  
+  }  
+  
+  await loadNotifications();  
+  
+}  
+  
+function resetNotifications(){  
+  
+  document.getElementById(  
+    "notificationBadge"  
+  ).style.display="none";  
+  
+  document.getElementById(  
+    "notificationList"  
+  ).innerHTML=`  
+    <div class="no-notifications">  
+      🔔 Login to see notifications.  
+    </div>  
+  `;  
+  
+}  
+  
+function toggleNotificationPanel(  
+  event  
+){  
+  
+  if(event){  
+    event.stopPropagation();  
+  }  
+  
+  if(!currentSession){  
+  
+    alert(  
+      "Please login to view notifications."  
+    );  
+  
+    openLogin();  
+  
+    return;  
+  
+  }  
+  
+  const panel =  
+    document.getElementById(  
+      "notificationPanel"  
+    );  
+  
+  panel.classList.toggle(  
+    "open"  
+  );  
+  
+  if(  
+    panel.classList.contains(  
+      "open"  
+    )  
+  ){  
+  
+    loadNotifications();  
+  
+  }  
+  
+}  
+  
+document.addEventListener(  
+  "click",  
+  event=>{  
+  
+    const panel =  
+      document.getElementById(  
+        "notificationPanel"  
+      );  
+  
+    const button =  
+      document.getElementById(  
+        "notificationButton"  
+      );  
+  
+    if(  
+      panel &&  
+      !panel.contains(event.target) &&  
+      button &&  
+      !button.contains(event.target)  
+    ){  
+  
+      panel.classList.remove(  
+        "open"  
+      );  
+  
+    }  
+  
+  }  
+);  
+  
+function subscribeToNotifications(){  
+  
+  if(!currentSession)return;  
+  
+  if(notificationChannel){  
+  
+    supabaseClient.removeChannel(  
+      notificationChannel  
+    );  
+  
+    notificationChannel=null;  
+  
+  }  
+  
+  const userId =  
+    currentSession.user.id;  
+  
+  notificationChannel =  
+    supabaseClient  
+      .channel(  
+        "notifications-"+userId  
+      )  
+      .on(  
+        "postgres_changes",  
+        {  
+          event:"INSERT",  
+          schema:"public",  
+          table:"notifications",  
+          filter:  
+            "user_id=eq."+userId  
+        },  
+        payload=>{  
+  
+          showNewNotificationPopup(  
+            payload.new  
+          );  
+  
+          loadNotifications();  
+  
+        }  
+      )  
+      .subscribe();  
+  
+}  
+  
+function showNewNotificationPopup(  
+  notification  
+){  
+  
+  if(document.hidden)return;  
+  
+  if(  
+    "Notification" in window &&  
+    Notification.permission==="granted"  
+  ){  
+  
+    try{  
+  
+      new Notification(  
+        notification.title||  
+        "New notification",  
+        {  
+          body:  
+            notification.body||""  
+        }  
+      );  
+  
+    }catch(error){  
+  
+      console.log(error);  
+  
+    }  
+  
+  }  
+  
+}  
+  
+async function requestNotificationPermission(){  
+  
+  if(!("Notification" in window))return;  
+  
+  if(  
+    Notification.permission==="default"  
+  ){  
+  
+    try{  
+  
+      await Notification.requestPermission();  
+  
+    }catch(error){  
+  
+      console.log(error);  
+  
+    }  
+  
+  }  
+  
+}  
+  
+/* ================================  
+   POSTS  
+================================ */  
+  
+async function loadPosts(  
+  shuffle=false  
+){  
+  
+  const feed =  
+    document.getElementById(  
+      "postsFeed"  
+    );  
+  
+  feed.innerHTML=`  
+    <div class="loading-posts">  
+      Loading public posts...  
+    </div>  
+  `;  
+  
+  let query =  
+    supabaseClient  
+      .from("posts")  
+      .select(`  
+        id,  
+        user_id,  
+        content,  
+        created_at,  
+        visibility  
+      `)  
+      .or(  
+        "visibility.eq.public,visibility.is.null"  
+      )  
+      .order(  
+        "created_at",  
+        {ascending:false}  
+      )  
+      .limit(100);  
+  
+  const {  
+    data:posts,  
+    error  
+  } =  
+    await query;  
+  
+  if(error){  
+  
+    console.error(  
+      "Posts loading error:",  
+      error  
+    );  
+  
+    feed.innerHTML=`  
+      <div class="no-posts">  
+        Could not load posts.<br>  
+        <small>  
+          ${escapeHtml(  
+            error.message  
+          )}  
+        </small>  
+      </div>  
+    `;  
+  
+    return;  
+  
+  }  
+  
+  allPosts =  
+    posts||[];  
+  
+  if(shuffle){  
+  
+    allPosts.sort(  
+      ()=>Math.random()-.5  
+    );  
+  
+  }  
+  
+  displayedPostCount=10;  
+  
+  await renderPosts();  
+  
+}  
+  
+async function loadMorePosts(){  
+  
+  if(  
+    displayedPostCount>=  
+    allPosts.length  
+  ){  
+  
+    return;  
+  
+  }  
+  
+  displayedPostCount+=10;  
+  
+  await renderPosts();  
+  
+}  
+  
+/* ================================  
+   RENDER POSTS  
+================================ */  
+  
+async function renderPosts(){  
+  
+  const feed =  
+    document.getElementById(  
+      "postsFeed"  
+    );  
+  
+  const visiblePosts =  
+    allPosts.slice(  
+      0,  
+      displayedPostCount  
+    );  
+  
+  if(!visiblePosts.length){  
+  
+    feed.innerHTML=`  
+      <div class="no-posts">  
+        No public posts yet.  
+      </div>  
+    `;  
+  
+    document.getElementById(  
+      "loadMoreBtn"  
+    ).style.display="none";  
+  
+    return;  
+  
+  }  
+  
+  const postIds =  
+    visiblePosts.map(  
+      p=>p.id  
+    );  
+  
+  const userIds =  
+    [...new Set(  
+      visiblePosts.map(  
+        p=>p.user_id  
+      )  
+    )];  
+  
+  let profiles=[];  
+  
+  if(userIds.length){  
+  
+    const result =  
+      await supabaseClient  
+        .from("profiles")  
+        .select(  
+          "id,username,avatar_url"  
+        )  
+        .in(  
+          "id",  
+          userIds  
+        );  
+  
+    if(!result.error){  
+  
+      profiles =  
+        result.data||[];  
+  
+    }  
+  
+  }  
+  
+  const profileMap={};  
+  
+  profiles.forEach(  
+    profile=>{  
+  
+      profileMap[  
+        profile.id  
+      ]=profile;  
+  
+    }  
+  );  
+  
+  /* LIKES */  
+  
+  let likes=[];  
+  
+  if(postIds.length){  
+  
+    const result =  
+      await supabaseClient  
+        .from("post_likes")  
+        .select(  
+          "post_id,user_id"  
+        )  
+        .in(  
+          "post_id",  
+          postIds  
+        );  
+  
+    if(!result.error){  
+  
+      likes =  
+        result.data||[];  
+  
+    }  
+  
+  }  
+  
+  const likeCount={};  
+  
+  likes.forEach(  
+    like=>{  
+  
+      likeCount[  
+        like.post_id  
+      ]=  
+        (  
+          likeCount[  
+            like.post_id  
+          ]||0  
+        )+1;  
+  
+    }  
+  );  
+  
+  const myLikes =  
+    new Set(  
+      currentSession  
+      ?  
+      likes  
+        .filter(  
+          like=>  
+            like.user_id===  
+            currentSession.user.id  
+        )  
+        .map(  
+          like=>like.post_id  
+        )  
+      :  
+      []  
+    );  
+  
+  /* COMMENTS */  
+  
+  let comments=[];  
+  
+  if(postIds.length){  
+  
+    const result =  
+      await supabaseClient  
+        .from("post_comments")  
+        .select(  
+          "id,post_id,user_id,comment,created_at"  
+        )  
+        .in(  
+          "post_id",  
+          postIds  
+        )  
+        .order(  
+          "created_at",  
+          {  
+            ascending:true  
+          }  
+        );  
+  
+    if(!result.error){  
+  
+      comments =  
+        result.data||[];  
+  
+    }  
+  
+  }  
+  
+  const commentUserIds =  
+    [...new Set(  
+      comments.map(  
+        c=>c.user_id  
+      )  
+    )];  
+  
+  if(commentUserIds.length){  
+  
+    const result =  
+      await supabaseClient  
+        .from("profiles")  
+        .select(  
+          "id,username,avatar_url"  
+        )  
+        .in(  
+          "id",  
+          commentUserIds  
+        );  
+  
+    if(!result.error){  
+  
+      (  
+        result.data||[]  
+      ).forEach(  
+        profile=>{  
+  
+          profileMap[  
+            profile.id  
+          ]=profile;  
+  
+        }  
+      );  
+  
+    }  
+  
+  }  
+  
+  feed.innerHTML="";  
+  
+  visiblePosts.forEach(  
+    post=>{  
+  
+      const profile =  
+        profileMap[  
+          post.user_id  
+        ]||{};  
+  
+      const username =  
+        profile.username||  
+        "User";  
+  
+      const avatar =  
+        profile.avatar_url||  
+        "";  
+  
+      const initial =  
+        username  
+          .charAt(0)  
+          .toUpperCase();  
+  
+      const postComments =  
+        comments.filter(  
+          c=>  
+            String(c.post_id)===  
+            String(post.id)  
+        );  
+  
+      const isOwner =  
+        currentSession &&  
+        currentSession.user.id===  
+        post.user_id;  
+  
+      const card =  
+        document.createElement(  
+          "article"  
+        );  
+  
+      card.className =  
+        "post-card";  
+  
+      card.innerHTML=`  
+  
+        <div  
+          class="post-header"  
+          onclick="openUserProfile(  
+            '${escapeJs(post.user_id)}'  
+          )">  
+  
+          ${  
+            avatar  
+            ?  
+            `  
+            <img  
+              class="post-avatar"  
+              src="${escapeHtml(avatar)}"  
+              alt="Profile">  
+            `  
+            :  
+            `  
+            <div class="post-avatar">  
+              ${escapeHtml(initial)}  
+            </div>  
+            `  
+          }  
+  
+          <div class="post-user-info">  
+  
+            <div class="post-name">  
+              ${escapeHtml(username)}  
+            </div>  
+  
+            <div class="post-handle">  
+              @${escapeHtml(username)}  
+            </div>  
+  
+          </div>  
+  
+          <div class="post-time">  
+  
+            ${escapeHtml(  
+              formatPostTime(  
+                post.created_at  
+              )  
+            )}  
+  
+          </div>  
+  
+          ${  
+            isOwner  
+            ?  
+            `  
+            <button  
+              class="post-menu"  
+              onclick="  
+                event.stopPropagation();  
+                deletePost(  
+                  '${escapeJs(post.id)}'  
+                )  
+              ">  
+              🗑️  
+            </button>  
+            `  
+            :  
+            ""  
+          }  
+  
+        </div>  
+  
+        <div class="post-content">  
+  
+          ${escapeHtml(  
+            post.content||""  
+          )}  
+  
+        </div>  
+  
+        <div class="post-actions">  
+  
+          <button  
+            class="post-action ${  
+              myLikes.has(post.id)  
+              ? "liked"  
+              : ""  
+            }"  
+            onclick="  
+              event.stopPropagation();  
+              likePost(  
+                '${escapeJs(post.id)}'  
+              )  
+            ">  
+  
+            ${  
+              myLikes.has(post.id)  
+              ? "♥ Liked"  
+              : "♡ Like"  
+            }  
+  
+            <span>  
+              ${likeCount[post.id]||0}  
+            </span>  
+  
+          </button>  
+  
+          <button  
+            class="post-action"  
+            onclick="  
+              event.stopPropagation();  
+              toggleComments(  
+                '${escapeJs(post.id)}'  
+              )  
+            ">  
+  
+            💬 Comments  
+  
+            <span>  
+              ${postComments.length}  
+            </span>  
+  
+          </button>  
+  
+          <button  
+            class="post-action"  
+            onclick="  
+              event.stopPropagation();  
+              sharePost(  
+                '${escapeJs(post.id)}'  
+              )  
+            ">  
+  
+            ↗ Share  
+  
+          </button>  
+  
+        </div>  
+  
+        <div  
+          id="comments-${escapeHtml(post.id)}"  
+          class="comments-box"  
+          style="  
+            display:${  
+              commentsOpen[post.id]  
+              ? "block"  
+              : "none"  
+            };  
+          ">  
+  
+          ${renderComments(  
+            post.id,  
+            comments,  
+            profileMap  
+          )}  
+  
+        </div>  
+  
+      `;  
+  
+      feed.appendChild(card);  
+  
+    }  
+  );  
+  
+  const loadMoreBtn =  
+    document.getElementById(  
+      "loadMoreBtn"  
+    );  
+  
+  loadMoreBtn.style.display =  
+    displayedPostCount<  
+    allPosts.length  
+    ? "block"  
+    : "none";  
+  
+}  
+  
+/* ================================  
+   COMMENTS OPEN / CLOSE  
+================================ */  
+  
+function toggleComments(  
+  postId  
+){  
+  
+  commentsOpen[postId]=  
+    !commentsOpen[postId];  
+  
+  const box =  
+    document.getElementById(  
+      "comments-"+postId  
+    );  
+  
+  if(box){  
+  
+    box.style.display =  
+      commentsOpen[postId]  
+      ? "block"  
+      : "none";  
+  
+  }  
+  
+  if(  
+    commentsOpen[postId]  
+  ){  
+  
+    refreshSinglePostComments(  
+      postId  
+    );  
+  
+  }  
+  
+}  
+  
+async function refreshSinglePostComments(  
+  postId  
+){  
+  
+  const box =  
+    document.getElementById(  
+      "comments-"+postId  
+    );  
+  
+  if(!box)return;  
+  
+  const {  
+    data:comments,  
+    error  
+  } =  
+    await supabaseClient  
+      .from("post_comments")  
+      .select(  
+        "id,post_id,user_id,comment,created_at"  
+      )  
+      .eq(  
+        "post_id",  
+        postId  
+      )  
+      .order(  
+        "created_at",  
+        {  
+          ascending:true  
+        }  
+      );  
+  
+  if(error){  
+  
+    console.error(error);  
+  
+    return;  
+  
+  }  
+  
+  const userIds =  
+    [...new Set(  
+      (comments||[]).map(  
+        c=>c.user_id  
+      )  
+    )];  
+  
+  let profiles=[];  
+  
+  if(userIds.length){  
+  
+    const result =  
+      await supabaseClient  
+        .from("profiles")  
+        .select(  
+          "id,username,avatar_url"  
+        )  
+        .in(  
+          "id",  
+          userIds  
+        );  
+  
+    if(!result.error){  
+  
+      profiles =  
+        result.data||[];  
+  
+    }  
+  
+  }  
+  
+  const profileMap={};  
+  
+  profiles.forEach(  
+    profile=>{  
+  
+      profileMap[  
+        profile.id  
+      ]=profile;  
+  
+    }  
+  );  
+  
+  box.innerHTML =  
+    renderComments(  
+      postId,  
+      comments||[],  
+      profileMap  
+    );  
+  
+}  
+  
+function renderComments(  
+  postId,  
+  comments,  
+  profileMap  
+){  
+  
+  const postComments =  
+    comments.filter(  
+      c=>  
+        String(c.post_id)===  
+        String(postId)  
+    );  
+  
+  let html="";  
+  
+  const showing =  
+    commentsOpen[postId]  
+    ?  
+    postComments  
+    :  
+    postComments.slice(  
+      0,  
+      2  
+    );  
+  
+  showing.forEach(  
+    comment=>{  
+  
+      const profile =  
+        profileMap[  
+          comment.user_id  
+        ]||{};  
+  
+      const username =  
+        profile.username||  
+        "User";  
+  
+      const avatar =  
+        profile.avatar_url||  
+        "";  
+  
+      const initial =  
+        username  
+          .charAt(0)  
+          .toUpperCase();  
+  
+      const owner =  
+        currentSession &&  
+        currentSession.user.id===  
+        comment.user_id;  
+  
+      html+=`  
+  
+        <div class="comment">  
+  
+          <div class="comment-avatar">  
+  
+            ${  
+              avatar  
+              ?  
+              `  
+              <img  
+                src="${escapeHtml(avatar)}"  
+                alt="Profile">  
+              `  
+              :  
+              escapeHtml(initial)  
+            }  
+  
+          </div>  
+  
+          <div class="comment-body">  
+  
+            <div class="comment-name">  
+              ${escapeHtml(username)}  
+            </div>  
+  
+            <div class="comment-text">  
+              ${escapeHtml(  
+                comment.comment||""  
+              )}  
+            </div>  
+  
+            ${  
+              owner  
+              ?  
+              `  
+              <button  
+                class="comment-delete"  
+                onclick="  
+                  deleteComment(  
+                    '${escapeJs(comment.id)}'  
+                  )  
+                ">  
+                🗑️  
+              </button>  
+              `  
+              :  
+              ""  
+            }  
+  
+          </div>  
+  
+        </div>  
+  
+      `;  
+  
+    }  
+  );  
+  
+  if(  
+    postComments.length>2 &&  
+    !commentsOpen[postId]  
+  ){  
+  
+    html+=`  
+  
+      <button  
+        class="view-comments"  
+        onclick="  
+          toggleComments(  
+            '${escapeJs(postId)}'  
+          )  
+        ">  
+  
+        👀 View all  
+        ${postComments.length}  
+        comments  
+  
+      </button>  
+  
+    `;  
+  
+  }  
+  
+  if(  
+    commentsOpen[postId]  
+  ){  
+  
+    html+=`  
+  
+      <button  
+        class="view-comments"  
+        onclick="  
+          toggleComments(  
+            '${escapeJs(postId)}'  
+          )  
+        ">  
+  
+        Hide comments  
+  
+      </button>  
+  
+    `;  
+  
+  }  
+  
+  if(currentSession){  
+  
+    html+=`  
+  
+      <div class="comment-input-row">  
+  
+        <input  
+          id="comment-input-${escapeHtml(postId)}"  
+          class="comment-input"  
+          maxlength="500"  
+          placeholder="Write a comment..."  
+          onkeydown="  
+            if(event.key==='Enter'){  
+              sendComment(  
+                '${escapeJs(postId)}'  
+              )  
+            }  
+          ">  
+  
+        <button  
+          class="comment-send"  
+          onclick="  
+            sendComment(  
+              '${escapeJs(postId)}'  
+            )  
+          ">  
+  
+          Send  
+  
+        </button>  
+  
+      </div>  
+  
+    `;  
+  
+  }else{  
+  
+    html+=`  
+  
+      <div  
+        style="  
+          font-size:12px;  
+          color:#777;  
+          margin-top:8px;  
+        ">  
+  
+        Login to comment.  
+  
+      </div>  
+  
+    `;  
+  
+  }  
+  
+  return html;  
+  
+}  
+  
+/* ================================  
+   SEND COMMENT  
+================================ */  
+  
+async function sendComment(  
+  postId  
+){  
+  
+  if(!currentSession){  
   
-if(error){      
+    alert(  
+      "Please login to comment."  
+    );  
   
-  console.error(error);      
+    openLogin();  
   
-  redirectToLogin();      
+    return;  
   
-  return;      
+  }  
   
-}      
+  const input =  
+    document.getElementById(  
+      "comment-input-"+postId  
+    );  
   
-if(      
-  !data ||      
-  !data.session      
-){      
+  if(!input)return;  
   
-  redirectToLogin();      
+  const text =  
+    String(  
+      input.value||""  
+    ).trim();  
   
-  return;      
+  if(!text)return;  
   
-}      
+  if(text.length>500){  
   
-currentSession =      
-  data.session;      
+    alert(  
+      "Comment is too long."  
+    );  
   
-document.getElementById(      
-  "checkingAuth"      
-).style.display="none";      
+    return;  
   
-document.getElementById(      
-  "app"      
-).style.display="block";      
+  }  
   
-await initializeDashboard();
-
-}catch(error){
-
-console.error(      
-  "Authentication error:",      
-  error      
-);      
-  
-redirectToLogin();
-
-}
-
-}
-
-function redirectToLogin(){
-
-window.location.replace(
-"./login.html"
-);
-
-}
-
-/* =====================================================
-AUTH STATE
-===================================================== */
-
-supabaseClient.auth.onAuthStateChange(
-async(event,session)=>{
-
-if(      
-  event==="SIGNED_OUT"      
-){      
+  const {error} =  
+    await supabaseClient  
+      .from("post_comments")  
+      .insert({  
   
-  currentSession=null;      
+        post_id:postId,  
   
-  redirectToLogin();      
+        user_id:  
+          currentSession.user.id,  
   
-  return;      
+        comment:text  
   
-}      
+      });  
   
-if(      
-  event==="SIGNED_IN" &&      
-  session      
-){      
+  if(error){  
   
-  currentSession=session;      
+    console.error(error);  
   
-}
-
-}
-);
-
-/* =====================================================
-INITIALIZE
-===================================================== */
-
-async function initializeDashboard(){
-
-if(!currentSession){
-
-redirectToLogin();      
+    alert(  
+      "Comment failed: "+  
+      error.message  
+    );  
   
-return;
-
-}
-
-await updateUserUI();
-
-await Promise.allSettled([
-
-loadAvailableOffers(),      
+    return;  
   
-loadNotifications(),      
+  }  
   
-loadPosts(false)
-
-]);
-
-subscribeToNotifications();
-
-}
-
-/* =====================================================
-USER / PREMIUM
-===================================================== */
-
-async function updateUserUI(){
-
-if(!currentSession){
-
-redirectToLogin();      
+  commentsOpen[postId]=true;  
   
-return;
-
-}
-
-const user =
-currentSession.user;
-
-let username =
-user.user_metadata?.username ||
-user.email?.split("@")[0] ||
-"User";
-
-/*
-Select * keeps this page compatible with
-profiles tables containing additional fields.
-*/
-
-const {
-data:profile,
-error
-} =
-await supabaseClient
-.from("profiles")
-.select("*")
-.eq(
-"id",
-user.id
-)
-.maybeSingle();
-
-if(error){
-
-console.log(      
-  "Profile:",      
-  error.message      
-);
-
-}
-
-currentProfile =
-profile || {};
-
-if(profile){
-
-username =      
-  profile.username ||      
-  username;      
-  
-currentPremiumTier =      
-  normalizePremiumTier(      
-    profile      
-  );      
-  
-currentLevel =      
-  getUserLevel(      
-    profile      
-  );      
-  
-isAdmin =      
-  detectAdmin(      
-    profile      
-  );      
-  
-updateWalletDisplay(      
-  profile      
-);
-
-}else{
-
-currentPremiumTier =      
-  "free";      
+  await renderPosts();  
   
-currentLevel =      
-  0;      
+}  
   
-isAdmin =      
-  false;      
+/* ================================  
+   DELETE COMMENT  
+================================ */  
   
-updateWalletDisplay({});
-
-}
-
-document.getElementById(
-"usernameDisplay"
-).textContent =
-username;
-
-updatePremiumUI();
-
-}
-
-/* =====================================================
-PREMIUM DETECTION
-===================================================== */
-
-function normalizePremiumTier(profile){
-
-if(!profile){
-
-return "free";
-
-}
-
-const values=[
-
-profile.premium_tier,      
+async function deleteComment(  
+  commentId  
+){  
   
-profile.subscription_tier,      
+  if(!currentSession)return;  
   
-profile.membership,      
+  if(!confirm(  
+    "Delete your comment?"  
+  )){  
   
-profile.plan,      
+    return;  
   
-profile.premium_plan,      
+  }  
   
-profile.account_tier
-
-];
-
-let value =
-values.find(
-v =>
-v !== null &&
-v !== undefined &&
-String(v).trim()!==""
-);
-
-if(!value){
-
-return "free";
-
-}
-
-value =
-String(value)
-.toLowerCase()
-.trim()
-.replace(/\s+/g,"");
-
-if(
-value==="premiummax" ||
-value==="max" ||
-value==="premium_max"
-){
-
-return "premium_max";
-
-}
-
-if(
-value==="premium+" ||
-value==="premiumplus" ||
-value==="premium_plus" ||
-value==="plus"
-){
-
-return "premium_plus";
-
-}
-
-if(
-value==="premium"
-){
-
-return "premium";
-
-}
-
-return "free";
-
-}
-
-function getUserLevel(profile){
-
-const values=[
-
-profile.level,      
+  const {error} =  
+    await supabaseClient  
+      .from("post_comments")  
+      .delete()  
+      .eq(  
+        "id",  
+        commentId  
+      )  
+      .eq(  
+        "user_id",  
+        currentSession.user.id  
+      );  
   
-profile.user_level,      
+  if(error){  
   
-profile.account_level,      
+    alert(  
+      "Could not delete comment: "+  
+      error.message  
+    );  
   
-profile.rank_level
-
-];
-
-for(
-const value of values
-){
-
-if(      
-  value!==null &&      
-  value!==undefined &&      
-  value!==""      
-){      
+    return;  
   
-  const number =      
-    Number(value);      
+  }  
   
-  if(      
-    !Number.isNaN(number)      
-  ){      
+  await renderPosts();  
   
-    return number;      
+}  
   
-  }      
+/* ================================  
+   LIKE / UNLIKE  
+================================ */  
   
-}
-
-}
-
-return 0;
-
-}
-
-function detectAdmin(profile){
-
-if(!profile){
-
-return false;
-
-}
-
-if(
-profile.is_admin===true
-){
-
-return true;
-
-}
-
-if(
-String(
-profile.role||""
-).toLowerCase()==="admin"
-){
-
-return true;
-
-}
-
-if(
-String(
-profile.account_role||""
-).toLowerCase()==="admin"
-){
-
-return true;
-
-}
-
-return false;
-
-}
-
-/* =====================================================
-PREMIUM CAPABILITIES
-===================================================== */
-
-function hasPremium(){
-
-return [
-"premium",
-"premium_plus",
-"premium_max"
-].includes(
-currentPremiumTier
-);
-
-}
-
-function hasPremiumPlus(){
-
-return [
-"premium_plus",
-"premium_max"
-].includes(
-currentPremiumTier
-);
-
-}
-
-function hasPremiumMax(){
-
-return (
-currentPremiumTier===
-"premium_max"
-);
-
-}
-
-function canPostImage(){
-
-return hasPremium();
-
-}
-
-function canPostVideo(){
-
-return hasPremiumPlus();
-
-}
-
-function canCreateLive(){
-
-return (
-hasPremiumMax() &&
-currentLevel>=
-PREMIUM_MAX_MIN_LEVEL
-);
-
-}
-
-function premiumLabel(){
-
-switch(
-currentPremiumTier
-){
-
-case "premium":      
-  return "🟢 Premium";      
+async function likePost(  
+  postId  
+){  
   
-case "premium_plus":      
-  return "🔵 Premium+";      
+  if(!currentSession){  
   
-case "premium_max":      
-  return "🟣 Premium Max";      
+    alert(  
+      "Please login to like posts."  
+    );  
   
-default:      
-  return "Free";
-
-}
-
-}
-
-function updatePremiumUI(){
-
-const label =
-premiumLabel();
-
-const current =
-document.getElementById(
-"currentPremiumLabel"
-);
-
-const header =
-document.getElementById(
-"headerPremiumBadge"
-);
-
-if(current){
-
-current.textContent =      
-  label;
-
-}
-
-if(header){
-
-header.textContent =      
-  label==="Free"      
-    ?""      
-    :label;
-
-}
-
-}
-
-/* =====================================================
-WALLET
-===================================================== */
-
-function updateWalletDisplay(
-profile
-){
-
-/*
-USDT field candidates.
-*/
-
-const usdt =
-getFirstValue(
-profile,
-[
-"usdt_balance",
-"balance_usdt",
-"wallet_usdt",
-"usdt"
-]
-);
-
-/*
-Diamond is intentionally separate
-from USDT.
-*/
-
-const diamond =
-getFirstValue(
-profile,
-[
-"diamond_balance",
-"diamonds",
-"balance_diamond",
-"diamond"
-]
-);
-
-const usdtNumber =
-Number(usdt)||0;
-
-const diamondNumber =
-Number(diamond)||0;
-
-document.getElementById(
-"usdtDisplay"
-).textContent =
-usdtNumber.toLocaleString(
-undefined,
-{
-minimumFractionDigits:2,
-maximumFractionDigits:8
-}
-);
-
-document.getElementById(
-"diamondDisplay"
-).textContent =
-diamondNumber.toLocaleString();
-
-/*
-Main wallet display is USDT.
-Diamonds are NOT converted to USDT.
-*/
-
-document.getElementById(
-"balanceDisplay"
-).textContent =
-usdtNumber.toLocaleString(
-undefined,
-{
-minimumFractionDigits:2,
-maximumFractionDigits:8
-}
-)+
-" USDT";
-
-}
-
-/* =====================================================
-PREMIUM DETAILS
-===================================================== */
-
-function openPremiumDetails(){
-
-document.getElementById(
-"premiumModal"
-).style.display="flex";
-
-}
-
-function closePremiumDetails(){
-
-document.getElementById(
-"premiumModal"
-).style.display="none";
-
-}
-
-/* =====================================================
-NAVIGATION
-===================================================== */
-
-function requireLogin(){
-
-if(!currentSession){
-
-redirectToLogin();      
+    openLogin();  
   
-return false;
-
-}
-
-return true;
-
-}
-
-function goHome(){
-
-if(!requireLogin())return;
-
-window.scrollTo({
-top:0,
-behavior:"smooth"
-});
-
-}
-
-function openLive(){
-
-if(!requireLogin())return;
-
-/*
-Premium Max Level 3+ is required
-to CREATE Live. Viewing Live remains
-available through live.html.
-*/
-
-window.location.href =
-"./live.html";
-
-}
-
-function openWallet(){
-
-if(!requireLogin())return;
-
-window.location.href =
-"./wallet.html";
-
-}
-
-function openMessages(){
-
-if(!requireLogin())return;
-
-window.location.href =
-"./message.html";
-
-}
-
-function openProfile(){
-
-if(!requireLogin())return;
-
-window.location.href =
-"./profile.html";
-
-}
-
-function openUserProfile(
-userId
-){
-
-if(!requireLogin())return;
-
-window.location.href =
-"./profile.html?id="+
-encodeURIComponent(userId);
-
-}
-
-function openP2POffer(
-offerId
-){
-
-if(!requireLogin())return;
-
-window.location.href =
-"./p2p-order.html?offer="+
-encodeURIComponent(
-offerId
-);
-
-}
-
-function openDeposit(){
-
-if(!requireLogin())return;
-
-window.location.href =
-"./wallet.html";
-
-}
-
-function createOffer(){
-
-if(!requireLogin())return;
-
-window.location.href =
-"./wallet.html";
-
-}
-
-/* =====================================================
-LOGOUT
-===================================================== */
-
-async function logout(){
-
-try{
-
-const {      
-  error      
-} =      
-await supabaseClient.auth.signOut();      
+    return;  
+  
+  }  
+  
+  const userId =  
+    currentSession.user.id;  
+  
+  const {  
+    data:existing,  
+    error:checkError  
+  } =  
+    await supabaseClient  
+      .from("post_likes")  
+      .select(  
+        "post_id"  
+      )  
+      .eq(  
+        "post_id",  
+        postId  
+      )  
+      .eq(  
+        "user_id",  
+        userId  
+      )  
+      .maybeSingle();  
+  
+  if(checkError){  
+  
+    alert(  
+      "Could not update like: "+  
+      checkError.message  
+    );  
+  
+    return;  
+  
+  }  
+  
+  if(existing){  
+  
+    const {error} =  
+      await supabaseClient  
+        .from("post_likes")  
+        .delete()  
+        .eq(  
+          "post_id",  
+          postId  
+        )  
+        .eq(  
+          "user_id",  
+          userId  
+        );  
+  
+    if(error){  
+  
+      alert(  
+        "Could not unlike post."  
+      );  
+  
+      return;  
+  
+    }  
+  
+  }else{  
+  
+    const {error} =  
+      await supabaseClient  
+        .from("post_likes")  
+        .insert({  
+  
+          post_id:postId,  
+  
+          user_id:userId  
+  
+        });  
+  
+    if(error){  
+  
+      alert(  
+        "Could not like post."  
+      );  
+  
+      return;  
+  
+    }  
+  
+  }  
+  
+  await renderPosts();  
+  
+}  
+  
+/* ================================  
+   DELETE POST  
+================================ */  
+  
+async function deletePost(  
+  postId  
+){  
+  
+  if(!currentSession){  
+  
+    openLogin();  
+  
+    return;  
+  
+  }  
+  
+  if(!confirm(  
+    "Delete your post?"  
+  )){  
+  
+    return;  
+  
+  }  
+  
+  const {error} =  
+    await supabaseClient  
+      .from("posts")  
+      .delete()  
+      .eq(  
+        "id",  
+        postId  
+      )  
+      .eq(  
+        "user_id",  
+        currentSession.user.id  
+      );  
+  
+  if(error){  
+  
+    console.error(error);  
+  
+    alert(  
+      "Could not delete post: "+  
+      error.message  
+    );  
+  
+    return;  
+  
+  }  
+  
+  allPosts =  
+    allPosts.filter(  
+      post =>  
+        String(post.id)!==  
+        String(postId)  
+    );  
+  
+  await renderPosts();  
+  
+}  
+  
+/* ================================  
+   CREATE POST  
+================================ */  
+  
+function openCreatePost(){  
+  
+  if(!currentSession){  
+  
+    alert(  
+      "Please login to create a post."  
+    );  
+  
+    openLogin();  
+  
+    return;  
+  
+  }  
+  
+  document.getElementById(  
+    "postContentInput"  
+  ).value="";  
+  
+  document.getElementById(  
+    "postVisibility"  
+  ).value="public";  
+  
+  document.getElementById(  
+    "createPostModal"  
+  ).style.display="flex";  
+  
+}  
+  
+function closeCreatePost(){  
+  
+  document.getElementById(  
+    "createPostModal"  
+  ).style.display="none";  
+  
+}  
+  
+async function createPost(){  
+  
+  if(!currentSession){  
+  
+    openLogin();  
+  
+    return;  
+  
+  }  
+  
+  const input =  
+    document.getElementById(  
+      "postContentInput"  
+    );  
   
-if(error){      
+  const visibility =  
+    document.getElementById(  
+      "postVisibility"  
+    ).value;  
   
-  alert(      
-    "Logout failed: "+      
-    error.message      
-  );      
+  const content =  
+    String(  
+      input.value||""  
+    ).trim();  
   
-  return;      
+  if(!content){  
   
-}      
+    alert(  
+      "Write something first."  
+    );  
   
-currentSession=null;      
+    return;  
   
-redirectToLogin();
-
-}catch(error){
-
-console.error(error);      
+  }  
   
-redirectToLogin();
-
-}
-
-}
-
-/* =====================================================
-P2P OFFERS
-===================================================== */
-
-async function loadAvailableOffers(){
-
-const container =
-document.getElementById(
-"p2pOffersContainer"
-);
-
-try{
-
-let result =      
-  await supabaseClient      
-    .from("p2p_offers")      
-    .select("*")      
-    .limit(50);      
+  if(content.length>5000){  
   
-if(result.error){      
+    alert(  
+      "Post is too long."  
+    );  
   
-  result =      
-    await supabaseClient      
-      .from("offers")      
-      .select("*")      
-      .limit(50);      
+    return;  
   
-}      
+  }  
   
-if(result.error){      
+  const button =  
+    document.getElementById(  
+      "publishPostBtn"  
+    );  
   
-  renderNoOffers();      
+  button.disabled=true;  
   
-  return;      
+  button.textContent=  
+    "Publishing...";  
   
-}      
+  const {error} =  
+    await supabaseClient  
+      .from("posts")  
+      .insert({  
   
-const offers =      
-  (result.data||[])      
-    .filter(      
-      isOfferAvailable      
-    );      
+        user_id:  
+          currentSession.user.id,  
   
-if(!offers.length){      
+        content:content,  
   
-  renderNoOffers();      
+        visibility:visibility  
   
-  return;      
+      });  
   
-}      
+  button.disabled=false;  
   
-await renderAvailableOffers(      
-  offers      
-);
-
-}catch(error){
-
-console.error(error);      
+  button.textContent=  
+    "Publish Post";  
   
-renderNoOffers();
-
-}
-
-}
-
-function isOfferAvailable(
-offer
-){
-
-if(!offer)return false;
-
-const status =
-String(
-offer.status??""
-)
-.toLowerCase()
-.trim();
-
-if([
-"closed",
-"cancelled",
-"canceled",
-"completed",
-"inactive",
-"disabled",
-"sold"
-].includes(status)){
-
-return false;
-
-}
-
-if(
-offer.is_active===false ||
-offer.active===false
-){
-
-return false;
-
-}
-
-const amountValue =
-getFirstValue(
-offer,
-[
-"available_amount",
-"available",
-"remaining_amount",
-"amount"
-]
-);
-
-if(
-amountValue!==null &&
-amountValue!==""
-){
-
-const amount =      
-  Number(amountValue);      
+  if(error){  
   
-if(      
-  !Number.isNaN(amount) &&      
-  amount<=0      
-){      
+    console.error(error);  
   
-  return false;      
+    alert(  
+      "Could not create post: "+  
+      error.message  
+    );  
   
-}
-
-}
-
-return true;
-
-}
-
-async function renderAvailableOffers(
-offers
-){
-
-const container =
-document.getElementById(
-"p2pOffersContainer"
-);
-
-const userIds = [
-...new Set(
-offers
-.map(
-offer =>
-offer.user_id||
-offer.seller_id||
-offer.owner_id||
-offer.created_by
-)
-.filter(Boolean)
-)
-];
-
-let profiles=[];
-
-if(userIds.length){
-
-const result =      
-  await supabaseClient      
-    .from("profiles")      
-    .select(      
-      "id,username,avatar_url"      
-    )      
-    .in(      
-      "id",      
-      userIds      
-    );      
-  
-if(!result.error){      
-  
-  profiles =      
-    result.data||[];      
-  
-}
-
-}
-
-const profileMap={};
-
-profiles.forEach(
-profile=>{
-
-profileMap[      
-    profile.id      
-  ]=profile;      
-  
-}
-
-);
-
-/*
-Pinned offers first,
-then normal offers.
-*/
-
-const sorted =
-[...offers].sort(
-(a,b)=>{
-
-const aPinned =      
-      Boolean(      
-        a.is_pinned||      
-        a.pinned      
-      );      
-  
-    const bPinned =      
-      Boolean(      
-        b.is_pinned||      
-        b.pinned      
-      );      
-  
-    return Number(bPinned)-      
-           Number(aPinned);      
-  
-  }      
-);
-
-container.innerHTML="";
-
-sorted
-.slice(
-0,
-AVAILABLE_OFFERS_LIMIT
-)
-.forEach(
-offer=>{
-
-container.appendChild(      
-      createOfferCard(      
-        offer,      
-        profileMap      
-      )      
-    );      
-  
-  }      
-);
-
-}
-
-function createOfferCard(
-offer,
-profileMap
-){
-
-const card =
-document.createElement(
-"div"
-);
-
-card.className =
-"p2p-card";
-
-const userId =
-offer.user_id||
-offer.seller_id||
-offer.owner_id||
-offer.created_by||
-"";
-
-const profile =
-profileMap[userId]||{};
-
-const username =
-profile.username||
-offer.username||
-offer.seller_username||
-"Available trader";
-
-const avatarUrl =
-profile.avatar_url||
-offer.avatar_url||
-"";
-
-const initial =
-username
-.charAt(0)
-.toUpperCase()||
-"U";
-
-const typeRaw =
-getFirstValue(
-offer,
-[
-"type",
-"trade_type",
-"side",
-"offer_type"
-]
-);
-
-const type =
-String(typeRaw||"buy")
-.toLowerCase();
-
-const rate =
-getFirstValue(
-offer,
-[
-"rate",
-"price",
-"exchange_rate",
-"price_per_usdt"
-]
-);
-
-const amount =
-getFirstValue(
-offer,
-[
-"available_amount",
-"available",
-"remaining_amount",
-"amount"
-]
-);
-
-const min =
-getFirstValue(
-offer,
-[
-"min_amount",
-"minimum_amount",
-"min"
-]
-);
-
-const max =
-getFirstValue(
-offer,
-[
-"max_amount",
-"maximum_amount",
-"max"
-]
-);
-
-const normalizedType =
-type.includes("sell")
-?"sell"
-:"buy";
-
-const label =
-normalizedType==="sell"
-?"SELL USDT"
-:"BUY USDT";
-
-const avatarHTML =
-avatarUrl
-?
-<div class="avatar">       <img       src="${escapeHtml(avatarUrl)}"       alt="Profile">       </div>
-:
-<div class="avatar">       ${escapeHtml(initial)}       </div>;
-
-const pinned =
-Boolean(
-offer.is_pinned||
-offer.pinned
-);
-
-card.innerHTML=`
-
-${      
-  pinned      
-    ?      
-    `      
-    <div class="pin-label">      
-      📌 Pinned      
-    </div>      
-    `      
-    :""      
-}      
-  
-<div class="offer-type">      
-  ${escapeHtml(label)}      
-</div>      
-  
-<div class="p2p-card-header">      
-  
-  <div class="seller">      
-  
-    ${avatarHTML}      
-  
-    <div>      
-  
-      <div class="username">      
-        ${escapeHtml(username)}      
-      </div>      
-  
-      <div class="online">      
-        ● Available      
-      </div>      
-  
-    </div>      
-  
-  </div>      
-  
-  ${      
-    rate!==null &&      
-    rate!==""      
-    ?      
-    `      
-    <div class="rate">      
-  
-      <strong>      
-        ${escapeHtml(      
-          formatNumber(rate)      
-        )} ETB      
-      </strong>      
-  
-      <small>      
-        1 USDT      
-      </small>      
-  
-    </div>      
-    `      
-    :""      
-  }      
-  
-</div>      
-  
-<div class="trade-info">      
-  
-  ${      
-    amount!==null &&      
-    amount!==""      
-    ?      
-    `      
-    <span>      
-      Available:      
-      <strong>      
-        ${escapeHtml(      
-          formatNumber(amount)      
-        )} USDT      
-      </strong>      
-    </span>      
-    `      
-    :      
-    `<span>      
-      Available offer      
-    </span>`      
-  }      
-  
-  ${      
-    min!==null &&      
-    min!==""      
-    ?      
-    `      
-    <span>      
-      Min:      
-      ${escapeHtml(      
-        formatNumber(min)      
-      )} ETB      
-    </span>      
-    `      
-    :""      
-  }      
-  
-  ${      
-    max!==null &&      
-    max!==""      
-    ?      
-    `      
-    <span>      
-      Max:      
-      ${escapeHtml(      
-        formatNumber(max)      
-      )} ETB      
-    </span>      
-    `      
-    :""      
-  }      
-  
-</div>      
-  
-<button      
-  class="buy-btn"      
-  onclick="      
-    openP2POffer(      
-      '${escapeJs(offer.id)}'      
-    );      
-  ">      
-  
-  ${      
-    normalizedType==="sell"      
-      ?"Buy USDT"      
-      :"View Offer"      
-  }      
-  
-</button>
-
-`;
-
-return card;
-
-}
-
-function renderNoOffers(){
-
-document.getElementById(
-"p2pOffersContainer"
-).innerHTML=`
-
-<div class="no-offers">      
+    return;  
   
-  <div class="no-offers-icon">      
-    🔄      
-  </div>      
+  }  
   
-  <strong>      
-    No available offers yet.      
-  </strong>      
+  closeCreatePost();  
   
-  <small>      
-    Available P2P offers will appear here      
-    when traders create them.      
-  </small>      
+  await loadPosts(true);  
   
-</div>
-
-`;
-
-}
-
-/* =====================================================
-POSTS
-===================================================== */
-
-async function loadPosts(
-shuffle=false
-){
-
-if(!requireLogin())return;
-
-const feed =
-document.getElementById(
-"postsFeed"
-);
-
-feed.innerHTML=      <div class="loading-posts">       Loading public posts...       </div>      ;
-
-const {
-data:posts,
-error
-} =
-await supabaseClient
-.from("posts")
-.select("*")
-.or(
-"visibility.eq.public,visibility.is.null"
-)
-.order(
-"created_at",
-{
-ascending:false
-}
-)
-.limit(100);
-
-if(error){
-
-console.error(      
-  "Posts:",      
-  error      
-);      
+}  
   
-feed.innerHTML=`      
-  <div class="no-posts">      
+/* ================================  
+   PROFILE  
+================================ */  
   
-    Could not load posts.      
+function openUserProfile(  
+  userId  
+){  
   
-    <br>      
+  if(!userId)return;  
   
-    <small>      
-      ${escapeHtml(      
-        error.message      
-      )}      
-    </small>      
+  window.location.href =  
+    "profile.html?user="+  
+    encodeURIComponent(  
+      userId  
+    );  
   
-  </div>      
-`;      
+}  
   
-return;
-
-}
-
-allPosts =
-posts||[];
-
-if(shuffle){
-
-allPosts.sort(      
-  ()=>Math.random()-.5      
-);
-
-}
-
-displayedPostCount =
-INITIAL_POST_LIMIT;
-
-await renderPosts();
-
-}
-
-async function loadMorePosts(){
-
-if(
-displayedPostCount>=
-allPosts.length
-){
-
-return;
-
-}
-
-displayedPostCount+=
-INITIAL_POST_LIMIT;
-
-await renderPosts();
-
-}
-
-async function renderPosts(){
-
-if(!requireLogin())return;
-
-const feed =
-document.getElementById(
-"postsFeed"
-);
-
-const visiblePosts =
-allPosts.slice(
-0,
-displayedPostCount
-);
-
-if(!visiblePosts.length){
-
-feed.innerHTML=`      
-  <div class="no-posts">      
-    No public posts yet.      
-  </div>      
-`;      
-  
-document.getElementById(      
-  "loadMoreBtn"      
-).style.display="none";      
-  
-return;
-
-}
-
-const postIds =
-visiblePosts.map(
-p=>p.id
-);
-
-const userIds=[
-...new Set(
-visiblePosts
-.map(
-p=>p.user_id
-)
-.filter(Boolean)
-)
-];
-
-const profileMap={};
-
-if(userIds.length){
-
-const {      
-  data      
-} =      
-await supabaseClient      
-  .from("profiles")      
-  .select(      
-    "id,username,avatar_url"      
-  )      
-  .in(      
-    "id",      
-    userIds      
-  );      
-  
-(data||[]).forEach(      
-  profile=>{      
-  
-    profileMap[      
-      profile.id      
-    ]=profile;      
-  
-  }      
-);
-
-}
-
-/* ===================================================
-LIKES
-=================================================== */
-
-let likes=[];
-
-if(postIds.length){
-
-const {      
-  data      
-} =      
-await supabaseClient      
-  .from("post_likes")      
-  .select(      
-    "post_id,user_id"      
-  )      
-  .in(      
-    "post_id",      
-    postIds      
-  );      
-  
-likes =      
-  data||[];
-
-}
-
-const likeCount={};
-
-likes.forEach(
-like=>{
-
-likeCount[      
-    like.post_id      
-  ] =      
-    (      
-      likeCount[      
-        like.post_id      
-      ]||0      
-    )+1;      
-  
-}
-
-);
-
-const myLikes =
-new Set(
-likes
-.filter(
-like=>
-like.user_id===
-currentSession.user.id
-)
-.map(
-like=>
-like.post_id
-)
-);
-
-/* ===================================================
-COMMENTS
-=================================================== */
-
-let comments=[];
-
-if(postIds.length){
-
-const {      
-  data      
-} =      
-await supabaseClient      
-  .from("post_comments")      
-  .select(      
-    "id,post_id,user_id,comment,created_at"      
-  )      
-  .in(      
-    "post_id",      
-    postIds      
-  )      
-  .order(      
-    "created_at",      
-    {      
-      ascending:true      
-    }      
-  );      
-  
-comments =      
-  data||[];
-
-}
-
-const commentUserIds=[
-...new Set(
-comments
-.map(
-c=>c.user_id
-)
-.filter(Boolean)
-)
-];
-
-if(commentUserIds.length){
-
-const {      
-  data      
-} =      
-await supabaseClient      
-  .from("profiles")      
-  .select(      
-    "id,username,avatar_url"      
-  )      
-  .in(      
-    "id",      
-    commentUserIds      
-  );      
-  
-(data||[]).forEach(      
-  profile=>{      
-  
-    profileMap[      
-      profile.id      
-    ]=profile;      
-  
-  }      
-);
-
-}
-
-feed.innerHTML="";
-
-visiblePosts.forEach(
-post=>{
-
-const profile =      
-    profileMap[      
-      post.user_id      
-    ]||{};      
-  
-  const username =      
-    profile.username||      
-    "User";      
-  
-  const avatar =      
-    profile.avatar_url||      
-    "";      
-  
-  const initial =      
-    username      
-      .charAt(0)      
-      .toUpperCase()||      
-    "U";      
-  
-  const postComments =      
-    comments.filter(      
-      c=>      
-        String(c.post_id)===      
-        String(post.id)      
-    );      
-  
-  const isOwner =      
-    currentSession.user.id===      
-    post.user_id;      
-  
-  const card =      
-    document.createElement(      
-      "article"      
-    );      
-  
-  card.className =      
-    "post-card";      
-  
-  const avatarHTML =      
-    avatar      
-      ?      
-      `<div class="post-avatar">      
-  
-        <img      
-          src="${escapeHtml(avatar)}"      
-          alt="Profile">      
-  
-      </div>`      
-      :      
-      `<div class="post-avatar">      
-  
-        ${escapeHtml(initial)}      
-  
-      </div>`;      
-  
-  const mediaHTML =      
-    renderPostMedia(      
-      post      
-    );      
-  
-  const isPinned =      
-    Boolean(      
-      post.is_pinned||      
-      post.pinned      
-    );      
-  
-  card.innerHTML=`      
-  
-    ${      
-      isPinned      
-        ?      
-        `      
-        <div class="post-pin">      
-          📌 Pinned      
-        </div>      
-        `      
-        :""      
-    }      
-  
-    <div      
-      class="post-header"      
-      onclick="      
-        openUserProfile(      
-          '${escapeJs(post.user_id)}'      
-        );      
-      ">      
-  
-      ${avatarHTML}      
-  
-      <div class="post-user-info">      
-  
-        <div class="post-name">      
-          ${escapeHtml(username)}      
-        </div>      
-  
-        <div class="post-handle">      
-          @${escapeHtml(username)}      
-        </div>      
-  
-      </div>      
-  
-      <div class="post-time">      
-        ${escapeHtml(      
-          formatPostTime(      
-            post.created_at      
-          )      
-        )}      
-      </div>      
-  
-      ${      
-        isOwner      
-          ?      
-          `      
-          <button      
-            class="post-menu"      
-            onclick="      
-              event.stopPropagation();      
-              deletePost(      
-                '${escapeJs(post.id)}'      
-              );      
-            ">      
-            🗑️      
-          </button>      
-          `      
-          :""      
-      }      
-  
-    </div>      
-  
-    <div class="post-content">      
-      ${escapeHtml(      
-        post.content||""      
-      )}      
-    </div>      
-  
-    ${mediaHTML}      
-  
-    <div class="post-actions">      
-  
-      <button      
-        class="post-action ${      
-          myLikes.has(post.id)      
-            ?"liked"      
-            :""      
-        }"      
-        onclick="      
-          event.stopPropagation();      
-          likePost(      
-            '${escapeJs(post.id)}'      
-          );      
-        ">      
-  
-        ${      
-          myLikes.has(post.id)      
-            ?"♥ Liked"      
-            :"♡ Like"      
-        }      
-  
-        <span>      
-          ${likeCount[post.id]||0}      
-        </span>      
-  
-      </button>      
-  
-      <button      
-        class="post-action"      
-        onclick="      
-          event.stopPropagation();      
-          toggleComments(      
-            '${escapeJs(post.id)}'      
-          );      
-        ">      
-  
-        💬 Comments      
-  
-        <span>      
-          ${postComments.length}      
-        </span>      
-  
-      </button>      
-  
-      <button      
-        class="post-action"      
-        onclick="      
-          event.stopPropagation();      
-          sharePost(      
-            '${escapeJs(post.id)}'      
-          );      
-        ">      
-  
-        ↗ Share      
-  
-      </button>      
-  
-    </div>      
-  
-    <div      
-      id="comments-${escapeHtml(post.id)}"      
-      class="comments-box"      
-      style="      
-        display:${      
-          commentsOpen[post.id]      
-            ?"block"      
-            :"none"      
-        };      
-      ">      
-  
-      ${renderComments(      
-        post.id,      
-        postComments,      
-        profileMap      
-      )}      
-  
-    </div>      
-  
-  `;      
-  
-  feed.appendChild(      
-    card      
-  );      
-  
-}
-
-);
-
-document.getElementById(
-"loadMoreBtn"
-).style.display =
-displayedPostCount<
-allPosts.length
-?"block"
-:"none";
-
-}
-
-/* =====================================================
-POST MEDIA
-===================================================== */
-
-function renderPostMedia(
-post
-){
-
-const mediaUrl =
-post.media_url||
-post.image_url||
-post.video_url||
-"";
-
-if(!mediaUrl){
-
-return "";
-
-}
-
-const type =
-String(
-post.media_type||
-post.post_type||
-""
-).toLowerCase();
-
-if(
-type==="video"||
-post.video_url
-){
-
-return `      
+/* ================================  
+   SHARE  
+================================ */  
   
-  <div class="post-media">      
+async function sharePost(  
+  postId  
+){  
   
-    <video      
-      src="${escapeHtml(mediaUrl)}"      
-      controls      
-      playsinline      
-      preload="metadata">      
-    </video>      
+  const url =  
+    window.location.origin+  
+    window.location.pathname+  
+    "?post="+  
+    encodeURIComponent(  
+      postId  
+    );  
   
-  </div>      
+  if(navigator.share){  
   
-  <div class="post-type-label">      
-    🎥 Video      
-  </div>      
+    try{  
   
-`;
-
-}
-
-return `
-
-<div class="post-media">      
+      await navigator.share({  
   
-  <img      
-    src="${escapeHtml(mediaUrl)}"      
-    alt="Post image"      
-    loading="lazy">      
+        title:  
+          "P2P Social Post",  
   
-</div>      
+        text:  
+          "Check out this post on P2P Social.",  
   
-<div class="post-type-label">      
-  🖼️ Picture      
-</div>
-
-`;
-
-}
-
-/* =====================================================
-LIKE
-===================================================== */
-
-async function likePost(
-postId
-){
-
-if(!requireLogin())return;
-
-const userId =
-currentSession.user.id;
-
-const {
-data:existing,
-error:checkError
-} =
-await supabaseClient
-.from("post_likes")
-.select("post_id")
-.eq(
-"post_id",
-postId
-)
-.eq(
-"user_id",
-userId
-)
-.maybeSingle();
-
-if(checkError){
-
-alert(      
-  "Could not check like."      
-);      
-  
-return;
-
-}
-
-if(existing){
-
-const {      
-  error      
-} =      
-await supabaseClient      
-  .from("post_likes")      
-  .delete()      
-  .eq(      
-    "post_id",      
-    postId      
-  )      
-  .eq(      
-    "user_id",      
-    userId      
-  );      
-  
-if(error){      
-  
-  alert(error.message);      
-  
-  return;      
-  
-}
-
-}else{
-
-const {      
-  error      
-} =      
-await supabaseClient      
-  .from("post_likes")      
-  .insert({      
-    post_id:postId,      
-    user_id:userId      
-  });      
-  
-if(error){      
-  
-  alert(error.message);      
-  
-  return;      
-  
-}
-
-}
-
-await renderPosts();
-
-}
-
-/* =====================================================
-COMMENTS
-===================================================== */
-
-function toggleComments(
-postId
-){
-
-commentsOpen[postId] =
-!commentsOpen[postId];
-
-const box =
-document.getElementById(
-"comments-"+postId
-);
-
-if(box){
-
-box.style.display =      
-  commentsOpen[postId]      
-    ?"block"      
-    :"none";
-
-}
-
-if(
-commentsOpen[postId]
-){
-
-refreshSinglePostComments(      
-  postId      
-);
-
-}
-
-}
-
-async function refreshSinglePostComments(
-postId
-){
-
-const box =
-document.getElementById(
-"comments-"+postId
-);
-
-if(!box)return;
-
-const {
-data,
-error
-} =
-await supabaseClient
-.from("post_comments")
-.select(
-"id,post_id,user_id,comment,created_at"
-)
-.eq(
-"post_id",
-postId
-)
-.order(
-"created_at",
-{
-ascending:true
-}
-);
-
-if(error){
-
-console.error(error);      
+        url:url  
   
-return;
-
-}
-
-const comments =
-data||[];
-
-const userIds=[
-...new Set(
-comments
-.map(
-c=>c.user_id
-)
-.filter(Boolean)
-)
-];
-
-const profileMap={};
-
-if(userIds.length){
-
-const {      
-  data:profiles      
-} =      
-await supabaseClient      
-  .from("profiles")      
-  .select(      
-    "id,username,avatar_url"      
-  )      
-  .in(      
-    "id",      
-    userIds      
-  );      
-  
-(profiles||[]).forEach(      
-  profile=>{      
-  
-    profileMap[      
-      profile.id      
-    ]=profile;      
-  
-  }      
-);
-
-}
-
-box.innerHTML =
-renderComments(
-postId,
-comments,
-profileMap
-);
-
-}
-
-function renderComments(
-postId,
-comments,
-profileMap
-){
-
-let html="";
-
-comments.forEach(
-comment=>{
-
-const profile =      
-    profileMap[      
-      comment.user_id      
-    ]||{};      
-  
-  const username =      
-    profile.username||      
-    "User";      
-  
-  const avatar =      
-    profile.avatar_url||      
-    "";      
-  
-  const initial =      
-    username      
-      .charAt(0)      
-      .toUpperCase()||      
-    "U";      
-  
-  const isOwner =      
-    currentSession &&      
-    currentSession.user.id===      
-    comment.user_id;      
-  
-  const avatarHTML =      
-    avatar      
-      ?      
-      `<div class="comment-avatar">      
-  
-        <img      
-          src="${escapeHtml(avatar)}"      
-          alt="Profile">      
-  
-      </div>`      
-      :      
-      `<div class="comment-avatar">      
-  
-        ${escapeHtml(initial)}      
-  
-      </div>`;      
-  
-  html+=`      
-  
-    <div class="comment">      
-  
-      ${avatarHTML}      
-  
-      <div class="comment-body">      
-  
-        <div class="comment-name">      
-          ${escapeHtml(username)}      
-        </div>      
-  
-        <div class="comment-text">      
-          ${escapeHtml(      
-            comment.comment||""      
-          )}      
-        </div>      
-  
-        ${      
-          isOwner      
-            ?      
-            `      
-            <button      
-              class="comment-delete"      
-              onclick="      
-                deleteComment(      
-                  '${escapeJs(comment.id)}',      
-                  '${escapeJs(postId)}'      
-                );      
-              ">      
-              Delete      
-            </button>      
-            `      
-            :""      
-        }      
-  
-      </div>      
-  
-    </div>      
-  
-  `;      
-  
-}
-
-);
-
-html+=`
-
-<div class="comment-input-row">      
-  
-  <input      
-    id="comment-input-${escapeHtml(postId)}"      
-    class="comment-input"      
-    maxlength="1000"      
-    placeholder="Write a comment...">      
-  
-  <button      
-    class="comment-send"      
-    onclick="      
-      addComment(      
-        '${escapeJs(postId)}'      
-      );      
-    ">      
-    Send      
-  </button>      
-  
-</div>
-
-`;
-
-return html;
-
-}
-
-async function addComment(
-postId
-){
-
-if(!requireLogin())return;
-
-const input =
-document.getElementById(
-"comment-input-"+postId
-);
-
-if(!input)return;
-
-const text =
-input.value.trim();
-
-if(!text)return;
-
-const {
-error
-} =
-await supabaseClient
-.from("post_comments")
-.insert({
-post_id:postId,
-user_id:currentSession.user.id,
-comment:text
-});
-
-if(error){
-
-alert(      
-  "Could not add comment: "+      
-  error.message      
-);      
-  
-return;
-
-}
-
-input.value="";
-
-await refreshSinglePostComments(
-postId
-);
-
-await renderPosts();
-
-}
-
-async function deleteComment(
-commentId,
-postId
-){
-
-if(!requireLogin())return;
-
-const {
-data:comment,
-error:loadError
-} =
-await supabaseClient
-.from("post_comments")
-.select("user_id")
-.eq(
-"id",
-commentId
-)
-.maybeSingle();
-
-if(loadError||!comment){
-
-alert(      
-  "Comment not found."      
-);      
-  
-return;
-
-}
-
-if(
-comment.user_id!==
-currentSession.user.id
-){
-
-alert(      
-  "You can only delete your own comment."      
-);      
-  
-return;
-
-}
-
-if(
-!confirm(
-"Delete this comment?"
-)
-){
-
-return;
-
-}
-
-const {
-error
-} =
-await supabaseClient
-.from("post_comments")
-.delete()
-.eq(
-"id",
-commentId
-)
-.eq(
-"user_id",
-currentSession.user.id
-);
-
-if(error){
-
-alert(error.message);      
+      });  
   
-return;
-
-}
-
-await refreshSinglePostComments(
-postId
-);
-
-await renderPosts();
-
-}
-
-/* =====================================================
-CREATE POST UI
-===================================================== */
-
-function openCreatePost(){
-
-if(!requireLogin())return;
-
-document.getElementById(
-"createPostModal"
-).style.display="flex";
-
-document.getElementById(
-"postContentInput"
-).focus();
-
-document.getElementById(
-"mediaType"
-).value="text";
-
-updateMediaControls();
-
-}
-
-function closeCreatePost(){
-
-document.getElementById(
-"createPostModal"
-).style.display="none";
-
-}
-
-function updateMediaControls(){
-
-const type =
-document.getElementById(
-"mediaType"
-).value;
-
-const controls =
-document.getElementById(
-"mediaControls"
-);
-
-const notice =
-document.getElementById(
-"promotionNotice"
-);
-
-controls.innerHTML="";
-
-notice.innerHTML="";
-
-if(type==="text"){
-
-notice.innerHTML=`      
+    }catch(error){  
+  
+      console.log(error);  
+  
+    }  
+  
+    return;  
+  
+  }  
+  
+  try{  
   
-  <div class="info-box">      
+    await navigator.clipboard.writeText(  
+      url  
+    );  
   
-    ⚪ Free users can publish text posts.      
+    alert(  
+      "Post link copied."  
+    );  
   
-  </div>      
+  }catch(error){  
   
-`;      
+    alert(  
+      "Post link: "+url  
+    );  
   
-return;
-
-}
-
-if(type==="image"){
-
-if(!canPostImage()){      
+  }  
   
-  controls.innerHTML=`      
+}  
   
-    <div class="locked-feature">      
+/* ================================  
+   TIME  
+================================ */  
   
-      🔒 <strong>Picture posts require 🟢 Premium.</strong>      
+function formatPostTime(  
+  dateString  
+){  
   
-      <br><br>      
+  if(!dateString)return"";  
   
-      Upgrade to Premium, Premium+ or Premium Max      
-      to publish picture posts.      
+  const date =  
+    new Date(dateString);  
   
-    </div>      
+  if(  
+    isNaN(  
+      date.getTime()  
+    )  
+  ){  
   
-  `;      
+    return"";  
   
-  return;      
+  }  
   
-}      
+  const now =  
+    new Date();  
   
-controls.innerHTML=`      
+  const seconds =  
+    Math.floor(  
+      (now-date)/1000  
+    );  
   
-  <label class="media-label">      
-    Picture URL      
-  </label>      
+  if(seconds<60)return"now";  
   
-  <input      
-    id="mediaUrlInput"      
-    class="media-input"      
-    type="url"      
-    placeholder="https://example.com/image.jpg"      
-    oninput="previewMedia()">      
+  const minutes =  
+    Math.floor(  
+      seconds/60  
+    );  
   
-  <div class="media-note">      
+  if(minutes<60){  
   
-    Your post table needs a media URL field      
-    such as media_url or image_url.      
+    return minutes+"m";  
   
-  </div>      
+  }  
   
-  <div      
-    id="mediaPreview"      
-    class="media-preview">      
-  </div>      
+  const hours =  
+    Math.floor(  
+      minutes/60  
+    );  
   
-`;      
+  if(hours<24){  
   
-notice.innerHTML=`      
+    return hours+"h";  
   
-  <div class="info-box">      
+  }  
   
-    🟢 Premium:      
-    picture post + promotion inside photo.      
+  const days =  
+    Math.floor(  
+      hours/24  
+    );  
   
-    <br><br>      
+  if(days<7){  
   
-    Additional paid promotion can be handled      
-    by your platform promotion system.      
+    return days+"d";  
   
-  </div>      
+  }  
   
-`;      
+  return date.toLocaleDateString();  
   
-return;
-
-}
-
-if(type==="video"){
-
-if(!canPostVideo()){      
+}  
   
-  controls.innerHTML=`      
+/* ================================  
+   NAVIGATION  
+================================ */  
   
-    <div class="locked-feature">      
+function openLogin(){  
   
-      🔒 <strong>      
-        Video posts require 🔵 Premium+.      
-      </strong>      
+  window.location.href=  
+    "login.html";  
   
-      <br><br>      
+}  
   
-      Premium+ and Premium Max can publish      
-      video posts.      
+function openRegister(){  
   
-    </div>      
+  window.location.href=  
+    "register.html";  
   
-  `;      
+}  
   
-  return;      
+function openLive(){  
   
-}      
+  window.location.href=  
+    "live.html";  
   
-controls.innerHTML=`      
+}  
   
-  <label class="media-label">      
-    Video URL      
-  </label>      
+function openDeposit(){  
   
-  <input      
-    id="mediaUrlInput"      
-    class="media-input"      
-    type="url"      
-    placeholder="https://example.com/video.mp4"      
-    oninput="previewMedia()">      
+  if(!currentSession){  
   
-  <div class="media-note">      
+    alert(  
+      "Please login to make a deposit."  
+    );  
   
-    Use a publicly accessible video URL or      
-    connect this field to your Supabase Storage      
-    upload system.      
+    openLogin();  
   
-  </div>      
+    return;  
   
-  <div      
-    id="mediaPreview"      
-    class="media-preview">      
-  </div>      
+  }  
   
-`;      
+  window.location.href=  
+    "deposit.html";  
   
-notice.innerHTML=`      
+}  
   
-  <div class="info-box">      
+function openWallet(){  
   
-    🔵 Premium+:      
-    video post + promotion inside video.      
+  if(!currentSession){  
   
-    <br><br>      
+    alert(  
+      "Please login to access your wallet."  
+    );  
   
-    🟣 Premium Max includes all Premium+      
-    video features.      
+    openLogin();  
   
-  </div>      
+    return;  
   
-`;
-
-}
-
-}
-
-function previewMedia(){
-
-const type =
-document.getElementById(
-"mediaType"
-).value;
-
-const input =
-document.getElementById(
-"mediaUrlInput"
-);
-
-const preview =
-document.getElementById(
-"mediaPreview"
-);
-
-if(
-!input||
-!preview
-){
-
-return;
-
-}
-
-const url =
-input.value.trim();
-
-if(!url){
-
-preview.innerHTML="";      
+  }  
   
-return;
-
-}
-
-if(type==="image"){
-
-preview.innerHTML=`      
+  window.location.href=  
+    "wallet.html";  
   
-  <img      
-    src="${escapeHtml(url)}"      
-    alt="Preview">      
+}  
   
-`;
-
-}
-
-if(type==="video"){
-
-preview.innerHTML=`      
-  
-  <video      
-    src="${escapeHtml(url)}"      
-    controls      
-    playsinline>      
-  </video>      
-  
-`;
-
-}
-
-}
-
-/* =====================================================
-CREATE POST
-===================================================== */
-
-async function createPost(){
-
-if(!requireLogin())return;
-
-const content =
-document.getElementById(
-"postContentInput"
-).value.trim();
-
-const visibility =
-document.getElementById(
-"postVisibility"
-).value;
-
-const mediaType =
-document.getElementById(
-"mediaType"
-).value;
-
-if(!content){
-
-alert(      
-  "Write something first."      
-);      
-  
-return;
-
-}
-
-if(
-mediaType==="image" &&
-!canPostImage()
-){
-
-alert(      
-  "Picture posts require Premium."      
-);      
-  
-return;
-
-}
-
-if(
-mediaType==="video" &&
-!canPostVideo()
-){
-
-alert(      
-  "Video posts require Premium+."      
-);      
-  
-return;
-
-}
-
-let mediaUrl="";
-
-if(
-mediaType==="image"||
-mediaType==="video"
-){
-
-const input =      
-  document.getElementById(      
-    "mediaUrlInput"      
-  );      
+function openMessages(){  
   
-mediaUrl =      
-  input?.value.trim()||"";      
+  if(!currentSession){  
   
-if(!mediaUrl){      
+    alert(  
+      "Please login to access messages."  
+    );  
   
-  alert(      
-    "Add a media URL first."      
-  );      
+    openLogin();  
   
-  return;      
+    return;  
   
-}
-
-}
-
-const button =
-document.getElementById(
-"publishPostBtn"
-);
-
-button.disabled=true;
-
-button.textContent =
-"Publishing...";
-
-/*
-Insert core fields first.
-This keeps compatibility with the
-existing posts table.
-*/
-
-const payload={
-
-user_id:      
-  currentSession.user.id,      
+  }  
   
-content:      
-  content,      
+  window.location.href=  
+    "message.html";  
   
-visibility:      
-  visibility
-
-};
-
-/*
-Media fields are added only for
-media posts. Your Supabase posts table
-must contain matching columns.
-*/
-
-if(mediaType!=="text"){
-
-payload.media_url =      
-  mediaUrl;      
-  
-payload.media_type =      
-  mediaType;
-
-}
-
-const {
-error
-} =
-await supabaseClient
-.from("posts")
-.insert(payload);
-
-button.disabled=false;
-
-button.textContent =
-"Publish Post";
-
-if(error){
-
-console.error(error);      
-  
-alert(      
-  "Could not publish post: "+      
-  error.message+      
-  "\n\nIf this is a media post, make sure your posts table has media_url and media_type columns."      
-);      
-  
-return;
-
-}
-
-document.getElementById(
-"postContentInput"
-).value="";
-
-document.getElementById(
-"postVisibility"
-).value="public";
-
-document.getElementById(
-"mediaType"
-).value="text";
-
-closeCreatePost();
-
-await loadPosts(false);
-
-}
-
-/* =====================================================
-DELETE POST
-===================================================== */
-
-async function deletePost(
-postId
-){
-
-if(!requireLogin())return;
-
-const {
-data:post,
-error:loadError
-} =
-await supabaseClient
-.from("posts")
-.select("user_id")
-.eq(
-"id",
-postId
-)
-.maybeSingle();
-
-if(loadError||!post){
-
-alert(      
-  "Post not found."      
-);      
-  
-return;
-
-}
-
-if(
-post.user_id!==
-currentSession.user.id
-){
-
-alert(      
-  "You can only delete your own post."      
-);      
-  
-return;
-
-}
-
-if(
-!confirm(
-"Delete this post?"
-)
-){
-
-return;
-
-}
-
-const {
-error
-} =
-await supabaseClient
-.from("posts")
-.delete()
-.eq(
-"id",
-postId
-)
-.eq(
-"user_id",
-currentSession.user.id
-);
-
-if(error){
-
-alert(error.message);      
+}  
   
-return;
-
-}
-
-await loadPosts(false);
-
-}
-
-/* =====================================================
-SHARE
-===================================================== */
-
-async function sharePost(
-postId
-){
-
-if(!requireLogin())return;
-
-const shareUrl =
-window.location.origin+
-window.location.pathname+
-"?post="+
-encodeURIComponent(
-postId
-);
-
-if(
-navigator.share
-){
-
-try{      
+function openProfile(){  
   
-  await navigator.share({      
+  if(!currentSession){  
   
-    title:      
-      "P2P Social",      
+    alert(  
+      "Please login to access your profile."  
+    );  
   
-    text:      
-      "Check out this post on P2P Social",      
+    openLogin();  
   
-    url:      
-      shareUrl      
+    return;  
   
-  });      
+  }  
   
-}catch(error){      
+  window.location.href=  
+    "profile.html";  
   
-  if(      
-    error.name!=="AbortError"      
-  ){      
+}  
   
-    console.log(error);      
+/* ================================  
+   LOGOUT  
+================================ */  
   
-  }      
+async function logout(){  
   
-}      
+  if(!confirm(  
+    "Do you want to log out?"  
+  )){  
   
-return;
-
-}
-
-try{
-
-await navigator.clipboard.writeText(      
-  shareUrl      
-);      
-  
-alert(      
-  "Post link copied."      
-);
-
-}catch(error){
-
-prompt(      
-  "Copy this post link:",      
-  shareUrl      
-);
-
-}
-
-}
-
-/* =====================================================
-NOTIFICATIONS
-===================================================== */
-
-async function loadNotifications(){
-
-if(!currentSession){
-
-resetNotifications();      
+    return;  
   
-return;
-
-}
-
-const {
-data,
-error
-} =
-await supabaseClient
-.from("notifications")
-.select(      id,       user_id,       type,       title,       body,       link,       is_read,       created_at      )
-.eq(
-"user_id",
-currentSession.user.id
-)
-.order(
-"created_at",
-{
-ascending:false
-}
-)
-.limit(50);
-
-if(error){
-
-console.log(      
-  "Notifications:",      
-  error.message      
-);      
-  
-return;
-
-}
-
-renderNotifications(
-data||[]
-);
-
-}
-
-function renderNotifications(
-notifications
-){
-
-const list =
-document.getElementById(
-"notificationList"
-);
-
-const badge =
-document.getElementById(
-"notificationBadge"
-);
-
-if(!notifications.length){
-
-list.innerHTML=`      
+  }  
   
-  <div class="no-notifications">      
-    🔔 No notifications yet.      
-  </div>      
+  if(notificationChannel){  
   
-`;      
+    await supabaseClient  
+      .removeChannel(  
+        notificationChannel  
+      );  
   
-badge.style.display="none";      
+    notificationChannel=null;  
   
-return;
-
-}
-
-const unread =
-notifications.filter(
-n=>!n.is_read
-).length;
-
-if(unread){
-
-badge.textContent =      
-  unread>99      
-    ?"99+"      
-    :unread;      
-  
-badge.style.display =      
-  "flex";
-
-}else{
-
-badge.style.display =      
-  "none";
-
-}
-
-list.innerHTML="";
-
-notifications.forEach(
-notification=>{
-
-const item =      
-    document.createElement(      
-      "div"      
-    );      
+  }  
   
-  item.className =      
-    "notification-item"+      
-    (      
-      notification.is_read      
-        ?""      
-        :" unread"      
-    );      
+  const {error} =  
+    await supabaseClient.auth.signOut();  
   
-  item.innerHTML=`      
+  if(error){  
   
-    <div class="notification-icon">      
+    alert(  
+      "Logout failed: "+  
+      error.message  
+    );  
   
-      ${notificationIcon(      
-        notification.type      
-      )}      
+    return;  
   
-    </div>      
+  }  
   
-    <div class="notification-content">      
+  currentSession=null;  
   
-      <div class="notification-title">      
-        ${escapeHtml(      
-          notification.title||      
-          "Notification"      
-        )}      
-      </div>      
+  window.location.href=  
+    "index.html";  
   
-      <div class="notification-body">      
-        ${escapeHtml(      
-          notification.body||""      
-        )}      
-      </div>      
+}  
   
-      <div class="notification-time">      
-        ${escapeHtml(      
-          formatPostTime(      
-            notification.created_at      
-          )      
-        )}      
-      </div>      
+/* ================================  
+   SEARCH  
+================================ */  
   
-    </div>      
+document  
+  .getElementById(  
+    "searchInput"  
+  )  
+  .addEventListener(  
+    "input",  
+    function(){  
   
-  `;      
+      const search =  
+        this.value  
+          .toLowerCase()  
+          .trim();  
   
-  item.addEventListener(      
-    "click",      
-    async()=>{      
+      const cards =  
+        document.querySelectorAll(  
+          ".post-card"  
+        );  
   
-      if(      
-        !notification.is_read      
-      ){      
+      cards.forEach(  
+        card=>{  
   
-        await markNotificationRead(      
-          notification.id      
-        );      
+          if(!search){  
   
-      }      
+            card.style.display=  
+              "block";  
   
-      if(      
-        notification.link      
-      ){      
+            return;  
   
-        window.location.href =      
-          notification.link;      
+          }  
   
-      }else{      
+          const text =  
+            card.textContent  
+              .toLowerCase();  
   
-        openMessages();      
+          card.style.display =  
+            text.includes(search)  
+            ? "block"  
+            : "none";  
   
-      }      
+        }  
+      );  
   
-    }      
-  );      
+    }  
+  );  
   
-  list.appendChild(      
-    item      
-  );      
+/* ================================  
+   ESCAPE HTML  
+================================ */  
   
-}
-
-);
-
-}
-
-function notificationIcon(
-type
-){
-
-switch(type){
-
-case "message":      
-  return "💬";      
+function escapeHtml(  
+  text  
+){  
   
-case "like":      
-  return "❤️";      
+  const div =  
+    document.createElement(  
+      "div"  
+    );  
   
-case "comment":      
-  return "💬";      
+  div.textContent =  
+    text==null  
+    ? ""  
+    : String(text);  
   
-case "follow":      
-  return "👤";      
+  return div.innerHTML;  
   
-case "wallet":      
-  return "💰";      
+}  
   
-case "deposit":      
-  return "💵";      
+/* ================================  
+   ESCAPE JS  
+================================ */  
   
-case "withdraw":      
-  return "🏦";      
+function escapeJs(  
+  text  
+){  
   
-case "trade":      
-  return "🔄";      
+  return String(  
+    text||""  
+  )  
+    .replace(  
+      /\\/g,  
+      "\\\\"  
+    )  
+    .replace(  
+      /'/g,  
+      "\\'"  
+    )  
+    .replace(  
+      /\r/g,  
+      "\\r"  
+    )  
+    .replace(  
+      /\n/g,  
+      "\\n"  
+    );  
   
-case "premium":      
-  return "⭐";      
+}  
   
-case "live":      
-  return "🔴";      
+/* ================================  
+   CLOSE MODAL  
+================================ */  
   
-default:      
-  return "🔔";
-
-}
-
-}
-
-async function markNotificationRead(
-id
-){
-
-if(!currentSession)return;
-
-await supabaseClient
-.from("notifications")
-.update({
-is_read:true
-})
-.eq(
-"id",
-id
-)
-.eq(
-"user_id",
-currentSession.user.id
-);
-
-await loadNotifications();
-
-}
-
-async function markAllNotificationsRead(){
-
-if(!currentSession)return;
-
-const {
-error
-} =
-await supabaseClient
-.from("notifications")
-.update({
-is_read:true
-})
-.eq(
-"user_id",
-currentSession.user.id
-)
-.eq(
-"is_read",
-false
-);
-
-if(error){
-
-alert(      
-  "Could not mark notifications as read."      
-);      
-  
-return;
-
-}
-
-await loadNotifications();
-
-}
-
-function resetNotifications(){
-
-document.getElementById(
-"notificationBadge"
-).style.display="none";
-
-document.getElementById(
-"notificationList"
-).innerHTML=`
-
-<div class="no-notifications">      
-  Login to see notifications.      
-</div>
-
-`;
-
-}
-
-function toggleNotificationPanel(
-event
-){
-
-if(event){
-
-event.stopPropagation();
-
-}
-
-if(!requireLogin())return;
-
-const panel =
-document.getElementById(
-"notificationPanel"
-);
-
-panel.classList.toggle(
-"open"
-);
-
-if(
-panel.classList.contains(
-"open"
-)
-){
-
-loadNotifications();
-
-}
-
-}
-
-document.addEventListener(
-"click",
-event=>{
-
-const panel =      
-  document.getElementById(      
-    "notificationPanel"      
-  );      
-  
-const button =      
-  document.getElementById(      
-    "notificationButton"      
-  );      
-  
-if(      
-  panel &&      
-  !panel.contains(      
-    event.target      
-  ) &&      
-  button &&      
-  !button.contains(      
-    event.target      
-  )      
-){      
-  
-  panel.classList.remove(      
-    "open"      
-  );      
-  
-}
-
-}
-);
-
-function subscribeToNotifications(){
-
-if(!currentSession)return;
-
-if(notificationChannel){
-
-supabaseClient.removeChannel(      
-  notificationChannel      
-);
-
-}
-
-const userId =
-currentSession.user.id;
-
-notificationChannel =
-supabaseClient
-.channel(
-"notifications-"+userId
-)
-.on(
-"postgres_changes",
-{
-event:"INSERT",
-schema:"public",
-table:"notifications",
-filter:
-"user_id=eq."+userId
-},
-payload=>{
-
-loadNotifications();      
+document  
+  .getElementById(  
+    "createPostModal"  
+  )  
+  .addEventListener(  
+    "click",  
+    function(event){  
   
-      if(      
-        !document.hidden      
-      ){      
+      if(  
+        event.target===  
+        this  
+      ){  
   
-        showNewNotificationPopup(      
-          payload.new      
-        );      
+        closeCreatePost();  
   
-      }      
+      }  
   
-    }      
-  )      
-  .subscribe();
-
-}
-
-function showNewNotificationPopup(
-notification
-){
-
-if(
-"Notification" in window &&
-Notification.permission==="granted"
-){
-
-try{      
+    }  
+  );  
   
-  new Notification(      
-    notification.title||      
-    "New notification",      
-    {      
-      body:      
-        notification.body||""      
-    }      
-  );      
+/* ================================  
+   AUTH STATE  
+================================ */  
   
-}catch(error){      
+supabaseClient.auth.onAuthStateChange(  
+  function(  
+    event,  
+    session  
+  ){  
   
-  console.log(error);      
+    currentSession=  
+      session;  
   
-}
-
-}
-
-}
-
-/* =====================================================
-HELPERS
-===================================================== */
-
-function getFirstValue(
-object,
-keys
-){
-
-if(!object)return null;
-
-for(
-const key of keys
-){
-
-if(      
-  Object.prototype.hasOwnProperty.call(      
-    object,      
-    key      
-  )      
-){      
-  
-  if(      
-    object[key]!==null &&      
-    object[key]!==undefined &&      
-    object[key]!==""      
-  ){      
-  
-    return object[key];      
-  
-  }      
-  
-}
-
-}
-
-return null;
-
-}
-
-function formatNumber(
-value
-){
-
-const number =
-Number(value);
-
-if(
-Number.isNaN(number)
-){
-
-return String(value);
-
-}
-
-return number.toLocaleString(
-undefined,
-{
-maximumFractionDigits:8
-}
-);
-
-}
-
-function formatPostTime(
-date
-){
-
-if(!date)return "";
-
-const d =
-new Date(date);
-
-if(
-Number.isNaN(
-d.getTime()
-)
-){
-
-return "";
-
-}
-
-const now =
-new Date();
-
-const diff =
-Math.floor(
-(now-d)/1000
-);
-
-if(diff<60){
-
-return "just now";
-
-}
-
-if(diff<3600){
-
-return Math.floor(      
-  diff/60      
-)+"m ago";
-
-}
-
-if(diff<86400){
-
-return Math.floor(      
-  diff/3600      
-)+"h ago";
-
-}
-
-if(diff<604800){
-
-return Math.floor(      
-  diff/86400      
-)+"d ago";
-
-}
-
-return d.toLocaleDateString();
-
-}
-
-function escapeHtml(
-value
-){
-
-return String(
-value??""
-)
-.replace(
-/&/g,
-"&"
-)
-.replace(
-/</g,
-"<"
-)
-.replace(
-/>/g,
-">"
-)
-.replace(
-/"/g,
-"""
-)
-.replace(
-/'/g,
-"'"
-);
-
-}
-
-function escapeJs(
-value
-){
-
-return String(
-value??""
-)
-.replace(
-/\/g,
-"\\"
-)
-.replace(
-/'/g,
-"\'"
-)
-.replace(
-/"/g,
-'\"'
-)
-.replace(
-/\n/g,
-"\n"
-)
-.replace(
-/\r/g,
-"\r"
-);
-
-}
-
-/* =====================================================
-CLOSE MODALS WHEN CLICKING BACKDROP
-===================================================== */
-
-document.addEventListener(
-"click",
-event=>{
-
-const premiumModal =      
-  document.getElementById(      
-    "premiumModal"      
-  );      
+    setTimeout(  
+      async function(){  
   
-const postModal =      
-  document.getElementById(      
-    "createPostModal"      
-  );      
+        await updateAuthUI();  
   
-if(      
-  event.target===      
-  premiumModal      
-){      
+        await loadPosts();  
   
-  closePremiumDetails();      
+        await loadAvailableOffers();  
   
-}      
+        if(currentSession){  
   
-if(      
-  event.target===      
-  postModal      
-){      
+          await loadNotifications();  
   
-  closeCreatePost();      
+          subscribeToNotifications();  
   
-}
-
-}
-);
-
-/* =====================================================
-ESC KEY
-===================================================== */
-
-document.addEventListener(
-"keydown",
-event=>{
-
-if(      
-  event.key==="Escape"      
-){      
+        }  
   
-  closePremiumDetails();      
+      },  
+      0  
+    );  
   
-  closeCreatePost();      
+  }  
+);  
   
-}
-
-}
-);
-
-/* =====================================================
-START APP
-===================================================== */
-
-startApp();
-
-</script>  </body>
-
+/* ================================  
+   SERVICE WORKER / PWA  
+================================ */  
+  
+if(  
+  "serviceWorker" in navigator  
+){  
+  
+  window.addEventListener(  
+    "load",  
+    function(){  
+  
+      navigator.serviceWorker  
+        .register(  
+          "./service-worker.js"  
+        )  
+        .then(  
+          registration=>{  
+  
+            console.log(  
+              "P2P Social service worker registered:",  
+              registration.scope  
+            );  
+  
+          }  
+        )  
+        .catch(  
+          error=>{  
+  
+            console.error(  
+              "Service worker registration failed:",  
+              error  
+            );  
+  
+          }  
+        );  
+  
+    }  
+  );  
+  
+}  
+  
+/* ================================  
+   START  
+================================ */  
+  
+async function startApp(){  
+  
+  await checkLogin();  
+  
+  await loadPosts();  
+  
+  await loadAvailableOffers();  
+  
+  if(currentSession){  
+  
+    await loadNotifications();  
+  
+    subscribeToNotifications();  
+  
+    requestNotificationPermission();  
+  
+  }  
+  
+}  
+  
+startApp();  
+  
+</script>  </body>  
 </html>

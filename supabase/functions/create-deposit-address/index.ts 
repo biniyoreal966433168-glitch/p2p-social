@@ -1,51 +1,65 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { TronWeb } from "npm:tronweb@6";
 
-const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const depositPrivateKey = Deno.env.get("TRON_DEPOSIT_PRIVATE_KEY");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get(
+  "SUPABASE_SERVICE_ROLE_KEY",
+)!;
 
-const supabase = createClient(
-  supabaseUrl,
-  serviceRoleKey,
+const DEPOSIT_PRIVATE_KEY = Deno.env.get(
+  "TRON_DEPOSIT_PRIVATE_KEY",
 );
 
-const tronWeb = new TronWeb({
-  fullHost: "https://api.trongrid.io",
-  privateKey: depositPrivateKey || undefined,
-});
+const supabaseAdmin = createClient(
+  SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY,
+);
+
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+}
 
 Deno.serve(async (req) => {
   try {
     if (req.method !== "POST") {
-      return new Response(
-        JSON.stringify({ error: "POST required" }),
+      return json(
         {
-          status: 405,
-          headers: { "Content-Type": "application/json" },
+          success: false,
+          error: "Method not allowed",
         },
+        405,
       );
     }
 
-    const authHeader = req.headers.get("Authorization");
+    /*
+     * Authenticate the caller.
+     */
+    const authorization =
+      req.headers.get("Authorization");
 
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Missing authorization" }),
+    if (!authorization) {
+      return json(
         {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
+          success: false,
+          error: "Missing Authorization header",
         },
+        401,
       );
     }
 
-    const userClient = createClient(
-      supabaseUrl,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
+    const supabaseUser = createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY,
       {
         global: {
           headers: {
-            Authorization: authHeader,
+            Authorization: authorization,
           },
         },
       },
@@ -53,108 +67,225 @@ Deno.serve(async (req) => {
 
     const {
       data: { user },
-      error: userError,
-    } = await userClient.auth.getUser();
+      error: authError,
+    } = await supabaseUser.auth.getUser();
 
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
+    if (authError || !user) {
+      return json(
         {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
+          success: false,
+          error: "Unauthorized",
         },
+        401,
       );
     }
 
-    // Check whether this user already has a deposit address.
-    const { data: existingWallet, error: existingError } =
-      await supabase
+    /*
+     * Check whether this user already has a TRON/USDT
+     * deposit wallet.
+     */
+    const { data: existingWallet, error: lookupError } =
+      await supabaseAdmin
         .from("wallets")
-        .select("id, address, network, token, status")
+        .select(`
+          id,
+          user_id,
+          blockchain,
+          network,
+          asset,
+          deposit_address,
+          status,
+          created_at,
+          updated_at
+        `)
         .eq("user_id", user.id)
-        .eq("network", "TRON")
-        .eq("token", "USDT")
+        .eq("blockchain", "TRON")
+        .eq("network", "TRC-20")
+        .eq("asset", "USDT")
         .maybeSingle();
 
-    if (existingError) {
-      throw existingError;
+    if (lookupError) {
+      console.error("Wallet lookup error:", lookupError);
+
+      return json(
+        {
+          success: false,
+          error: "Could not check wallet",
+        },
+        500,
+      );
     }
 
+    /*
+     * If the user already has an address,
+     * return it instead of creating another one.
+     */
     if (existingWallet) {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          wallet: existingWallet,
-        }),
+      return json({
+        success: true,
+        existing: true,
+        wallet: existingWallet,
+        deposit_address:
+          existingWallet.deposit_address,
+      });
+    }
+
+    /*
+     * A dedicated deposit wallet secret is required.
+     */
+    if (!DEPOSIT_PRIVATE_KEY) {
+      console.error(
+        "TRON_DEPOSIT_PRIVATE_KEY is not configured",
+      );
+
+      return json(
         {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
+          success: false,
+          error: "Deposit wallet is not configured",
         },
+        500,
       );
     }
 
     /*
-      IMPORTANT:
-      Do NOT generate a random address here for production.
+     * IMPORTANT:
+     *
+     * Do NOT use the platform withdrawal private key here.
+     *
+     * This function currently derives the public address
+     * controlled by TRON_DEPOSIT_PRIVATE_KEY.
+     *
+     * A production multi-user deposit system should use
+     * deterministic HD-wallet derivation or another secure
+     * custody/address-allocation system so every user receives
+     * a different controlled deposit address.
+     */
+    const tronWeb = new TronWeb({
+      fullHost: "https://api.trongrid.io",
+      privateKey: DEPOSIT_PRIVATE_KEY,
+    });
 
-      A real deposit system needs a secure wallet derivation/custody
-      system that creates a unique address for each user and allows
-      the backend to monitor and eventually sweep those deposits.
-    */
+    const depositAddress =
+      tronWeb.address.fromPrivateKey(
+        DEPOSIT_PRIVATE_KEY,
+      );
 
-    if (!depositPrivateKey) {
-      return new Response(
-        JSON.stringify({
-          error: "Deposit wallet is not configured yet",
-          code: "DEPOSIT_WALLET_NOT_CONFIGURED",
-        }),
+    if (!depositAddress) {
+      return json(
         {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
+          success: false,
+          error: "Could not derive TRON address",
         },
+        500,
       );
     }
 
-    const baseAddress = tronWeb.address.fromPrivateKey(
-      depositPrivateKey,
-    );
+    /*
+     * SAFETY STOP:
+     *
+     * Do not assign the same address to multiple users.
+     *
+     * Before accepting real deposits, this must be replaced
+     * with unique address derivation/allocation.
+     */
+    const { data: addressAlreadyUsed, error: addressError } =
+      await supabaseAdmin
+        .from("wallets")
+        .select("id, user_id")
+        .eq("deposit_address", depositAddress)
+        .maybeSingle();
 
-    if (!baseAddress) {
-      throw new Error("Could not derive deposit wallet address");
+    if (addressError) {
+      console.error(
+        "Address lookup error:",
+        addressError,
+      );
+
+      return json(
+        {
+          success: false,
+          error: "Could not verify deposit address",
+        },
+        500,
+      );
+    }
+
+    if (addressAlreadyUsed) {
+      return json(
+        {
+          success: false,
+          error:
+            "Deposit address allocation is not configured for multiple users yet",
+          code: "UNIQUE_DEPOSIT_ADDRESS_REQUIRED",
+        },
+        409,
+      );
     }
 
     /*
-      TEMPORARY SAFETY STOP:
+     * Save the address using your EXACT wallets schema.
+     */
+    const { data: wallet, error: insertError } =
+      await supabaseAdmin
+        .from("wallets")
+        .insert({
+          user_id: user.id,
+          blockchain: "TRON",
+          network: "TRC-20",
+          asset: "USDT",
+          deposit_address: depositAddress,
+          status: "active",
+        })
+        .select(`
+          id,
+          user_id,
+          blockchain,
+          network,
+          asset,
+          deposit_address,
+          status,
+          created_at,
+          updated_at
+        `)
+        .single();
 
-      Do not assign the same platform address to every user.
-      We will replace this with deterministic/unique deposit-address
-      derivation before accepting real deposits.
-    */
+    if (insertError) {
+      console.error(
+        "Wallet insert error:",
+        insertError,
+      );
 
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: "Unique deposit-address derivation is not configured yet",
-        platformAddress: baseAddress,
-      }),
-      {
-        status: 409,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+      return json(
+        {
+          success: false,
+          error: "Could not save deposit wallet",
+        },
+        500,
+      );
+    }
+
+    return json({
+      success: true,
+      existing: false,
+      wallet,
+      deposit_address:
+        wallet.deposit_address,
+    });
   } catch (error) {
-    console.error("create-deposit-address error:", error);
+    console.error(
+      "create-deposit-address error:",
+      error,
+    );
 
-    return new Response(
-      JSON.stringify({
-        error: error instanceof Error
-          ? error.message
-          : "Internal server error",
-      }),
+    return json(
       {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Internal server error",
       },
+      500,
     );
   }
 });

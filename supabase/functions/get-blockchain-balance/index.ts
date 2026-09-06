@@ -17,10 +17,10 @@ const SUPABASE_PUBLISHABLE_KEY =
 // KEEP THESE AS SUPABASE SECRETS.
 // Do NOT insert the real values here.
 const SUPABASE_SERVICE_ROLE_KEY =
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  Deno.env.get("sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa");
 
 const TRONGRID_API_KEY =
-  Deno.env.get("TRONGRID_API_KEY");
+  Deno.env.get("8978e772-a3b2-4db3-b9c9-3feff764c5f5");
 
 const TRONGRID_BASE_URL =
   "https://api.trongrid.io";

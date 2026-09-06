@@ -1,13 +1,21 @@
-index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#087f73">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="P2P Social">
 
-<!DOCTYPE html>  <html lang="en">    <head>    
-<meta charset="UTF-8">    
-<meta name="viewport" content="width=device-width,initial-scale=1.0">  <meta name="theme-color" content="#087f73">    
-<meta name="mobile-web-app-capable" content="yes">    
-<meta name="apple-mobile-web-app-capable" content="yes">    
-<meta name="apple-mobile-web-app-status-bar-style" content="default">    
-<meta name="apple-mobile-web-app-title" content="P2P Social">  <link rel="manifest" href="./manifest.json">    
-<link rel="icon" href="./p2p-logo.svg" type="image/svg+xml">  <title>P2P Social</title>  <style>    *{
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./p2p-logo.svg" type="image/svg+xml">
+
+<title>P2P Social</title>
+
+<style>
+*{
 box-sizing:border-box;
 margin:0;
 padding:0;
@@ -1220,6 +1228,72 @@ cursor:pointer;
 }
 
 /* =====================================================
+OWNER TREASURY
+===================================================== */
+
+.treasury-box{
+display:none;
+margin:0 18px 18px;
+background:white;
+border-radius:18px;
+padding:16px;
+box-shadow:0 4px 15px rgba(0,0,0,.06);
+}
+
+.treasury-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:10px;
+}
+
+.treasury-title{
+font-size:17px;
+font-weight:bold;
+}
+
+.treasury-badge{
+font-size:11px;
+font-weight:bold;
+padding:6px 9px;
+border-radius:20px;
+background:#f1f3f6;
+}
+
+.treasury-balance{
+font-size:25px;
+font-weight:bold;
+margin-top:10px;
+}
+
+.treasury-row{
+display:flex;
+justify-content:space-between;
+margin-top:9px;
+font-size:13px;
+}
+
+.treasury-actions{
+display:flex;
+gap:8px;
+margin-top:14px;
+}
+
+.treasury-actions button{
+flex:1;
+border:none;
+padding:10px;
+border-radius:10px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.treasury-refresh{
+background:#eaf7f4;
+color:#087f73;
+}
+
+/* =====================================================
 BOTTOM NAV
 ===================================================== */
 
@@ -1277,6 +1351,10 @@ margin:16px 12px;
 margin:14px 12px 0;
 }
 
+.treasury-box{
+margin:0 12px 16px;
+}
+
 .wallet-balance{
 font-size:27px;
 }
@@ -1303,496 +1381,844 @@ grid-template-columns:1fr;
 }
 
 }
+</style>
+</head>
 
-</style>  </head>  <body>  <!-- =====================================================    
-AUTH CHECK    
-===================================================== -->  <div id="checkingAuth">    <div class="auth-logo">
-P2P
+<body>
 
-  </div>    <div>    
-    <strong>P2P Social</strong>    
-  </div>    <div class="auth-loading">    
-    Checking login...    
-  </div>  </div>  <!-- =====================================================    
-     APP    
-===================================================== -->  <div id="app">  <header>    <div class="top">  <div class="logo-area">      <div class="logo">    
-    <div class="p-left"></div>    
-    <div class="p-right"></div>    <div class="center">    
-  <div class="dot"></div>    
+<div id="checkingAuth">
+<div class="auth-logo">P2P</div>
+<div><strong>P2P Social</strong></div>
+<div class="auth-loading">Checking login...</div>
 </div>
 
-  </div>      <div class="brand">    
-    P2P <span>Social</span>    
-  </div>    </div>    <div class="top-actions">    <button    
-id="logoutBtn"    
-class="auth-btn logout-btn"    
+<div id="app">
+
+<header>
+
+<div class="top">
+
+<div class="logo-area">
+
+<div class="logo">
+<div class="p-left"></div>
+<div class="p-right"></div>
+<div class="center">
+<div class="dot"></div>
+</div>
+</div>
+
+<div class="brand">
+P2P <span>Social</span>
+</div>
+
+</div>
+
+<div class="top-actions">
+
+<button
+id="logoutBtn"
+class="auth-btn logout-btn"
 onclick="logout()">
 Logout
 </button>
 
-  <div class="notification-wrap">    <button    
-  id="notificationButton"    
-  class="notification"    
-  onclick="toggleNotificationPanel(event)">    
-  🔔    
+<div class="notification-wrap">
 
-  <span    
-    id="notificationBadge"    
-    class="notification-badge">    
-    0    
-  </span>    
+<button
+id="notificationButton"
+class="notification"
+onclick="toggleNotificationPanel(event)">
+🔔
+<span
+id="notificationBadge"
+class="notification-badge">0</span>
+</button>
 
-</button>    
+<div
+id="notificationPanel"
+class="notification-panel">
 
-<div    
-  id="notificationPanel"    
-  class="notification-panel">    
+<div class="notification-header">
 
-  <div class="notification-header">    
+<strong>Notifications</strong>
 
-    <strong>    
-      Notifications    
-    </strong>    
-
-    <button    
-      class="mark-all"    
-      onclick="markAllNotificationsRead()">    
-      Mark all read    
-    </button>    
-
-  </div>    
-
-  <div    
-    id="notificationList"    
-    class="notification-list">    
-
-    <div class="no-notifications">    
-      Loading notifications...    
-    </div>    
-
-  </div>    
+<button
+class="mark-all"
+onclick="markAllNotificationsRead()">
+Mark all read
+</button>
 
 </div>
 
-  </div>    </div>    </div>    <div class="user-info">  Logged in as:    <strong id="usernameDisplay">    
-  User    
-</strong>    <span    
-id="headerPremiumBadge"    
-class="premium-user-badge">
+<div
+id="notificationList"
+class="notification-list">
+
+<div class="no-notifications">
+Loading notifications...
+</div>
+
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<div class="user-info">
+Logged in as:
+<strong id="usernameDisplay">User</strong>
+<span
+id="headerPremiumBadge"
+class="premium-user-badge"></span>
+</div>
+
+<div class="search">
+🔎
+<input
+type="text"
+id="searchInput"
+placeholder="Search users, live rooms...">
+</div>
+
+</header>
+
+<!-- =====================================================
+PREMIUM SUMMARY
+===================================================== -->
+
+<div class="premium-summary">
+
+<div class="premium-summary-top">
+
+<div class="premium-summary-title">
+Premium Membership
+</div>
+
+<div
+id="currentPremiumLabel"
+class="premium-current">
+Free
+</div>
+
+</div>
+
+<div class="premium-summary-text">
+Unlock picture posts, video posts, promotion,
+and Live depending on your membership level.
+</div>
+
+<button
+class="premium-detail-btn"
+onclick="openPremiumDetails()">
+⭐ View Premium Details
+</button>
+
+</div>
+
+<!-- =====================================================
+WALLET
+===================================================== -->
+
+<div class="wallet">
+
+<div class="wallet-title">
+Total Wallet Balance
+</div>
+
+<div
+id="balanceDisplay"
+class="wallet-balance">
+0 💎
+</div>
+
+<div class="wallet-balance-label">
+💎 Diamond wallet balance
+</div>
+
+<div class="wallet-row">
+
+<span>
+💎 Diamond
 </span>
 
-  </div>    <div class="search">  🔎    <input    
-type="text"    
-id="searchInput"    
-placeholder="Search users, live rooms...">
+<strong id="diamondDisplay">
+0
+</strong>
 
-  </div>  </header>  <!-- =====================================================    
-     PREMIUM SUMMARY    
-===================================================== -->  <div class="premium-summary">    <div class="premium-summary-top">  <div class="premium-summary-title">    
-  Premium Membership    
-</div>    <div    
-  id="currentPremiumLabel"    
-  class="premium-current">    
-  Free    
-</div>    </div>    <div class="premium-summary-text">  Unlock picture posts, video posts, promotion,    
-and Live depending on your membership level.    </div>  <button    
-class="premium-detail-btn"    
-onclick="openPremiumDetails()">  ⭐ View Premium Details
+</div>
 
-</button>  </div>  <!-- =====================================================    
-WALLET    
-===================================================== -->  <div class="wallet">    <div class="wallet-title">
-Total Wallet Balance
+<div class="wallet-buttons">
 
-  </div>    <div    
-    id="balanceDisplay"    
-    class="wallet-balance">    
-    0.00 USDT    
-  </div>    <div class="wallet-balance-label">    
-    USDT and 💎 Diamond are separate balances    
-  </div>    <div class="wallet-row">  <span>    
-  💵 USDT    
-</span>    <strong id="usdtDisplay">    
-  0.00    
-</strong>    </div>    <div class="wallet-row">  <span>    
-  💎 Diamond    
-</span>    <strong id="diamondDisplay">    
-  0    
-</strong>    </div>    <div class="wallet-buttons">  <button    
-  class="deposit"    
-  onclick="openDeposit()">    
-  💎 Send    
-</button>    <button    
-class="wallet-button"    
+<button
+class="deposit"
+onclick="openDeposit()">
+💎 Send
+</button>
+
+<button
+class="wallet-button"
 onclick="openWallet()">
 🟢 Buy / 🤝 Trade
 </button>
 
-  </div>  </div>  <!-- =====================================================    
-     LIVE    
-===================================================== -->  <section>    <div class="section-title">  <h2>    
-  🔴 Top Live    
-</h2>    <span    
-class="see-all"    
+</div>
+
+</div>
+
+<!-- =====================================================
+OWNER TREASURY
+===================================================== -->
+
+<div
+id="ownerTreasury"
+class="treasury-box">
+
+<div class="treasury-header">
+
+<div class="treasury-title">
+💎 Owner Treasury
+</div>
+
+<div class="treasury-badge">
+OWNER
+</div>
+
+</div>
+
+<div
+id="treasuryDiamondBalance"
+class="treasury-balance">
+0 💎
+</div>
+
+<div class="treasury-row">
+
+<span>
+USDT / 💎
+</span>
+
+<strong id="treasuryUsdtDiamond">
+0
+</strong>
+
+</div>
+
+<div class="treasury-row">
+
+<span>
+ETB / 💎
+</span>
+
+<strong id="treasuryEtbDiamond">
+0
+</strong>
+
+</div>
+
+<div class="treasury-actions">
+
+<button
+class="treasury-refresh"
+onclick="loadOwnerTreasury()">
+🔃 Refresh
+</button>
+
+</div>
+
+</div>
+
+<!-- =====================================================
+LIVE
+===================================================== -->
+
+<section>
+
+<div class="section-title">
+
+<h2>
+🔴 Top Live
+</h2>
+
+<span
+class="see-all"
 onclick="openLive()">
 See all 10
 </span>
 
-  </div>    <div class="live-container">  <div    
-  class="live-card"    
-  onclick="openLive()">      <div class="live-image">    👩    
+</div>
 
-<span class="live-badge">    
-  LIVE    
-</span>    
+<div class="live-container">
 
-<span class="viewers">    
-  ***    
-</span>
+<div
+class="live-card"
+onclick="openLive()">
 
-  </div>      <div class="live-name">    
-    🟣Premium Max  
-  </div>    </div>    <div    
-  class="live-card"    
-  onclick="openLive()">      <div class="live-image">    👨    
+<div class="live-image">
+👩
+<span class="live-badge">LIVE</span>
+<span class="viewers">***</span>
+</div>
 
-<span class="live-badge">    
-  LIVE    
-</span>    
+<div class="live-name">
+🟣Premium Max
+</div>
 
-<span class="viewers">    
-  ***    
-</span>
+</div>
 
-  </div>      <div class="live-name">    
-    🟣Premium Max    
-  </div>    </div>    <div    
-  class="live-card"    
-  onclick="openLive()">      <div class="live-image">    👩‍🦱    
+<div
+class="live-card"
+onclick="openLive()">
 
-<span class="live-badge">    
-  LIVE    
-</span>    
+<div class="live-image">
+👨
+<span class="live-badge">LIVE</span>
+<span class="viewers">***</span>
+</div>
 
-<span class="viewers">    
-  ***    
-</span>
+<div class="live-name">
+🟣Premium Max
+</div>
 
-  </div>      <div class="live-name">    
-    🟣Premium Max    
-  </div>    </div>    </div>  </section>  <!-- =====================================================    
-     P2P    
-===================================================== -->  <section>    <div class="section-title">  <h2>    
-  🔄 Available Offers    
-</h2>    <div class="p2p-header-actions">    <button    
-class="create-offer-btn"    
+</div>
+
+<div
+class="live-card"
+onclick="openLive()">
+
+<div class="live-image">
+👩‍🦱
+<span class="live-badge">LIVE</span>
+<span class="viewers">***</span>
+</div>
+
+<div class="live-name">
+🟣Premium Max
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- =====================================================
+P2P
+===================================================== -->
+
+<section>
+
+<div class="section-title">
+
+<h2>
+🔄 Available Offers
+</h2>
+
+<div class="p2p-header-actions">
+
+<button
+class="create-offer-btn"
 onclick="createOffer()">
 + Create Offer
 </button>
 
-<button    
-class="refresh-btn"    
+<button
+class="refresh-btn"
 onclick="loadAvailableOffers()">
 🔃
 </button>
 
-</div>    </div>    <div    
-    id="p2pOffersContainer"    
-    class="p2p-offers">  <div class="no-offers">      <div class="no-offers-icon">    
-    🔄    
-  </div>      <strong>    
-    Loading available offers...    
-  </strong>      <small>    
-    Please wait.    
-  </small>    </div>    </div>  </section>  <!-- =====================================================    
-     POSTS    
-===================================================== -->  <section class="posts-section">    <div class="posts-title">  <h2>    
-  📝 Public Posts    
-</h2>    <div    
-  style="    
-    display:flex;    
-    gap:7px;    
-    align-items:center;    
-  ">    <span    
-class="see-all"    
+</div>
+
+</div>
+
+<div
+id="p2pOffersContainer"
+class="p2p-offers">
+
+<div class="no-offers">
+
+<div class="no-offers-icon">
+🔄
+</div>
+
+<strong>
+Loading available offers...
+</strong>
+
+<small>
+Please wait.
+</small>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- =====================================================
+POSTS
+===================================================== -->
+
+<section class="posts-section">
+
+<div class="posts-title">
+
+<h2>
+📝 Public Posts
+</h2>
+
+<div
+style="
+display:flex;
+gap:7px;
+align-items:center;
+">
+
+<span
+class="see-all"
 onclick="loadPosts(true)">
 🔃 Refresh
 </span>
 
-<button    
-class="create-post-btn"    
+<button
+class="create-post-btn"
 onclick="openCreatePost()">
-+ Post
+Post
 </button>
 
-</div>    </div>    <div    
-    id="postsFeed"    
-    class="posts-feed">  <div class="loading-posts">    
-  Loading public posts...    
-</div>    </div>  <button    
-id="loadMoreBtn"    
-class="load-more"    
-onclick="loadMorePosts()"    
-style="display:none;">  ➕ Load more posts
+</div>
 
-</button>  </section>  <!-- =====================================================    
-PREMIUM DETAILS MODAL    
-===================================================== -->  <div    
-id="premiumModal"    
-class="modal">    <div class="modal-content">  <div class="modal-header">
+</div>
 
-  <h3>    
-    ⭐ Premium Membership    
-  </h3>    <button    
-class="close-modal"    
+<div
+id="postsFeed"
+class="posts-feed">
+
+<div class="loading-posts">
+Loading public posts...
+</div>
+
+</div>
+
+<button
+id="loadMoreBtn"
+class="load-more"
+onclick="loadMorePosts()"
+style="display:none;">
+➕ Load more posts
+</button>
+
+</section>
+
+<!-- =====================================================
+PREMIUM DETAILS MODAL
+===================================================== -->
+
+<div
+id="premiumModal"
+class="modal">
+
+<div class="modal-content">
+
+<div class="modal-header">
+
+<h3>
+⭐ Premium Membership
+</h3>
+
+<button
+class="close-modal"
 onclick="closePremiumDetails()">
 ×
 </button>
 
-</div>    <div class="premium-intro">    Choose the membership level that matches
+</div>
+
+<div class="premium-intro">
+Choose the membership level that matches
 how you want to use P2P Social.
+</div>
 
-</div>    <!-- FREE -->    <div class="premium-plan">      <div class="plan-title">    
-    ⚪ Free    
-  </div>      <div class="plan-description">    + Post text, comment, like, P2P trade    
+<div class="premium-plan">
+
+<div class="plan-title">
+⚪ Free
+</div>
+
+<div class="plan-description">
++ Post text, comment, like, P2P trade
 and other basic social features.
-
-  </div>    </div>    <!-- PREMIUM -->    <div class="premium-plan green">      <div class="plan-title">    
-    🟢 Premium    
-  </div>      <div class="plan-description">    + Picture posts<br>    
-+ Promote inside photo<br>    
-+ All Free features
-
-  </div>      <div class="plan-prices">    <div class="plan-price">    
-  1 Month — 2 USDT    
-</div>    
-
-<div class="plan-price">    
-  3 Months — 6 USDT    
-</div>    
-
-<div class="plan-price">    
-  6 Months — 12 USDT    
-</div>    
-
-<div class="plan-price">    
-  1 Year — 24 USDT    
 </div>
 
-  </div>    </div>    <!-- PREMIUM PLUS -->    <div class="premium-plan blue">      <div class="plan-title">    
-    🔵 Premium+    
-  </div>      <div class="plan-description">    + Video posts<br>    
-+ Promote inside video<br>    
-+ Picture-post features<br>    
-+ All Free features
-
-  </div>      <div class="plan-prices">    <div class="plan-price">    
-  1 Month — 5.42 USDT    
-</div>    
-
-<div class="plan-price">    
-  3 Months — 16.26 USDT    
-</div>    
-
-<div class="plan-price">    
-  6 Months — 32.52 USDT    
-</div>    
-
-<div class="plan-price">    
-  1 Year — 65.04 USDT    
 </div>
 
-  </div>    </div>    <!-- PREMIUM MAX -->    <div class="premium-plan purple">      <div class="plan-title">    
-    🟣 Premium Max    
-  </div>      <div class="plan-description">    + Picture posts<br>    
-+ Promote inside photo<br>    
-+ Video posts<br>    
-+ Promote inside video<br>    
-+ Create Live rooms<br>    
+<div class="premium-plan green">
+
+<div class="plan-title">
+🟢 Premium
+</div>
+
+<div class="plan-description">
++ Picture posts<br>
++ Promote inside photo<br>
++ All Free features
+</div>
+
+<div class="plan-prices">
+
+<div class="plan-price">
+1 Month — 2 USDT
+</div>
+
+<div class="plan-price">
+3 Months — 6 USDT
+</div>
+
+<div class="plan-price">
+6 Months — 12 USDT
+</div>
+
+<div class="plan-price">
+1 Year — 24 USDT
+</div>
+
+</div>
+
+</div>
+
+<div class="premium-plan blue">
+
+<div class="plan-title">
+🔵 Premium+
+</div>
+
+<div class="plan-description">
++ Video posts<br>
++ Promote inside video<br>
++ Picture-post features<br>
++ All Free features
+</div>
+
+<div class="plan-prices">
+
+<div class="plan-price">
+1 Month — 5.42 USDT
+</div>
+
+<div class="plan-price">
+3 Months — 16.26 USDT
+</div>
+
+<div class="plan-price">
+6 Months — 32.52 USDT
+</div>
+
+<div class="plan-price">
+1 Year — 65.04 USDT
+</div>
+
+</div>
+
+</div>
+
+<div class="premium-plan purple">
+
+<div class="plan-title">
+🟣 Premium Max
+</div>
+
+<div class="plan-description">
++ Picture posts<br>
++ Promote inside photo<br>
++ Video posts<br>
++ Promote inside video<br>
++ Create Live rooms<br>
 + Premium+ features
-
-  </div>      <div class="plan-prices">    <div class="plan-price">    
-  1 Month — 108.5 USDT    
-</div>    
-
-<div class="plan-price">    
-  3 Months — 325.5 USDT    
-</div>    
-
-<div class="plan-price">    
-  6 Months — 651 USDT    
-</div>    
-
-<div class="plan-price">    
-  1 Year — 1,302 USDT    
 </div>
 
-  </div>    </div>    <!-- THRESHOLDS -->    <div class="threshold-box">      <strong>    
-    🟣 Premium Max — Level 3+    
-  </strong>      <div    
-    style="    
-      margin-top:6px;    
-      font-size:12px;    
-      color:#5d5570;    
-      line-height:1.5;    
-    ">    Premium Max Live creation is intended for    
-Level 3+ accounts. The account level should    
-be checked by the platform before a Live room    
+<div class="plan-prices">
+
+<div class="plan-price">
+1 Month — 108.5 USDT
+</div>
+
+<div class="plan-price">
+3 Months — 325.5 USDT
+</div>
+
+<div class="plan-price">
+6 Months — 651 USDT
+</div>
+
+<div class="plan-price">
+1 Year — 1,302 USDT
+</div>
+
+</div>
+
+</div>
+
+<div class="threshold-box">
+
+<strong>
+🟣 Premium Max — Level 3+
+</strong>
+
+<div
+style="
+margin-top:6px;
+font-size:12px;
+color:#5d5570;
+line-height:1.5;
+">
+
+Premium Max Live creation is intended for
+Level 3+ accounts. The account level should
+be checked by the platform before a Live room
 is created.
 
-  </div>    </div>    <!-- PIN RULES -->    <div class="premium-rules">      <h4>    
-    📌 Pinned-item rules    
-  </h4>      <div class="rule">    <span class="rule-icon">    
-  📌    
-</span>    
+</div>
 
-<span>    
-  Available Offers show up to 5 offers initially.    
+</div>
+
+<div class="premium-rules">
+
+<h4>
+📌 Pinned-item rules
+</h4>
+
+<div class="rule">
+<span class="rule-icon">📌</span>
+<span>
+Available Offers show up to 5 offers initially.
 </span>
+</div>
 
-  </div>      <div class="rule">    <span class="rule-icon">    
-  ⭐    
-</span>    
-
-<span>    
-  Admin can pin up to 3 offers.    
+<div class="rule">
+<span class="rule-icon">⭐</span>
+<span>
+Admin can pin up to 3 offers.
 </span>
+</div>
 
-  </div>      <div class="rule">    <span class="rule-icon">    
-  💳    
-</span>    
-
-<span>    
-  Additional paid promotion can be used    
-  according to the platform's promotion rules.    
+<div class="rule">
+<span class="rule-icon">💳</span>
+<span>
+Additional paid promotion can be used
+according to the platform's promotion rules.
 </span>
+</div>
 
-  </div>      <div class="rule">    <span class="rule-icon">    
-  📝    
-</span>    
-
-<span>    
-  Public Posts initially show up to 10 posts.    
+<div class="rule">
+<span class="rule-icon">📝</span>
+<span>
+Public Posts initially show up to 10 posts.
 </span>
+</div>
 
-  </div>      <div class="rule">    <span class="rule-icon">    
-  📌    
-</span>    
-
-<span>    
-  Admin can pin up to 3 posts.    
+<div class="rule">
+<span class="rule-icon">📌</span>
+<span>
+Admin can pin up to 3 posts.
 </span>
+</div>
 
-  </div>    </div>    <!-- LIVE EARNINGS -->    <div class="premium-rules">      <h4>    
-    🔴 Live-room earning rules    
-  </h4>      <div class="info-box">    Premium Max users can create Live rooms.    
-Viewer gifts/earnings should be recorded    
-separately from USDT wallet funds and should    
-follow the platform's Live earning and    
+</div>
+
+<div class="premium-rules">
+
+<h4>
+🔴 Live-room earning rules
+</h4>
+
+<div class="info-box">
+Premium Max users can create Live rooms.
+Viewer gifts/earnings should be recorded
+separately from wallet funds and should
+follow the platform's Live earning and
 settlement rules.
+</div>
 
-  </div>    </div>    <!-- DISPUTES -->    <div class="premium-rules">      <h4>    
-    ⚖️ P2P dispute rules    
-  </h4>      <div class="info-box">    A disputed P2P order should remain protected    
-until the dispute process is completed.    
-Funds should not be released simply because    
-one side reports completion. Evidence,    
-payment status and admin resolution should    
+</div>
+
+<div class="premium-rules">
+
+<h4>
+⚖️ P2P dispute rules
+</h4>
+
+<div class="info-box">
+A disputed P2P order should remain protected
+until the dispute process is completed.
+Funds should not be released simply because
+one side reports completion. Evidence,
+payment status and admin resolution should
 be checked before final settlement.
+</div>
 
-  </div>    </div>    </div>  </div>  <!-- =====================================================    
-     CREATE POST MODAL    
-===================================================== -->  <div    
-  id="createPostModal"    
-  class="modal">    <div class="modal-content">  <div class="modal-header">      <h3>    
-    Create Post    
-  </h3>    <button    
-class="close-modal"    
+</div>
+
+</div>
+
+</div>
+
+<!-- =====================================================
+CREATE POST MODAL
+===================================================== -->
+
+<div
+id="createPostModal"
+class="modal">
+
+<div class="modal-content">
+
+<div class="modal-header">
+
+<h3>
+Create Post
+</h3>
+
+<button
+class="close-modal"
 onclick="closeCreatePost()">
 ×
 </button>
 
-</div>    <textarea    
-  id="postContentInput"    
-  class="post-textarea"    
-  maxlength="5000"    
-  placeholder="What's on your mind?"></textarea>    <label class="visibility-label">    
-  Post visibility    
-</label>    <select    
-id="postVisibility"    
+</div>
+
+<textarea
+id="postContentInput"
+class="post-textarea"
+maxlength="5000"
+placeholder="What's on your mind?"></textarea>
+
+<label class="visibility-label">
+Post visibility
+</label>
+
+<select
+id="postVisibility"
 class="visibility-select">
 
-  <option value="public">    
-    🌍 Public    
-  </option>      <option value="private">    
-    🔒 Private    
-  </option>    </select>    <div class="media-section">      <label class="media-label">    
-    Post type    
-  </label>    <select    
-id="mediaType"    
-class="media-type-select"    
-onchange="updateMediaControls()">
-
-<option value="text">    
-  📝 Text    
-</option>    
-
-<option value="image">    
-  🖼️ Picture    
-</option>    
-
-<option value="video">    
-  🎥 Video    
+<option value="public">
+🌍 Public
 </option>
 
-  </select>    </div>    <div    
-  id="mediaControls"    
-  class="media-section">    
-</div>    <div    
-  id="promotionNotice"    
-  class="media-section">    
-</div>    <button    
-id="publishPostBtn"    
-class="publish-btn"    
+<option value="private">
+🔒 Private
+</option>
+
+</select>
+
+<div class="media-section">
+
+<label class="media-label">
+Post type
+</label>
+
+<select
+id="mediaType"
+class="media-type-select"
+onchange="updateMediaControls()">
+
+<option value="text">
+📝 Text
+</option>
+
+<option value="image">
+🖼️ Picture
+</option>
+
+<option value="video">
+🎥 Video
+</option>
+
+</select>
+
+</div>
+
+<div
+id="mediaControls"
+class="media-section">
+</div>
+
+<div
+id="promotionNotice"
+class="media-section">
+</div>
+
+<button
+id="publishPostBtn"
+class="publish-btn"
 onclick="createPost()">
-
 Publish Post
+</button>
 
-</button>    </div>  </div>  <!-- =====================================================    
-     BOTTOM NAV    
-===================================================== -->  <nav class="bottom-nav">    <div    
-    class="nav-item active"    
-    onclick="goHome()">  <span>    
-  🏠    
-</span>    Home
+</div>
+</div>
 
-  </div>    <div    
-    class="nav-item"    
-    onclick="openLive()">  <span>    
-  🔴    
-</span>    Live
+<!-- =====================================================
+BOTTOM NAV
+===================================================== -->
 
-  </div>    <div    
-    class="nav-item"    
-    onclick="openWallet()">  <span>    
-  🔄    
-</span>    P2P
+<nav class="bottom-nav">
 
-  </div>    <div    
-    class="nav-item"    
-    onclick="openMessages()">  <span>    
-  💬    
-</span>    Messages
+<div
+class="nav-item active"
+onclick="goHome()">
 
-  </div>    <div    
-    class="nav-item"    
-    onclick="openProfile()">  <span>    
-  👤    
-</span>    Profile
+<span>🏠</span>
+Home
 
-  </div>  </nav>  </div>  <!-- =====================================================    
-     SUPABASE    
-===================================================== -->  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <script>    /* =====================================================
+</div>
+
+<div
+class="nav-item"
+onclick="openLive()">
+
+<span>🔴</span>
+Live
+
+</div>
+
+<div
+class="nav-item"
+onclick="openWallet()">
+
+<span>🔄</span>
+P2P
+
+</div>
+
+<div
+class="nav-item"
+onclick="openMessages()">
+
+<span>💬</span>
+Messages
+
+</div>
+
+<div
+class="nav-item"
+onclick="openProfile()">
+
+<span>👤</span>
+Profile
+
+</div>
+
+</nav>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+/* =====================================================
 SUPABASE
 ===================================================== */
 
@@ -1813,95 +2239,76 @@ GLOBAL STATE
 ===================================================== */
 
 let currentSession = null;
-
 let currentProfile = null;
-
 let currentPremiumTier = "free";
-
 let currentLevel = 0;
-
 let isAdmin = false;
-
 let allPosts = [];
-
 let displayedPostCount = 10;
-
 let commentsOpen = {};
-
 let notificationChannel = null;
 
-/*
-Premium Max requirement.
-Change this constant if your database uses
-another Level 3+ definition.
-*/
+/* =====================================================
+LIMITS
+===================================================== */
+
 const PREMIUM_MAX_MIN_LEVEL = 3;
-
-/*
-Display limits.
-*/
 const TOP_LIVE_LIMIT = 10;
-
 const AVAILABLE_OFFERS_LIMIT = 5;
-
 const INITIAL_POST_LIMIT = 10;
-
 const ADMIN_PIN_LIMIT = 3;
 
 /* =====================================================
-LOGIN PROTECTION
+AUTH
 ===================================================== */
 
 async function startApp(){
 
 try{
 
-const {    
-  data,    
-  error    
-} =    
-await supabaseClient.auth.getSession();    
+const {
+data,
+error
+} =
+await supabaseClient.auth.getSession();
 
-if(error){    
+if(error){
 
-  console.error(error);    
+console.error(error);
+redirectToLogin();
+return;
 
-  redirectToLogin();    
+}
 
-  return;    
+if(
+!data ||
+!data.session
+){
 
-}    
+redirectToLogin();
+return;
 
-if(    
-  !data ||    
-  !data.session    
-){    
+}
 
-  redirectToLogin();    
+currentSession =
+data.session;
 
-  return;    
+document.getElementById(
+"checkingAuth"
+).style.display="none";
 
-}    
-
-currentSession =    
-  data.session;    
-
-document.getElementById(    
-  "checkingAuth"    
-).style.display="none";    
-
-document.getElementById(    
-  "app"    
-).style.display="block";    
+document.getElementById(
+"app"
+).style.display="block";
 
 await initializeDashboard();
 
 }catch(error){
 
-console.error(    
-  "Authentication error:",    
-  error    
-);    
+console.error(
+"Authentication error:",
+error
+);
 
 redirectToLogin();
 
@@ -1917,31 +2324,23 @@ window.location.replace(
 
 }
 
-/* =====================================================
-AUTH STATE
-===================================================== */
-
 supabaseClient.auth.onAuthStateChange(
 async(event,session)=>{
 
-if(    
-  event==="SIGNED_OUT"    
-){    
+if(event==="SIGNED_OUT"){
 
-  currentSession=null;    
+currentSession=null;
+redirectToLogin();
+return;
 
-  redirectToLogin();    
+}
 
-  return;    
+if(
+event==="SIGNED_IN" &&
+session
+){
 
-}    
-
-if(    
-  event==="SIGNED_IN" &&    
-  session    
-){    
-
-  currentSession=session;    
+currentSession=session;
 
 }
 
@@ -1956,8 +2355,7 @@ async function initializeDashboard(){
 
 if(!currentSession){
 
-redirectToLogin();    
-
+redirectToLogin();
 return;
 
 }
@@ -1966,11 +2364,10 @@ await updateUserUI();
 
 await Promise.allSettled([
 
-loadAvailableOffers(),    
-
-loadNotifications(),    
-
-loadPosts(false)
+loadAvailableOffers(),
+loadNotifications(),
+loadPosts(false),
+loadOwnerTreasury()
 
 ]);
 
@@ -1979,15 +2376,14 @@ subscribeToNotifications();
 }
 
 /* =====================================================
-USER / PREMIUM
+USER
 ===================================================== */
 
 async function updateUserUI(){
 
 if(!currentSession){
 
-redirectToLogin();    
-
+redirectToLogin();
 return;
 
 }
@@ -1999,11 +2395,6 @@ let username =
 user.user_metadata?.username ||
 user.email?.split("@")[0] ||
 "User";
-
-/*
-Select * keeps this page compatible with
-profiles tables containing additional fields.
-*/
 
 const {
 data:profile,
@@ -2020,9 +2411,9 @@ user.id
 
 if(error){
 
-console.log(    
-  "Profile:",    
-  error.message    
+console.log(
+"Profile:",
+error.message
 );
 
 }
@@ -2032,39 +2423,26 @@ profile || {};
 
 if(profile){
 
-username =    
-  profile.username ||    
-  username;    
+username =
+profile.username ||
+username;
 
-currentPremiumTier =    
-  normalizePremiumTier(    
-    profile    
-  );    
+currentPremiumTier =
+normalizePremiumTier(profile);
 
-currentLevel =    
-  getUserLevel(    
-    profile    
-  );    
+currentLevel =
+getUserLevel(profile);
 
-isAdmin =    
-  detectAdmin(    
-    profile    
-  );    
+isAdmin =
+detectAdmin(profile);
 
-updateWalletDisplay(    
-  profile    
-);
+updateWalletDisplay(profile);
 
 }else{
 
-currentPremiumTier =    
-  "free";    
-
-currentLevel =    
-  0;    
-
-isAdmin =    
-  false;    
+currentPremiumTier="free";
+currentLevel=0;
+isAdmin=false;
 
 updateWalletDisplay({});
 
@@ -2072,37 +2450,27 @@ updateWalletDisplay({});
 
 document.getElementById(
 "usernameDisplay"
-).textContent =
-username;
+).textContent=username;
 
 updatePremiumUI();
 
 }
 
 /* =====================================================
-PREMIUM DETECTION
+PREMIUM
 ===================================================== */
 
 function normalizePremiumTier(profile){
 
-if(!profile){
-
-return "free";
-
-}
+if(!profile)return "free";
 
 const values=[
 
-profile.premium_tier,    
-
-profile.subscription_tier,    
-
-profile.membership,    
-
-profile.plan,    
-
-profile.premium_plan,    
-
+profile.premium_tier,
+profile.subscription_tier,
+profile.membership,
+profile.plan,
+profile.premium_plan,
 profile.account_tier
 
 ];
@@ -2110,16 +2478,12 @@ profile.account_tier
 let value =
 values.find(
 v =>
-v !== null &&
-v !== undefined &&
+v!==null &&
+v!==undefined &&
 String(v).trim()!==""
 );
 
-if(!value){
-
-return "free";
-
-}
+if(!value)return "free";
 
 value =
 String(value)
@@ -2148,9 +2512,7 @@ return "premium_plus";
 
 }
 
-if(
-value==="premium"
-){
+if(value==="premium"){
 
 return "premium";
 
@@ -2164,12 +2526,9 @@ function getUserLevel(profile){
 
 const values=[
 
-profile.level,    
-
-profile.user_level,    
-
-profile.account_level,    
-
+profile.level,
+profile.user_level,
+profile.account_level,
 profile.rank_level
 
 ];
@@ -2178,22 +2537,19 @@ for(
 const value of values
 ){
 
-if(    
-  value!==null &&    
-  value!==undefined &&    
-  value!==""    
-){    
+if(
+value!==null &&
+value!==undefined &&
+value!==""
+){
 
-  const number =    
-    Number(value);    
+const number=Number(value);
 
-  if(    
-    !Number.isNaN(number)    
-  ){    
+if(!Number.isNaN(number)){
 
-    return number;    
+return number;
 
-  }    
+}
 
 }
 
@@ -2205,14 +2561,13 @@ return 0;
 
 function detectAdmin(profile){
 
-if(!profile){
+if(!profile)return false;
 
-return false;
-
-}
+if(profile.is_admin===true)return true;
 
 if(
-profile.is_admin===true
+String(profile.role||"")
+.toLowerCase()==="admin"
 ){
 
 return true;
@@ -2220,19 +2575,8 @@ return true;
 }
 
 if(
-String(
-profile.role||""
-).toLowerCase()==="admin"
-){
-
-return true;
-
-}
-
-if(
-String(
-profile.account_role||""
-).toLowerCase()==="admin"
+String(profile.account_role||"")
+.toLowerCase()==="admin"
 ){
 
 return true;
@@ -2242,10 +2586,6 @@ return true;
 return false;
 
 }
-
-/* =====================================================
-PREMIUM CAPABILITIES
-===================================================== */
 
 function hasPremium(){
 
@@ -2253,9 +2593,7 @@ return [
 "premium",
 "premium_plus",
 "premium_max"
-].includes(
-currentPremiumTier
-);
+].includes(currentPremiumTier);
 
 }
 
@@ -2264,18 +2602,13 @@ function hasPremiumPlus(){
 return [
 "premium_plus",
 "premium_max"
-].includes(
-currentPremiumTier
-);
+].includes(currentPremiumTier);
 
 }
 
 function hasPremiumMax(){
 
-return (
-currentPremiumTier===
-"premium_max"
-);
+return currentPremiumTier==="premium_max";
 
 }
 
@@ -2295,29 +2628,26 @@ function canCreateLive(){
 
 return (
 hasPremiumMax() &&
-currentLevel>=
-PREMIUM_MAX_MIN_LEVEL
+currentLevel>=PREMIUM_MAX_MIN_LEVEL
 );
 
 }
 
 function premiumLabel(){
 
-switch(
-currentPremiumTier
-){
+switch(currentPremiumTier){
 
-case "premium":    
-  return "🟢 Premium";    
+case "premium":
+return "🟢 Premium";
 
-case "premium_plus":    
-  return "🔵 Premium+";    
+case "premium_plus":
+return "🔵 Premium+";
 
-case "premium_max":    
-  return "🟣 Premium Max";    
+case "premium_max":
+return "🟣 Premium Max";
 
-default:    
-  return "Free";
+default:
+return "Free";
 
 }
 
@@ -2325,8 +2655,7 @@ default:
 
 function updatePremiumUI(){
 
-const label =
-premiumLabel();
+const label=premiumLabel();
 
 const current =
 document.getElementById(
@@ -2340,17 +2669,16 @@ document.getElementById(
 
 if(current){
 
-current.textContent =    
-  label;
+current.textContent=label;
 
 }
 
 if(header){
 
-header.textContent =    
-  label==="Free"    
-    ?""    
-    :label;
+header.textContent =
+label==="Free"
+?""
+:label;
 
 }
 
@@ -2360,29 +2688,7 @@ header.textContent =
 WALLET
 ===================================================== */
 
-function updateWalletDisplay(
-profile
-){
-
-/*
-USDT field candidates.
-*/
-
-const usdt =
-getFirstValue(
-profile,
-[
-"usdt_balance",
-"balance_usdt",
-"wallet_usdt",
-"usdt"
-]
-);
-
-/*
-Diamond is intentionally separate
-from USDT.
-*/
+function updateWalletDisplay(profile){
 
 const diamond =
 getFirstValue(
@@ -2395,44 +2701,141 @@ profile,
 ]
 );
 
-const usdtNumber =
-Number(usdt)||0;
-
 const diamondNumber =
 Number(diamond)||0;
-
-document.getElementById(
-"usdtDisplay"
-).textContent =
-usdtNumber.toLocaleString(
-undefined,
-{
-minimumFractionDigits:2,
-maximumFractionDigits:8
-}
-);
 
 document.getElementById(
 "diamondDisplay"
 ).textContent =
 diamondNumber.toLocaleString();
 
-/*
-Main wallet display is USDT.
-Diamonds are NOT converted to USDT.
-*/
-
 document.getElementById(
 "balanceDisplay"
 ).textContent =
-usdtNumber.toLocaleString(
-undefined,
-{
-minimumFractionDigits:2,
-maximumFractionDigits:8
+diamondNumber.toLocaleString()+
+" 💎";
+
 }
-)+
-" USDT";
+
+/* =====================================================
+OWNER TREASURY
+===================================================== */
+
+async function loadOwnerTreasury(){
+
+if(!currentSession)return;
+
+if(!isAdmin){
+
+const treasury =
+document.getElementById(
+"ownerTreasury"
+);
+
+if(treasury){
+
+treasury.style.display="none";
+
+}
+
+return;
+
+}
+
+const treasury =
+document.getElementById(
+"ownerTreasury"
+);
+
+if(treasury){
+
+treasury.style.display="block";
+
+}
+
+let treasuryData=null;
+
+/*
+Try the owner treasury table first.
+*/
+
+const treasuryResult =
+await supabaseClient
+.from("owner_treasury")
+.select("*")
+.limit(1)
+.maybeSingle();
+
+if(
+!treasuryResult.error &&
+treasuryResult.data
+){
+
+treasuryData =
+treasuryResult.data;
+
+}
+
+/*
+Fallback to profile treasury fields.
+*/
+
+if(!treasuryData){
+
+treasuryData=currentProfile||{};
+
+}
+
+const diamonds =
+getFirstValue(
+treasuryData,
+[
+"diamond_balance",
+"diamonds",
+"treasury_diamond_balance",
+"owner_diamond_balance",
+"balance_diamond",
+"diamond"
+]
+);
+
+const usdtDiamond =
+getFirstValue(
+treasuryData,
+[
+"usdt_per_diamond",
+"usdt_diamond_rate",
+"usdt_to_diamond",
+"usdt_rate_diamond"
+]
+);
+
+const etbDiamond =
+getFirstValue(
+treasuryData,
+[
+"etb_per_diamond",
+"etb_diamond_rate",
+"etb_to_diamond",
+"etb_rate_diamond"
+]
+);
+
+document.getElementById(
+"treasuryDiamondBalance"
+).textContent =
+(Number(diamonds)||0).toLocaleString()+
+" 💎";
+
+document.getElementById(
+"treasuryUsdtDiamond"
+).textContent =
+formatNumber(usdtDiamond||0);
+
+document.getElementById(
+"treasuryEtbDiamond"
+).textContent =
+formatNumber(etbDiamond||0);
 
 }
 
@@ -2464,8 +2867,7 @@ function requireLogin(){
 
 if(!currentSession){
 
-redirectToLogin();    
-
+redirectToLogin();
 return false;
 
 }
@@ -2489,14 +2891,7 @@ function openLive(){
 
 if(!requireLogin())return;
 
-/*
-Premium Max Level 3+ is required
-to CREATE Live. Viewing Live remains
-available through live.html.
-*/
-
-window.location.href =
-"./live.html";
+window.location.href="./live.html";
 
 }
 
@@ -2504,8 +2899,7 @@ function openWallet(){
 
 if(!requireLogin())return;
 
-window.location.href =
-"./wallet.html";
+window.location.href="./wallet.html";
 
 }
 
@@ -2513,8 +2907,7 @@ function openMessages(){
 
 if(!requireLogin())return;
 
-window.location.href =
-"./message.html";
+window.location.href="./message.html";
 
 }
 
@@ -2522,14 +2915,11 @@ function openProfile(){
 
 if(!requireLogin())return;
 
-window.location.href =
-"./profile.html";
+window.location.href="./profile.html";
 
 }
 
-function openUserProfile(
-userId
-){
+function openUserProfile(userId){
 
 if(!requireLogin())return;
 
@@ -2539,17 +2929,13 @@ encodeURIComponent(userId);
 
 }
 
-function openP2POffer(
-offerId
-){
+function openP2POffer(offerId){
 
 if(!requireLogin())return;
 
 window.location.href =
 "./p2p-order.html?offer="+
-encodeURIComponent(
-offerId
-);
+encodeURIComponent(offerId);
 
 }
 
@@ -2557,8 +2943,7 @@ function openDeposit(){
 
 if(!requireLogin())return;
 
-window.location.href =
-"./wallet.html";
+window.location.href="./wallet.html";
 
 }
 
@@ -2566,8 +2951,7 @@ function createOffer(){
 
 if(!requireLogin())return;
 
-window.location.href =
-"./wallet.html";
+window.location.href="./wallet.html";
 
 }
 
@@ -2579,39 +2963,36 @@ async function logout(){
 
 try{
 
-const {    
-  error    
-} =    
-await supabaseClient.auth.signOut();    
+const {
+error
+} =
+await supabaseClient.auth.signOut();
 
-if(error){    
+if(error){
 
-  alert(    
-    "Logout failed: "+    
-    error.message    
-  );    
+alert(
+"Logout failed: "+
+error.message
+);
 
-  return;    
+return;
 
-}    
+}
 
-currentSession=null;    
+currentSession=null;
 
 redirectToLogin();
 
 }catch(error){
 
-console.error(error);    
-
+console.error(error);
 redirectToLogin();
 
 }
 
 }
 
-/*
-
-=====================================================
+/* =====================================================
 P2P OFFERS
 ===================================================== */
 
@@ -2624,61 +3005,52 @@ document.getElementById(
 
 try{
 
-let result =    
-  await supabaseClient    
-    .from("p2p_offers")    
-    .select("*")    
-    .limit(50);    
+let result =
+await supabaseClient
+.from("p2p_offers")
+.select("*")
+.limit(50);
 
-if(result.error){    
+if(result.error){
 
-  result =    
-    await supabaseClient    
-      .from("offers")    
-      .select("*")    
-      .limit(50);    
+result =
+await supabaseClient
+.from("offers")
+.select("*")
+.limit(50);
 
-}    
+}
 
-if(result.error){    
+if(result.error){
 
-  renderNoOffers();    
+renderNoOffers();
+return;
 
-  return;    
+}
 
-}    
+const offers =
+(result.data||[])
+.filter(isOfferAvailable);
 
-const offers =    
-  (result.data||[])    
-    .filter(    
-      isOfferAvailable    
-    );    
+if(!offers.length){
 
-if(!offers.length){    
+renderNoOffers();
+return;
 
-  renderNoOffers();    
+}
 
-  return;    
-
-}    
-
-await renderAvailableOffers(    
-  offers    
-);
+await renderAvailableOffers(offers);
 
 }catch(error){
 
-console.error(error);    
-
+console.error(error);
 renderNoOffers();
 
 }
 
 }
 
-function isOfferAvailable(
-offer
-){
+function isOfferAvailable(offer){
 
 if(!offer)return false;
 
@@ -2728,15 +3100,14 @@ amountValue!==null &&
 amountValue!==""
 ){
 
-const amount =    
-  Number(amountValue);    
+const amount=Number(amountValue);
 
-if(    
-  !Number.isNaN(amount) &&    
-  amount<=0    
-){    
+if(
+!Number.isNaN(amount) &&
+amount<=0
+){
 
-  return false;    
+return false;
 
 }
 
@@ -2746,16 +3117,14 @@ return true;
 
 }
 
-async function renderAvailableOffers(
-offers
-){
+async function renderAvailableOffers(offers){
 
 const container =
 document.getElementById(
 "p2pOffersContainer"
 );
 
-const userIds = [
+const userIds=[
 ...new Set(
 offers
 .map(
@@ -2773,21 +3142,17 @@ let profiles=[];
 
 if(userIds.length){
 
-const result =    
-  await supabaseClient    
-    .from("profiles")    
-    .select(    
-      "id,username,avatar_url"    
-    )    
-    .in(    
-      "id",    
-      userIds    
-    );    
+const result =
+await supabaseClient
+.from("profiles")
+.select(
+"id,username,avatar_url"
+)
+.in("id",userIds);
 
-if(!result.error){    
+if(!result.error){
 
-  profiles =    
-    result.data||[];    
+profiles=result.data||[];
 
 }
 
@@ -2797,76 +3162,51 @@ const profileMap={};
 
 profiles.forEach(
 profile=>{
-
-profileMap[    
-    profile.id    
-  ]=profile;    
-
+profileMap[profile.id]=profile;
 }
-
 );
-
-/*
-Pinned offers first,
-then normal offers.
-*/
 
 const sorted =
 [...offers].sort(
 (a,b)=>{
 
-const aPinned =    
-      Boolean(    
-        a.is_pinned||    
-        a.pinned    
-      );    
+const aPinned =
+Boolean(a.is_pinned||a.pinned);
 
-    const bPinned =    
-      Boolean(    
-        b.is_pinned||    
-        b.pinned    
-      );    
+const bPinned =
+Boolean(b.is_pinned||b.pinned);
 
-    return Number(bPinned)-    
-           Number(aPinned);    
+return Number(bPinned)-
+Number(aPinned);
 
-  }    
+}
 );
 
 container.innerHTML="";
 
 sorted
-.slice(
-0,
-AVAILABLE_OFFERS_LIMIT
-)
+.slice(0,AVAILABLE_OFFERS_LIMIT)
 .forEach(
 offer=>{
 
-container.appendChild(    
-      createOfferCard(    
-        offer,    
-        profileMap    
-      )    
-    );    
+container.appendChild(
+createOfferCard(
+offer,
+profileMap
+)
+);
 
-  }    
+}
 );
 
 }
 
-function createOfferCard(
-offer,
-profileMap
-){
+function createOfferCard(offer,profileMap){
 
 const card =
-document.createElement(
-"div"
-);
+document.createElement("div");
 
-card.className =
-"p2p-card";
+card.className="p2p-card";
 
 const userId =
 offer.user_id||
@@ -2890,9 +3230,7 @@ offer.avatar_url||
 "";
 
 const initial =
-username
-.charAt(0)
-.toUpperCase()||
+username.charAt(0).toUpperCase()||
 "U";
 
 const typeRaw =
@@ -2907,8 +3245,7 @@ offer,
 );
 
 const type =
-String(typeRaw||"buy")
-.toLowerCase();
+String(typeRaw||"buy").toLowerCase();
 
 const rate =
 getFirstValue(
@@ -2917,7 +3254,8 @@ offer,
 "rate",
 "price",
 "exchange_rate",
-"price_per_usdt"
+"price_per_usdt",
+"price_per_diamond"
 ]
 );
 
@@ -2959,15 +3297,25 @@ type.includes("sell")
 
 const label =
 normalizedType==="sell"
-?"SELL USDT"
-:"BUY USDT";
+?"SELL USDT / 💎"
+:"BUY USDT / 💎";
 
 const avatarHTML =
 avatarUrl
 ?
-<div class="avatar">     <img     src="${escapeHtml(avatarUrl)}"     alt="Profile">     </div>
+`
+<div class="avatar">
+<img
+src="${escapeHtml(avatarUrl)}"
+alt="Profile">
+</div>
+`
 :
-<div class="avatar">     ${escapeHtml(initial)}     </div>;
+`
+<div class="avatar">
+${escapeHtml(initial)}
+</div>
+`;
 
 const pinned =
 Boolean(
@@ -2977,132 +3325,126 @@ offer.pinned
 
 card.innerHTML=`
 
-${    
-  pinned    
-    ?    
-    `    
-    <div class="pin-label">    
-      📌 Pinned    
-    </div>    
-    `    
-    :""    
-}    
+${
+pinned
+?
+`
+<div class="pin-label">
+📌 Pinned
+</div>
+`
+:""
+}
 
-<div class="offer-type">    
-  ${escapeHtml(label)}    
-</div>    
+<div class="offer-type">
+${escapeHtml(label)}
+</div>
 
-<div class="p2p-card-header">    
+<div class="p2p-card-header">
 
-  <div class="seller">    
+<div class="seller">
 
-    ${avatarHTML}    
+${avatarHTML}
 
-    <div>    
+<div>
 
-      <div class="username">    
-        ${escapeHtml(username)}    
-      </div>    
+<div class="username">
+${escapeHtml(username)}
+</div>
 
-      <div class="online">    
-        ● Available    
-      </div>    
+<div class="online">
+● Available
+</div>
 
-    </div>    
+</div>
 
-  </div>    
+</div>
 
-  ${    
-    rate!==null &&    
-    rate!==""    
-    ?    
-    `    
-    <div class="rate">    
+${
+rate!==null &&
+rate!==""
+?
+`
+<div class="rate">
 
-      <strong>    
-        ${escapeHtml(    
-          formatNumber(rate)    
-        )} ETB    
-      </strong>    
+<strong>
+${escapeHtml(formatNumber(rate))} 💎
+</strong>
 
-      <small>    
-        1 USDT    
-      </small>    
+<small>
+USDT / 💎
+</small>
 
-    </div>    
-    `    
-    :""    
-  }    
+</div>
+`
+:""
+}
 
-</div>    
+</div>
 
-<div class="trade-info">    
+<div class="trade-info">
 
-  ${    
-    amount!==null &&    
-    amount!==""    
-    ?    
-    `    
-    <span>    
-      Available:    
-      <strong>    
-        ${escapeHtml(    
-          formatNumber(amount)    
-        )} USDT    
-      </strong>    
-    </span>    
-    `    
-    :    
-    `<span>    
-      Available offer    
-    </span>`    
-  }    
+${
+amount!==null &&
+amount!==""
+?
+`
+<span>
+Available:
+<strong>
+${escapeHtml(formatNumber(amount))} 💎
+</strong>
+</span>
+`
+:
+`
+<span>
+Available offer
+</span>
+`
+}
 
-  ${    
-    min!==null &&    
-    min!==""    
-    ?    
-    `    
-    <span>    
-      Min:    
-      ${escapeHtml(    
-        formatNumber(min)    
-      )} ETB    
-    </span>    
-    `    
-    :""    
-  }    
+${
+min!==null &&
+min!==""
+?
+`
+<span>
+Min:
+${escapeHtml(formatNumber(min))} 💎
+</span>
+`
+:""
+}
 
-  ${    
-    max!==null &&    
-    max!==""    
-    ?    
-    `    
-    <span>    
-      Max:    
-      ${escapeHtml(    
-        formatNumber(max)    
-      )} ETB    
-    </span>    
-    `    
-    :""    
-  }    
+${
+max!==null &&
+max!==""
+?
+`
+<span>
+Max:
+${escapeHtml(formatNumber(max))} 💎
+</span>
+`
+:""
+}
 
-</div>    
+</div>
 
-<button    
-  class="buy-btn"    
-  onclick="    
-    openP2POffer(    
-      '${escapeJs(offer.id)}'    
-    );    
-  ">    
+<button
+class="buy-btn"
+onclick="
+openP2POffer(
+'${escapeJs(offer.id)}'
+);
+">
 
-  ${    
-    normalizedType==="sell"    
-      ?"Buy USDT"    
-      :"View Offer"    
-  }    
+${
+normalizedType==="sell"
+?"Buy 💎"
+:"View Offer"
+}
 
 </button>
 
@@ -3118,20 +3460,20 @@ document.getElementById(
 "p2pOffersContainer"
 ).innerHTML=`
 
-<div class="no-offers">    
+<div class="no-offers">
 
-  <div class="no-offers-icon">    
-    🔄    
-  </div>    
+<div class="no-offers-icon">
+🔄
+</div>
 
-  <strong>    
-    No available offers yet.    
-  </strong>    
+<strong>
+No available offers yet.
+</strong>
 
-  <small>    
-    Available P2P offers will appear here    
-    when traders create them.    
-  </small>    
+<small>
+Available P2P offers will appear here
+when traders create them.
+</small>
 
 </div>
 
@@ -3143,9 +3485,7 @@ document.getElementById(
 POSTS
 ===================================================== */
 
-async function loadPosts(
-shuffle=false
-){
+async function loadPosts(shuffle=false){
 
 if(!requireLogin())return;
 
@@ -3154,7 +3494,11 @@ document.getElementById(
 "postsFeed"
 );
 
-feed.innerHTML=    <div class="loading-posts">     Loading public posts...     </div>    ;
+feed.innerHTML=`
+<div class="loading-posts">
+Loading public posts...
+</div>
+`;
 
 const {
 data:posts,
@@ -3176,43 +3520,38 @@ ascending:false
 
 if(error){
 
-console.error(    
-  "Posts:",    
-  error    
-);    
+console.error("Posts:",error);
 
-feed.innerHTML=`    
-  <div class="no-posts">    
+feed.innerHTML=`
 
-    Could not load posts.    
+<div class="no-posts">
 
-    <br>    
+Could not load posts.
 
-    <small>    
-      ${escapeHtml(    
-        error.message    
-      )}    
-    </small>    
+<br>
 
-  </div>    
-`;    
+<small>
+${escapeHtml(error.message)}
+</small>
+
+</div>
+`;
 
 return;
 
 }
 
-allPosts =
-posts||[];
+allPosts=posts||[];
 
 if(shuffle){
 
-allPosts.sort(    
-  ()=>Math.random()-.5    
+allPosts.sort(
+()=>Math.random()-.5
 );
 
 }
 
-displayedPostCount =
+displayedPostCount=
 INITIAL_POST_LIMIT;
 
 await renderPosts();
@@ -3254,31 +3593,28 @@ displayedPostCount
 
 if(!visiblePosts.length){
 
-feed.innerHTML=`    
-  <div class="no-posts">    
-    No public posts yet.    
-  </div>    
-`;    
+feed.innerHTML=`
 
-document.getElementById(    
-  "loadMoreBtn"    
-).style.display="none";    
+<div class="no-posts">
+No public posts yet.
+</div>
+`;
+
+document.getElementById(
+"loadMoreBtn"
+).style.display="none";
 
 return;
 
 }
 
 const postIds =
-visiblePosts.map(
-p=>p.id
-);
+visiblePosts.map(p=>p.id);
 
 const userIds=[
 ...new Set(
 visiblePosts
-.map(
-p=>p.user_id
-)
+.map(p=>p.user_id)
 .filter(Boolean)
 )
 ];
@@ -3287,54 +3623,37 @@ const profileMap={};
 
 if(userIds.length){
 
-const {    
-  data    
-} =    
-await supabaseClient    
-  .from("profiles")    
-  .select(    
-    "id,username,avatar_url"    
-  )    
-  .in(    
-    "id",    
-    userIds    
-  );    
+const {
+data
+} =
+await supabaseClient
+.from("profiles")
+.select(
+"id,username,avatar_url"
+)
+.in("id",userIds);
 
-(data||[]).forEach(    
-  profile=>{    
-
-    profileMap[    
-      profile.id    
-    ]=profile;    
-
-  }    
+(data||[]).forEach(
+profile=>{
+profileMap[profile.id]=profile;
+}
 );
 
 }
-
-/* ===================================================
-LIKES
-=================================================== */
 
 let likes=[];
 
 if(postIds.length){
 
-const {    
-  data    
-} =    
-await supabaseClient    
-  .from("post_likes")    
-  .select(    
-    "post_id,user_id"    
-  )    
-  .in(    
-    "post_id",    
-    postIds    
-  );    
+const {
+data
+} =
+await supabaseClient
+.from("post_likes")
+.select("post_id,user_id")
+.in("post_id",postIds);
 
-likes =    
-  data||[];
+likes=data||[];
 
 }
 
@@ -3343,98 +3662,75 @@ const likeCount={};
 likes.forEach(
 like=>{
 
-likeCount[    
-    like.post_id    
-  ] =    
-    (    
-      likeCount[    
-        like.post_id    
-      ]||0    
-    )+1;    
+likeCount[like.post_id]=
+(
+likeCount[like.post_id]||0
+)+1;
 
 }
-
 );
 
 const myLikes =
 new Set(
 likes
 .filter(
-like=>
+like =>
 like.user_id===
 currentSession.user.id
 )
 .map(
-like=>
-like.post_id
+like=>like.post_id
 )
 );
-
-/* ===================================================
-COMMENTS
-=================================================== */
 
 let comments=[];
 
 if(postIds.length){
 
-const {    
-  data    
-} =    
-await supabaseClient    
-  .from("post_comments")    
-  .select(    
-    "id,post_id,user_id,comment,created_at"    
-  )    
-  .in(    
-    "post_id",    
-    postIds    
-  )    
-  .order(    
-    "created_at",    
-    {    
-      ascending:true    
-    }    
-  );    
+const {
+data
+} =
+await supabaseClient
+.from("post_comments")
+.select(
+"id,post_id,user_id,comment,created_at"
+)
+.in("post_id",postIds)
+.order(
+"created_at",
+{
+ascending:true
+}
+);
 
-comments =    
-  data||[];
+comments=data||[];
 
 }
 
 const commentUserIds=[
 ...new Set(
 comments
-.map(
-c=>c.user_id
-)
+.map(c=>c.user_id)
 .filter(Boolean)
 )
 ];
 
 if(commentUserIds.length){
 
-const {    
-  data    
-} =    
-await supabaseClient    
-  .from("profiles")    
-  .select(    
-    "id,username,avatar_url"    
-  )    
-  .in(    
-    "id",    
-    commentUserIds    
-  );    
+const {
+data
+} =
+await supabaseClient
+.from("profiles")
+.select(
+"id,username,avatar_url"
+)
+.in("id",commentUserIds);
 
-(data||[]).forEach(    
-  profile=>{    
-
-    profileMap[    
-      profile.id    
-    ]=profile;    
-
-  }    
+(data||[]).forEach(
+profile=>{
+profileMap[profile.id]=profile;
+}
 );
 
 }
@@ -3444,229 +3740,211 @@ feed.innerHTML="";
 visiblePosts.forEach(
 post=>{
 
-const profile =    
-    profileMap[    
-      post.user_id    
-    ]||{};    
+const profile =
+profileMap[post.user_id]||{};
 
-  const username =    
-    profile.username||    
-    "User";    
+const username =
+profile.username||"User";
 
-  const avatar =    
-    profile.avatar_url||    
-    "";    
+const avatar =
+profile.avatar_url||"";
 
-  const initial =    
-    username    
-      .charAt(0)    
-      .toUpperCase()||    
-    "U";    
+const initial =
+username.charAt(0).toUpperCase()||
+"U";
 
-  const postComments =    
-    comments.filter(    
-      c=>    
-        String(c.post_id)===    
-        String(post.id)    
-    );    
+const postComments =
+comments.filter(
+c =>
+String(c.post_id)===
+String(post.id)
+);
 
-  const isOwner =    
-    currentSession.user.id===    
-    post.user_id;    
+const isOwner =
+currentSession.user.id===
+post.user_id;
 
-  const card =    
-    document.createElement(    
-      "article"    
-    );    
+const card =
+document.createElement("article");
 
-  card.className =    
-    "post-card";    
+card.className="post-card";
 
-  const avatarHTML =    
-    avatar    
-      ?    
-      `<div class="post-avatar">    
+const avatarHTML =
+avatar
+?
+`
+<div class="post-avatar">
+<img
+src="${escapeHtml(avatar)}"
+alt="Profile">
+</div>
+`
+:
+`
+<div class="post-avatar">
+${escapeHtml(initial)}
+</div>
+`;
 
-        <img    
-          src="${escapeHtml(avatar)}"    
-          alt="Profile">    
+const mediaHTML =
+renderPostMedia(post);
 
-      </div>`    
-      :    
-      `<div class="post-avatar">    
+const isPinned =
+Boolean(
+post.is_pinned||
+post.pinned
+);
 
-        ${escapeHtml(initial)}    
+card.innerHTML=`
 
-      </div>`;    
-
-  const mediaHTML =    
-    renderPostMedia(    
-      post    
-    );    
-
-  const isPinned =    
-    Boolean(    
-      post.is_pinned||    
-      post.pinned    
-    );    
-
-  card.innerHTML=`    
-
-    ${    
-      isPinned    
-        ?    
-        `    
-        <div class="post-pin">    
-          📌 Pinned    
-        </div>    
-        `    
-        :""    
-    }    
-
-    <div    
-      class="post-header"    
-      onclick="    
-        openUserProfile(    
-          '${escapeJs(post.user_id)}'    
-        );    
-      ">    
-
-      ${avatarHTML}    
-
-      <div class="post-user-info">    
-
-        <div class="post-name">    
-          ${escapeHtml(username)}    
-        </div>    
-
-        <div class="post-handle">    
-          @${escapeHtml(username)}    
-        </div>    
-
-      </div>    
-
-      <div class="post-time">    
-        ${escapeHtml(    
-          formatPostTime(    
-            post.created_at    
-          )    
-        )}    
-      </div>    
-
-      ${    
-        isOwner    
-          ?    
-          `    
-          <button    
-            class="post-menu"    
-            onclick="    
-              event.stopPropagation();    
-              deletePost(    
-                '${escapeJs(post.id)}'    
-              );    
-            ">    
-            🗑️    
-          </button>    
-          `    
-          :""    
-      }    
-
-    </div>    
-
-    <div class="post-content">    
-      ${escapeHtml(    
-        post.content||""    
-      )}    
-    </div>    
-
-    ${mediaHTML}    
-
-    <div class="post-actions">    
-
-      <button    
-        class="post-action ${    
-          myLikes.has(post.id)    
-            ?"liked"    
-            :""    
-        }"    
-        onclick="    
-          event.stopPropagation();    
-          likePost(    
-            '${escapeJs(post.id)}'    
-          );    
-        ">    
-
-        ${    
-          myLikes.has(post.id)    
-            ?"♥ Liked"    
-            :"♡ Like"    
-        }    
-
-        <span>    
-          ${likeCount[post.id]||0}    
-        </span>    
-
-      </button>    
-
-      <button    
-        class="post-action"    
-        onclick="    
-          event.stopPropagation();    
-          toggleComments(    
-            '${escapeJs(post.id)}'    
-          );    
-        ">    
-
-        💬 Comments    
-
-        <span>    
-          ${postComments.length}    
-        </span>    
-
-      </button>    
-
-      <button    
-        class="post-action"    
-        onclick="    
-          event.stopPropagation();    
-          sharePost(    
-            '${escapeJs(post.id)}'    
-          );    
-        ">    
-
-        ↗ Share    
-
-      </button>    
-
-    </div>    
-
-    <div    
-      id="comments-${escapeHtml(post.id)}"    
-      class="comments-box"    
-      style="    
-        display:${    
-          commentsOpen[post.id]    
-            ?"block"    
-            :"none"    
-        };    
-      ">    
-
-      ${renderComments(    
-        post.id,    
-        postComments,    
-        profileMap    
-      )}    
-
-    </div>    
-
-  `;    
-
-  feed.appendChild(    
-    card    
-  );    
-
+${
+isPinned
+?
+`
+<div class="post-pin">
+📌 Pinned
+</div>
+`
+:""
 }
 
+<div
+class="post-header"
+onclick="
+openUserProfile(
+'${escapeJs(post.user_id)}'
+);
+">
+
+${avatarHTML}
+
+<div class="post-user-info">
+
+<div class="post-name">
+${escapeHtml(username)}
+</div>
+
+<div class="post-handle">
+@${escapeHtml(username)}
+</div>
+
+</div>
+
+<div class="post-time">
+${escapeHtml(
+formatPostTime(post.created_at)
+)}
+</div>
+
+${
+isOwner
+?
+`
+<button
+class="post-menu"
+onclick="
+event.stopPropagation();
+deletePost(
+'${escapeJs(post.id)}'
+);
+">
+🗑️
+</button>
+`
+:""
+}
+
+</div>
+
+<div class="post-content">
+${escapeHtml(post.content||"")}
+</div>
+
+${mediaHTML}
+
+<div class="post-actions">
+
+<button
+class="post-action ${
+myLikes.has(post.id)
+?"liked"
+:""
+}"
+onclick="
+event.stopPropagation();
+likePost(
+'${escapeJs(post.id)}'
+);
+">
+
+${
+myLikes.has(post.id)
+?"♥ Liked"
+:"♡ Like"
+}
+
+<span>
+${likeCount[post.id]||0}
+</span>
+
+</button>
+
+<button
+class="post-action"
+onclick="
+event.stopPropagation();
+toggleComments(
+'${escapeJs(post.id)}'
+);
+">
+
+💬 Comments
+
+<span>
+${postComments.length}
+</span>
+
+</button>
+
+<button
+class="post-action"
+onclick="
+event.stopPropagation();
+sharePost(
+'${escapeJs(post.id)}'
+);
+">
+
+↗ Share
+
+</button>
+
+</div>
+
+<div
+id="comments-${escapeHtml(post.id)}"
+class="comments-box"
+style="
+display:${
+commentsOpen[post.id]
+?"block"
+:"none"
+};
+">
+
+${renderComments(
+post.id,
+postComments,
+profileMap
+)}
+
+</div>
+
+`;
+
+feed.appendChild(card);
+
+}
 );
 
 document.getElementById(
@@ -3683,9 +3961,7 @@ allPosts.length
 POST MEDIA
 ===================================================== */
 
-function renderPostMedia(
-post
-){
+function renderPostMedia(post){
 
 const mediaUrl =
 post.media_url||
@@ -3693,11 +3969,7 @@ post.image_url||
 post.video_url||
 "";
 
-if(!mediaUrl){
-
-return "";
-
-}
+if(!mediaUrl)return "";
 
 const type =
 String(
@@ -3711,22 +3983,22 @@ type==="video"||
 post.video_url
 ){
 
-return `    
+return `
 
-  <div class="post-media">    
+<div class="post-media">
 
-    <video    
-      src="${escapeHtml(mediaUrl)}"    
-      controls    
-      playsinline    
-      preload="metadata">    
-    </video>    
+<video
+src="${escapeHtml(mediaUrl)}"
+controls
+playsinline
+preload="metadata">
+</video>
 
-  </div>    
+</div>
 
-  <div class="post-type-label">    
-    🎥 Video    
-  </div>    
+<div class="post-type-label">
+🎥 Video
+</div>
 
 `;
 
@@ -3734,17 +4006,17 @@ return `
 
 return `
 
-<div class="post-media">    
+<div class="post-media">
 
-  <img    
-    src="${escapeHtml(mediaUrl)}"    
-    alt="Post image"    
-    loading="lazy">    
+<img
+src="${escapeHtml(mediaUrl)}"
+alt="Post image"
+loading="lazy">
 
-</div>    
+</div>
 
-<div class="post-type-label">    
-  🖼️ Picture    
+<div class="post-type-label">
+🖼️ Picture
 </div>
 
 `;
@@ -3755,9 +4027,7 @@ return `
 LIKE
 ===================================================== */
 
-async function likePost(
-postId
-){
+async function likePost(postId){
 
 if(!requireLogin())return;
 
@@ -3771,68 +4041,51 @@ error:checkError
 await supabaseClient
 .from("post_likes")
 .select("post_id")
-.eq(
-"post_id",
-postId
-)
-.eq(
-"user_id",
-userId
-)
+.eq("post_id",postId)
+.eq("user_id",userId)
 .maybeSingle();
 
 if(checkError){
 
-alert(    
-  "Could not check like."    
-);    
-
+alert("Could not check like.");
 return;
 
 }
 
 if(existing){
 
-const {    
-  error    
-} =    
-await supabaseClient    
-  .from("post_likes")    
-  .delete()    
-  .eq(    
-    "post_id",    
-    postId    
-  )    
-  .eq(    
-    "user_id",    
-    userId    
-  );    
+const {
+error
+} =
+await supabaseClient
+.from("post_likes")
+.delete()
+.eq("post_id",postId)
+.eq("user_id",userId);
 
-if(error){    
+if(error){
 
-  alert(error.message);    
-
-  return;    
+alert(error.message);
+return;
 
 }
 
 }else{
 
-const {    
-  error    
-} =    
-await supabaseClient    
-  .from("post_likes")    
-  .insert({    
-    post_id:postId,    
-    user_id:userId    
-  });    
+const {
+error
+} =
+await supabaseClient
+.from("post_likes")
+.insert({
+post_id:postId,
+user_id:userId
+});
 
-if(error){    
+if(error){
 
-  alert(error.message);    
-
-  return;    
+alert(error.message);
+return;
 
 }
 
@@ -3846,11 +4099,9 @@ await renderPosts();
 COMMENTS
 ===================================================== */
 
-function toggleComments(
-postId
-){
+function toggleComments(postId){
 
-commentsOpen[postId] =
+commentsOpen[postId]=
 !commentsOpen[postId];
 
 const box =
@@ -3860,28 +4111,22 @@ document.getElementById(
 
 if(box){
 
-box.style.display =    
-  commentsOpen[postId]    
-    ?"block"    
-    :"none";
-
-}
-
-if(
+box.style.display =
 commentsOpen[postId]
-){
+?"block"
+:"none";
 
-refreshSinglePostComments(    
-  postId    
-);
+}
+
+if(commentsOpen[postId]){
+
+refreshSinglePostComments(postId);
 
 }
 
 }
 
-async function refreshSinglePostComments(
-postId
-){
+async function refreshSinglePostComments(postId){
 
 const box =
 document.getElementById(
@@ -3899,10 +4144,7 @@ await supabaseClient
 .select(
 "id,post_id,user_id,comment,created_at"
 )
-.eq(
-"post_id",
-postId
-)
+.eq("post_id",postId)
 .order(
 "created_at",
 {
@@ -3912,21 +4154,17 @@ ascending:true
 
 if(error){
 
-console.error(error);    
-
+console.error(error);
 return;
 
 }
 
-const comments =
-data||[];
+const comments=data||[];
 
 const userIds=[
 ...new Set(
 comments
-.map(
-c=>c.user_id
-)
+.map(c=>c.user_id)
 .filter(Boolean)
 )
 ];
@@ -3935,27 +4173,20 @@ const profileMap={};
 
 if(userIds.length){
 
-const {    
-  data:profiles    
-} =    
-await supabaseClient    
-  .from("profiles")    
-  .select(    
-    "id,username,avatar_url"    
-  )    
-  .in(    
-    "id",    
-    userIds    
-  );    
+const {
+data:profiles
+} =
+await supabaseClient
+.from("profiles")
+.select(
+"id,username,avatar_url"
+)
+.in("id",userIds);
 
-(profiles||[]).forEach(    
-  profile=>{    
-
-    profileMap[    
-      profile.id    
-    ]=profile;    
-
-  }    
+(profiles||[]).forEach(
+profile=>{
+profileMap[profile.id]=profile;
+}
 );
 
 }
@@ -3980,112 +4211,103 @@ let html="";
 comments.forEach(
 comment=>{
 
-const profile =    
-    profileMap[    
-      comment.user_id    
-    ]||{};    
+const profile =
+profileMap[comment.user_id]||{};
 
-  const username =    
-    profile.username||    
-    "User";    
+const username =
+profile.username||"User";
 
-  const avatar =    
-    profile.avatar_url||    
-    "";    
+const avatar =
+profile.avatar_url||"";
 
-  const initial =    
-    username    
-      .charAt(0)    
-      .toUpperCase()||    
-    "U";    
+const initial =
+username.charAt(0).toUpperCase()||
+"U";
 
-  const isOwner =    
-    currentSession &&    
-    currentSession.user.id===    
-    comment.user_id;    
+const isOwner =
+currentSession &&
+currentSession.user.id===
+comment.user_id;
 
-  const avatarHTML =    
-    avatar    
-      ?    
-      `<div class="comment-avatar">    
+const avatarHTML =
+avatar
+?
+`
+<div class="comment-avatar">
+<img
+src="${escapeHtml(avatar)}"
+alt="Profile">
+</div>
+`
+:
+`
+<div class="comment-avatar">
+${escapeHtml(initial)}
+</div>
+`;
 
-        <img    
-          src="${escapeHtml(avatar)}"    
-          alt="Profile">    
+html+=`
 
-      </div>`    
-      :    
-      `<div class="comment-avatar">    
+<div class="comment">
 
-        ${escapeHtml(initial)}    
+${avatarHTML}
 
-      </div>`;    
+<div class="comment-body">
 
-  html+=`    
+<div class="comment-name">
+${escapeHtml(username)}
+</div>
 
-    <div class="comment">    
+<div class="comment-text">
+${escapeHtml(comment.comment||"")}
+</div>
 
-      ${avatarHTML}    
-
-      <div class="comment-body">    
-
-        <div class="comment-name">    
-          ${escapeHtml(username)}    
-        </div>    
-
-        <div class="comment-text">    
-          ${escapeHtml(    
-            comment.comment||""    
-          )}    
-        </div>    
-
-        ${    
-          isOwner    
-            ?    
-            `    
-            <button    
-              class="comment-delete"    
-              onclick="    
-                deleteComment(    
-                  '${escapeJs(comment.id)}',    
-                  '${escapeJs(postId)}'    
-                );    
-              ">    
-              Delete    
-            </button>    
-            `    
-            :""    
-        }    
-
-      </div>    
-
-    </div>    
-
-  `;    
-
+${
+isOwner
+?
+`
+<button
+class="comment-delete"
+onclick="
+deleteComment(
+'${escapeJs(comment.id)}',
+'${escapeJs(postId)}'
+);
+">
+Delete
+</button>
+`
+:""
 }
 
+</div>
+
+</div>
+
+`;
+
+}
 );
 
 html+=`
 
-<div class="comment-input-row">    
+<div class="comment-input-row">
 
-  <input    
-    id="comment-input-${escapeHtml(postId)}"    
-    class="comment-input"    
-    maxlength="1000"    
-    placeholder="Write a comment...">    
+<input
+id="comment-input-${escapeHtml(postId)}"
+class="comment-input"
+maxlength="1000"
+placeholder="Write a comment...">
 
-  <button    
-    class="comment-send"    
-    onclick="    
-      addComment(    
-        '${escapeJs(postId)}'    
-      );    
-    ">    
-    Send    
-  </button>    
+<button
+class="comment-send"
+onclick="
+addComment(
+'${escapeJs(postId)}'
+);
+">
+Send
+</button>
 
 </div>
 
@@ -4095,9 +4317,7 @@ return html;
 
 }
 
-async function addComment(
-postId
-){
+async function addComment(postId){
 
 if(!requireLogin())return;
 
@@ -4126,10 +4346,10 @@ comment:text
 
 if(error){
 
-alert(    
-  "Could not add comment: "+    
-  error.message    
-);    
+alert(
+"Could not add comment: "+
+error.message
+);
 
 return;
 
@@ -4137,10 +4357,7 @@ return;
 
 input.value="";
 
-await refreshSinglePostComments(
-postId
-);
-
+await refreshSinglePostComments(postId);
 await renderPosts();
 
 }
@@ -4159,18 +4376,12 @@ error:loadError
 await supabaseClient
 .from("post_comments")
 .select("user_id")
-.eq(
-"id",
-commentId
-)
+.eq("id",commentId)
 .maybeSingle();
 
 if(loadError||!comment){
 
-alert(    
-  "Comment not found."    
-);    
-
+alert("Comment not found.");
 return;
 
 }
@@ -4180,18 +4391,16 @@ comment.user_id!==
 currentSession.user.id
 ){
 
-alert(    
-  "You can only delete your own comment."    
-);    
+alert(
+"You can only delete your own comment."
+);
 
 return;
 
 }
 
 if(
-!confirm(
-"Delete this comment?"
-)
+!confirm("Delete this comment?")
 ){
 
 return;
@@ -4204,10 +4413,7 @@ error
 await supabaseClient
 .from("post_comments")
 .delete()
-.eq(
-"id",
-commentId
-)
+.eq("id",commentId)
 .eq(
 "user_id",
 currentSession.user.id
@@ -4215,16 +4421,12 @@ currentSession.user.id
 
 if(error){
 
-alert(error.message);    
-
+alert(error.message);
 return;
 
 }
 
-await refreshSinglePostComments(
-postId
-);
-
+await refreshSinglePostComments(postId);
 await renderPosts();
 
 }
@@ -4279,20 +4481,17 @@ document.getElementById(
 );
 
 controls.innerHTML="";
-
 notice.innerHTML="";
 
 if(type==="text"){
 
-notice.innerHTML=`    
+notice.innerHTML=`
 
-  <div class="info-box">    
+<div class="info-box">
+⚪ Free users can publish text posts.
+</div>
 
-    ⚪ Free users can publish text posts.    
-
-  </div>    
-
-`;    
+`;
 
 return;
 
@@ -4300,69 +4499,70 @@ return;
 
 if(type==="image"){
 
-if(!canPostImage()){    
+if(!canPostImage()){
 
-  controls.innerHTML=`    
+controls.innerHTML=`
 
-    <div class="locked-feature">    
+<div class="locked-feature">
 
-      🔒 <strong>Picture posts require 🟢 Premium.</strong>    
+🔒
+<strong>
+Picture posts require 🟢 Premium.
+</strong>
 
-      <br><br>    
+<br><br>
 
-      Upgrade to Premium, Premium+ or Premium Max    
-      to publish picture posts.    
+Upgrade to Premium, Premium+ or Premium Max
+to publish picture posts.
 
-    </div>    
+</div>
 
-  `;    
+`;
 
-  return;    
+return;
 
-}    
+}
 
-controls.innerHTML=`    
+controls.innerHTML=`
 
-  <label class="media-label">    
-    Picture URL    
-  </label>    
+<label class="media-label">
+Picture URL
+</label>
 
-  <input    
-    id="mediaUrlInput"    
-    class="media-input"    
-    type="url"    
-    placeholder="https://example.com/image.jpg"    
-    oninput="previewMedia()">    
+<input
+id="mediaUrlInput"
+class="media-input"
+type="url"
+placeholder="https://example.com/image.jpg"
+oninput="previewMedia()">
 
-  <div class="media-note">    
+<div class="media-note">
+Your post table needs a media URL field
+such as media_url or image_url.
+</div>
 
-    Your post table needs a media URL field    
-    such as media_url or image_url.    
+<div
+id="mediaPreview"
+class="media-preview">
+</div>
 
-  </div>    
+`;
 
-  <div    
-    id="mediaPreview"    
-    class="media-preview">    
-  </div>    
+notice.innerHTML=`
 
-`;    
+<div class="info-box">
 
-notice.innerHTML=`    
+🟢 Premium:
+picture post + promotion inside photo.
 
-  <div class="info-box">    
+<br><br>
 
-    🟢 Premium:    
-    picture post + promotion inside photo.    
+Additional paid promotion can be handled
+by your platform promotion system.
 
-    <br><br>    
+</div>
 
-    Additional paid promotion can be handled    
-    by your platform promotion system.    
-
-  </div>    
-
-`;    
+`;
 
 return;
 
@@ -4370,70 +4570,69 @@ return;
 
 if(type==="video"){
 
-if(!canPostVideo()){    
+if(!canPostVideo()){
 
-  controls.innerHTML=`    
+controls.innerHTML=`
 
-    <div class="locked-feature">    
+<div class="locked-feature">
 
-      🔒 <strong>    
-        Video posts require 🔵 Premium+.    
-      </strong>    
+🔒
+<strong>
+Video posts require 🔵 Premium+.
+</strong>
 
-      <br><br>    
+<br><br>
 
-      Premium+ and Premium Max can publish    
-      video posts.    
+Premium+ and Premium Max can publish
+video posts.
 
-    </div>    
+</div>
 
-  `;    
+`;
 
-  return;    
+return;
 
-}    
+}
 
-controls.innerHTML=`    
+controls.innerHTML=`
 
-  <label class="media-label">    
-    Video URL    
-  </label>    
+<label class="media-label">
+Video URL
+</label>
 
-  <input    
-    id="mediaUrlInput"    
-    class="media-input"    
-    type="url"    
-    placeholder="https://example.com/video.mp4"    
-    oninput="previewMedia()">    
+<input
+id="mediaUrlInput"
+class="media-input"
+type="url"
+placeholder="https://example.com/video.mp4"
+oninput="previewMedia()">
 
-  <div class="media-note">    
+<div class="media-note">
+Use a publicly accessible video URL or
+connect this field to your Supabase Storage
+upload system.
+</div>
 
-    Use a publicly accessible video URL or    
-    connect this field to your Supabase Storage    
-    upload system.    
+<div
+id="mediaPreview"
+class="media-preview">
+</div>
 
-  </div>    
+`;
 
-  <div    
-    id="mediaPreview"    
-    class="media-preview">    
-  </div>    
+notice.innerHTML=`
 
-`;    
+<div class="info-box">
 
-notice.innerHTML=`    
+🔵 Premium+:
+video post + promotion inside video.
 
-  <div class="info-box">    
+<br><br>
 
-    🔵 Premium+:    
-    video post + promotion inside video.    
+🟣 Premium Max includes all Premium+
+video features.
 
-    <br><br>    
-
-    🟣 Premium Max includes all Premium+    
-    video features.    
-
-  </div>    
+</div>
 
 `;
 
@@ -4458,33 +4657,24 @@ document.getElementById(
 "mediaPreview"
 );
 
-if(
-!input||
-!preview
-){
+if(!input||!preview)return;
 
-return;
-
-}
-
-const url =
-input.value.trim();
+const url=input.value.trim();
 
 if(!url){
 
-preview.innerHTML="";    
-
+preview.innerHTML="";
 return;
 
 }
 
 if(type==="image"){
 
-preview.innerHTML=`    
+preview.innerHTML=`
 
-  <img    
-    src="${escapeHtml(url)}"    
-    alt="Preview">    
+<img
+src="${escapeHtml(url)}"
+alt="Preview">
 
 `;
 
@@ -4492,13 +4682,13 @@ preview.innerHTML=`
 
 if(type==="video"){
 
-preview.innerHTML=`    
+preview.innerHTML=`
 
-  <video    
-    src="${escapeHtml(url)}"    
-    controls    
-    playsinline>    
-  </video>    
+<video
+src="${escapeHtml(url)}"
+controls
+playsinline>
+</video>
 
 `;
 
@@ -4531,10 +4721,7 @@ document.getElementById(
 
 if(!content){
 
-alert(    
-  "Write something first."    
-);    
-
+alert("Write something first.");
 return;
 
 }
@@ -4544,9 +4731,9 @@ mediaType==="image" &&
 !canPostImage()
 ){
 
-alert(    
-  "Picture posts require Premium."    
-);    
+alert(
+"Picture posts require Premium."
+);
 
 return;
 
@@ -4557,9 +4744,9 @@ mediaType==="video" &&
 !canPostVideo()
 ){
 
-alert(    
-  "Video posts require Premium+."    
-);    
+alert(
+"Video posts require Premium+."
+);
 
 return;
 
@@ -4572,21 +4759,21 @@ mediaType==="image"||
 mediaType==="video"
 ){
 
-const input =    
-  document.getElementById(    
-    "mediaUrlInput"    
-  );    
+const input =
+document.getElementById(
+"mediaUrlInput"
+);
 
-mediaUrl =    
-  input?.value.trim()||"";    
+mediaUrl =
+input?.value.trim()||"";
 
-if(!mediaUrl){    
+if(!mediaUrl){
 
-  alert(    
-    "Add a media URL first."    
-  );    
+alert(
+"Add a media URL first."
+);
 
-  return;    
+return;
 
 }
 
@@ -4598,42 +4785,25 @@ document.getElementById(
 );
 
 button.disabled=true;
-
-button.textContent =
-"Publishing...";
-
-/*
-Insert core fields first.
-This keeps compatibility with the
-existing posts table.
-*/
+button.textContent="Publishing...";
 
 const payload={
 
-user_id:    
-  currentSession.user.id,    
+user_id:
+currentSession.user.id,
 
-content:    
-  content,    
+content:
+content,
 
-visibility:    
-  visibility
+visibility:
+visibility
 
 };
 
-/*
-Media fields are added only for
-media posts. Your Supabase posts table
-must contain matching columns.
-*/
-
 if(mediaType!=="text"){
 
-payload.media_url =    
-  mediaUrl;    
-
-payload.media_type =    
-  mediaType;
+payload.media_url=mediaUrl;
+payload.media_type=mediaType;
 
 }
 
@@ -4645,19 +4815,17 @@ await supabaseClient
 .insert(payload);
 
 button.disabled=false;
-
-button.textContent =
-"Publish Post";
+button.textContent="Publish Post";
 
 if(error){
 
-console.error(error);    
+console.error(error);
 
-alert(    
-  "Could not publish post: "+    
-  error.message+    
-  "\n\nIf this is a media post, make sure your posts table has media_url and media_type columns."    
-);    
+alert(
+"Could not publish post: "+
+error.message+
+"\n\nIf this is a media post, make sure your posts table has media_url and media_type columns."
+);
 
 return;
 
@@ -4685,9 +4853,7 @@ await loadPosts(false);
 DELETE POST
 ===================================================== */
 
-async function deletePost(
-postId
-){
+async function deletePost(postId){
 
 if(!requireLogin())return;
 
@@ -4698,18 +4864,12 @@ error:loadError
 await supabaseClient
 .from("posts")
 .select("user_id")
-.eq(
-"id",
-postId
-)
+.eq("id",postId)
 .maybeSingle();
 
 if(loadError||!post){
 
-alert(    
-  "Post not found."    
-);    
-
+alert("Post not found.");
 return;
 
 }
@@ -4719,23 +4879,15 @@ post.user_id!==
 currentSession.user.id
 ){
 
-alert(    
-  "You can only delete your own post."    
-);    
+alert(
+"You can only delete your own post."
+);
 
 return;
 
 }
 
-if(
-!confirm(
-"Delete this post?"
-)
-){
-
-return;
-
-}
+if(!confirm("Delete this post?"))return;
 
 const {
 error
@@ -4743,10 +4895,7 @@ error
 await supabaseClient
 .from("posts")
 .delete()
-.eq(
-"id",
-postId
-)
+.eq("id",postId)
 .eq(
 "user_id",
 currentSession.user.id
@@ -4754,8 +4903,7 @@ currentSession.user.id
 
 if(error){
 
-alert(error.message);    
-
+alert(error.message);
 return;
 
 }
@@ -4768,9 +4916,7 @@ await loadPosts(false);
 SHARE
 ===================================================== */
 
-async function sharePost(
-postId
-){
+async function sharePost(postId){
 
 if(!requireLogin())return;
 
@@ -4778,40 +4924,32 @@ const shareUrl =
 window.location.origin+
 window.location.pathname+
 "?post="+
-encodeURIComponent(
-postId
-);
+encodeURIComponent(postId);
 
-if(
-navigator.share
-){
+if(navigator.share){
 
-try{    
+try{
 
-  await navigator.share({    
+await navigator.share({
 
-    title:    
-      "P2P Social",    
+title:"P2P Social",
 
-    text:    
-      "Check out this post on P2P Social",    
+text:
+"Check out this post on P2P Social",
 
-    url:    
-      shareUrl    
+url:shareUrl
 
-  });    
+});
 
-}catch(error){    
+}catch(error){
 
-  if(    
-    error.name!=="AbortError"    
-  ){    
+if(error.name!=="AbortError"){
 
-    console.log(error);    
+console.log(error);
 
-  }    
+}
 
-}    
+}
 
 return;
 
@@ -4819,19 +4957,17 @@ return;
 
 try{
 
-await navigator.clipboard.writeText(    
-  shareUrl    
-);    
-
-alert(    
-  "Post link copied."    
+await navigator.clipboard.writeText(
+shareUrl
 );
+
+alert("Post link copied.");
 
 }catch(error){
 
-prompt(    
-  "Copy this post link:",    
-  shareUrl    
+prompt(
+"Copy this post link:",
+shareUrl
 );
 
 }
@@ -4846,8 +4982,7 @@ async function loadNotifications(){
 
 if(!currentSession){
 
-resetNotifications();    
-
+resetNotifications();
 return;
 
 }
@@ -4858,7 +4993,9 @@ error
 } =
 await supabaseClient
 .from("notifications")
-.select(    id,     user_id,     type,     title,     body,     link,     is_read,     created_at    )
+.select(
+"id,user_id,type,title,body,link,is_read,created_at"
+)
 .eq(
 "user_id",
 currentSession.user.id
@@ -4873,24 +5010,20 @@ ascending:false
 
 if(error){
 
-console.log(    
-  "Notifications:",    
-  error.message    
-);    
+console.log(
+"Notifications:",
+error.message
+);
 
 return;
 
 }
 
-renderNotifications(
-data||[]
-);
+renderNotifications(data||[]);
 
 }
 
-function renderNotifications(
-notifications
-){
+function renderNotifications(notifications){
 
 const list =
 document.getElementById(
@@ -4904,15 +5037,15 @@ document.getElementById(
 
 if(!notifications.length){
 
-list.innerHTML=`    
+list.innerHTML=`
 
-  <div class="no-notifications">    
-    🔔 No notifications yet.    
-  </div>    
+<div class="no-notifications">
+🔔 No notifications yet.
+</div>
 
-`;    
+`;
 
-badge.style.display="none";    
+badge.style.display="none";
 
 return;
 
@@ -4925,18 +5058,16 @@ n=>!n.is_read
 
 if(unread){
 
-badge.textContent =    
-  unread>99    
-    ?"99+"    
-    :unread;    
+badge.textContent =
+unread>99
+?"99+"
+:unread;
 
-badge.style.display =    
-  "flex";
+badge.style.display="flex";
 
 }else{
 
-badge.style.display =    
-  "none";
+badge.style.display="none";
 
 }
 
@@ -4945,142 +5076,125 @@ list.innerHTML="";
 notifications.forEach(
 notification=>{
 
-const item =    
-    document.createElement(    
-      "div"    
-    );    
+const item =
+document.createElement("div");
 
-  item.className =    
-    "notification-item"+    
-    (    
-      notification.is_read    
-        ?""    
-        :" unread"    
-    );    
+item.className =
+"notification-item"+
+(
+notification.is_read
+?""
+:" unread"
+);
 
-  item.innerHTML=`    
+item.innerHTML=`
 
-    <div class="notification-icon">    
+<div class="notification-icon">
+${notificationIcon(notification.type)}
+</div>
 
-      ${notificationIcon(    
-        notification.type    
-      )}    
+<div class="notification-content">
 
-    </div>    
+<div class="notification-title">
+${escapeHtml(
+notification.title||
+"Notification"
+)}
+</div>
 
-    <div class="notification-content">    
+<div class="notification-body">
+${escapeHtml(
+notification.body||""
+)}
+</div>
 
-      <div class="notification-title">    
-        ${escapeHtml(    
-          notification.title||    
-          "Notification"    
-        )}    
-      </div>    
+<div class="notification-time">
+${escapeHtml(
+formatPostTime(
+notification.created_at
+)
+)}
+</div>
 
-      <div class="notification-body">    
-        ${escapeHtml(    
-          notification.body||""    
-        )}    
-      </div>    
+</div>
 
-      <div class="notification-time">    
-        ${escapeHtml(    
-          formatPostTime(    
-            notification.created_at    
-          )    
-        )}    
-      </div>    
+`;
 
-    </div>    
+item.addEventListener(
+"click",
+async()=>{
 
-  `;    
+if(!notification.is_read){
 
-  item.addEventListener(    
-    "click",    
-    async()=>{    
-
-      if(    
-        !notification.is_read    
-      ){    
-
-        await markNotificationRead(    
-          notification.id    
-        );    
-
-      }    
-
-      if(    
-        notification.link    
-      ){    
-
-        window.location.href =    
-          notification.link;    
-
-      }else{    
-
-        openMessages();    
-
-      }    
-
-    }    
-  );    
-
-  list.appendChild(    
-    item    
-  );    
-
-}
-
+await markNotificationRead(
+notification.id
 );
 
 }
 
-function notificationIcon(
-type
-){
+if(notification.link){
+
+window.location.href=
+notification.link;
+
+}else{
+
+openMessages();
+
+}
+
+}
+);
+
+list.appendChild(item);
+
+}
+);
+
+}
+
+function notificationIcon(type){
 
 switch(type){
 
-case "message":    
-  return "💬";    
+case "message":
+return "💬";
 
-case "like":    
-  return "❤️";    
+case "like":
+return "❤️";
 
-case "comment":    
-  return "💬";    
+case "comment":
+return "💬";
 
-case "follow":    
-  return "👤";    
+case "follow":
+return "👤";
 
-case "wallet":    
-  return "💰";    
+case "wallet":
+return "💎";
 
-case "deposit":    
-  return "💵";    
+case "deposit":
+return "💎";
 
-case "withdraw":    
-  return "🏦";    
+case "withdraw":
+return "💎";
 
-case "trade":    
-  return "🔄";    
+case "trade":
+return "🔄";
 
-case "premium":    
-  return "⭐";    
+case "premium":
+return "⭐";
 
-case "live":    
-  return "🔴";    
+case "live":
+return "🔴";
 
-default:    
-  return "🔔";
-
-}
+default:
+return "🔔";
 
 }
 
-async function markNotificationRead(
-id
-){
+}
+
+async function markNotificationRead(id){
 
 if(!currentSession)return;
 
@@ -5125,9 +5239,9 @@ false
 
 if(error){
 
-alert(    
-  "Could not mark notifications as read."    
-);    
+alert(
+"Could not mark notifications as read."
+);
 
 return;
 
@@ -5147,17 +5261,15 @@ document.getElementById(
 "notificationList"
 ).innerHTML=`
 
-<div class="no-notifications">    
-  Login to see notifications.    
+<div class="no-notifications">
+Login to see notifications.
 </div>
 
 `;
 
 }
 
-function toggleNotificationPanel(
-event
-){
+function toggleNotificationPanel(event){
 
 if(event){
 
@@ -5172,14 +5284,10 @@ document.getElementById(
 "notificationPanel"
 );
 
-panel.classList.toggle(
-"open"
-);
+panel.classList.toggle("open");
 
 if(
-panel.classList.contains(
-"open"
-)
+panel.classList.contains("open")
 ){
 
 loadNotifications();
@@ -5192,30 +5300,24 @@ document.addEventListener(
 "click",
 event=>{
 
-const panel =    
-  document.getElementById(    
-    "notificationPanel"    
-  );    
+const panel =
+document.getElementById(
+"notificationPanel"
+);
 
-const button =    
-  document.getElementById(    
-    "notificationButton"    
-  );    
+const button =
+document.getElementById(
+"notificationButton"
+);
 
-if(    
-  panel &&    
-  !panel.contains(    
-    event.target    
-  ) &&    
-  button &&    
-  !button.contains(    
-    event.target    
-  )    
-){    
+if(
+panel &&
+!panel.contains(event.target) &&
+button &&
+!button.contains(event.target)
+){
 
-  panel.classList.remove(    
-    "open"    
-  );    
+panel.classList.remove("open");
 
 }
 
@@ -5228,8 +5330,8 @@ if(!currentSession)return;
 
 if(notificationChannel){
 
-supabaseClient.removeChannel(    
-  notificationChannel    
+supabaseClient.removeChannel(
+notificationChannel
 );
 
 }
@@ -5253,21 +5355,19 @@ filter:
 },
 payload=>{
 
-loadNotifications();    
+loadNotifications();
 
-      if(    
-        !document.hidden    
-      ){    
+if(!document.hidden){
 
-        showNewNotificationPopup(    
-          payload.new    
-        );    
+showNewNotificationPopup(
+payload.new
+);
 
-      }    
+}
 
-    }    
-  )    
-  .subscribe();
+}
+)
+.subscribe();
 
 }
 
@@ -5280,20 +5380,20 @@ if(
 Notification.permission==="granted"
 ){
 
-try{    
+try{
 
-  new Notification(    
-    notification.title||    
-    "New notification",    
-    {    
-      body:    
-        notification.body||""    
-    }    
-  );    
+new Notification(
+notification.title||
+"New notification",
+{
+body:
+notification.body||""
+}
+);
 
-}catch(error){    
+}catch(error){
 
-  console.log(error);    
+console.log(error);
 
 }
 
@@ -5305,33 +5405,28 @@ try{
 HELPERS
 ===================================================== */
 
-function getFirstValue(
-object,
-keys
-){
+function getFirstValue(object,keys){
 
 if(!object)return null;
 
-for(
-const key of keys
+for(const key of keys){
+
+if(
+Object.prototype.hasOwnProperty.call(
+object,
+key
+)
 ){
 
-if(    
-  Object.prototype.hasOwnProperty.call(    
-    object,    
-    key    
-  )    
-){    
+if(
+object[key]!==null &&
+object[key]!==undefined &&
+object[key]!==""
+){
 
-  if(    
-    object[key]!==null &&    
-    object[key]!==undefined &&    
-    object[key]!==""    
-  ){    
+return object[key];
 
-    return object[key];    
-
-  }    
+}
 
 }
 
@@ -5341,16 +5436,11 @@ return null;
 
 }
 
-function formatNumber(
-value
-){
+function formatNumber(value){
 
-const number =
-Number(value);
+const number=Number(value);
 
-if(
-Number.isNaN(number)
-){
+if(Number.isNaN(number)){
 
 return String(value);
 
@@ -5365,30 +5455,23 @@ maximumFractionDigits:8
 
 }
 
-function formatPostTime(
-date
-){
+function formatPostTime(date){
 
 if(!date)return "";
 
-const d =
-new Date(date);
+const d=new Date(date);
 
 if(
-Number.isNaN(
-d.getTime()
-)
+Number.isNaN(d.getTime())
 ){
 
 return "";
 
 }
 
-const now =
-new Date();
+const now=new Date();
 
-const diff =
-Math.floor(
+const diff=Math.floor(
 (now-d)/1000
 );
 
@@ -5400,25 +5483,19 @@ return "just now";
 
 if(diff<3600){
 
-return Math.floor(    
-  diff/60    
-)+"m ago";
+return Math.floor(diff/60)+"m ago";
 
 }
 
 if(diff<86400){
 
-return Math.floor(    
-  diff/3600    
-)+"h ago";
+return Math.floor(diff/3600)+"h ago";
 
 }
 
 if(diff<604800){
 
-return Math.floor(    
-  diff/86400    
-)+"d ago";
+return Math.floor(diff/86400)+"d ago";
 
 }
 
@@ -5426,99 +5503,55 @@ return d.toLocaleDateString();
 
 }
 
-function escapeHtml(
-value
-){
+function escapeHtml(value){
 
-return String(
-value??""
-)
-.replace(
-/&/g,
-"&"
-)
-.replace(
-/</g,
-"<"
-)
-.replace(
-/>/g,
-">"
-)
-.replace(
-/"/g,
-"""
-)
-.replace(
-/'/g,
-"'"
-);
+return String(value??"")
+.replace(/&/g,"&amp;")
+.replace(/</g,"&lt;")
+.replace(/>/g,"&gt;")
+.replace(/"/g,"&quot;")
+.replace(/'/g,"&#039;");
 
 }
 
-function escapeJs(
-value
-){
+function escapeJs(value){
 
-return String(
-value??""
-)
-.replace(
-/\/g,
-"\\"
-)
-.replace(
-/'/g,
-"\'"
-)
-.replace(
-/"/g,
-'\"'
-)
-.replace(
-/\n/g,
-"\n"
-)
-.replace(
-/\r/g,
-"\r"
-);
+return String(value??"")
+.replace(/\\/g,"\\\\")
+.replace(/'/g,"\\'")
+.replace(/"/g,'\\"')
+.replace(/\n/g,"\\n")
+.replace(/\r/g,"\\r");
 
 }
 
 /* =====================================================
-CLOSE MODALS WHEN CLICKING BACKDROP
+CLOSE MODALS
 ===================================================== */
 
 document.addEventListener(
 "click",
 event=>{
 
-const premiumModal =    
-  document.getElementById(    
-    "premiumModal"    
-  );    
+const premiumModal =
+document.getElementById(
+"premiumModal"
+);
 
-const postModal =    
-  document.getElementById(    
-    "createPostModal"    
-  );    
+const postModal =
+document.getElementById(
+"createPostModal"
+);
 
-if(    
-  event.target===    
-  premiumModal    
-){    
+if(event.target===premiumModal){
 
-  closePremiumDetails();    
+closePremiumDetails();
 
-}    
+}
 
-if(    
-  event.target===    
-  postModal    
-){    
+if(event.target===postModal){
 
-  closeCreatePost();    
+closeCreatePost();
 
 }
 
@@ -5526,20 +5559,17 @@ if(
 );
 
 /* =====================================================
-ESC KEY
+ESC
 ===================================================== */
 
 document.addEventListener(
 "keydown",
 event=>{
 
-if(    
-  event.key==="Escape"    
-){    
+if(event.key==="Escape"){
 
-  closePremiumDetails();    
-
-  closeCreatePost();    
+closePremiumDetails();
+closeCreatePost();
 
 }
 
@@ -5547,11 +5577,12 @@ if(
 );
 
 /* =====================================================
-START APP
+START
 ===================================================== */
 
 startApp();
 
-</script>  </body>
+</script>
 
+</body>
 </html>

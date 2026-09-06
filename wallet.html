@@ -21,6 +21,7 @@ height:68px;background:#fff;border-bottom:1px solid #e2e8ea;
 display:flex;align-items:center;justify-content:space-between;
 padding:0 18px;position:sticky;top:0;z-index:100
 }
+
 .brand{display:flex;align-items:center;gap:10px}
 .brand-logo{
 width:42px;height:42px;border-radius:13px;
@@ -36,6 +37,7 @@ box-shadow:0 4px 12px rgba(0,0,0,.12);flex-shrink:0
 .security{color:#087f73;font-size:13px;font-weight:bold}
 
 .container{width:100%;max-width:850px;margin:auto;padding:18px}
+
 .balance-card{
 background:linear-gradient(135deg,#064e46,#10a889);color:#fff;
 border-radius:20px;padding:24px;position:relative;overflow:hidden;
@@ -91,7 +93,7 @@ border:none;background:#edf7f5;color:#087f73;padding:7px 10px;
 border-radius:8px;font-weight:bold
 }
 
-.card,.market-order,.offer-card,.trade-card,.message-card,.treasury-card{
+.card,.market-order,.offer-card,.trade-card,.message-card{
 background:#fff;border:1px solid #dfe7e9;border-radius:15px;overflow:hidden
 }
 .card{border-radius:17px;padding:18px}
@@ -119,12 +121,14 @@ outline:none;font-size:16px;min-width:0
 .modal-box input:focus,.modal-box select:focus,.modal-box textarea:focus{
 border-color:#087f73;box-shadow:0 0 0 3px rgba(8,127,115,.08)
 }
+
 .create-btn{
 width:100%;padding:14px;border:none;border-radius:10px;
 background:linear-gradient(135deg,#064e46,#10a889);
 color:#fff;font-size:16px;font-weight:bold
 }
 .create-btn.sell{background:linear-gradient(135deg,#a91f3d,#d72c50)}
+
 .fee-card{
 margin-top:14px;background:#f7fbfa;border:1px solid #d7ebe7;
 border-radius:13px;padding:14px
@@ -210,22 +214,6 @@ justify-content:center;align-items:center;font-weight:bold
 .positive{color:#159447}
 .negative{color:#d72c50}
 
-.treasury-card{padding:18px}
-.treasury-grid{
-display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px
-}
-.treasury-item{
-background:#f7fbfa;border:1px solid #d7ebe7;border-radius:12px;padding:13px
-}
-.treasury-label{font-size:12px;color:#71808a}
-.treasury-value{font-size:20px;font-weight:bold;color:#087f73;margin-top:6px}
-.treasury-note{font-size:11px;color:#89949b;margin-top:12px;line-height:1.4}
-.treasury-actions{display:flex;gap:8px;margin-top:12px}
-.treasury-actions button{
-flex:1;border:none;border-radius:9px;padding:10px;
-background:#edf7f5;color:#087f73;font-weight:bold
-}
-
 .empty{
 background:#fff;border:1px dashed #ccd8da;border-radius:15px;
 padding:30px 18px;text-align:center;color:#7b8790
@@ -256,6 +244,7 @@ background:#f7fbfa;border:1px solid #d7ebe7;border-radius:11px;
 padding:12px;margin-bottom:12px;font-size:12px;line-height:1.45;color:#596579
 }
 .address-info strong{color:#087f73}
+
 .blockchain-box{
 background:#f7fbfa;border:1px solid #d7ebe7;border-radius:12px;
 padding:12px;margin-bottom:12px;font-size:12px;line-height:1.5
@@ -303,7 +292,6 @@ font-size:13px;z-index:1000;display:none;max-width:90%;text-align:center
 .bottom-nav{height:70px}
 .section-title h2{font-size:17px}
 .view-btn,.refresh-btn{padding:6px 7px;font-size:11px}
-.treasury-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -331,73 +319,65 @@ font-size:13px;z-index:1000;display:none;max-width:90%;text-align:center
 </div>
 
 <div id="balanceDiamond" class="balance-diamond">0 💎</div>
-<div id="balanceUsdtMini" class="balance-usdt-mini">USDT: 0.00</div>
+
 <div class="available">Available for P2P trading</div>
+
 <div class="asset-note">
-💎 Diamonds and USDT are separate assets.
-Diamonds are not displayed or converted as USDT.
+💎 Diamonds are the P2P trading asset.
 </div>
 </section>
 
 <!-- =====================================================
-OWNER / ADMIN DIAMOND TREASURY
+OWNER / ADMIN TREASURY
 ===================================================== -->
 
-<section id="treasurySection" style="display:none;">
+<section
+id="ownerTreasurySection"
+class="card"
+style="display:none;margin-top:16px;">
 
-<div class="section-title">
+<div class="section-title" style="margin-top:0;">
 <h2>💎 Owner Treasury</h2>
-<div class="section-actions">
-<span id="treasuryRoleText"></span>
-<button type="button" class="refresh-btn" onclick="loadDiamondTreasury()">🔃 Refresh</button>
-</div>
+<span id="treasuryRoleLabel">Admin</span>
 </div>
 
-<div class="treasury-card">
+<div class="fee-card" style="margin-top:0;">
 
-<div class="treasury-grid">
-
-<div class="treasury-item">
-<div class="treasury-label">Treasury Supply</div>
-<div id="treasurySupply" class="treasury-value">0 💎</div>
+<div class="fee-row">
+<span>Treasury Supply</span>
+<strong id="treasurySupply">0 💎</strong>
 </div>
 
-<div class="treasury-item">
-<div class="treasury-label">Distributed</div>
-<div id="treasuryDistributed" class="treasury-value">0 💎</div>
+<div class="fee-row">
+<span>Distributed</span>
+<strong id="treasuryDistributed">0 💎</strong>
 </div>
 
-<div class="treasury-item">
-<div class="treasury-label">Remaining</div>
-<div id="treasuryRemaining" class="treasury-value">0 💎</div>
-</div>
-
-<div class="treasury-item">
-<div class="treasury-label">Your Diamonds</div>
-<div id="treasuryUserBalance" class="treasury-value">0 💎</div>
+<div class="fee-row fee-total">
+<span>Remaining</span>
+<strong id="treasuryRemaining">0 💎</strong>
 </div>
 
 </div>
 
-<div class="treasury-note">
-💎 Treasury is separate from USDT. Only accounts with the
-<strong>admin</strong> or <strong>owner</strong> role can view this section.
-</div>
+<button
+type="button"
+class="blockchain-refresh"
+onclick="loadDiamondTreasury()">
+🔄 Refresh Treasury
+</button>
 
-<div class="treasury-actions">
-<button type="button" onclick="openAdminDiamondModal()">💎 Add Diamonds</button>
-</div>
-
-</div>
 </section>
 
 <div class="quick-actions">
 <button type="button" onclick="openDeposit()">
-<span class="action-icon">＋</span>Deposit USDT
+<span class="action-icon">＋</span>Deposit
 </button>
+
 <button type="button" onclick="openWithdraw()">
-<span class="action-icon">↗</span>Withdraw USDT
+<span class="action-icon">↗</span>Withdraw
 </button>
+
 <button type="button" onclick="showHistory()">
 <span class="action-icon">◷</span>History
 </button>
@@ -441,28 +421,28 @@ Pending orders, closed orders and disputes will appear here.
 <div class="field">
 <label for="pair">Trading pair</label>
 <select id="pair" class="select-box" onchange="updateCurrency();updateFeePreview();">
-<option value="USDT_USD">USDT / USD</option>
-<option value="USDT_EUR">USDT / EUR</option>
-<option value="USDT_AED">USDT / AED</option>
-<option value="USDT_GBP">USDT / GBP</option>
-<option value="USDT_USDT">USDT / USDT</option>
-<option value="USDT_ETB">USDT / ETB</option>
-<option value="USDT_NGN">USDT / NGN</option>
-<option value="USDT_KES">USDT / KES</option>
-<option value="USDT_BRL">USDT / BRL</option>
-<option value="USDT_ARS">USDT / ARS</option>
-<option value="USDT_MXN">USDT / MXN</option>
-<option value="USDT_TRY">USDT / TRY</option>
-<option value="USDT_PHP">USDT / PHP</option>
-<option value="USDT_AUD">USDT / AUD</option>
-<option value="USDT_CAD">USDT / CAD</option>
-<option value="USDT_CHF">USDT / CHF</option>
-<option value="USDT_SGD">USDT / SGD</option>
-<option value="USDT_HKD">USDT / HKD</option>
-<option value="USDT_JPY">USDT / JPY</option>
-<option value="USDT_KRY">USDT / KRY</option>
-<option value="USDT_ZAR">USDT / ZAR</option>
-<option value="USDT_INR">USDT / INR</option>
+<option value="USDT_USD">USDT / 💎</option>
+<option value="USDT_EUR">USDT / 💎</option>
+<option value="USDT_AED">USDT / 💎</option>
+<option value="USDT_GBP">USDT / 💎</option>
+<option value="USDT_USDT">USDT / 💎</option>
+<option value="USDT_ETB">USDT / 💎</option>
+<option value="USDT_NGN">USDT / 💎</option>
+<option value="USDT_KES">USDT / 💎</option>
+<option value="USDT_BRL">USDT / 💎</option>
+<option value="USDT_ARS">USDT / 💎</option>
+<option value="USDT_MXN">USDT / 💎</option>
+<option value="USDT_TRY">USDT / 💎</option>
+<option value="USDT_PHP">USDT / 💎</option>
+<option value="USDT_AUD">USDT / 💎</option>
+<option value="USDT_CAD">USDT / 💎</option>
+<option value="USDT_CHF">USDT / 💎</option>
+<option value="USDT_SGD">USDT / 💎</option>
+<option value="USDT_HKD">USDT / 💎</option>
+<option value="USDT_JPY">USDT / 💎</option>
+<option value="USDT_KRY">USDT / 💎</option>
+<option value="USDT_ZAR">USDT / 💎</option>
+<option value="USDT_INR">USDT / 💎</option>
 </select>
 </div>
 
@@ -470,7 +450,7 @@ Pending orders, closed orders and disputes will appear here.
 <label for="orderAmount">Amount</label>
 <div class="input-box">
 <input id="orderAmount" type="number" min="0" step="0.000001" placeholder="0.00" inputmode="decimal" oninput="updateFeePreview()">
-<span id="amountCurrency" class="currency">USDT</span>
+<span id="amountCurrency" class="currency">💎</span>
 </div>
 </div>
 
@@ -478,7 +458,7 @@ Pending orders, closed orders and disputes will appear here.
 <label for="orderPrice">Price</label>
 <div class="input-box">
 <input id="orderPrice" type="number" min="0" step="0.000001" placeholder="0.00" inputmode="decimal" oninput="updateFeePreview()">
-<span id="priceCurrency" class="currency">USDT</span>
+<span id="priceCurrency" class="currency">💎</span>
 </div>
 </div>
 
@@ -497,13 +477,29 @@ Pending orders, closed orders and disputes will appear here.
 <strong>💸 Platform Fee</strong>
 <span class="fee-badge"><span id="feeRateText">1%</span></span>
 </div>
-<div class="fee-row"><span>Trade value</span><strong id="feeTradeValue">0.00 USDT</strong></div>
-<div class="fee-row"><span>Platform fee</span><strong id="feeAmount">0.00 USDT</strong></div>
-<div class="fee-row fee-total"><span>Total</span><strong id="feeTotal">0.00 USDT</strong></div>
-<div class="fee-note">Frontend preview only. The protected Supabase function is authoritative.</div>
+
+<div class="fee-row">
+<span>Trade value</span>
+<strong id="feeTradeValue">0.00 💎</strong>
+</div>
+
+<div class="fee-row">
+<span>Platform fee</span>
+<strong id="feeAmount">0.00 💎</strong>
+</div>
+
+<div class="fee-row fee-total">
+<span>Total</span>
+<strong id="feeTotal">0.00 💎</strong>
+</div>
+
+<div class="fee-note">
+Frontend preview only. The protected Supabase function is authoritative.
+</div>
 </div>
 
 <button type="button" id="createOrderButton" class="create-btn" onclick="createOrder()">Create Buy Order</button>
+
 </section>
 
 <div class="section-title">
@@ -550,13 +546,17 @@ Pending orders, closed orders and disputes will appear here.
 
 </main>
 
+<!-- =====================================================
+DEPOSIT MODAL
+===================================================== -->
+
 <div id="depositModal" class="modal" role="dialog" aria-modal="true">
 <div class="modal-box">
 
-<h3>➕ Deposit USDT</h3>
+<h3>➕ Deposit</h3>
 
 <div class="address-info">
-Send <strong>USDT</strong> only on <strong>TRON / TRC-20</strong>.
+Send funds only on <strong>TRON / TRC-20</strong>.
 Use the registered deposit address below.
 </div>
 
@@ -574,44 +574,83 @@ Use the registered deposit address below.
 <strong style="color:#087f73;">TRON (TRC-20)</strong>
 </div>
 
-<div id="depositBlockchainStatus" class="blockchain-status" style="text-align:center;margin-top:16px;">
+<div id="depositBlockchainStatus"
+class="blockchain-status"
+style="text-align:center;margin-top:16px;">
 Loading deposit address...
 </div>
 
-<div id="depositQr" style="display:flex;justify-content:center;align-items:center;min-height:220px;margin:14px 0;background:#fff;border-radius:12px;padding:15px;"></div>
+<div id="depositQr"
+style="
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:220px;
+margin:14px 0;
+background:#fff;
+border-radius:12px;
+padding:15px;
+">
+</div>
 
 <div style="font-size:12px;color:#71808a;margin-bottom:6px;">
 Deposit Address
 </div>
 
-<div id="depositBlockchainAddress" class="blockchain-address">—</div>
+<div id="depositBlockchainAddress" class="blockchain-address">
+—
+</div>
 
-<button type="button" class="blockchain-refresh" onclick="copyDepositAddress()">📋 Copy Address</button>
-<button type="button" class="blockchain-refresh" onclick="loadDepositAddress()">🔄 Refresh Address</button>
+<button
+type="button"
+class="blockchain-refresh"
+onclick="copyDepositAddress()">
+📋 Copy Address
+</button>
+
+<button
+type="button"
+class="blockchain-refresh"
+onclick="loadDepositAddress()">
+🔄 Refresh Address
+</button>
 
 </div>
 
 <div class="address-info" style="margin-top:12px;margin-bottom:0;">
 <strong>⚠️ Important</strong><br>
-Only send <strong>USDT</strong> on <strong>TRON (TRC-20)</strong> to this address.
+Only send the supported asset on
+<strong>TRON (TRC-20)</strong> to this address.
 Sending another token or using another network may result in loss of funds.
 </div>
 
 <div class="modal-actions" style="margin-top:14px;">
-<button type="button" class="close-btn" onclick="closeModal('depositModal')">Close</button>
+<button
+type="button"
+class="close-btn"
+onclick="closeModal('depositModal')">
+Close
+</button>
 </div>
 
 </div>
 </div>
+
+<!-- =====================================================
+WITHDRAW MODAL
+===================================================== -->
 
 <div id="withdrawModal" class="modal" role="dialog" aria-modal="true">
 <div class="modal-box">
-<h3>↗ Withdraw USDT</h3>
+<h3>↗ Withdraw</h3>
+
 <div class="address-info">
-Withdraw <strong>USDT</strong> using <strong>TRON / TRC-20</strong> only.
+Withdraw using <strong>TRON / TRC-20</strong> only.
 </div>
-<input id="withdrawAmount" type="number" min="0.000001" step="0.000001" placeholder="Amount in USDT">
+
+<input id="withdrawAmount" type="number" min="0.000001" step="0.000001" placeholder="Amount">
 <input id="withdrawAddress" maxlength="200" placeholder="TRC-20 withdrawal address">
+
 <div class="modal-actions">
 <button type="button" class="close-btn" onclick="closeModal('withdrawModal')">Cancel</button>
 <button type="button" class="confirm-btn" id="withdrawSubmitButton" onclick="submitWithdraw()">Request Withdraw</button>
@@ -619,16 +658,22 @@ Withdraw <strong>USDT</strong> using <strong>TRON / TRC-20</strong> only.
 </div>
 </div>
 
+<!-- =====================================================
+SEND DIAMONDS
+===================================================== -->
+
 <div id="sendModal" class="modal" role="dialog" aria-modal="true">
 <div class="modal-box">
 <h3>💎 Send Diamonds</h3>
+
 <div class="address-info">
 This transfers <strong>💎 Diamonds</strong> only.
-It does not transfer USDT.
 </div>
+
 <input id="sendRecipient" maxlength="150" placeholder="Recipient user ID / username">
 <input id="sendAmount" type="number" min="1" step="1" placeholder="Amount in 💎">
 <textarea id="sendNote" maxlength="300" placeholder="Optional message"></textarea>
+
 <div class="modal-actions">
 <button type="button" class="close-btn" onclick="closeModal('sendModal')">Cancel</button>
 <button type="button" class="confirm-btn" id="sendSubmitButton" onclick="submitSend()">Send 💎</button>
@@ -636,45 +681,49 @@ It does not transfer USDT.
 </div>
 </div>
 
-<div id="adminDiamondModal" class="modal" role="dialog" aria-modal="true">
-<div class="modal-box">
-<h3>💎 Add Diamonds</h3>
-
-<div class="address-info">
-Admin/Owner treasury action. Diamonds are separate from USDT.
-</div>
-
-<input id="adminDiamondRecipient" maxlength="150" placeholder="Recipient user ID / username">
-<input id="adminDiamondAmount" type="number" min="1" step="1" placeholder="Amount in 💎">
-
-<div class="modal-actions">
-<button type="button" class="close-btn" onclick="closeModal('adminDiamondModal')">Cancel</button>
-<button type="button" class="confirm-btn" id="adminDiamondSubmitButton" onclick="submitAdminDiamond()">Add 💎</button>
-</div>
-
-</div>
-</div>
+<!-- =====================================================
+TRADE MODAL
+===================================================== -->
 
 <div id="tradeModal" class="modal" role="dialog" aria-modal="true">
 <div class="modal-box">
 <h3>🤝 Create Trade</h3>
 <div id="tradeSummary"></div>
-<input id="tradeAmount" type="number" min="0" step="0.000001" placeholder="Trade amount" oninput="updateTradeFeePreview">
+
+<input id="tradeAmount" type="number" min="0" step="0.000001" placeholder="Trade amount" oninput="updateTradeFeePreview()">
+
 <div class="fee-card" style="margin-top:4px;margin-bottom:12px;">
 <div class="fee-title">
 <strong>💸 Platform Fee</strong>
 <span class="fee-badge"><span id="tradeFeeRateText">1%</span></span>
 </div>
-<div class="fee-row"><span>Trade value</span><strong id="tradeValuePreview">0.00 USDT</strong></div>
-<div class="fee-row"><span>Platform fee</span><strong id="tradeFeePreviewAmount">0.00 USDT</strong></div>
-<div class="fee-row fee-total"><span>Total</span><strong id="tradeTotalPreview">0.00 USDT</strong></div>
+
+<div class="fee-row">
+<span>Trade value</span>
+<strong id="tradeValuePreview">0.00 💎</strong>
 </div>
+
+<div class="fee-row">
+<span>Platform fee</span>
+<strong id="tradeFeePreviewAmount">0.00 💎</strong>
+</div>
+
+<div class="fee-row fee-total">
+<span>Total</span>
+<strong id="tradeTotalPreview">0.00 💎</strong>
+</div>
+</div>
+
 <div class="modal-actions">
 <button type="button" class="close-btn" onclick="closeModal('tradeModal')">Cancel</button>
 <button type="button" class="confirm-btn" id="tradeSubmitButton" onclick="submitTrade()">Create Trade</button>
 </div>
 </div>
 </div>
+
+<!-- =====================================================
+DISPUTE
+===================================================== -->
 
 <div id="disputeModal" class="modal" role="dialog" aria-modal="true">
 <div class="modal-box">
@@ -698,76 +747,191 @@ Admin/Owner treasury action. Diamonds are separate from USDT.
 </nav>
 
 <script>
-const SUPABASE_URL="https://mbsvuwrgigqfporxwpfr.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY="sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
-const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 
-const PLATFORM_FEE_RATE=.01;
-const TRON_NETWORK="TRON";
-const TRC20_STANDARD="TRC-20";
-const USDT_TOKEN="USDT";
+/* =====================================================
+SUPABASE
+===================================================== */
 
-const EDGE_FUNCTIONS={
+const SUPABASE_URL =
+"https://mbsvuwrgigqfporxwpfr.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+"sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
+
+const supabaseClient =
+window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_PUBLISHABLE_KEY
+);
+
+/* =====================================================
+CONFIG
+===================================================== */
+
+const PLATFORM_FEE_RATE = 0.01;
+
+const TRON_NETWORK = "TRON";
+const TRC20_STANDARD = "TRC-20";
+const USDT_TOKEN = "USDT";
+
+const EDGE_FUNCTIONS = {
 blockchainBalance:"get-blockchain-balance",
 createDepositAddress:"create-tron-deposit-address"
 };
 
-let currentSession=null,currentUser=null,currentProfile=null;
-let orderType="buy";
-let myOrders=[],availableOrders=[],myTrades=[],myTransactions=[];
-let selectedOffer=null,selectedTradeId=null;
-let realtimeChannel=null,toastTimer=null,isLoading=false;
-let balanceVisible=true,offersExpanded=false,tradesExpanded=false,transactionsExpanded=false,ordersExpanded=false;
-let blockchainBalance=0,blockchainAddress=null;
+/* =====================================================
+STATE
+===================================================== */
 
-document.addEventListener("DOMContentLoaded",startApp);
+let currentSession = null;
+let currentUser = null;
+let currentProfile = null;
+
+let orderType = "buy";
+
+let myOrders = [];
+let availableOrders = [];
+let myTrades = [];
+let myTransactions = [];
+
+let selectedOffer = null;
+let selectedTradeId = null;
+
+let realtimeChannel = null;
+let toastTimer = null;
+let isLoading = false;
+
+let balanceVisible = true;
+let offersExpanded = false;
+let tradesExpanded = false;
+let transactionsExpanded = false;
+let ordersExpanded = false;
+
+let blockchainBalance = 0;
+let blockchainAddress = null;
+
+/* =====================================================
+TREASURY STATE
+===================================================== */
+
+let diamondTreasury = null;
+
+/* =====================================================
+START
+===================================================== */
+
+document.addEventListener(
+"DOMContentLoaded",
+startApp
+);
 
 async function startApp(){
+
 try{
-const {data,error}=await supabaseClient.auth.getSession();
-if(error){console.error(error);showLogin();return}
-currentSession=data.session;
-if(!currentSession){showLogin();return}
-currentUser=currentSession.user;
+
+const {data,error} =
+await supabaseClient.auth.getSession();
+
+if(error){
+console.error("SESSION ERROR:",error);
+showLogin();
+return;
+}
+
+currentSession = data.session;
+
+if(!currentSession){
+showLogin();
+return;
+}
+
+currentUser = currentSession.user;
+
 updateFeeRateText();
 updateCurrency();
 updateFeePreview();
+
 await loadAll();
+
 setupRealtime();
+
 }catch(error){
+
 console.error("START ERROR:",error);
 toast(getErrorMessage(error),"error");
+
 }
+
 }
+
+/* =====================================================
+AUTH
+===================================================== */
 
 function showLogin(){
+
 alert("Please login first.");
 window.location.href="login.html";
+
 }
 
-supabaseClient.auth.onAuthStateChange(function(event,session){
+supabaseClient.auth.onAuthStateChange(
+function(event,session){
+
 currentSession=session;
 currentUser=session?.user||null;
+
 if(event==="SIGNED_OUT"){
+
 if(realtimeChannel){
-supabaseClient.removeChannel(realtimeChannel);
+supabaseClient.removeChannel(
+realtimeChannel
+);
 realtimeChannel=null;
 }
+
 window.location.href="login.html";
+
 }
-});
+
+}
+);
+
+/* =====================================================
+PROFILE
+===================================================== */
 
 async function loadProfile(){
+
 if(!currentUser)return;
-const {data,error}=await supabaseClient.from("profiles").select("*").eq("id",currentUser.id).maybeSingle();
-if(error)console.error("PROFILE ERROR:",error);
-currentProfile=data||{};
-updateBalance();
-updateTreasuryVisibility();
+
+const {data,error} =
+await supabaseClient
+.from("profiles")
+.select("*")
+.eq("id",currentUser.id)
+.maybeSingle();
+
+if(error){
+console.error("PROFILE ERROR:",error);
 }
 
+currentProfile=data||{};
+
+updateBalance();
+
+await loadDiamondTreasury();
+
+}
+
+/* =====================================================
+DATABASE USDT BALANCE
+===================================================== */
+
 function getProfileBalance(){
+
 if(!currentProfile)return 0;
+
 const values=[
 currentProfile.usdt_balance,
 currentProfile.available_usdt,
@@ -776,706 +940,1633 @@ currentProfile.wallet_balance,
 currentProfile.available_balance,
 currentProfile.total_balance
 ];
+
 for(const value of values){
+
 if(value!==null&&value!==undefined&&value!==""){
+
 const number=Number(value);
-if(Number.isFinite(number))return number;
-}
-}
-return 0;
+
+if(Number.isFinite(number))
+return number;
+
 }
 
+}
+
+return 0;
+
+}
+
+/* =====================================================
+DIAMOND BALANCE
+===================================================== */
+
 function getProfileDiamondBalance(){
+
 if(!currentProfile)return 0;
+
 const values=[
 currentProfile.diamond_balance,
 currentProfile.diamonds,
 currentProfile.gift_balance,
 currentProfile.gift_diamonds
 ];
+
 for(const value of values){
+
 if(value!==null&&value!==undefined&&value!==""){
+
 const number=Number(value);
-if(Number.isFinite(number))return number;
+
+if(Number.isFinite(number))
+return number;
+
 }
+
 }
+
 return 0;
+
 }
 
 /* =====================================================
-TREASURY
+OWNER / ADMIN TREASURY
 ===================================================== */
 
-function isAdminOrOwner(){
-const role=String(currentProfile?.role||"").toLowerCase().trim();
+function isTreasuryAdmin(){
+
+const role=
+String(
+currentProfile?.role||
+""
+).toLowerCase().trim();
+
 return role==="admin"||role==="owner";
+
 }
 
-function updateTreasuryVisibility(){
-const section=document.getElementById("treasurySection");
-const roleText=document.getElementById("treasuryRoleText");
+function getTreasuryNumber(
+row,
+keys
+){
 
-if(!section)return;
+if(!row)return null;
 
-if(isAdminOrOwner()){
-section.style.display="";
-if(roleText)roleText.textContent=String(currentProfile.role||"").toUpperCase();
-loadDiamondTreasury();
-}else{
-section.style.display="none";
-}
+for(const key of keys){
+
+if(
+row[key]!==null &&
+row[key]!==undefined &&
+row[key]!==""
+){
+
+const number=
+Number(row[key]);
+
+if(Number.isFinite(number))
+return number;
+
 }
 
-function treasuryNumber(row,names){
-if(!row)return 0;
-for(const name of names){
-if(row[name]!==null&&row[name]!==undefined&&row[name]!==""){
-const n=Number(row[name]);
-if(Number.isFinite(n))return n;
 }
-}
-return 0;
+
+return null;
+
 }
 
 async function loadDiamondTreasury(){
-if(!currentUser||!isAdminOrOwner())return;
 
-const supply=document.getElementById("treasurySupply");
-const distributed=document.getElementById("treasuryDistributed");
-const remaining=document.getElementById("treasuryRemaining");
-const userBalance=document.getElementById("treasuryUserBalance");
+const section=
+document.getElementById(
+"ownerTreasurySection"
+);
 
-if(supply)supply.textContent="Loading...";
-if(distributed)distributed.textContent="Loading...";
-if(remaining)remaining.textContent="Loading...";
-if(userBalance)userBalance.textContent=moneyNoDecimals(getProfileDiamondBalance())+" 💎";
+if(!section)
+return;
+
+if(!currentUser||!isTreasuryAdmin()){
+
+section.style.display="none";
+diamondTreasury=null;
+return;
+
+}
+
+section.style.display="block";
+
+const roleLabel=
+document.getElementById(
+"treasuryRoleLabel"
+);
+
+if(roleLabel){
+
+roleLabel.textContent=
+String(
+currentProfile?.role||
+"admin"
+).toLowerCase()==="owner"
+?"Owner"
+:"Admin";
+
+}
 
 try{
-const {data,error}=await supabaseClient.from("diamond_treasury").select("*").limit(1).maybeSingle();
-if(error)throw error;
 
-const row=data||{};
+const {data,error}=
+await supabaseClient
+.from("diamond_treasury")
+.select("*")
+.limit(1)
+.maybeSingle();
 
-const total=treasuryNumber(row,[
+if(error)
+throw error;
+
+diamondTreasury=data||null;
+
+const supply=
+getTreasuryNumber(
+diamondTreasury,
+[
 "total_diamonds",
 "total_supply",
 "treasury_supply",
-"supply",
-"diamonds",
-"balance",
-"amount"
-]);
+"diamond_supply",
+"supply"
+]
+);
 
-const used=treasuryNumber(row,[
+const distributed=
+getTreasuryNumber(
+diamondTreasury,
+[
 "distributed_diamonds",
 "distributed",
-"used_diamonds",
 "sent_diamonds",
-"spent_diamonds"
-]);
+"used_diamonds"
+]
+);
 
-let remainingValue=treasuryNumber(row,[
+let remaining=
+getTreasuryNumber(
+diamondTreasury,
+[
 "remaining_diamonds",
 "remaining",
 "available_diamonds",
-"available_supply"
-]);
+"current_balance"
+]
+);
 
-if(!remainingValue&&total>=used)remainingValue=total-used;
+if(
+remaining===null &&
+supply!==null &&
+distributed!==null
+){
 
-if(supply)supply.textContent=moneyNoDecimals(total)+" 💎";
-if(distributed)distributed.textContent=moneyNoDecimals(used)+" 💎";
-if(remaining)remaining.textContent=moneyNoDecimals(remainingValue)+" 💎";
-if(userBalance)userBalance.textContent=moneyNoDecimals(getProfileDiamondBalance())+" 💎";
+remaining=
+Math.max(
+0,
+supply-distributed
+);
+
+}
+
+const supplyElement=
+document.getElementById(
+"treasurySupply"
+);
+
+const distributedElement=
+document.getElementById(
+"treasuryDistributed"
+);
+
+const remainingElement=
+document.getElementById(
+"treasuryRemaining"
+);
+
+if(supplyElement){
+
+supplyElement.textContent=
+supply===null
+?"—"
+:moneyNoDecimals(supply)+" 💎";
+
+}
+
+if(distributedElement){
+
+distributedElement.textContent=
+distributed===null
+?"—"
+:moneyNoDecimals(distributed)+" 💎";
+
+}
+
+if(remainingElement){
+
+remainingElement.textContent=
+remaining===null
+?"—"
+:moneyNoDecimals(remaining)+" 💎";
+
+}
 
 }catch(error){
-console.error("TREASURY ERROR:",error);
-if(supply)supply.textContent="0 💎";
-if(distributed)distributed.textContent="0 💎";
-if(remaining)remaining.textContent="0 💎";
-toast(getErrorMessage(error),"error");
-}
-}
 
-function openAdminDiamondModal(){
-if(!isAdminOrOwner()){
-toast("Admin or Owner access required.","error");
-return;
-}
-document.getElementById("adminDiamondModal")?.classList.add("show");
-}
+console.error(
+"TREASURY ERROR:",
+error
+);
 
-async function submitAdminDiamond(){
-if(!currentUser||!isAdminOrOwner()){
-toast("Admin or Owner access required.","error");
-return;
-}
+diamondTreasury=null;
 
-const recipient=String(document.getElementById("adminDiamondRecipient")?.value||"").trim();
-const amount=Number(document.getElementById("adminDiamondAmount")?.value);
-const button=document.getElementById("adminDiamondSubmitButton");
+const supplyElement=
+document.getElementById(
+"treasurySupply"
+);
 
-if(!recipient){
-toast("Enter recipient.","warning");
-return;
-}
+const distributedElement=
+document.getElementById(
+"treasuryDistributed"
+);
 
-if(!Number.isInteger(amount)||amount<=0){
-toast("Enter a whole diamond amount.","warning");
-return;
+const remainingElement=
+document.getElementById(
+"treasuryRemaining"
+);
+
+if(supplyElement)
+supplyElement.textContent="—";
+
+if(distributedElement)
+distributedElement.textContent="—";
+
+if(remainingElement)
+remainingElement.textContent="—";
+
 }
 
-button.disabled=true;
-button.textContent="Adding...";
-
-try{
-const {error}=await supabaseClient.rpc("admin_add_diamond",{
-p_recipient:recipient,
-p_amount:amount
-});
-
-if(error)throw error;
-
-document.getElementById("adminDiamondRecipient").value="";
-document.getElementById("adminDiamondAmount").value="";
-closeModal("adminDiamondModal");
-
-toast("Diamonds added successfully.","success");
-await loadAll();
-await loadDiamondTreasury();
-
-}catch(error){
-toast(getErrorMessage(error),"error");
-}finally{
-button.disabled=false;
-button.textContent="Add 💎";
-}
 }
 
 /* =====================================================
-BLOCKCHAIN
+REAL BLOCKCHAIN BALANCE
 ===================================================== */
 
 async function loadBlockchainBalance(){
+
 if(!currentUser)return;
+
 try{
-const {data,error}=await supabaseClient.functions.invoke(
+
+const {data,error} =
+await supabaseClient.functions.invoke(
 EDGE_FUNCTIONS.blockchainBalance,
-{body:{network:TRON_NETWORK,token:USDT_TOKEN,standard:TRC20_STANDARD}}
+{
+body:{
+network:TRON_NETWORK,
+token:USDT_TOKEN,
+standard:TRC20_STANDARD
+}
+}
 );
-if(error)throw error;
 
-const value=data?.balance??data?.usdt_balance??data?.amount??data?.result?.balance??0;
+if(error){
+throw error;
+}
+
+const value =
+data?.balance ??
+data?.usdt_balance ??
+data?.amount ??
+data?.result?.balance ??
+0;
+
 const number=Number(value);
-blockchainBalance=Number.isFinite(number)&&number>=0?number:0;
 
-const element=document.getElementById("blockchainBalanceValue");
-if(element)element.textContent=money(blockchainBalance)+" USDT";
+blockchainBalance =
+Number.isFinite(number) && number>=0
+? number
+: 0;
+
+const blockchainElement =
+document.getElementById(
+"blockchainBalanceValue"
+);
+
+if(blockchainElement){
+blockchainElement.textContent =
+money(blockchainBalance)+" USDT";
+}
+
 }catch(error){
-console.error("BLOCKCHAIN BALANCE ERROR:",error);
+
+console.error(
+"BLOCKCHAIN BALANCE ERROR:",
+error
+);
+
 }
+
 }
+
+/* =====================================================
+REAL TRON DEPOSIT ADDRESS
+===================================================== */
 
 async function loadDepositAddress(){
-if(!currentUser){showLogin();return}
 
-const status=document.getElementById("depositBlockchainStatus");
-const addressElement=document.getElementById("depositBlockchainAddress");
-const qrElement=document.getElementById("depositQr");
+if(!currentUser){
+showLogin();
+return;
+}
 
-if(status)status.textContent="Loading TRON / TRC-20 address...";
-if(addressElement)addressElement.textContent="—";
-if(qrElement)qrElement.innerHTML="";
+const status =
+document.getElementById(
+"depositBlockchainStatus"
+);
+
+const addressElement =
+document.getElementById(
+"depositBlockchainAddress"
+);
+
+const qrElement =
+document.getElementById(
+"depositQr"
+);
+
+if(status)
+status.textContent=
+"Loading TRON / TRC-20 address...";
+
+if(addressElement)
+addressElement.textContent="—";
+
+if(qrElement)
+qrElement.innerHTML="";
 
 try{
-const {data,error}=await supabaseClient.functions.invoke(
-EDGE_FUNCTIONS.createDepositAddress,
-{body:{network:TRON_NETWORK,token:USDT_TOKEN,standard:TRC20_STANDARD}}
-);
-if(error)throw error;
 
-const address=data?.address??data?.deposit_address??data?.wallet_address??data?.result?.address??null;
-if(!address)throw new Error("Deposit address was not returned.");
-if(!/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(address))throw new Error("Invalid TRON deposit address returned.");
+const {data,error} =
+await supabaseClient.functions.invoke(
+EDGE_FUNCTIONS.createDepositAddress,
+{
+body:{
+network:TRON_NETWORK,
+token:USDT_TOKEN,
+standard:TRC20_STANDARD
+}
+}
+);
+
+if(error)
+throw error;
+
+const address =
+data?.address ??
+data?.deposit_address ??
+data?.wallet_address ??
+data?.result?.address ??
+null;
+
+if(!address){
+
+throw new Error(
+"Deposit address was not returned."
+);
+
+}
+
+if(
+!/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(address)
+){
+
+throw new Error(
+"Invalid TRON deposit address returned."
+);
+
+}
 
 blockchainAddress=address;
-if(addressElement)addressElement.textContent=address;
+
+if(addressElement)
+addressElement.textContent=address;
 
 if(qrElement){
+
 if(typeof QRCode==="undefined"){
-qrElement.innerHTML='<div style="text-align:center;color:#b4233f;font-size:12px;">QR code library could not load.</div>';
+
+qrElement.innerHTML=`
+<div style="
+text-align:center;
+color:#b4233f;
+font-size:12px;
+">
+QR code library could not load.
+</div>
+`;
+
 }else{
-new QRCode(qrElement,{text:address,width:190,height:190,correctLevel:QRCode.CorrectLevel.M});
-}
+
+new QRCode(qrElement,{
+text:address,
+width:190,
+height:190,
+correctLevel:QRCode.CorrectLevel.M
+});
+
 }
 
-if(status)status.textContent="TRON / TRC-20 deposit address ready.";
+}
+
+if(status){
+
+status.textContent=
+"TRON / TRC-20 deposit address ready.";
+
+}
+
 }catch(error){
-console.error("DEPOSIT ADDRESS ERROR:",error);
-if(status)status.textContent="Could not load deposit address.";
-if(addressElement)addressElement.textContent="—";
-if(qrElement)qrElement.innerHTML="";
-toast(getErrorMessage(error),"error");
+
+console.error(
+"DEPOSIT ADDRESS ERROR:",
+error
+);
+
+if(status)
+status.textContent=
+"Could not load deposit address.";
+
+if(addressElement)
+addressElement.textContent="—";
+
+if(qrElement)
+qrElement.innerHTML="";
+
+toast(
+getErrorMessage(error),
+"error"
+);
+
 }
+
 }
+
+/* =====================================================
+COPY DEPOSIT ADDRESS
+===================================================== */
 
 async function copyDepositAddress(){
-const address=blockchainAddress||document.getElementById("depositBlockchainAddress")?.textContent?.trim();
-if(!address||address==="—"){toast("Deposit address is not ready.","warning");return}
+
+const address =
+blockchainAddress ||
+document.getElementById(
+"depositBlockchainAddress"
+)?.textContent?.trim();
+
+if(!address || address==="—"){
+
+toast(
+"Deposit address is not ready.",
+"warning"
+);
+
+return;
+
+}
 
 try{
-await navigator.clipboard.writeText(address);
-toast("TRON deposit address copied.","success");
+
+await navigator.clipboard.writeText(
+address
+);
+
+toast(
+"TRON deposit address copied.",
+"success"
+);
+
 }catch(error){
-const textarea=document.createElement("textarea");
+
+console.error(
+"COPY ADDRESS ERROR:",
+error
+);
+
+const textarea=
+document.createElement("textarea");
+
 textarea.value=address;
 textarea.style.position="fixed";
 textarea.style.opacity="0";
-document.body.appendChild(textarea);
+
+document.body.appendChild(
+textarea
+);
+
 textarea.focus();
 textarea.select();
+
 try{
+
 document.execCommand("copy");
-toast("TRON deposit address copied.","success");
+
+toast(
+"TRON deposit address copied.",
+"success"
+);
+
 }catch(copyError){
-toast("Could not copy address.","error");
+
+toast(
+"Could not copy address.",
+"error"
+);
+
 }
-document.body.removeChild(textarea);
+
+document.body.removeChild(
+textarea
+);
+
 }
+
 }
+
+/* =====================================================
+BLOCKCHAIN BALANCE DISPLAY
+===================================================== */
 
 function updateBlockchainBalanceDisplay(){
-let box=document.getElementById("blockchainBalanceBox");
+
+let box =
+document.getElementById(
+"blockchainBalanceBox"
+);
 
 if(!box){
-const balanceCard=document.querySelector(".balance-card");
+
+const balanceCard =
+document.querySelector(
+".balance-card"
+);
+
 if(balanceCard){
+
 box=document.createElement("div");
 box.id="blockchainBalanceBox";
 box.className="blockchain-box";
 box.style.marginTop="12px";
 box.innerHTML=`
-<strong>🌐 TRON / TRC-20 USDT</strong>
+<strong>🌐 TRON / TRC-20</strong>
 <div class="blockchain-status">
 Blockchain balance:
-<span id="blockchainBalanceValue">0.00 USDT</span>
+<span id="blockchainBalanceValue">0.00</span>
 </div>
-<button type="button" class="blockchain-refresh" onclick="refreshBlockchainBalance()">
+<button type="button"
+class="blockchain-refresh"
+onclick="refreshBlockchainBalance()">
 🔄 Check Blockchain Balance
-</button>`;
+</button>
+`;
+
 balanceCard.appendChild(box);
-}
-}
 
-const valueElement=document.getElementById("blockchainBalanceValue");
-if(valueElement)valueElement.textContent=money(blockchainBalance)+" USDT";
 }
 
-async function refreshBlockchainBalance(){
-if(!currentUser){showLogin();return}
-toast("Checking TRON blockchain...","warning");
-await loadBlockchainBalance();
-updateBlockchainBalanceDisplay();
-toast("Blockchain balance updated.","success");
 }
 
-function updateBalance(){
-const usdt=getProfileBalance();
-const diamonds=getProfileDiamondBalance();
+const valueElement =
+document.getElementById(
+"blockchainBalanceValue"
+);
 
-const diamondElement=document.getElementById("balanceDiamond");
-const usdtElement=document.getElementById("balanceUsdtMini");
-
-if(diamondElement)
-diamondElement.textContent=balanceVisible?moneyNoDecimals(diamonds)+" 💎":"•••••• 💎";
-
-if(usdtElement)
-usdtElement.textContent=balanceVisible?"USDT: "+money(usdt):"USDT: ••••••";
-
-const treasuryUserBalance=document.getElementById("treasuryUserBalance");
-if(treasuryUserBalance)
-treasuryUserBalance.textContent=moneyNoDecimals(diamonds)+" 💎";
-
-updateBlockchainBalanceDisplay();
+if(valueElement){
+valueElement.textContent=
+money(blockchainBalance);
 }
 
-function toggleBalance(){
-balanceVisible=!balanceVisible;
-const button=document.getElementById("balanceToggle");
-if(button)button.textContent=balanceVisible?"👁️ Hide":"🙈 Show";
-updateBalance();
 }
 
 /* =====================================================
-LOAD
+REFRESH BLOCKCHAIN BALANCE
+===================================================== */
+
+async function refreshBlockchainBalance(){
+
+if(!currentUser){
+showLogin();
+return;
+}
+
+toast(
+"Checking TRON blockchain...",
+"warning"
+);
+
+await loadBlockchainBalance();
+
+updateBlockchainBalanceDisplay();
+
+toast(
+"Blockchain balance updated.",
+"success"
+);
+
+}
+
+/* =====================================================
+BALANCE DISPLAY
+===================================================== */
+
+function updateBalance(){
+
+const diamonds=getProfileDiamondBalance();
+
+const diamondElement =
+document.getElementById("balanceDiamond");
+
+if(diamondElement){
+
+diamondElement.textContent =
+balanceVisible
+?moneyNoDecimals(diamonds)+" 💎"
+:"•••••• 💎";
+
+}
+
+updateBlockchainBalanceDisplay();
+
+}
+
+/* =====================================================
+TOGGLE
+===================================================== */
+
+function toggleBalance(){
+
+balanceVisible=!balanceVisible;
+
+const button =
+document.getElementById(
+"balanceToggle"
+);
+
+if(button){
+
+button.textContent =
+balanceVisible
+?"👁️ Hide"
+:"🙈 Show";
+
+}
+
+updateBalance();
+
+}
+
+/* =====================================================
+LOAD ALL
 ===================================================== */
 
 async function loadAll(){
-if(!currentUser){showLogin();return}
+
+if(!currentUser){
+showLogin();
+return;
+}
+
 if(isLoading)return;
+
 isLoading=true;
 
 try{
+
 await loadProfile();
+
 await Promise.allSettled([
 loadMyOrders(),
 loadAvailableOffers(),
 loadTrades(),
 loadTransactions()
 ]);
+
 await loadMessages();
+
 await loadBlockchainBalance();
+
 updateBlockchainBalanceDisplay();
 
-if(isAdminOrOwner())await loadDiamondTreasury();
+await loadDiamondTreasury();
+
+}catch(error){
+
+console.error(
+"LOAD ALL ERROR:",
+error
+);
 
 }finally{
+
 isLoading=false;
+
 }
+
 }
 
 /* =====================================================
-ORDERS
+ORDER TYPE
 ===================================================== */
 
 function setOrderType(type){
-orderType=type==="sell"?"sell":"buy";
 
-const buy=document.getElementById("buyOrderTab");
-const sell=document.getElementById("sellOrderTab");
-const button=document.getElementById("createOrderButton");
+orderType=
+type==="sell"
+?"sell"
+:"buy";
+
+const buy=
+document.getElementById(
+"buyOrderTab"
+);
+
+const sell=
+document.getElementById(
+"sellOrderTab"
+);
+
+const button=
+document.getElementById(
+"createOrderButton"
+);
 
 if(!buy||!sell||!button)return;
 
-buy.classList.remove("active","buy");
-sell.classList.remove("active","sell");
+buy.classList.remove(
+"active",
+"buy"
+);
+
+sell.classList.remove(
+"active",
+"sell"
+);
 
 if(orderType==="buy"){
-buy.classList.add("active","buy");
+
+buy.classList.add(
+"active",
+"buy"
+);
+
 button.classList.remove("sell");
-button.textContent="Create Buy Order";
+button.textContent=
+"Create Buy Order";
+
 }else{
-sell.classList.add("active","sell");
+
+sell.classList.add(
+"active",
+"sell"
+);
+
 button.classList.add("sell");
-button.textContent="Create Sell Order";
-}
-updateFeePreview();
+button.textContent=
+"Create Sell Order";
+
 }
 
+updateFeePreview();
+
+}
+
+/* =====================================================
+PAIR
+===================================================== */
+
 function getPairParts(pair){
-const parts=String(pair||"").split("_");
-return{base:parts[0]||"",quote:parts[1]||""};
+
+const parts=
+String(pair||"").split("_");
+
+return{
+base:parts[0]||"",
+quote:parts[1]||""
+};
+
 }
 
 function updateCurrency(){
-const pair=document.getElementById("pair");
-const amount=document.getElementById("amountCurrency");
-const price=document.getElementById("priceCurrency");
+
+const pair=
+document.getElementById("pair");
+
+const amount=
+document.getElementById(
+"amountCurrency"
+);
+
+const price=
+document.getElementById(
+"priceCurrency"
+);
+
 if(!pair||!amount||!price)return;
-const parts=getPairParts(pair.value);
-amount.textContent=parts.base||"USDT";
-price.textContent=parts.quote||"USDT";
+
+amount.textContent="💎";
+price.textContent="💎";
+
 }
 
+/* =====================================================
+FEE
+===================================================== */
+
 function calculatePlatformFee(value){
-const number=Number(value)||0;
-return number>0?number*PLATFORM_FEE_RATE:0;
+
+const number=
+Number(value)||0;
+
+return number>0
+?number*PLATFORM_FEE_RATE
+:0;
+
 }
 
 function calculateTotalWithFee(value){
-const number=Number(value)||0;
-return number+calculatePlatformFee(number);
+
+const number=
+Number(value)||0;
+
+return number+
+calculatePlatformFee(number);
+
 }
 
 function updateFeeRateText(){
-const text=(PLATFORM_FEE_RATE*100)+"%";
-["feeRateText","tradeFeeRateText"].forEach(id=>{
-const element=document.getElementById(id);
-if(element)element.textContent=text;
+
+const text=
+(PLATFORM_FEE_RATE*100)+"%";
+
+[
+"feeRateText",
+"tradeFeeRateText"
+].forEach(id=>{
+
+const element=
+document.getElementById(id);
+
+if(element)
+element.textContent=text;
+
 });
+
 }
+
+/* =====================================================
+PAIR VALUE
+===================================================== */
 
 function calculatePairValue(amount,price){
-const a=Number(amount)||0,p=Number(price)||0;
+
+const a=Number(amount)||0;
+const p=Number(price)||0;
+
 if(a<=0||p<=0)return 0;
+
 return a*p;
+
 }
 
+/* =====================================================
+ORDER FEE PREVIEW
+===================================================== */
+
 function getOrderTradeValue(){
-const amount=Number(document.getElementById("orderAmount")?.value)||0;
-const price=Number(document.getElementById("orderPrice")?.value)||0;
-return calculatePairValue(amount,price);
+
+const amount=
+Number(
+document.getElementById(
+"orderAmount"
+)?.value
+)||0;
+
+const price=
+Number(
+document.getElementById(
+"orderPrice"
+)?.value
+)||0;
+
+return calculatePairValue(
+amount,
+price
+);
+
 }
 
 function getOrderValueCurrency(){
-return getPairParts(document.getElementById("pair")?.value).quote||"USDT";
+
+return "💎";
+
 }
 
 function updateFeePreview(){
-const value=getOrderTradeValue();
-const fee=calculatePlatformFee(value);
-const total=calculateTotalWithFee(value);
-const currency=getOrderValueCurrency();
 
-const tradeValue=document.getElementById("feeTradeValue");
-const feeAmount=document.getElementById("feeAmount");
-const feeTotal=document.getElementById("feeTotal");
+const value=
+getOrderTradeValue();
 
-if(tradeValue)tradeValue.textContent=money(value)+" "+currency;
-if(feeAmount)feeAmount.textContent=money(fee)+" "+currency;
-if(feeTotal)feeTotal.textContent=money(total)+" "+currency;
+const fee=
+calculatePlatformFee(value);
+
+const total=
+calculateTotalWithFee(value);
+
+const tradeValue=
+document.getElementById(
+"feeTradeValue"
+);
+
+const feeAmount=
+document.getElementById(
+"feeAmount"
+);
+
+const feeTotal=
+document.getElementById(
+"feeTotal"
+);
+
+if(tradeValue)
+tradeValue.textContent=
+money(value)+" 💎";
+
+if(feeAmount)
+feeAmount.textContent=
+money(fee)+" 💎";
+
+if(feeTotal)
+feeTotal.textContent=
+money(total)+" 💎";
+
 }
 
+/* =====================================================
+CREATE ORDER
+===================================================== */
+
 async function createOrder(){
-if(!currentUser){showLogin();return}
 
-const pair=document.getElementById("pair").value;
-const amount=Number(document.getElementById("orderAmount").value);
-const price=Number(document.getElementById("orderPrice").value);
-const payment=document.getElementById("paymentMethod").value;
+if(!currentUser){
+showLogin();
+return;
+}
 
-if(!Number.isFinite(amount)||amount<=0){toast("Enter a valid amount.","warning");return}
-if(!Number.isFinite(price)||price<=0){toast("Enter a valid price.","warning");return}
-if(!payment){toast("Select a payment method.","warning");return}
+const pair=
+document.getElementById(
+"pair"
+).value;
 
-const button=document.getElementById("createOrderButton");
+const amount=
+Number(
+document.getElementById(
+"orderAmount"
+).value
+);
+
+const price=
+Number(
+document.getElementById(
+"orderPrice"
+).value
+);
+
+const payment=
+document.getElementById(
+"paymentMethod"
+).value;
+
+if(!Number.isFinite(amount)||amount<=0){
+toast("Enter a valid amount.","warning");
+return;
+}
+
+if(!Number.isFinite(price)||price<=0){
+toast("Enter a valid price.","warning");
+return;
+}
+
+if(!payment){
+toast("Select a payment method.","warning");
+return;
+}
+
+const button=
+document.getElementById(
+"createOrderButton"
+);
+
 button.disabled=true;
 button.textContent="Creating...";
 
 try{
-const {error}=await supabaseClient.rpc("create_p2p_order",{
+
+const {error}=
+await supabaseClient.rpc(
+"create_p2p_order",
+{
 p_order_type:orderType,
 p_pair:pair,
 p_amount:amount,
 p_price:price,
 p_payment_method:payment
-});
-if(error)throw error;
+}
+);
 
-document.getElementById("orderAmount").value="";
-document.getElementById("orderPrice").value="";
-document.getElementById("paymentMethod").value="";
+if(error){
+toast(getErrorMessage(error),"error");
+return;
+}
+
+document.getElementById(
+"orderAmount"
+).value="";
+
+document.getElementById(
+"orderPrice"
+).value="";
+
+document.getElementById(
+"paymentMethod"
+).value="";
+
 updateFeePreview();
 
-toast("Order created successfully.","success");
+toast(
+"Order created successfully.",
+"success"
+);
+
 await loadAll();
 
 }catch(error){
-toast(getErrorMessage(error),"error");
+
+toast(
+getErrorMessage(error),
+"error"
+);
+
 }finally{
+
 button.disabled=false;
 setOrderType(orderType);
+
 }
+
 }
+
+/* =====================================================
+MY ORDERS
+===================================================== */
 
 async function loadMyOrders(){
-const container=document.getElementById("myOrders");
+
+const container=
+document.getElementById(
+"myOrders"
+);
+
 if(!container)return;
 
-container.innerHTML='<div class="empty">Loading orders...</div>';
+container.innerHTML=
+'<div class="empty">Loading orders...</div>';
 
-const {data,error}=await supabaseClient
+const {data,error}=
+await supabaseClient
 .from("p2p_orders")
 .select("*")
-.eq("user_id",currentUser.id)
-.order("created_at",{ascending:false});
+.eq(
+"user_id",
+currentUser.id
+)
+.order(
+"created_at",
+{ascending:false}
+);
 
 if(error){
-container.innerHTML=emptyHtml("📋","Could not load orders.",getErrorMessage(error));
+
+container.innerHTML=
+emptyHtml(
+"📋",
+"Could not load orders.",
+getErrorMessage(error)
+);
+
 return;
+
 }
 
 myOrders=data||[];
 
-const count=document.getElementById("orderCount");
-if(count)count.textContent=myOrders.length;
+const count=
+document.getElementById(
+"orderCount"
+);
+
+if(count)
+count.textContent=
+myOrders.length;
 
 renderMyOrders();
+
 }
 
 function renderMyOrders(){
-const container=document.getElementById("myOrders");
+
+const container=
+document.getElementById(
+"myOrders"
+);
+
 if(!container)return;
 
 if(!myOrders.length){
-container.innerHTML=emptyHtml("📋","You have no orders yet.");
+
+container.innerHTML=
+emptyHtml(
+"📋",
+"You have no orders yet."
+);
+
 return;
+
 }
 
 container.innerHTML="";
 
-const items=ordersExpanded?myOrders:myOrders.slice(0,3);
+const items=
+ordersExpanded
+?myOrders
+:myOrders.slice(0,3);
 
 items.forEach(order=>{
-const type=String(order.order_type||order.type||"buy").toLowerCase();
-const safeType=type==="sell"?"sell":"buy";
-const status=normalizeStatus(order.status);
-const canCancel=["active","open","pending"].includes(status);
 
-const card=document.createElement("div");
-card.className="market-order";
+const type=
+String(
+order.order_type||
+order.type||
+"buy"
+).toLowerCase();
+
+const safeType=
+type==="sell"
+?"sell"
+:"buy";
+
+const status=
+normalizeStatus(
+order.status
+);
+
+const canCancel=
+[
+"active",
+"open",
+"pending"
+].includes(status);
+
+const card=
+document.createElement("div");
+
+card.className=
+"market-order";
 
 card.innerHTML=`
+
 <div class="order-main">
+
 <div class="row">
+
 <div>
-<div class="order-title">${escapeHtml(safeType.toUpperCase())}</div>
-<div class="order-pair">${escapeHtml(formatPair(order))}</div>
-</div>
-<span class="type ${safeType==="buy"?"buy-type":"sell-type"}">
-${safeType==="buy"?"🟢 BUY":"🔴 SELL"}
-</span>
+
+<div class="order-title">
+${escapeHtml(
+safeType.toUpperCase()
+)}
 </div>
 
-<div class="details" style="margin:12px -16px -16px;">
-${detail("Amount",formatAmount(order))}
-${detail("Price",money(order.price)+" "+getPairParts(order.pair||order.trading_pair).quote)}
-${detail("Payment",order.payment_method||order.payment||"—")}
-${order.platform_fee!=null?detail("Platform fee",money(order.platform_fee)):""}
-${detail("Status",`<span class="status ${statusClass(status)}">${escapeHtml(status)}</span>`)}
-${canCancel?`
-<button type="button" class="cancel-btn" style="width:100%;margin-top:8px;padding:10px;border-radius:9px;" onclick="cancelOrder('${escapeJs(order.id)}')">
-❌ Cancel Order
-</button>`:""}
+<div class="order-pair">
+${escapeHtml(
+formatPair(order)
+)}
 </div>
-</div>`;
+
+</div>
+
+<span class="type ${
+safeType==="buy"
+?"buy-type"
+:"sell-type"
+}">
+
+${
+safeType==="buy"
+?"🟢 BUY"
+:"🔴 SELL"
+}
+
+</span>
+
+</div>
+
+<div
+class="details"
+style="margin:12px -16px -16px;">
+
+${detail(
+"Amount",
+formatAmount(order)
+)}
+
+${detail(
+"Price",
+money(order.price)+" 💎"
+)}
+
+${detail(
+"Payment",
+order.payment_method||
+order.payment||
+"—"
+)}
+
+${
+order.platform_fee!=null
+?detail(
+"Platform fee",
+money(order.platform_fee)+" 💎"
+)
+:""
+}
+
+${detail(
+"Status",
+`<span class="status ${statusClass(status)}">${escapeHtml(status)}</span>`
+)}
+
+${
+canCancel
+?`
+<button
+type="button"
+class="cancel-btn"
+style="width:100%;margin-top:8px;padding:10px;border-radius:9px;"
+onclick="cancelOrder('${escapeJs(order.id)}')">
+❌ Cancel Order
+</button>
+`
+:""
+}
+
+</div>
+
+</div>
+`;
 
 container.appendChild(card);
+
 });
-}
 
-async function cancelOrder(orderId){
-if(!currentUser)return;
-if(!orderId){toast("Invalid order.","error");return}
-if(!confirm("Cancel this order?"))return;
-
-try{
-const {error}=await supabaseClient.rpc("cancel_p2p_order",{p_order_id:orderId});
-if(error)throw error;
-toast("Order cancelled.","success");
-await loadAll();
-}catch(error){
-toast(getErrorMessage(error),"error");
-}
 }
 
 /* =====================================================
-DEPOSIT / WITHDRAW / SEND
+CANCEL ORDER
+===================================================== */
+
+async function cancelOrder(orderId){
+
+if(!currentUser)return;
+
+if(!orderId){
+toast("Invalid order.","error");
+return;
+}
+
+if(!confirm("Cancel this order?"))
+return;
+
+try{
+
+const {error}=
+await supabaseClient.rpc(
+"cancel_p2p_order",
+{
+p_order_id:orderId
+}
+);
+
+if(error)
+throw error;
+
+toast(
+"Order cancelled.",
+"success"
+);
+
+await loadAll();
+
+}catch(error){
+
+toast(
+getErrorMessage(error),
+"error"
+);
+
+}
+
+}
+
+/* =====================================================
+DEPOSIT
 ===================================================== */
 
 function openDeposit(){
-if(!currentUser){showLogin();return}
-const modal=document.getElementById("depositModal");
-if(!modal)return;
-modal.classList.add("show");
-loadDepositAddress();
+
+if(!currentUser){
+showLogin();
+return;
 }
+
+const modal=
+document.getElementById(
+"depositModal"
+);
+
+if(!modal)return;
+
+modal.classList.add("show");
+
+loadDepositAddress();
+
+}
+
+/* =====================================================
+WITHDRAW
+===================================================== */
 
 function openWithdraw(){
-document.getElementById("withdrawModal")?.classList.add("show");
+
+document.getElementById(
+"withdrawModal"
+)?.classList.add("show");
+
 }
+
+/* =====================================================
+SEND
+===================================================== */
 
 function openSend(){
-document.getElementById("sendModal")?.classList.add("show");
+
+document.getElementById(
+"sendModal"
+)?.classList.add("show");
+
 }
+
+/* =====================================================
+MODAL
+===================================================== */
 
 function closeModal(id){
-const modal=document.getElementById(id);
-if(modal)modal.classList.remove("show");
+
+const modal=
+document.getElementById(id);
+
+if(modal)
+modal.classList.remove("show");
+
 }
 
-async function submitWithdraw(){
-if(!currentUser){showLogin();return}
+/* =====================================================
+WITHDRAW REQUEST
+===================================================== */
 
-const amount=Number(document.getElementById("withdrawAmount")?.value);
-const address=String(document.getElementById("withdrawAddress")?.value||"").trim();
+async function submitWithdraw(){
+
+if(!currentUser){
+showLogin();
+return;
+}
+
+const amount=
+Number(
+document.getElementById(
+"withdrawAmount"
+)?.value
+);
+
+const address=
+String(
+document.getElementById(
+"withdrawAddress"
+)?.value||""
+).trim();
 
 if(!Number.isFinite(amount)||amount<=0){
-toast("Enter a valid withdrawal amount.","warning");
+toast(
+"Enter a valid withdrawal amount.",
+"warning"
+);
 return;
 }
 
 if(!address){
-toast("Enter a TRC-20 withdrawal address.","warning");
+toast(
+"Enter a TRC-20 withdrawal address.",
+"warning"
+);
 return;
 }
 
 if(!/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(address)){
-toast("Enter a valid TRON address.","warning");
+toast(
+"Enter a valid TRON address.",
+"warning"
+);
 return;
 }
 
-const button=document.getElementById("withdrawSubmitButton");
+const button=
+document.getElementById(
+"withdrawSubmitButton"
+);
+
 button.disabled=true;
 button.textContent="Requesting...";
 
 try{
-const {error}=await supabaseClient.rpc("request_wallet_withdrawal",{
+
+const {error}=
+await supabaseClient.rpc(
+"request_wallet_withdrawal",
+{
 p_amount:amount,
 p_address:address,
 p_network:"TRC20",
 p_note:null
-});
-if(error)throw error;
+}
+);
 
-document.getElementById("withdrawAmount").value="";
-document.getElementById("withdrawAddress").value="";
+if(error)
+throw error;
+
+document.getElementById(
+"withdrawAmount"
+).value="";
+
+document.getElementById(
+"withdrawAddress"
+).value="";
+
 closeModal("withdrawModal");
 
-toast("Withdrawal request submitted.","success");
+toast(
+"Withdrawal request submitted.",
+"success"
+);
+
 await loadAll();
 
 }catch(error){
-toast(getErrorMessage(error),"error");
+
+toast(
+getErrorMessage(error),
+"error"
+);
+
 }finally{
+
 button.disabled=false;
-button.textContent="Request Withdraw";
+button.textContent=
+"Request Withdraw";
+
 }
+
 }
+
+/* =====================================================
+DIAMOND SEND
+===================================================== */
 
 async function submitSend(){
-if(!currentUser){showLogin();return}
 
-const recipient=String(document.getElementById("sendRecipient")?.value||"").trim();
-const amount=Number(document.getElementById("sendAmount")?.value);
-const note=String(document.getElementById("sendNote")?.value||"").trim();
+if(!currentUser){
+showLogin();
+return;
+}
+
+const recipient=
+String(
+document.getElementById(
+"sendRecipient"
+)?.value||""
+).trim();
+
+const amount=
+Number(
+document.getElementById(
+"sendAmount"
+)?.value
+);
+
+const note=
+String(
+document.getElementById(
+"sendNote"
+)?.value||""
+).trim();
 
 if(!recipient){
-toast("Enter recipient.","warning");
+toast(
+"Enter recipient.",
+"warning"
+);
 return;
 }
 
 if(!Number.isInteger(amount)||amount<=0){
-toast("Enter a whole diamond amount.","warning");
+toast(
+"Enter a whole diamond amount.",
+"warning"
+);
 return;
 }
 
-const button=document.getElementById("sendSubmitButton");
+const button=
+document.getElementById(
+"sendSubmitButton"
+);
+
 button.disabled=true;
 button.textContent="Sending...";
 
 try{
-const {error}=await supabaseClient.rpc("send_wallet_diamonds",{
+
+const {error}=
+await supabaseClient.rpc(
+"send_wallet_diamonds",
+{
 p_recipient:recipient,
 p_amount:amount,
 p_note:note||null
-});
-if(error)throw error;
+}
+);
 
-document.getElementById("sendRecipient").value="";
-document.getElementById("sendAmount").value="";
-document.getElementById("sendNote").value="";
+if(error)
+throw error;
+
+document.getElementById(
+"sendRecipient"
+).value="";
+
+document.getElementById(
+"sendAmount"
+).value="";
+
+document.getElementById(
+"sendNote"
+).value="";
+
 closeModal("sendModal");
 
-toast("Diamonds sent successfully.","success");
+toast(
+"Diamonds sent successfully.",
+"success"
+);
+
 await loadAll();
 
 }catch(error){
-toast(getErrorMessage(error),"error");
+
+toast(
+getErrorMessage(error),
+"error"
+);
+
 }finally{
+
 button.disabled=false;
 button.textContent="Send 💎";
+
 }
+
 }
 
 /* =====================================================
@@ -1483,98 +2574,203 @@ HELPERS
 ===================================================== */
 
 function money(value){
+
 const number=Number(value)||0;
-return number.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:6});
+
+return number.toLocaleString(
+"en-US",
+{
+minimumFractionDigits:2,
+maximumFractionDigits:6
+}
+);
+
 }
 
 function moneyNoDecimals(value){
+
 const number=Number(value)||0;
-return number.toLocaleString("en-US",{maximumFractionDigits:0});
+
+return number.toLocaleString(
+"en-US",
+{
+maximumFractionDigits:0
+}
+);
+
 }
 
 function escapeHtml(value){
+
 return String(value??"")
 .replace(/&/g,"&amp;")
 .replace(/</g,"&lt;")
 .replace(/>/g,"&gt;")
 .replace(/"/g,"&quot;")
 .replace(/'/g,"&#039;");
+
 }
 
 function escapeJs(value){
+
 return String(value??"")
 .replace(/\\/g,"\\\\")
 .replace(/'/g,"\\'")
 .replace(/\n/g,"\\n")
 .replace(/\r/g,"\\r");
+
 }
 
 function getErrorMessage(error){
-return error?.message||error?.error_description||error?.details||"Something went wrong.";
+
+return error?.message||
+error?.error_description||
+error?.details||
+"Something went wrong.";
+
 }
 
 function normalizeStatus(status){
-return String(status||"pending").toLowerCase().trim();
+
+return String(
+status||"pending"
+).toLowerCase().trim();
+
 }
 
 function statusClass(status){
-return normalizeStatus(status).replace(/[^a-z0-9_-]/g,"");
+
+return normalizeStatus(status)
+.replace(/[^a-z0-9_-]/g,"");
+
 }
 
 function detail(label,value){
-return `<div class="detail-row"><span>${escapeHtml(label)}</span><strong>${value}</strong></div>`;
+
+return `
+<div class="detail-row">
+<span>${escapeHtml(label)}</span>
+<strong>${value}</strong>
+</div>
+`;
+
 }
 
 function emptyHtml(icon,title,message){
-return `<div class="empty"><div class="empty-icon">${icon}</div><strong>${escapeHtml(title)}</strong>${message?`<div style="margin-top:7px;">${escapeHtml(message)}</div>`:""}</div>`;
+
+return `
+<div class="empty">
+<div class="empty-icon">${icon}</div>
+<strong>${escapeHtml(title)}</strong>
+${
+message
+?`<div style="margin-top:7px;">${escapeHtml(message)}</div>`
+:""
+}
+</div>
+`;
+
 }
 
 function formatPair(order){
-return order?.pair||order?.trading_pair||"USDT / USDT";
+
+return "USDT / 💎";
+
 }
 
 function formatAmount(order){
-const amount=order?.amount??order?.quantity??0;
-return money(amount)+" USDT";
+
+const amount=
+order?.amount ??
+order?.quantity ??
+0;
+
+return money(amount)+" 💎";
+
 }
 
 function scrollToCreateOrder(type){
+
 setOrderType(type||"buy");
-document.getElementById("createOrderSection")?.scrollIntoView({behavior:"smooth",block:"start"});
+
+document.getElementById(
+"createOrderSection"
+)?.scrollIntoView({
+behavior:"smooth",
+block:"start"
+});
+
 }
 
 function scrollToOffers(){
-document.getElementById("offers")?.scrollIntoView({behavior:"smooth",block:"start"});
+
+document.getElementById(
+"offers"
+)?.scrollIntoView({
+behavior:"smooth",
+block:"start"
+});
+
 }
 
 function showHistory(){
-document.getElementById("historySection")?.scrollIntoView({behavior:"smooth",block:"start"});
+
+document.getElementById(
+"historySection"
+)?.scrollIntoView({
+behavior:"smooth",
+block:"start"
+});
+
 }
 
 function openMessages(){
-window.location.href="message.html";
+
+window.location.href=
+"message.html";
+
 }
 
 function showAllOrders(){
+
 ordersExpanded=!ordersExpanded;
-const button=document.querySelector('.section-title .view-btn[onclick="showAllOrders()"]');
-if(button)button.textContent=ordersExpanded?"Show 3":"View All";
+
+const button=
+document.querySelector(
+'.section-title .view-btn[onclick="showAllOrders()"]'
+);
+
+if(button)
+button.textContent=
+ordersExpanded
+?"Show 3"
+:"View All";
+
 renderMyOrders();
+
 }
 
 function toggleOffers(){
+
 offersExpanded=!offersExpanded;
 renderOffers();
+
 }
 
 function toggleTrades(){
+
 tradesExpanded=!tradesExpanded;
 renderTrades();
+
 }
 
 function toggleTransactions(){
-transactionsExpanded=!transactionsExpanded;
+
+transactionsExpanded=
+!transactionsExpanded;
+
 renderTransactions();
+
 }
 
 /* =====================================================
@@ -1582,670 +2778,564 @@ AVAILABLE OFFERS
 ===================================================== */
 
 async function loadAvailableOffers(){
-const container=document.getElementById("offers");
+
+const container=
+document.getElementById(
+"offers"
+);
+
 if(!container)return;
 
-container.innerHTML='<div class="empty">Loading offers...</div>';
+container.innerHTML=
+'<div class="empty">Loading offers...</div>';
 
-const {data,error}=await supabaseClient
+const {data,error}=
+await supabaseClient
 .from("p2p_orders")
 .select("*")
-.neq("user_id",currentUser.id)
-.in("status",["active","open","pending"])
-.order("created_at",{ascending:false});
+.neq(
+"user_id",
+currentUser.id
+)
+.in(
+"status",
+["active","open","pending"]
+)
+.order(
+"created_at",
+{ascending:false}
+);
 
 if(error){
-container.innerHTML=emptyHtml("👥","Could not load offers.",getErrorMessage(error));
+
+container.innerHTML=
+emptyHtml(
+"👥",
+"Could not load offers.",
+getErrorMessage(error)
+);
+
 return;
+
 }
 
 availableOrders=data||[];
 
-const count=document.getElementById("offerCount");
-if(count)count.textContent=availableOrders.length;
+const count=
+document.getElementById(
+"offerCount"
+);
+
+if(count)
+count.textContent=
+availableOrders.length;
 
 renderOffers();
+
 }
 
 function renderOffers(){
-const container=document.getElementById("offers");
+
+const container=
+document.getElementById(
+"offers"
+);
+
 if(!container)return;
 
 if(!availableOrders.length){
-container.innerHTML=emptyHtml("👥","No available offers.");
+
+container.innerHTML=
+emptyHtml(
+"👥",
+"No available offers."
+);
+
 return;
+
 }
 
 container.innerHTML="";
 
-const items=offersExpanded?availableOrders:availableOrders.slice(0,3);
+const items=
+offersExpanded
+?availableOrders
+:availableOrders.slice(0,3);
 
 items.forEach(order=>{
-const type=String(order.order_type||order.type||"buy").toLowerCase();
-const safeType=type==="sell"?"sell":"buy";
-const pair=formatPair(order);
-const amount=getOfferAvailableAmount(order);
-const price=Number(order.price)||0;
-const payment=order.payment_method||order.payment||"—";
 
-const card=document.createElement("div");
-card.className="offer-card";
+const type=
+String(
+order.order_type||
+order.type||
+"buy"
+).toLowerCase();
+
+const safeType=
+type==="sell"
+?"sell"
+:"buy";
+
+const pair=
+"USDT / 💎";
+
+const amount=
+getOfferAvailableAmount(order);
+
+const price=
+Number(order.price)||0;
+
+const payment=
+order.payment_method||
+order.payment||
+"—";
+
+const card=
+document.createElement("div");
+
+card.className=
+"offer-card";
 
 card.innerHTML=`
+
 <div class="offer-main">
+
 <div class="row">
+
 <div>
-<div class="offer-user">${escapeHtml(order.username||order.user_name||"Trader")}</div>
-<div class="offer-meta">${escapeHtml(pair)}</div>
-</div>
-<div>
-<div class="offer-price">${money(price)}</div>
-<div class="offer-meta">${escapeHtml(getPairParts(order.pair||order.trading_pair).quote)}</div>
-</div>
+
+<div class="offer-user">
+${escapeHtml(
+order.username||
+order.user_name||
+"Trader"
+)}
 </div>
 
-<div class="offer-amount">Available: ${money(amount)} USDT</div>
-<div class="offer-meta">Payment: ${escapeHtml(payment)}</div>
+<div class="offer-meta">
+${escapeHtml(pair)}
+</div>
 
-<button type="button" class="offer-trade" onclick="openTrade('${escapeJs(order.id)}')">
+</div>
+
+<div>
+
+<div class="offer-price">
+${money(price)}
+</div>
+
+<div class="offer-meta">
+💎
+</div>
+
+</div>
+
+</div>
+
+<div class="offer-amount">
+Available: ${money(amount)} 💎
+</div>
+
+<div class="offer-meta">
+Payment: ${escapeHtml(payment)}
+</div>
+
+<button
+type="button"
+class="offer-trade"
+onclick="openTrade('${escapeJs(order.id)}')">
 🤝 Trade
 </button>
-</div>`;
+
+</div>
+`;
 
 container.appendChild(card);
+
 });
 
-const button=document.getElementById("offerViewButton");
-if(button)button.textContent=offersExpanded?"Show 3":"View All";
+const button=
+document.getElementById(
+"offerViewButton"
+);
+
+if(button)
+button.textContent=
+offersExpanded
+?"Show 3"
+:"View All";
+
 }
 
+/* =====================================================
+OFFER AMOUNT
+===================================================== */
+
 function getOfferAvailableAmount(order){
-const values=[order?.remaining_amount,order?.available_amount,order?.remaining,order?.amount];
+
+const values=[
+order?.remaining_amount,
+order?.available_amount,
+order?.remaining,
+order?.amount
+];
+
 for(const value of values){
+
 const number=Number(value);
-if(Number.isFinite(number)&&number>=0)return number;
+
+if(Number.isFinite(number)&&number>=0)
+return number;
+
 }
+
 return 0;
+
 }
 
 function getMinimumTradeAmount(order){
-const values=[order?.min_trade_amount,order?.minimum_amount,order?.min_amount];
+
+const values=[
+order?.min_trade_amount,
+order?.minimum_amount,
+order?.min_amount
+];
+
 for(const value of values){
+
 const number=Number(value);
-if(Number.isFinite(number)&&number>0)return number;
+
+if(Number.isFinite(number)&&number>0)
+return number;
+
 }
+
 return 0;
+
 }
+
+/* =====================================================
+OPEN TRADE
+===================================================== */
 
 function openTrade(orderId){
-selectedOffer=availableOrders.find(order=>String(order.id)===String(orderId))||null;
+
+selectedOffer=
+availableOrders.find(
+order=>String(order.id)===String(orderId)
+)||null;
 
 if(!selectedOffer){
-toast("Offer no longer available.","error");
+
+toast(
+"Offer no longer available.",
+"error"
+);
+
 return;
+
 }
 
-const pair=formatPair(selectedOffer);
-const price=Number(selectedOffer.price)||0;
-const available=getOfferAvailableAmount(selectedOffer);
-const minimum=getMinimumTradeAmount(selectedOffer);
-const payment=selectedOffer.payment_method||selectedOffer.payment||"—";
+const price=
+Number(selectedOffer.price)||0;
 
-const summary=document.getElementById("tradeSummary");
+const available=
+getOfferAvailableAmount(
+selectedOffer
+);
+
+const minimum=
+getMinimumTradeAmount(
+selectedOffer
+);
+
+const payment=
+selectedOffer.payment_method||
+selectedOffer.payment||
+"—";
+
+const summary=
+document.getElementById(
+"tradeSummary"
+);
 
 if(summary){
+
 summary.innerHTML=`
+
 <div class="address-info">
-<strong>${escapeHtml(pair)}</strong><br>
+
+<strong>USDT / 💎</strong><br>
+
 Price:
-<strong>${money(price)} ${escapeHtml(getPairParts(selectedOffer.pair||selectedOffer.trading_pair).quote)}</strong><br>
+<strong>
+${money(price)} 💎
+</strong><br>
+
 Available:
-<strong>${money(available)} USDT</strong><br>
-${minimum>0?`Minimum: <strong>${money(minimum)} USDT</strong><br>`:""}
+<strong>${money(available)} 💎</strong><br>
+
+${
+minimum>0
+?`Minimum:
+<strong>${money(minimum)} 💎</strong><br>`
+:""
+}
+
 Payment:
 <strong>${escapeHtml(payment)}</strong>
-</div>`;
+
+</div>
+`;
+
 }
 
-const amount=document.getElementById("tradeAmount");
-if(amount)amount.value="";
+const amount=
+document.getElementById(
+"tradeAmount"
+);
+
+if(amount)
+amount.value="";
 
 updateTradeFeePreview();
-document.getElementById("tradeModal")?.classList.add("show");
+
+document.getElementById(
+"tradeModal"
+)?.classList.add("show");
+
 }
+
+/* =====================================================
+TRADE FEE PREVIEW
+===================================================== */
 
 function updateTradeFeePreview(){
+
 if(!selectedOffer)return;
 
-const amount=Number(document.getElementById("tradeAmount")?.value)||0;
-const price=Number(selectedOffer.price)||0;
-const value=calculatePairValue(amount,price);
-const fee=calculatePlatformFee(value);
-const total=calculateTotalWithFee(value);
-const currency=getPairParts(selectedOffer.pair||selectedOffer.trading_pair).quote||"USDT";
+const amount=
+Number(
+document.getElementById(
+"tradeAmount"
+)?.value
+)||0;
 
-const valueElement=document.getElementById("tradeValuePreview");
-const feeElement=document.getElementById("tradeFeePreviewAmount");
-const totalElement=document.getElementById("tradeTotalPreview");
+const price=
+Number(selectedOffer.price)||0;
 
-if(valueElement)valueElement.textContent=money(value)+" "+currency;
-if(feeElement)feeElement.textContent=money(fee)+" "+currency;
-if(totalElement)totalElement.textContent=money(total)+" "+currency;
+const value=
+calculatePairValue(
+amount,
+price
+);
+
+const fee=
+calculatePlatformFee(value);
+
+const total=
+calculateTotalWithFee(value);
+
+const valueElement=
+document.getElementById(
+"tradeValuePreview"
+);
+
+const feeElement=
+document.getElementById(
+"tradeFeePreviewAmount"
+);
+
+const totalElement=
+document.getElementById(
+"tradeTotalPreview"
+);
+
+if(valueElement)
+valueElement.textContent=
+money(value)+" 💎";
+
+if(feeElement)
+feeElement.textContent=
+money(fee)+" 💎";
+
+if(totalElement)
+totalElement.textContent=
+money(total)+" 💎";
+
 }
+
+/* =====================================================
+SUBMIT TRADE
+===================================================== */
 
 async function submitTrade(){
-if(!currentUser){showLogin();return}
+
+if(!currentUser){
+showLogin();
+return;
+}
 
 if(!selectedOffer){
-toast("Select an offer first.","warning");
+toast(
+"Select an offer first.",
+"warning"
+);
 return;
 }
 
-const amount=Number(document.getElementById("tradeAmount")?.value);
+const amount=
+Number(
+document.getElementById(
+"tradeAmount"
+)?.value
+);
 
 if(!Number.isFinite(amount)||amount<=0){
-toast("Enter a valid trade amount.","warning");
+
+toast(
+"Enter a valid trade amount.",
+"warning"
+);
+
 return;
+
 }
 
-const button=document.getElementById("tradeSubmitButton");
+const button=
+document.getElementById(
+"tradeSubmitButton"
+);
+
 button.disabled=true;
 button.textContent="Creating...";
 
 try{
-const {data:latest,error:latestError}=await supabaseClient
+
+const {data:latest,error:latestError}=
+await supabaseClient
 .from("p2p_orders")
 .select("*")
 .eq("id",selectedOffer.id)
 .maybeSingle();
 
-if(latestError)throw latestError;
+if(latestError)
+throw latestError;
 
 if(!latest){
-toast("Offer no longer exists.","error");
+
+toast(
+"Offer no longer exists.",
+"error"
+);
+
 return;
+
 }
 
-const status=normalizeStatus(latest.status);
+const status=
+normalizeStatus(latest.status);
 
 if(!["active","open","pending"].includes(status)){
-toast("Offer is no longer available.","error");
+
+toast(
+"Offer is no longer available.",
+"error"
+);
+
 return;
+
 }
 
-if(String(latest.user_id)===String(currentUser.id)){
-toast("You cannot trade with your own offer.","warning");
+if(String(latest.user_id)===
+String(currentUser.id)){
+
+toast(
+"You cannot trade with your own offer.",
+"warning"
+);
+
 return;
+
 }
 
-const available=getOfferAvailableAmount(latest);
-const minimum=getMinimumTradeAmount(latest);
+const available=
+getOfferAvailableAmount(latest);
+
+const minimum=
+getMinimumTradeAmount(latest);
 
 if(amount>available){
-toast("Amount exceeds available offer.","warning");
+
+toast(
+"Amount exceeds available offer.",
+"warning"
+);
+
 return;
+
 }
 
 if(minimum>0&&amount<minimum){
-toast("Amount is below the minimum trade amount.","warning");
-return;
-}
 
-const rounded=Math.round(amount*1000000)/1000000;
-
-const {error}=await supabaseClient.rpc("create_p2p_trade",{
-p_order_id:latest.id,
-p_amount:rounded
-});
-
-if(error)throw error;
-
-closeModal("tradeModal");
-selectedOffer=null;
-
-toast("Trade created successfully.","success");
-await loadAll();
-
-}catch(error){
-console.error("TRADE ERROR:",error);
-toast(getErrorMessage(error),"error");
-}finally{
-button.disabled=false;
-button.textContent="Create Trade";
-}
-}
-
-/* =====================================================
-TRADES
-===================================================== */
-
-async function loadTrades(){
-const container=document.getElementById("trades");
-if(!container)return;
-
-container.innerHTML='<div class="empty">Loading trades...</div>';
-
-const {data,error}=await supabaseClient
-.from("p2p_trades")
-.select("*")
-.or(`buyer_id.eq.${currentUser.id},seller_id.eq.${currentUser.id}`)
-.order("created_at",{ascending:false});
-
-if(error){
-container.innerHTML=emptyHtml("🤝","Could not load trades.",getErrorMessage(error));
-return;
-}
-
-myTrades=data||[];
-
-const count=document.getElementById("tradeCount");
-if(count)count.textContent=myTrades.length;
-
-renderTrades();
-}
-
-function renderTrades(){
-const container=document.getElementById("trades");
-if(!container)return;
-
-if(!myTrades.length){
-container.innerHTML=emptyHtml("🤝","No trades yet.");
-return;
-}
-
-container.innerHTML="";
-
-const items=tradesExpanded?myTrades:myTrades.slice(0,3);
-
-items.forEach(trade=>{
-const status=normalizeStatus(trade.status);
-const amount=Number(trade.amount||trade.trade_amount||0);
-const price=Number(trade.price||trade.order_price||0);
-const value=calculatePairValue(amount,price);
-const fee=Number(trade.platform_fee||trade.fee||calculatePlatformFee(value))||0;
-const total=value+fee;
-const buyer=String(trade.buyer_id||"");
-const seller=String(trade.seller_id||"");
-const isBuyer=buyer===String(currentUser.id);
-const expiry=trade.expires_at||trade.expiry_at||trade.expires_on||null;
-
-const card=document.createElement("div");
-card.className="trade-card";
-
-card.innerHTML=`
-<div class="trade-main">
-<div class="row">
-<div>
-<div class="trade-number">Trade #${escapeHtml(String(trade.trade_number||trade.id||"").slice(0,12))}</div>
-<div class="offer-meta">${escapeHtml(trade.pair||trade.trading_pair||"USDT / USDT")}</div>
-</div>
-<span class="status ${statusClass(status)}">${escapeHtml(status)}</span>
-</div>
-
-<div class="trade-info">
-${detail("Amount",money(amount)+" USDT")}
-${detail("Price",money(price))}
-${detail("Trade value",money(value))}
-${detail("Platform fee",money(fee))}
-${detail("Total",money(total))}
-${detail("Role",isBuyer?"Buyer":"Seller")}
-${trade.trader_commission!=null?detail("Trader commission",money(trade.trader_commission)):""}
-${expiry?`<div class="trade-expiry">⏱️ Expiry: ${escapeHtml(formatDate(expiry))}</div>`:""}
-${renderTradeActions(trade,isBuyer,status)}
-</div>
-</div>`;
-
-container.appendChild(card);
-});
-
-const button=document.getElementById("tradeViewButton");
-if(button)button.textContent=tradesExpanded?"Show 3":"View All";
-}
-
-function renderTradeActions(trade,isBuyer,status){
-const tradeId=escapeJs(trade.id);
-let html="";
-
-if(["closed","expired","cancelled","completed","released"].includes(status)){
-html+=`<button type="button" class="message-open-btn" onclick="openTradeMessage('${tradeId}')">💬 Open Message</button>`;
-return html;
-}
-
-if(isBuyer&&["pending","open","active"].includes(status)){
-html+=`<button type="button" class="payment-btn" onclick="confirmBuyerPayment('${tradeId}')">💰 I Have Paid</button>`;
-}
-
-if(!isBuyer&&status==="paid"){
-html+=`<button type="button" class="release-btn" onclick="releaseTrade('${tradeId}')">💵 Release Trade</button>`;
-}
-
-if(["pending","open","active","paid","disputed"].includes(status)){
-html+=`<button type="button" class="dispute-btn" onclick="openDispute('${tradeId}')">⚠️ Open Dispute</button>`;
-}
-
-if(isBuyer&&["pending","open","active"].includes(status)){
-html+=`<button type="button" class="cancel-btn" style="width:100%;margin-top:8px;padding:10px;border-radius:9px;" onclick="cancelTrade('${tradeId}')">❌ Cancel Trade</button>`;
-}
-
-html+=`<button type="button" class="message-open-btn" onclick="openTradeMessage('${tradeId}')">💬 Open Message</button>`;
-
-return html;
-}
-
-async function confirmBuyerPayment(tradeId){
-if(!confirm("Confirm that you have paid?"))return;
-try{
-const {error}=await supabaseClient.rpc("buyer_confirm_payment",{p_trade_id:tradeId});
-if(error)throw error;
-toast("Payment marked as sent.","success");
-await loadAll();
-}catch(error){toast(getErrorMessage(error),"error")}
-}
-
-async function releaseTrade(tradeId){
-if(!confirm("Release the trade to the buyer?"))return;
-try{
-const {error}=await supabaseClient.rpc("seller_release_trade",{p_trade_id:tradeId});
-if(error)throw error;
-toast("Trade released.","success");
-await loadAll();
-}catch(error){toast(getErrorMessage(error),"error")}
-}
-
-async function cancelTrade(tradeId){
-if(!confirm("Cancel this trade?"))return;
-try{
-const {error}=await supabaseClient.rpc("buyer_cancel_trade",{p_trade_id:tradeId});
-if(error)throw error;
-toast("Trade cancelled.","success");
-await loadAll();
-}catch(error){toast(getErrorMessage(error),"error")}
-}
-
-/* =====================================================
-DISPUTE
-===================================================== */
-
-function openDispute(tradeId){
-selectedTradeId=tradeId;
-const reason=document.getElementById("disputeReason");
-if(reason)reason.value="";
-document.getElementById("disputeModal")?.classList.add("show");
-}
-
-async function submitDispute(){
-if(!currentUser){showLogin();return}
-
-if(!selectedTradeId){
-toast("Trade not selected.","error");
-return;
-}
-
-const reason=String(document.getElementById("disputeReason")?.value||"").trim();
-
-if(reason.length<3){
-toast("Explain the problem.","warning");
-return;
-}
-
-const button=document.getElementById("disputeSubmitButton");
-button.disabled=true;
-button.textContent="Opening...";
-
-try{
-const {error}=await supabaseClient.rpc("open_p2p_dispute",{
-p_trade_id:selectedTradeId,
-p_reason:reason
-});
-
-if(error)throw error;
-
-closeModal("disputeModal");
-selectedTradeId=null;
-
-toast("Dispute opened.","success");
-await loadAll();
-
-}catch(error){
-toast(getErrorMessage(error),"error");
-}finally{
-button.disabled=false;
-button.textContent="Open Dispute";
-}
-}
-
-/* =====================================================
-MESSAGES
-===================================================== */
-
-async function loadMessages(){
-const container=document.getElementById("messages");
-if(!container)return;
-
-if(!myTrades.length){
-container.innerHTML=`
-<div class="empty">
-<div class="empty-icon">💬</div>
-<strong>No pending messages</strong>
-<div style="margin-top:7px;">Pending orders, closed orders and disputes will appear here.</div>
-</div>`;
-return;
-}
-
-const recent=myTrades.slice(0,10);
-container.innerHTML="";
-
-recent.forEach(trade=>{
-const status=normalizeStatus(trade.status);
-const card=document.createElement("div");
-
-card.className="message-card "+(
-status==="disputed"?"dispute":
-["closed","expired","cancelled","completed","released"].includes(status)?"closed":"pending"
+toast(
+"Amount is below the minimum trade amount.",
+"warning"
 );
 
-card.innerHTML=`
-<div class="message-main">
-<div class="message-title">💬 Trade Message</div>
-<div class="message-meta">
-Trade #${escapeHtml(String(trade.trade_number||trade.id||"").slice(0,12))} • ${escapeHtml(status)}
-</div>
-<button type="button" class="message-open-btn" onclick="openTradeMessage('${escapeJs(trade.id)}')">Open</button>
-</div>`;
-
-container.appendChild(card);
-});
-}
-
-function openTradeMessage(tradeId){
-window.location.href="message.html?trade="+encodeURIComponent(tradeId);
-}
-
-/* =====================================================
-TRANSACTIONS
-===================================================== */
-
-async function loadTransactions(){
-const container=document.getElementById("transactions");
-if(!container)return;
-
-container.innerHTML='<div class="empty">Loading transactions...</div>';
-
-const {data,error}=await supabaseClient
-.from("usdt_ledger")
-.select("*")
-.eq("user_id",currentUser.id)
-.order("created_at",{ascending:false})
-.limit(50);
-
-if(error){
-container.innerHTML=emptyHtml("💳","Could not load transactions.",getErrorMessage(error));
 return;
+
 }
 
-myTransactions=data||[];
-renderTransactions();
+const rounded=
+Math.round(
+amount*1000000
+)/1000000;
+
+const {error}=
+await supabaseClient.rpc(
+"create_p2p_trade",
+{
+p_order_id:latest.id,
+p_amount:rounded
+}
+);
+
+if(error)
+throw error;
+
+closeModal("tradeModal");
+
+selectedOffer=null;
+
+toast(
+"Trade created successfully.",
+"success"
+);
+
+await loadAll();
+
+}catch(error){
+
+console.error(
+"TRADE ERROR:",
+error
+);
+
+toast(
+getErrorMessage(error),
+"error"
+);
+
+}finally{
+
+button.disabled=false;
+button.textContent=
+"Create Trade";
+
 }
 
-function renderTransactions(){
-const container=document.getElementById("transactions");
-if(!container)return;
-
-if(!myTransactions.length){
-container.innerHTML=emptyHtml("💳","No transactions yet.");
-return;
 }
-
-container.innerHTML="";
-
-const items=transactionsExpanded?myTransactions:myTransactions.slice(0,5);
-
-items.forEach(transaction=>{
-const amount=Number(transaction.amount||transaction.value||0);
-const type=String(transaction.type||transaction.transaction_type||transaction.kind||"transaction").toLowerCase();
-const positive=amount>=0;
-
-const card=document.createElement("div");
-card.className="transaction";
-
-card.innerHTML=`
-<div class="transaction-left">
-<div class="transaction-icon">${positive?"＋":"−"}</div>
-<div>
-<div class="transaction-title">${escapeHtml(type)}</div>
-<div class="transaction-date">${escapeHtml(formatDate(transaction.created_at))}</div>
-</div>
-</div>
-
-<div class="transaction-amount ${positive?"positive":"negative"}">
-${positive?"+":"−"}${money(Math.abs(amount))} USDT
-</div>`;
-
-container.appendChild(card);
-});
-
-const button=document.getElementById("transactionViewButton");
-if(button)button.textContent=transactionsExpanded?"Show Less":"View All";
-}
-
-/* =====================================================
-REALTIME
-===================================================== */
-
-function setupRealtime(){
-if(!currentUser)return;
-
-if(realtimeChannel){
-supabaseClient.removeChannel(realtimeChannel);
-}
-
-realtimeChannel=supabaseClient
-.channel("wallet-realtime-"+currentUser.id)
-
-.on("postgres_changes",{
-event:"*",schema:"public",table:"p2p_orders"
-},function(){loadAll()})
-
-.on("postgres_changes",{
-event:"*",schema:"public",table:"p2p_trades"
-},function(){loadAll()})
-
-.on("postgres_changes",{
-event:"*",schema:"public",table:"usdt_ledger"
-},function(){loadAll()})
-
-.on("postgres_changes",{
-event:"*",schema:"public",table:"profiles",
-filter:"id=eq."+currentUser.id
-},function(){loadAll()})
-
-.on("postgres_changes",{
-event:"*",schema:"public",table:"diamond_treasury"
-},function(){
-if(isAdminOrOwner())loadDiamondTreasury();
-})
-
-.subscribe();
-}
-
-/* =====================================================
-DATE
-===================================================== */
-
-function formatDate(value){
-if(!value)return"—";
-const date=new Date(value);
-if(Number.isNaN(date.getTime()))return String(value);
-
-return date.toLocaleString("en-US",{
-year:"numeric",
-month:"short",
-day:"numeric",
-hour:"2-digit",
-minute:"2-digit"
-});
-}
-
-/* =====================================================
-TOAST
-===================================================== */
-
-function toast(message,type="",duration=3500){
-const element=document.getElementById("toast");
-if(!element)return;
-
-clearTimeout(toastTimer);
-element.className="toast show "+(type||"");
-element.textContent=String(message||"");
-
-toastTimer=setTimeout(()=>{
-element.className="toast";
-},duration);
-}
-
-/* =====================================================
-MODAL OUTSIDE CLICK
-===================================================== */
-
-document.addEventListener("click",function(event){
-if(event.target.classList.contains("modal")){
-event.target.classList.remove("show");
-}
-});
-
-document.addEventListener("keydown",function(event){
-if(event.key!=="Escape")return;
-document.querySelectorAll(".modal.show").forEach(modal=>{
-modal.classList.remove("show");
-});
-});
-
-/* =====================================================
-AUTO BLOCKCHAIN REFRESH
-===================================================== */
-
-let blockchainRefreshTimer=null;
-
-function startBlockchainRefresh(){
-if(blockchainRefreshTimer)clearInterval(blockchainRefreshTimer);
-
-blockchainRefreshTimer=setInterval(async function(){
-if(document.visibilityState==="visible"&&currentUser){
-await loadBlockchainBalance();
-updateBlockchainBalanceDisplay();
-}
-},60000);
-}
-
-window.addEventListener("beforeunload",function(){
-if(realtimeChannel){
-supabaseClient.removeChannel(realtimeChannel);
-realtimeChannel=null;
-}
-
-if(blockchainRefreshTimer)
-clearInterval(blockchainRefreshTimer);
-});
 
 /* =====================================================
 TRADES
@@ -2420,11 +3510,7 @@ trade.id||
 </div>
 
 <div class="offer-meta">
-${escapeHtml(
-trade.pair||
-trade.trading_pair||
-"USDT / USDT"
-)}
+USDT / 💎
 </div>
 
 </div>
@@ -2439,27 +3525,27 @@ ${escapeHtml(status)}
 
 ${detail(
 "Amount",
-money(amount)+" USDT"
+money(amount)+" 💎"
 )}
 
 ${detail(
 "Price",
-money(price)
+money(price)+" 💎"
 )}
 
 ${detail(
 "Trade value",
-money(value)
+money(value)+" 💎"
 )}
 
 ${detail(
 "Platform fee",
-money(fee)
+money(fee)+" 💎"
 )}
 
 ${detail(
 "Total",
-money(total)
+money(total)+" 💎"
 )}
 
 ${detail(
@@ -2471,7 +3557,7 @@ ${
 trade.trader_commission!=null
 ?detail(
 "Trader commission",
-money(trade.trader_commission)
+money(trade.trader_commission)+" 💎"
 )
 :""
 }
@@ -3085,7 +4171,7 @@ positive
 
 ${positive?"+":"−"}${money(
 Math.abs(amount)
-)} USDT
+)} 💎
 
 </div>
 
@@ -3176,6 +4262,18 @@ filter:"id=eq."+currentUser.id
 },
 function(){
 loadAll();
+}
+)
+
+.on(
+"postgres_changes",
+{
+event:"*",
+schema:"public",
+table:"diamond_treasury"
+},
+function(){
+loadDiamondTreasury();
 }
 )
 

@@ -7,8 +7,11 @@
    SUPABASE
 ===================================================== */
 
-const SUPABASE_URL = "YOUR_SUPABASE_URL";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+const SUPABASE_URL =
+    "https://mbsvuwrgigqfporxwpfr.supabase.co";
+
+const SUPABASE_ANON_KEY =
+    "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
 
 let supabaseClient = null;
 let currentUser = null;
@@ -22,24 +25,27 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     console.log("wallet.js loaded");
 
-    // Check Supabase library
     if (typeof supabase === "undefined") {
-        console.error("Supabase library is not loaded.");
+
+        console.error(
+            "Supabase library is not loaded."
+        );
+
         return;
     }
 
-    // Create Supabase client
-    supabaseClient = supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_ANON_KEY
+    supabaseClient =
+        supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_ANON_KEY
+        );
+
+    console.log(
+        "Supabase client created"
     );
 
-    console.log("Supabase client created");
-
-    // Attach buttons
     setupButtons();
 
-    // Check logged-in user
     await loadCurrentUser();
 
 });
@@ -66,72 +72,110 @@ function setupButtons() {
     const tradeBtn =
         document.getElementById("tradeBtn");
 
+
     if (depositBtn) {
 
-        depositBtn.addEventListener("click", function () {
+        depositBtn.addEventListener(
+            "click",
+            function () {
 
-            console.log("Deposit button clicked");
+                console.log(
+                    "Deposit button clicked"
+                );
 
-            showSection("depositSection");
+                showSection(
+                    "depositSection"
+                );
 
-        });
+            }
+        );
 
     }
 
 
     if (withdrawBtn) {
 
-        withdrawBtn.addEventListener("click", function () {
+        withdrawBtn.addEventListener(
+            "click",
+            function () {
 
-            console.log("Withdraw button clicked");
+                console.log(
+                    "Withdraw button clicked"
+                );
 
-            showSection("withdrawSection");
+                showSection(
+                    "withdrawSection"
+                );
 
-        });
+            }
+        );
 
     }
 
 
     if (sendBtn) {
 
-        sendBtn.addEventListener("click", function () {
+        sendBtn.addEventListener(
+            "click",
+            function () {
 
-            console.log("Send button clicked");
+                console.log(
+                    "Send button clicked"
+                );
 
-            showSection("sendSection");
+                showSection(
+                    "sendSection"
+                );
 
-        });
+            }
+        );
 
     }
 
 
     if (receiveBtn) {
 
-        receiveBtn.addEventListener("click", function () {
+        receiveBtn.addEventListener(
+            "click",
+            function () {
 
-            console.log("Receive button clicked");
+                console.log(
+                    "Receive button clicked"
+                );
 
-            showSection("receiveSection");
+                showSection(
+                    "receiveSection"
+                );
 
-        });
+            }
+        );
 
     }
 
 
     if (tradeBtn) {
 
-        tradeBtn.addEventListener("click", function () {
+        tradeBtn.addEventListener(
+            "click",
+            function () {
 
-            console.log("P2P Trade button clicked");
+                console.log(
+                    "P2P Trade button clicked"
+                );
 
-            showSection("tradeSection");
+                showSection(
+                    "tradeSection"
+                );
 
-        });
+            }
+        );
 
     }
 
 
-    console.log("Wallet buttons initialized");
+    console.log(
+        "Wallet buttons initialized"
+    );
 
 }
 
@@ -143,38 +187,53 @@ function setupButtons() {
 function showSection(sectionId) {
 
     const sections = [
+
         "depositSection",
         "withdrawSection",
         "sendSection",
         "receiveSection",
         "tradeSection"
+
     ];
 
-    sections.forEach(function (id) {
 
-        const section =
-            document.getElementById(id);
+    sections.forEach(
+        function (id) {
 
-        if (section) {
-            section.style.display = "none";
+            const section =
+                document.getElementById(id);
+
+            if (section) {
+
+                section.style.display =
+                    "none";
+
+            }
+
         }
-
-    });
+    );
 
 
     const selected =
-        document.getElementById(sectionId);
+        document.getElementById(
+            sectionId
+        );
+
 
     if (selected) {
 
-        selected.style.display = "block";
+        selected.style.display =
+            "block";
 
         selected.scrollIntoView({
+
             behavior: "smooth",
             block: "start"
+
         });
 
-    } else {
+    }
+    else {
 
         console.warn(
             "Section not found:",
@@ -196,12 +255,17 @@ async function loadCurrentUser() {
         return;
     }
 
+
     try {
 
         const {
             data,
             error
-        } = await supabaseClient.auth.getUser();
+        } =
+            await supabaseClient
+                .auth
+                .getUser();
+
 
         if (error) {
 
@@ -214,7 +278,8 @@ async function loadCurrentUser() {
         }
 
 
-        currentUser = data.user || null;
+        currentUser =
+            data.user || null;
 
 
         if (currentUser) {
@@ -226,13 +291,17 @@ async function loadCurrentUser() {
 
             await loadWalletBalance();
 
-        } else {
+        }
+        else {
 
-            console.log("No logged-in user");
+            console.log(
+                "No logged-in user"
+            );
 
         }
 
-    } catch (error) {
+    }
+    catch (error) {
 
         console.error(
             "User loading error:",
@@ -251,20 +320,29 @@ async function loadCurrentUser() {
 async function loadWalletBalance() {
 
     if (!currentUser) {
-        console.log("No current user");
+
+        console.log(
+            "No current user"
+        );
+
         return;
     }
+
 
     try {
 
         const {
             data,
             error
-        } = await supabaseClient
-            .from("wallets")
-            .select("*")
-            .eq("user_id", currentUser.id)
-            .maybeSingle();
+        } =
+            await supabaseClient
+                .from("wallets")
+                .select("*")
+                .eq(
+                    "user_id",
+                    currentUser.id
+                )
+                .maybeSingle();
 
 
         if (error) {
@@ -294,10 +372,15 @@ async function loadWalletBalance() {
 
 
         const usdt =
-            Number(data.usdt_balance || 0);
+            Number(
+                data.usdt_balance || 0
+            );
+
 
         const diamonds =
-            Number(data.diamond_balance || 0);
+            Number(
+                data.diamond_balance || 0
+            );
 
 
         updateBalance(
@@ -305,8 +388,8 @@ async function loadWalletBalance() {
             diamonds
         );
 
-
-    } catch (error) {
+    }
+    catch (error) {
 
         console.error(
             "Balance error:",
@@ -319,53 +402,78 @@ async function loadWalletBalance() {
 
 
 /* =====================================================
-   UPDATE BALANCE ON PAGE
+   UPDATE BALANCE
 ===================================================== */
 
-function updateBalance(usdt, diamonds) {
+function updateBalance(
+    usdt,
+    diamonds
+) {
 
     const usdtElements = [
 
-        document.getElementById("usdtBalance"),
-        document.getElementById("balanceUSDT"),
-        document.getElementById("walletBalance")
+        document.getElementById(
+            "usdtBalance"
+        ),
+
+        document.getElementById(
+            "balanceUSDT"
+        ),
+
+        document.getElementById(
+            "walletBalance"
+        )
 
     ];
 
 
-    usdtElements.forEach(function (element) {
+    usdtElements.forEach(
+        function (element) {
 
-        if (element) {
+            if (element) {
 
-            element.textContent =
-                Number(usdt).toFixed(2) +
-                " USDT";
+                element.textContent =
+                    Number(usdt)
+                        .toFixed(2) +
+                    " USDT";
+
+            }
 
         }
-
-    });
+    );
 
 
     const diamondElements = [
 
-        document.getElementById("diamondBalance"),
-        document.getElementById("balanceDiamond"),
-        document.getElementById("walletDiamondBalance")
+        document.getElementById(
+            "diamondBalance"
+        ),
+
+        document.getElementById(
+            "balanceDiamond"
+        ),
+
+        document.getElementById(
+            "walletDiamondBalance"
+        )
 
     ];
 
 
-    diamondElements.forEach(function (element) {
+    diamondElements.forEach(
+        function (element) {
 
-        if (element) {
+            if (element) {
 
-            element.textContent =
-                Number(diamonds).toFixed(0) +
-                " 💎";
+                element.textContent =
+                    Number(diamonds)
+                        .toFixed(0) +
+                    " 💎";
+
+            }
 
         }
-
-    });
+    );
 
 }
 
@@ -384,25 +492,36 @@ function toggleBalance() {
 
 
     const usdtElement =
-        document.getElementById("usdtBalance");
+        document.getElementById(
+            "usdtBalance"
+        );
+
 
     const diamondElement =
-        document.getElementById("diamondBalance");
+        document.getElementById(
+            "diamondBalance"
+        );
 
 
     if (!balanceVisible) {
 
         if (usdtElement) {
+
             usdtElement.textContent =
                 "•••• USDT";
+
         }
+
 
         if (diamondElement) {
+
             diamondElement.textContent =
                 "•••• 💎";
+
         }
 
-    } else {
+    }
+    else {
 
         loadWalletBalance();
 
@@ -486,11 +605,15 @@ async function logoutWallet() {
         return;
     }
 
+
     try {
 
         const {
             error
-        } = await supabaseClient.auth.signOut();
+        } =
+            await supabaseClient
+                .auth
+                .signOut();
 
 
         if (error) {
@@ -504,13 +627,15 @@ async function logoutWallet() {
         }
 
 
-        currentUser = null;
+        currentUser =
+            null;
+
 
         window.location.href =
             "index.html";
 
-
-    } catch (error) {
+    }
+    catch (error) {
 
         console.error(
             "Logout failed:",

@@ -3721,3 +3721,3771 @@
     - Share
     - Modal controls
   -->
+
+<script>
+/* =========================================================
+   P2P SOCIAL LIVE ROOM
+   PART 2 — JAVASCRIPT CORE
+   ========================================================= */
+
+"use strict";
+
+/* =========================================================
+   1. SUPABASE CONFIG
+   ========================================================= */
+
+const SUPABASE_URL = "YOUR_SUPABASE_URL";
+const SUPABASE_PUBLISHABLE_KEY = "YOUR_SUPABASE_PUBLISHABLE_KEY";
+
+let supabaseClient = null;
+
+if (
+    SUPABASE_URL &&
+    SUPABASE_URL !== "YOUR_SUPABASE_URL" &&
+    SUPABASE_PUBLISHABLE_KEY &&
+    SUPABASE_PUBLISHABLE_KEY !== "YOUR_SUPABASE_PUBLISHABLE_KEY"
+) {
+    supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
+    );
+}
+
+
+/* =========================================================
+   2. GLOBAL STATE
+   ========================================================= */
+
+const LiveState = {
+
+    user: null,
+
+    profile: null,
+
+    room: null,
+
+    roomId: null,
+
+    hostId: null,
+
+    isHost: false,
+
+    isFollowing: false,
+
+    isMuted: false,
+
+    isCameraOn: false,
+
+    isMicOn: false,
+
+    isSpeakerOn: true,
+
+    isSeated: false,
+
+    isChatMuted: false,
+
+    isLoading: false,
+
+    viewerCount: 0,
+
+    diamondBalance: 0,
+
+    messages: [],
+
+    participants: [],
+
+    gifts: [],
+
+    channels: {},
+
+    subscriptions: [],
+
+    heartbeatTimer: null,
+
+    presenceTimer: null,
+
+    roomChannel: null,
+
+    presenceChannel: null,
+
+    chatChannel: null,
+
+    giftChannel: null,
+
+    currentGift: null,
+
+    selectedSeat: null,
+
+    pageReady: false
+
+};
+
+
+/* =========================================================
+   3. DOM HELPERS
+   ========================================================= */
+
+function $(selector) {
+    return document.querySelector(selector);
+}
+
+function $$(selector) {
+    return Array.from(document.querySelectorAll(selector));
+}
+
+function getElement(id) {
+    return document.getElementById(id);
+}
+
+function safeText(value) {
+
+    if (value === null || value === undefined) {
+        return "";
+    }
+
+    return String(value);
+}
+
+function escapeHTML(value) {
+
+    return safeText(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+/* =========================================================
+   4. URL / ROOM ID
+   ========================================================= */
+
+function getRoomIdFromURL() {
+
+    const params = new URLSearchParams(
+        window.location.search
+    );
+
+    const id =
+        params.get("room") ||
+        params.get("room_id") ||
+        params.get("id");
+
+    return id;
+}
+
+function getRoomId() {
+
+    if (LiveState.roomId) {
+        return LiveState.roomId;
+    }
+
+    const urlId = getRoomIdFromURL();
+
+    if (urlId) {
+        LiveState.roomId = urlId;
+        return urlId;
+    }
+
+    const roomElement = getElement("roomId");
+
+    if (roomElement) {
+        LiveState.roomId =
+            roomElement.dataset.roomId ||
+            roomElement.value ||
+            roomElement.textContent.trim();
+    }
+
+    return LiveState.roomId;
+}
+
+
+/* =========================================================
+   5. TOAST
+   ========================================================= */
+
+let toastTimer = null;
+
+function showToast(message, type = "info") {
+
+    let toast = getElement("liveToast");
+
+    if (!toast) {
+
+        toast = document.createElement("div");
+
+        toast.id = "liveToast";
+
+        toast.className = "live-toast";
+
+        document.body.appendChild(toast);
+    }
+
+    toast.textContent = message;
+
+    toast.dataset.type = type;
+
+    toast.classList.add("show");
+
+    clearTimeout(toastTimer);
+
+    toastTimer = setTimeout(() => {
+
+        toast.classList.remove("show");
+
+    }, 2800);
+}
+
+
+/* =========================================================
+   6. LOADING
+   ========================================================= */
+
+function setLoading(state, text = "Loading...") {
+
+    LiveState.isLoading = state;
+
+    const loader =
+        getElement("loadingOverlay");
+
+    const loaderText =
+        getElement("loadingText");
+
+    if (loaderText) {
+        loaderText.textContent = text;
+    }
+
+    if (loader) {
+
+        loader.classList.toggle(
+            "show",
+            state
+        );
+    }
+}
+
+
+/* =========================================================
+   7. FORMATTERS
+   ========================================================= */
+
+function formatNumber(number) {
+
+    const value = Number(number) || 0;
+
+    if (value >= 1000000000) {
+        return (
+            (value / 1000000000)
+                .toFixed(1)
+                .replace(".0", "") +
+            "B"
+        );
+    }
+
+    if (value >= 1000000) {
+        return (
+            (value / 1000000)
+                .toFixed(1)
+                .replace(".0", "") +
+            "M"
+        );
+    }
+
+    if (value >= 1000) {
+        return (
+            (value / 1000)
+                .toFixed(1)
+                .replace(".0", "") +
+            "K"
+        );
+    }
+
+    return String(value);
+}
+
+function formatTime(seconds) {
+
+    const value = Math.max(
+        0,
+        Number(seconds) || 0
+    );
+
+    const h =
+        Math.floor(value / 3600);
+
+    const m =
+        Math.floor(
+            (value % 3600) / 60
+        );
+
+    const s =
+        Math.floor(value % 60);
+
+    if (h > 0) {
+
+        return [
+            String(h).padStart(2, "0"),
+            String(m).padStart(2, "0"),
+            String(s).padStart(2, "0")
+        ].join(":");
+    }
+
+    return [
+        String(m).padStart(2, "0"),
+        String(s).padStart(2, "0")
+    ].join(":");
+}
+
+
+/* =========================================================
+   8. AVATAR HELPERS
+   ========================================================= */
+
+function avatarHTML(
+    avatar,
+    name,
+    className = ""
+) {
+
+    const safeName =
+        escapeHTML(name || "User");
+
+    const safeAvatar =
+        escapeHTML(avatar || "");
+
+    if (safeAvatar) {
+
+        return `
+            <img
+                class="${className}"
+                src="${safeAvatar}"
+                alt="${safeName}"
+                loading="lazy"
+                onerror="
+                    this.style.display='none';
+                    this.nextElementSibling.style.display='flex';
+                "
+            >
+            <span
+                class="${className} avatar-fallback"
+                style="display:none"
+            >
+                ${safeName.charAt(0).toUpperCase()}
+            </span>
+        `;
+    }
+
+    return `
+        <span class="${className} avatar-fallback">
+            ${safeName.charAt(0).toUpperCase()}
+        </span>
+    `;
+}
+
+
+/* =========================================================
+   9. CURRENT USER
+   ========================================================= */
+
+async function loadCurrentUser() {
+
+    if (!supabaseClient) {
+
+        console.warn(
+            "Supabase is not configured."
+        );
+
+        return null;
+    }
+
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient.auth.getUser();
+
+        if (error) {
+            throw error;
+        }
+
+        LiveState.user =
+            data?.user || null;
+
+        return LiveState.user;
+
+    } catch (error) {
+
+        console.error(
+            "Auth error:",
+            error
+        );
+
+        showToast(
+            "Unable to verify login.",
+            "error"
+        );
+
+        return null;
+    }
+}
+
+
+/* =========================================================
+   10. LOAD PROFILE
+   ========================================================= */
+
+async function loadMyProfile() {
+
+    if (
+        !supabaseClient ||
+        !LiveState.user
+    ) {
+        return null;
+    }
+
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .from("profiles")
+                .select(`
+                    id,
+                    username,
+                    display_name,
+                    avatar_url
+                `)
+                .eq(
+                    "id",
+                    LiveState.user.id
+                )
+                .maybeSingle();
+
+        if (error) {
+            throw error;
+        }
+
+        LiveState.profile = data;
+
+        return data;
+
+    } catch (error) {
+
+        console.error(
+            "Profile loading failed:",
+            error
+        );
+
+        return null;
+    }
+}
+
+
+/* =========================================================
+   11. LOAD ROOM
+   ========================================================= */
+
+async function loadRoom() {
+
+    const roomId = getRoomId();
+
+    if (!roomId) {
+
+        showToast(
+            "Live room not found.",
+            "error"
+        );
+
+        return null;
+    }
+
+    if (!supabaseClient) {
+
+        console.warn(
+            "Using demo room because Supabase is not configured."
+        );
+
+        createDemoRoom();
+
+        return LiveState.room;
+    }
+
+    try {
+
+        setLoading(
+            true,
+            "Opening live room..."
+        );
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .from("live_rooms")
+                .select("*")
+                .eq("id", roomId)
+                .maybeSingle();
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data) {
+
+            showToast(
+                "This live room does not exist.",
+                "error"
+            );
+
+            return null;
+        }
+
+        LiveState.room = data;
+
+        LiveState.hostId =
+            data.host_id ||
+            data.owner_id;
+
+        LiveState.isHost =
+            LiveState.user &&
+            LiveState.hostId ===
+            LiveState.user.id;
+
+        renderRoom(data);
+
+        return data;
+
+    } catch (error) {
+
+        console.error(
+            "Room loading failed:",
+            error
+        );
+
+        showToast(
+            "Could not load live room.",
+            "error"
+        );
+
+        return null;
+
+    } finally {
+
+        setLoading(false);
+    }
+}
+
+
+/* =========================================================
+   12. DEMO ROOM
+   ========================================================= */
+
+function createDemoRoom() {
+
+    LiveState.room = {
+
+        id: "demo",
+
+        title: "P2P Social Live",
+
+        category: "Chat",
+
+        host_id: null,
+
+        status: "live",
+
+        viewer_count: 128,
+
+        description:
+            "Welcome to P2P Social live room.",
+
+        created_at:
+            new Date().toISOString()
+    };
+
+    LiveState.hostId = null;
+
+    LiveState.viewerCount = 128;
+
+    renderRoom(
+        LiveState.room
+    );
+
+    renderDemoParticipants();
+}
+
+
+/* =========================================================
+   13. RENDER ROOM
+   ========================================================= */
+
+function renderRoom(room) {
+
+    if (!room) {
+        return;
+    }
+
+    const title =
+        room.title ||
+        room.name ||
+        "Live Room";
+
+    const category =
+        room.category ||
+        "Live";
+
+    const titleElements =
+        $$("[data-room-title]");
+
+    titleElements.forEach(
+        element => {
+            element.textContent =
+                title;
+        }
+    );
+
+    const categoryElements =
+        $$("[data-room-category]");
+
+    categoryElements.forEach(
+        element => {
+            element.textContent =
+                category;
+        }
+    );
+
+    const viewer =
+        Number(
+            room.viewer_count ||
+            room.viewers ||
+            0
+        );
+
+    LiveState.viewerCount =
+        viewer;
+
+    updateViewerCount();
+}
+
+
+/* =========================================================
+   14. VIEWER COUNT
+   ========================================================= */
+
+function updateViewerCount() {
+
+    const elements =
+        $$("[data-viewer-count]");
+
+    elements.forEach(
+        element => {
+
+            element.textContent =
+                formatNumber(
+                    LiveState.viewerCount
+                );
+        }
+    );
+
+    const count =
+        getElement("viewerCount");
+
+    if (count) {
+
+        count.textContent =
+            formatNumber(
+                LiveState.viewerCount
+            );
+    }
+}
+
+
+/* =========================================================
+   15. DIAMOND BALANCE
+   ========================================================= */
+
+async function loadDiamondBalance() {
+
+    if (
+        !supabaseClient ||
+        !LiveState.user
+    ) {
+
+        LiveState.diamondBalance = 0;
+
+        updateDiamondBalance();
+
+        return;
+    }
+
+    try {
+
+        /*
+         IMPORTANT:
+
+         Do not allow the browser to update
+         the authoritative diamond balance.
+
+         The balance should be controlled by
+         secure backend/database logic.
+        */
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .from("diamond_wallets")
+                .select("balance")
+                .eq(
+                    "user_id",
+                    LiveState.user.id
+                )
+                .maybeSingle();
+
+        if (error) {
+            throw error;
+        }
+
+        LiveState.diamondBalance =
+            Number(
+                data?.balance || 0
+            );
+
+        updateDiamondBalance();
+
+    } catch (error) {
+
+        console.error(
+            "Diamond balance error:",
+            error
+        );
+
+        LiveState.diamondBalance = 0;
+
+        updateDiamondBalance();
+    }
+}
+
+
+/* =========================================================
+   16. UPDATE DIAMOND UI
+   ========================================================= */
+
+function updateDiamondBalance() {
+
+    const elements =
+        $$("[data-diamond-balance]");
+
+    elements.forEach(
+        element => {
+
+            element.textContent =
+                formatNumber(
+                    LiveState.diamondBalance
+                );
+        }
+    );
+
+    const element =
+        getElement("diamondBalance");
+
+    if (element) {
+
+        element.textContent =
+            formatNumber(
+                LiveState.diamondBalance
+            );
+    }
+}
+
+
+/* =========================================================
+   17. FOLLOW STATUS
+   ========================================================= */
+
+async function loadFollowStatus() {
+
+    if (
+        !supabaseClient ||
+        !LiveState.user ||
+        !LiveState.hostId
+    ) {
+        return;
+    }
+
+    if (
+        LiveState.user.id ===
+        LiveState.hostId
+    ) {
+
+        LiveState.isFollowing =
+            false;
+
+        updateFollowButton();
+
+        return;
+    }
+
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .from("follows")
+                .select("id")
+                .eq(
+                    "follower_id",
+                    LiveState.user.id
+                )
+                .eq(
+                    "following_id",
+                    LiveState.hostId
+                )
+                .maybeSingle();
+
+        if (error) {
+            throw error;
+        }
+
+        LiveState.isFollowing =
+            Boolean(data);
+
+        updateFollowButton();
+
+    } catch (error) {
+
+        console.error(
+            "Follow status error:",
+            error
+        );
+    }
+}
+
+
+/* =========================================================
+   18. FOLLOW BUTTON
+   ========================================================= */
+
+function updateFollowButton() {
+
+    const buttons =
+        $$("[data-follow-button]");
+
+    buttons.forEach(
+        button => {
+
+            button.textContent =
+                LiveState.isFollowing
+                    ? "Following"
+                    : "Follow";
+
+            button.classList.toggle(
+                "following",
+                LiveState.isFollowing
+            );
+        }
+    );
+}
+
+
+/* =========================================================
+   19. FOLLOW / UNFOLLOW
+   ========================================================= */
+
+async function toggleFollow() {
+
+    if (!LiveState.user) {
+
+        showToast(
+            "Please login first.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (!LiveState.hostId) {
+
+        showToast(
+            "Host information unavailable.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (
+        LiveState.user.id ===
+        LiveState.hostId
+    ) {
+
+        showToast(
+            "You cannot follow yourself."
+        );
+
+        return;
+    }
+
+    if (!supabaseClient) {
+
+        LiveState.isFollowing =
+            !LiveState.isFollowing;
+
+        updateFollowButton();
+
+        showToast(
+            LiveState.isFollowing
+                ? "Followed"
+                : "Unfollowed"
+        );
+
+        return;
+    }
+
+    try {
+
+        setLoading(
+            true,
+            LiveState.isFollowing
+                ? "Unfollowing..."
+                : "Following..."
+        );
+
+        if (LiveState.isFollowing) {
+
+            const {
+                error
+            } =
+                await supabaseClient
+                    .from("follows")
+                    .delete()
+                    .eq(
+                        "follower_id",
+                        LiveState.user.id
+                    )
+                    .eq(
+                        "following_id",
+                        LiveState.hostId
+                    );
+
+            if (error) {
+                throw error;
+            }
+
+            LiveState.isFollowing =
+                false;
+
+        } else {
+
+            const {
+                error
+            } =
+                await supabaseClient
+                    .from("follows")
+                    .insert({
+
+                        follower_id:
+                            LiveState.user.id,
+
+                        following_id:
+                            LiveState.hostId
+                    });
+
+            if (error) {
+                throw error;
+            }
+
+            LiveState.isFollowing =
+                true;
+        }
+
+        updateFollowButton();
+
+    } catch (error) {
+
+        console.error(
+            "Follow action failed:",
+            error
+        );
+
+        showToast(
+            "Follow action failed.",
+            "error"
+        );
+
+    } finally {
+
+        setLoading(false);
+    }
+}
+
+
+/* =========================================================
+   20. CHAT INPUT
+   ========================================================= */
+
+function getChatInput() {
+
+    return (
+        getElement("chatInput") ||
+        $("[data-chat-input]")
+    );
+}
+
+
+/* =========================================================
+   21. SEND CHAT
+   ========================================================= */
+
+async function sendChatMessage() {
+
+    const input =
+        getChatInput();
+
+    if (!input) {
+        return;
+    }
+
+    const message =
+        input.value.trim();
+
+    if (!message) {
+        return;
+    }
+
+    if (message.length > 500) {
+
+        showToast(
+            "Message is too long.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (!LiveState.user) {
+
+        showToast(
+            "Please login to chat.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (LiveState.isChatMuted) {
+
+        showToast(
+            "Chat is muted."
+        );
+
+        return;
+    }
+
+    try {
+
+        input.disabled = true;
+
+        if (!supabaseClient) {
+
+            addLocalMessage({
+
+                id:
+                    crypto.randomUUID(),
+
+                user_id:
+                    LiveState.user.id,
+
+                username:
+                    LiveState.profile?.username ||
+                    "You",
+
+                display_name:
+                    LiveState.profile?.display_name ||
+                    "You",
+
+                avatar_url:
+                    LiveState.profile?.avatar_url ||
+                    "",
+
+                message,
+
+                created_at:
+                    new Date().toISOString()
+            });
+
+            input.value = "";
+
+            return;
+        }
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .from("live_messages")
+                .insert({
+
+                    room_id:
+                        LiveState.roomId,
+
+                    user_id:
+                        LiveState.user.id,
+
+                    message
+                })
+                .select()
+                .single();
+
+        if (error) {
+            throw error;
+        }
+
+        input.value = "";
+
+        if (data) {
+
+            addLocalMessage(
+                data
+            );
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Chat error:",
+            error
+        );
+
+        showToast(
+            "Message could not be sent.",
+            "error"
+        );
+
+    } finally {
+
+        input.disabled = false;
+
+        input.focus();
+    }
+}
+
+
+/* =========================================================
+   22. ADD CHAT MESSAGE
+   ========================================================= */
+
+function addLocalMessage(message) {
+
+    if (!message) {
+        return;
+    }
+
+    LiveState.messages.push(
+        message
+    );
+
+    if (
+        LiveState.messages.length >
+        100
+    ) {
+
+        LiveState.messages.shift();
+    }
+
+    renderChatMessage(
+        message
+    );
+}
+
+
+/* =========================================================
+   23. RENDER CHAT MESSAGE
+   ========================================================= */
+
+function renderChatMessage(message) {
+
+    const container =
+        getElement("chatMessages") ||
+        $("[data-chat-messages]");
+
+    if (!container) {
+        return;
+    }
+
+    const name =
+        message.display_name ||
+        message.username ||
+        "User";
+
+    const text =
+        message.message ||
+        "";
+
+    const avatar =
+        message.avatar_url ||
+        "";
+
+    const row =
+        document.createElement("div");
+
+    row.className =
+        "chat-message";
+
+    row.dataset.messageId =
+        message.id || "";
+
+    row.innerHTML = `
+
+        <div class="chat-avatar">
+
+            ${avatarHTML(
+                avatar,
+                name,
+                "avatar-image"
+            )}
+
+        </div>
+
+        <div class="chat-content">
+
+            <div class="chat-name">
+
+                ${escapeHTML(name)}
+
+            </div>
+
+            <div class="chat-text">
+
+                ${escapeHTML(text)}
+
+            </div>
+
+        </div>
+
+    `;
+
+    container.appendChild(
+        row
+    );
+
+    container.scrollTop =
+        container.scrollHeight;
+}
+
+
+/* =========================================================
+   24. LOAD CHAT HISTORY
+   ========================================================= */
+
+async function loadChatHistory() {
+
+    if (!supabaseClient) {
+        return;
+    }
+
+    if (!LiveState.roomId) {
+        return;
+    }
+
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .from("live_messages")
+                .select(`
+                    id,
+                    room_id,
+                    user_id,
+                    message,
+                    created_at
+                `)
+                .eq(
+                    "room_id",
+                    LiveState.roomId
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending: true
+                    }
+                )
+                .limit(100);
+
+        if (error) {
+            throw error;
+        }
+
+        const container =
+            getElement("chatMessages") ||
+            $("[data-chat-messages]");
+
+        if (container) {
+            container.innerHTML = "";
+        }
+
+        LiveState.messages = [];
+
+        for (
+            const message of data || []
+        ) {
+
+            LiveState.messages.push(
+                message
+            );
+
+            renderChatMessage(
+                message
+            );
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Chat history error:",
+            error
+        );
+    }
+}
+
+
+/* =========================================================
+   25. REALTIME CHAT
+   ========================================================= */
+
+function subscribeToChat() {
+
+    if (!supabaseClient) {
+        return;
+    }
+
+    if (!LiveState.roomId) {
+        return;
+    }
+
+    if (LiveState.chatChannel) {
+
+        supabaseClient.removeChannel(
+            LiveState.chatChannel
+        );
+    }
+
+    LiveState.chatChannel =
+        supabaseClient
+            .channel(
+                "live-chat-" +
+                LiveState.roomId
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "INSERT",
+                    schema: "public",
+                    table: "live_messages",
+                    filter:
+                        "room_id=eq." +
+                        LiveState.roomId
+                },
+                payload => {
+
+                    const message =
+                        payload.new;
+
+                    if (
+                        LiveState.messages
+                            .some(
+                                item =>
+                                    item.id ===
+                                    message.id
+                            )
+                    ) {
+                        return;
+                    }
+
+                    addLocalMessage(
+                        message
+                    );
+                }
+            )
+            .subscribe(
+                status => {
+
+                    console.log(
+                        "Chat realtime:",
+                        status
+                    );
+                }
+            );
+}
+
+
+/* =========================================================
+   26. PRESENCE
+   ========================================================= */
+
+async function joinPresence() {
+
+    if (!supabaseClient) {
+
+        updateViewerCount();
+
+        return;
+    }
+
+    if (!LiveState.roomId) {
+        return;
+    }
+
+    if (LiveState.presenceChannel) {
+
+        await supabaseClient
+            .removeChannel(
+                LiveState.presenceChannel
+            );
+    }
+
+    LiveState.presenceChannel =
+        supabaseClient
+            .channel(
+                "live-presence-" +
+                LiveState.roomId,
+                {
+                    config: {
+                        presence: {
+                            key:
+                                LiveState.user?.id ||
+                                crypto.randomUUID()
+                        }
+                    }
+                }
+            );
+
+    LiveState.presenceChannel
+        .on(
+            "presence",
+            {
+                event: "sync"
+            },
+            () => {
+
+                const state =
+                    LiveState
+                        .presenceChannel
+                        .presenceState();
+
+                let total = 0;
+
+                Object.keys(state)
+                    .forEach(
+                        key => {
+
+                            total +=
+                                state[key]
+                                    .length;
+                        }
+                    );
+
+                LiveState.viewerCount =
+                    Math.max(
+                        total,
+                        1
+                    );
+
+                updateViewerCount();
+            }
+        )
+        .on(
+            "presence",
+            {
+                event: "join"
+            },
+            payload => {
+
+                console.log(
+                    "Viewer joined:",
+                    payload
+                );
+            }
+        )
+        .on(
+            "presence",
+            {
+                event: "leave"
+            },
+            payload => {
+
+                console.log(
+                    "Viewer left:",
+                    payload
+                );
+            }
+        )
+        .subscribe(
+            async status => {
+
+                if (
+                    status ===
+                    "SUBSCRIBED"
+                ) {
+
+                    try {
+
+                        await LiveState
+                            .presenceChannel
+                            .track({
+
+                                user_id:
+                                    LiveState.user?.id ||
+                                    null,
+
+                                online_at:
+                                    new Date()
+                                        .toISOString(),
+
+                                room_id:
+                                    LiveState.roomId
+                            });
+
+                    } catch (error) {
+
+                        console.error(
+                            "Presence track error:",
+                            error
+                        );
+                    }
+                }
+            }
+        );
+}
+
+
+/* =========================================================
+   27. HEARTBEAT
+   ========================================================= */
+
+function startHeartbeat() {
+
+    stopHeartbeat();
+
+    LiveState.heartbeatTimer =
+        setInterval(
+            () => {
+
+                if (
+                    LiveState.presenceChannel &&
+                    LiveState.user
+                ) {
+
+                    LiveState.presenceChannel
+                        .track({
+
+                            user_id:
+                                LiveState.user.id,
+
+                            online_at:
+                                new Date()
+                                    .toISOString(),
+
+                            room_id:
+                                LiveState.roomId,
+
+                            status:
+                                "online"
+                        })
+                        .catch(
+                            error => {
+                                console.error(
+                                    "Heartbeat error:",
+                                    error
+                                );
+                            }
+                        );
+                }
+
+            },
+            30000
+        );
+}
+
+function stopHeartbeat() {
+
+    if (
+        LiveState.heartbeatTimer
+    ) {
+
+        clearInterval(
+            LiveState.heartbeatTimer
+        );
+
+        LiveState.heartbeatTimer =
+            null;
+    }
+}
+
+
+/* =========================================================
+   28. PARTICIPANTS
+   ========================================================= */
+
+async function loadParticipants() {
+
+    if (!supabaseClient) {
+
+        renderDemoParticipants();
+
+        return;
+    }
+
+    if (!LiveState.roomId) {
+        return;
+    }
+
+    try {
+
+        /*
+         Participant data should be
+         read from the live-room system.
+
+         Camera/microphone media itself
+         must NOT be trusted from database
+         fields.
+        */
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .from("live_room_participants")
+                .select(`
+                    id,
+                    room_id,
+                    user_id,
+                    seat_number,
+                    status
+                `)
+                .eq(
+                    "room_id",
+                    LiveState.roomId
+                )
+                .order(
+                    "seat_number",
+                    {
+                        ascending: true
+                    }
+                );
+
+        if (error) {
+            throw error;
+        }
+
+        LiveState.participants =
+            data || [];
+
+        renderParticipants();
+
+    } catch (error) {
+
+        console.error(
+            "Participants error:",
+            error
+        );
+
+        renderDemoParticipants();
+    }
+}
+
+
+/* =========================================================
+   29. DEMO PARTICIPANTS
+   ========================================================= */
+
+function renderDemoParticipants() {
+
+    LiveState.participants = [
+
+        {
+            seat_number: 1,
+            user_id: "demo-1",
+            username: "Host",
+            display_name: "Host",
+            avatar_url: "",
+            status: "speaking"
+        },
+
+        {
+            seat_number: 2,
+            user_id: "demo-2",
+            username: "Guest01",
+            display_name: "Guest01",
+            avatar_url: "",
+            status: "online"
+        },
+
+        {
+            seat_number: 3,
+            user_id: "demo-3",
+            username: "Guest02",
+            display_name: "Guest02",
+            avatar_url: "",
+            status: "online"
+        },
+
+        {
+            seat_number: 4,
+            user_id: "demo-4",
+            username: "Guest03",
+            display_name: "Guest03",
+            avatar_url: "",
+            status: "muted"
+        },
+
+        {
+            seat_number: 5,
+            user_id: "demo-5",
+            username: "Guest04",
+            display_name: "Guest04",
+            avatar_url: "",
+            status: "online"
+        },
+
+        {
+            seat_number: 6,
+            user_id: "demo-6",
+            username: "Guest05",
+            display_name: "Guest05",
+            avatar_url: "",
+            status: "online"
+        }
+    ];
+
+    renderParticipants();
+}
+
+
+/* =========================================================
+   30. RENDER PARTICIPANTS
+   ========================================================= */
+
+function renderParticipants() {
+
+    const container =
+        getElement("seatGrid") ||
+        $("[data-seat-grid]");
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = "";
+
+    const maximumSeats = 12;
+
+    for (
+        let seat = 1;
+        seat <= maximumSeats;
+        seat++
+    ) {
+
+        const participant =
+            LiveState.participants.find(
+                item =>
+                    Number(
+                        item.seat_number
+                    ) === seat
+            );
+
+        const element =
+            document.createElement("div");
+
+        element.className =
+            "live-seat";
+
+        element.dataset.seat =
+            seat;
+
+        if (participant) {
+
+            const name =
+                participant.display_name ||
+                participant.username ||
+                "Guest";
+
+            const speaking =
+                participant.status ===
+                "speaking";
+
+            element.innerHTML = `
+
+                <div class="
+                    seat-avatar
+                    ${speaking
+                        ? "speaking"
+                        : ""}
+                ">
+
+                    ${avatarHTML(
+                        participant.avatar_url,
+                        name,
+                        "seat-image"
+                    )}
+
+                </div>
+
+                <div class="seat-name">
+
+                    ${escapeHTML(name)}
+
+                </div>
+
+                <div class="seat-status">
+
+                    ${
+                        participant.status ===
+                        "muted"
+                            ? "🔇"
+                            : "🎙️"
+                    }
+
+                </div>
+            `;
+
+        } else {
+
+            element.classList.add(
+                "empty-seat"
+            );
+
+            element.innerHTML = `
+
+                <div class="empty-seat-icon">
+                    +
+                </div>
+
+                <div class="seat-name">
+                    Empty
+                </div>
+
+            `;
+        }
+
+        container.appendChild(
+            element
+        );
+    }
+}
+
+
+/* =========================================================
+   31. REQUEST SEAT
+   ========================================================= */
+
+async function requestSeat(
+    seatNumber
+) {
+
+    if (!LiveState.user) {
+
+        showToast(
+            "Please login first.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (!LiveState.roomId) {
+        return;
+    }
+
+    if (LiveState.isSeated) {
+
+        showToast(
+            "You already have a seat."
+        );
+
+        return;
+    }
+
+    try {
+
+        setLoading(
+            true,
+            "Requesting seat..."
+        );
+
+        if (!supabaseClient) {
+
+            LiveState.isSeated =
+                true;
+
+            LiveState.selectedSeat =
+                seatNumber;
+
+            showToast(
+                "Seat requested."
+            );
+
+            return;
+        }
+
+        /*
+         Do not directly insert arbitrary
+         participant rows if your security
+         policy requires server-side control.
+
+         Preferred implementation:
+         call a SECURITY DEFINER RPC
+         that validates the room,
+         availability, bans, limits,
+         and user authorization.
+        */
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient.rpc(
+                "request_live_seat",
+                {
+                    p_room_id:
+                        LiveState.roomId,
+
+                    p_seat_number:
+                        Number(seatNumber)
+                }
+            );
+
+        if (error) {
+            throw error;
+        }
+
+        LiveState.isSeated =
+            true;
+
+        LiveState.selectedSeat =
+            seatNumber;
+
+        showToast(
+            "Seat request accepted.",
+            "success"
+        );
+
+        await loadParticipants();
+
+    } catch (error) {
+
+        console.error(
+            "Seat request error:",
+            error
+        );
+
+        showToast(
+            error?.message ||
+            "Seat request failed.",
+            "error"
+        );
+
+    } finally {
+
+        setLoading(false);
+    }
+}
+
+
+/* =========================================================
+   32. LEAVE SEAT
+   ========================================================= */
+
+async function leaveSeat() {
+
+    if (!LiveState.isSeated) {
+        return;
+    }
+
+    try {
+
+        if (
+            supabaseClient &&
+            LiveState.roomId
+        ) {
+
+            const {
+                error
+            } =
+                await supabaseClient.rpc(
+                    "leave_live_seat",
+                    {
+                        p_room_id:
+                            LiveState.roomId
+                    }
+                );
+
+            if (error) {
+                throw error;
+            }
+        }
+
+        LiveState.isSeated =
+            false;
+
+        LiveState.selectedSeat =
+            null;
+
+        showToast(
+            "You left the seat."
+        );
+
+        await loadParticipants();
+
+    } catch (error) {
+
+        console.error(
+            "Leave seat error:",
+            error
+        );
+
+        showToast(
+            "Could not leave seat.",
+            "error"
+        );
+    }
+}
+
+
+/* =========================================================
+   33. MIC CONTROL
+   ========================================================= */
+
+function toggleMic() {
+
+    LiveState.isMicOn =
+        !LiveState.isMicOn;
+
+    const buttons =
+        $$("[data-mic-button]");
+
+    buttons.forEach(
+        button => {
+
+            button.classList.toggle(
+                "active",
+                LiveState.isMicOn
+            );
+
+            button.setAttribute(
+                "aria-pressed",
+                String(
+                    LiveState.isMicOn
+                )
+            );
+
+            button.textContent =
+                LiveState.isMicOn
+                    ? "🎙️"
+                    : "🔇";
+        }
+    );
+
+    showToast(
+        LiveState.isMicOn
+            ? "Microphone on"
+            : "Microphone off"
+    );
+
+    /*
+     Real microphone publishing belongs
+     to the WebRTC/media layer.
+
+     Do not treat this boolean as proof
+     that audio is actually being published.
+    */
+}
+
+
+/* =========================================================
+   34. SPEAKER CONTROL
+   ========================================================= */
+
+function toggleSpeaker() {
+
+    LiveState.isSpeakerOn =
+        !LiveState.isSpeakerOn;
+
+    const buttons =
+        $$("[data-speaker-button]");
+
+    buttons.forEach(
+        button => {
+
+            button.classList.toggle(
+                "active",
+                LiveState.isSpeakerOn
+            );
+
+            button.textContent =
+                LiveState.isSpeakerOn
+                    ? "🔊"
+                    : "🔇";
+        }
+    );
+
+    showToast(
+        LiveState.isSpeakerOn
+            ? "Speaker on"
+            : "Speaker muted"
+    );
+}
+
+
+/* =========================================================
+   35. CAMERA CONTROL
+   ========================================================= */
+
+function toggleCamera() {
+
+    LiveState.isCameraOn =
+        !LiveState.isCameraOn;
+
+    const buttons =
+        $$("[data-camera-button]");
+
+    buttons.forEach(
+        button => {
+
+            button.classList.toggle(
+                "active",
+                LiveState.isCameraOn
+            );
+
+            button.textContent =
+                LiveState.isCameraOn
+                    ? "📹"
+                    : "🚫";
+        }
+    );
+
+    showToast(
+        LiveState.isCameraOn
+            ? "Camera on"
+            : "Camera off"
+    );
+}
+
+
+/* =========================================================
+   36. CHAT MUTE
+   ========================================================= */
+
+function toggleChatMute() {
+
+    LiveState.isChatMuted =
+        !LiveState.isChatMuted;
+
+    showToast(
+        LiveState.isChatMuted
+            ? "Chat muted"
+            : "Chat unmuted"
+    );
+
+    closeModal(
+        "moreModal"
+    );
+}
+
+
+/* =========================================================
+   37. GIFT CATALOG
+   ========================================================= */
+
+const GiftCatalog = [
+
+    {
+        id: "rose",
+        name: "Rose",
+        icon: "🌹",
+        price: 1
+    },
+
+    {
+        id: "heart",
+        name: "Heart",
+        icon: "❤️",
+        price: 5
+    },
+
+    {
+        id: "star",
+        name: "Star",
+        icon: "⭐",
+        price: 10
+    },
+
+    {
+        id: "crown",
+        name: "Crown",
+        icon: "👑",
+        price: 50
+    },
+
+    {
+        id: "fire",
+        name: "Fire",
+        icon: "🔥",
+        price: 100
+    },
+
+    {
+        id: "diamond",
+        name: "Diamond",
+        icon: "💎",
+        price: 500
+    },
+
+    {
+        id: "rocket",
+        name: "Rocket",
+        icon: "🚀",
+        price: 1000
+    },
+
+    {
+        id: "castle",
+        name: "Castle",
+        icon: "🏰",
+        price: 5000
+    }
+];
+
+
+/* =========================================================
+   38. RENDER GIFT CATALOG
+   ========================================================= */
+
+function renderGiftCatalog() {
+
+    const container =
+        getElement("giftGrid") ||
+        $("[data-gift-grid]");
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = "";
+
+    GiftCatalog.forEach(
+        gift => {
+
+            const item =
+                document.createElement("button");
+
+            item.type = "button";
+
+            item.className =
+                "gift-item";
+
+            item.dataset.giftId =
+                gift.id;
+
+            item.innerHTML = `
+
+                <div class="gift-icon">
+
+                    ${gift.icon}
+
+                </div>
+
+                <div class="gift-name">
+
+                    ${escapeHTML(
+                        gift.name
+                    )}
+
+                </div>
+
+                <div class="gift-price">
+
+                    💎 ${formatNumber(
+                        gift.price
+                    )}
+
+                </div>
+            `;
+
+            item.addEventListener(
+                "click",
+                () => {
+
+                    selectGift(
+                        gift.id
+                    );
+                }
+            );
+
+            container.appendChild(
+                item
+            );
+        }
+    );
+}
+
+
+/* =========================================================
+   39. SELECT GIFT
+   ========================================================= */
+
+function selectGift(giftId) {
+
+    const gift =
+        GiftCatalog.find(
+            item =>
+                item.id === giftId
+        );
+
+    if (!gift) {
+        return;
+    }
+
+    LiveState.currentGift =
+        gift;
+
+    $$(".gift-item")
+        .forEach(
+            item => {
+
+                item.classList.toggle(
+                    "selected",
+                    item.dataset.giftId ===
+                    giftId
+                );
+            }
+        );
+
+    const selected =
+        getElement("selectedGift");
+
+    if (selected) {
+
+        selected.textContent =
+            `${gift.icon} ${gift.name} • 💎 ${formatNumber(gift.price)}`;
+    }
+}
+
+
+/* =========================================================
+   40. SEND GIFT
+   ========================================================= */
+
+async function sendGift() {
+
+    const gift =
+        LiveState.currentGift;
+
+    if (!gift) {
+
+        showToast(
+            "Select a gift first."
+        );
+
+        return;
+    }
+
+    if (!LiveState.user) {
+
+        showToast(
+            "Please login first.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (!LiveState.hostId) {
+
+        showToast(
+            "Host is unavailable.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (
+        LiveState.user.id ===
+        LiveState.hostId
+    ) {
+
+        showToast(
+            "You cannot send a gift to yourself."
+        );
+
+        return;
+    }
+
+    try {
+
+        setLoading(
+            true,
+            "Sending gift..."
+        );
+
+        if (!supabaseClient) {
+
+            animateGift(
+                gift
+            );
+
+            showToast(
+                `${gift.name} sent!`,
+                "success"
+            );
+
+            return;
+        }
+
+        /*
+         CRITICAL SECURITY:
+
+         Never do:
+
+             balance = balance - price
+
+         from browser JavaScript.
+
+         The backend/RPC must atomically:
+
+         1. authenticate auth.uid()
+         2. validate room
+         3. validate recipient
+         4. validate gift
+         5. lock/check sender balance
+         6. debit sender
+         7. credit recipient/ledger
+         8. create immutable transaction
+         9. prevent duplicate/replay abuse
+        */
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient.rpc(
+                "send_live_gift",
+                {
+                    p_room_id:
+                        LiveState.roomId,
+
+                    p_recipient_id:
+                        LiveState.hostId,
+
+                    p_gift_id:
+                        gift.id
+                }
+            );
+
+        if (error) {
+            throw error;
+        }
+
+        animateGift(
+            gift
+        );
+
+        showToast(
+            `${gift.name} sent!`,
+            "success"
+        );
+
+        /*
+         Refresh from authoritative source.
+        */
+        await loadDiamondBalance();
+
+    } catch (error) {
+
+        console.error(
+            "Gift error:",
+            error
+        );
+
+        showToast(
+            error?.message ||
+            "Gift could not be sent.",
+            "error"
+        );
+
+    } finally {
+
+        setLoading(false);
+    }
+}
+
+
+/* =========================================================
+   41. GIFT ANIMATION
+   ========================================================= */
+
+function animateGift(gift) {
+
+    const layer =
+        getElement("giftAnimationLayer") ||
+        document.body;
+
+    const giftElement =
+        document.createElement("div");
+
+    giftElement.className =
+        "floating-gift";
+
+    giftElement.textContent =
+        gift.icon;
+
+    giftElement.style.left =
+        `${30 + Math.random() * 40}%`;
+
+    giftElement.style.bottom =
+        "120px";
+
+    layer.appendChild(
+        giftElement
+    );
+
+    setTimeout(
+        () => {
+
+            giftElement.remove();
+
+        },
+        3000
+    );
+
+    createHeartBurst(
+        6
+    );
+}
+
+
+/* =========================================================
+   42. HEART BURST
+   ========================================================= */
+
+function createHeartBurst(
+    count = 5
+) {
+
+    const layer =
+        getElement("heartLayer") ||
+        document.body;
+
+    for (
+        let i = 0;
+        i < count;
+        i++
+    ) {
+
+        const heart =
+            document.createElement("div");
+
+        heart.className =
+            "floating-heart";
+
+        heart.textContent =
+            Math.random() > 0.5
+                ? "❤️"
+                : "💗";
+
+        heart.style.left =
+            `${50 + (Math.random() * 30 - 15)}%`;
+
+        heart.style.bottom =
+            `${100 + Math.random() * 50}px`;
+
+        heart.style.animationDelay =
+            `${Math.random() * 0.5}s`;
+
+        layer.appendChild(
+            heart
+        );
+
+        setTimeout(
+            () => {
+
+                heart.remove();
+
+            },
+            2500
+        );
+    }
+}
+
+
+/* =========================================================
+   43. LIKE / HEART
+   ========================================================= */
+
+function sendHeart() {
+
+    createHeartBurst(
+        4
+    );
+}
+
+
+/* =========================================================
+   44. OPEN MODAL
+   ========================================================= */
+
+function openModal(id) {
+
+    const modal =
+        getElement(id);
+
+    if (!modal) {
+        return;
+    }
+
+    modal.classList.add(
+        "show"
+    );
+
+    modal.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+}
+
+
+/* =========================================================
+   45. CLOSE MODAL
+   ========================================================= */
+
+function closeModal(id) {
+
+    const modal =
+        getElement(id);
+
+    if (!modal) {
+        return;
+    }
+
+    modal.classList.remove(
+        "show"
+    );
+
+    modal.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+}
+
+
+/* =========================================================
+   46. CLOSE ALL MODALS
+   ========================================================= */
+
+function closeAllModals() {
+
+    $$(".modal.show")
+        .forEach(
+            modal => {
+
+                modal.classList.remove(
+                    "show"
+                );
+
+                modal.setAttribute(
+                    "aria-hidden",
+                    "true"
+                );
+            }
+        );
+}
+
+
+/* =========================================================
+   47. GIFT MODAL
+   ========================================================= */
+
+function openGiftModal() {
+
+    renderGiftCatalog();
+
+    openModal(
+        "giftModal"
+    );
+}
+
+
+/* =========================================================
+   48. RANKING
+   ========================================================= */
+
+async function loadRanking() {
+
+    const container =
+        getElement("rankingList") ||
+        $("[data-ranking-list]");
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = `
+
+        <div class="ranking-loading">
+
+            Loading ranking...
+
+        </div>
+    `;
+
+    if (!supabaseClient) {
+
+        renderDemoRanking(
+            container
+        );
+
+        return;
+    }
+
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await supabaseClient
+                .from("live_gift_leaderboard")
+                .select("*")
+                .eq(
+                    "room_id",
+                    LiveState.roomId
+                )
+                .order(
+                    "total_diamonds",
+                    {
+                        ascending: false
+                    }
+                )
+                .limit(20);
+
+        if (error) {
+            throw error;
+        }
+
+        renderRanking(
+            container,
+            data || []
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Ranking error:",
+            error
+        );
+
+        renderDemoRanking(
+            container
+        );
+    }
+}
+
+
+/* =========================================================
+   49. DEMO RANKING
+   ========================================================= */
+
+function renderDemoRanking(
+    container
+) {
+
+    const ranking = [
+
+        {
+            name: "Top Supporter",
+            diamonds: 12500
+        },
+
+        {
+            name: "Diamond King",
+            diamonds: 8500
+        },
+
+        {
+            name: "P2P Friend",
+            diamonds: 5200
+        },
+
+        {
+            name: "Guest",
+            diamonds: 2300
+        }
+    ];
+
+    renderRanking(
+        container,
+        ranking
+    );
+}
+
+
+/* =========================================================
+   50. RENDER RANKING
+   ========================================================= */
+
+function renderRanking(
+    container,
+    ranking
+) {
+
+    container.innerHTML = "";
+
+    if (!ranking.length) {
+
+        container.innerHTML = `
+
+            <div class="empty-ranking">
+
+                No gifts yet.
+
+            </div>
+        `;
+
+        return;
+    }
+
+    ranking.forEach(
+        (item, index) => {
+
+            const row =
+                document.createElement("div");
+
+            row.className =
+                "ranking-row";
+
+            const name =
+                item.display_name ||
+                item.username ||
+                item.name ||
+                "User";
+
+            const amount =
+                Number(
+                    item.total_diamonds ||
+                    item.diamonds ||
+                    0
+                );
+
+            row.innerHTML = `
+
+                <div class="ranking-position">
+
+                    ${index + 1}
+
+                </div>
+
+                <div class="ranking-user">
+
+                    <div class="ranking-avatar">
+
+                        ${escapeHTML(
+                            name.charAt(0)
+                        )}
+
+                    </div>
+
+                    <div>
+
+                        <div class="ranking-name">
+
+                            ${escapeHTML(name)}
+
+                        </div>
+
+                        <div class="ranking-score">
+
+                            💎 ${formatNumber(
+                                amount
+                            )}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            `;
+
+            container.appendChild(
+                row
+            );
+        }
+    );
+}
+
+
+/* =========================================================
+   51. OPEN RANKING
+   ========================================================= */
+
+async function openRanking() {
+
+    openModal(
+        "rankingModal"
+    );
+
+    await loadRanking();
+}
+
+
+/* =========================================================
+   52. SHARE ROOM
+   ========================================================= */
+
+async function shareRoom() {
+
+    const url =
+        window.location.href;
+
+    const title =
+        LiveState.room?.title ||
+        "Join my live room";
+
+    if (
+        navigator.share
+    ) {
+
+        try {
+
+            await navigator.share({
+
+                title,
+
+                text:
+                    "Join this live room on P2P Social.",
+
+                url
+            });
+
+            return;
+
+        } catch (error) {
+
+            if (
+                error?.name ===
+                "AbortError"
+            ) {
+                return;
+            }
+        }
+    }
+
+    try {
+
+        await navigator.clipboard.writeText(
+            url
+        );
+
+        showToast(
+            "Live room link copied.",
+            "success"
+        );
+
+    } catch (error) {
+
+        showToast(
+            "Could not copy link.",
+            "error"
+        );
+    }
+}
+
+
+/* =========================================================
+   53. ROOM INFORMATION
+   ========================================================= */
+
+function showRoomInformation() {
+
+    const room =
+        LiveState.room;
+
+    if (!room) {
+        return;
+    }
+
+    const title =
+        room.title ||
+        room.name ||
+        "Live Room";
+
+    const description =
+        room.description ||
+        "No description.";
+
+    showToast(
+        `${title}: ${description}`
+    );
+}
+
+
+/* =========================================================
+   54. REPORT ROOM
+   ========================================================= */
+
+async function reportRoom() {
+
+    if (!LiveState.user) {
+
+        showToast(
+            "Please login first.",
+            "error"
+        );
+
+        return;
+    }
+
+    const reason =
+        window.prompt(
+            "Why are you reporting this live?"
+        );
+
+    if (!reason) {
+        return;
+    }
+
+    if (
+        reason.length >
+        500
+    ) {
+
+        showToast(
+            "Report reason is too long.",
+            "error"
+        );
+
+        return;
+    }
+
+    try {
+
+        if (!supabaseClient) {
+
+            showToast(
+                "Report submitted.",
+                "success"
+            );
+
+            return;
+        }
+
+        const {
+            error
+        } =
+            await supabaseClient
+                .from("reports")
+                .insert({
+
+                    reporter_id:
+                        LiveState.user.id,
+
+                    reported_user_id:
+                        LiveState.hostId,
+
+                    room_id:
+                        LiveState.roomId,
+
+                    reason
+                });
+
+        if (error) {
+            throw error;
+        }
+
+        showToast(
+            "Report submitted.",
+            "success"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Report error:",
+            error
+        );
+
+        showToast(
+            "Could not submit report.",
+            "error"
+        );
+    }
+}
+
+
+/* =========================================================
+   55. LEAVE LIVE
+   ========================================================= */
+
+async function leaveLive() {
+
+    const confirmed =
+        window.confirm(
+            "Leave this live room?"
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+
+        await leaveSeat();
+
+    } catch (error) {
+
+        console.error(
+            error
+        );
+    }
+
+    stopHeartbeat();
+
+    if (
+        supabaseClient
+    ) {
+
+        const channels = [
+
+            LiveState.chatChannel,
+
+            LiveState.presenceChannel,
+
+            LiveState.roomChannel,
+
+            LiveState.giftChannel
+        ];
+
+        for (
+            const channel of channels
+        ) {
+
+            if (channel) {
+
+                try {
+
+                    await supabaseClient
+                        .removeChannel(
+                            channel
+                        );
+
+                } catch (error) {
+
+                    console.warn(
+                        error
+                    );
+                }
+            }
+        }
+    }
+
+    /*
+     Change this to your actual
+     application home page.
+    */
+
+    window.location.href =
+        "index.html";
+}
+
+
+/* =========================================================
+   56. KEYBOARD CHAT
+   ========================================================= */
+
+function setupChatKeyboard() {
+
+    const input =
+        getChatInput();
+
+    if (!input) {
+        return;
+    }
+
+    input.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key ===
+                "Enter"
+            ) {
+
+                if (
+                    event.shiftKey
+                ) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                sendChatMessage();
+            }
+        }
+    );
+}
+
+
+/* =========================================================
+   57. BUTTON EVENTS
+   ========================================================= */
+
+function setupButtons() {
+
+    $$("[data-follow-button]")
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    toggleFollow
+                );
+            }
+        );
+
+
+    $$("[data-send-chat]")
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    sendChatMessage
+                );
+            }
+        );
+
+
+    $$("[data-gift-button]")
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    openGiftModal
+                );
+            }
+        );
+
+
+    $$("[data-ranking-button]")
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    openRanking
+                );
+            }
+        );
+
+
+    $$("[data-share-button]")
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    shareRoom
+                );
+            }
+        );
+
+
+    $$("[data-heart-button]")
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    sendHeart
+                );
+            }
+        );
+
+
+    $$("[data-mic-button]")
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    toggleMic
+                );
+            }
+        );
+
+
+    $$("[data-camera-button]")
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    toggleCamera
+                );
+            }
+        );
+
+
+    $$("[data-speaker-button]")
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    toggleSpeaker
+                );
+            }
+        );
+
+
+    $$("[data-seat-button]")
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        const seat =
+                            window.prompt(
+                                "Enter seat number"
+                            );
+
+                        if (!seat) {
+                            return;
+                        }
+
+                        requestSeat(
+                            Number(seat)
+                        );
+                    }
+                );
+            }
+        );
+
+
+    $$("[data-leave-button]")
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    leaveLive
+                );
+            }
+        );
+
+
+    $$("[data-more-button]")
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        openModal(
+                            "moreModal"
+                        );
+                    }
+                );
+            }
+        );
+
+
+    $$("[data-report-button]")
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    reportRoom
+                );
+            }
+        );
+
+
+    $$("[data-mute-chat-button]")
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    toggleChatMute
+                );
+            }
+        );
+
+
+    $$("[data-room-info-button]")
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    showRoomInformation
+                );
+            }
+        );
+}
+
+
+/* =========================================================
+   58. MODAL EVENTS
+   ========================================================= */
+
+function setupModalEvents() {
+
+    $$(".modal")
+        .forEach(
+            modal => {
+
+                modal.addEventListener(
+                    "click",
+                    event => {
+
+                        if (
+                            event.target ===
+                            modal
+                        ) {
+
+                            modal.classList.remove(
+                                "show"
+                            );
+                        }
+                    }
+                );
+            }
+        );
+
+
+    $$("[data-close-modal]")
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        const modalId =
+                            button.dataset
+                                .closeModal;
+
+                        if (modalId) {
+
+                            closeModal(
+                                modalId
+                            );
+                        } else {
+
+                            closeAllModals();
+                        }
+                    }
+                );
+            }
+        );
+
+
+    document.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key ===
+                "Escape"
+            ) {
+
+                closeAllModals();
+            }
+        }
+    );
+}
+
+
+/* =========================================================
+   59. VISIBILITY
+   ========================================================= */
+
+function setupVisibility() {
+
+    document.addEventListener(
+        "visibilitychange",
+        () => {
+
+            if (
+                document.visibilityState ===
+                "visible"
+            ) {
+
+                if (
+                    LiveState.presenceChannel &&
+                    LiveState.user
+                ) {
+
+                    LiveState.presenceChannel
+                        .track({
+
+                            user_id:
+                                LiveState.user.id,
+
+                            room_id:
+                                LiveState.roomId,
+
+                            online_at:
+                                new Date()
+                                    .toISOString(),
+
+                            status:
+                                "online"
+                        })
+                        .catch(
+                            console.error
+                        );
+                }
+
+            } else {
+
+                /*
+                 Keep media/WebRTC handling
+                 in its own layer.
+                */
+
+                console.log(
+                    "Live page hidden."
+                );
+            }
+        }
+    );
+}
+
+
+/* =========================================================
+   60. BEFORE UNLOAD
+   ========================================================= */
+
+window.addEventListener(
+    "beforeunload",
+    () => {
+
+        stopHeartbeat();
+
+        /*
+         Supabase presence automatically
+         handles disconnect in normal cases.
+        */
+    }
+);
+
+
+/* =========================================================
+   61. INITIALIZATION
+   ========================================================= */
+
+async function initializeLiveRoom() {
+
+    if (
+        LiveState.pageReady
+    ) {
+        return;
+    }
+
+    LiveState.pageReady =
+        true;
+
+    try {
+
+        setLoading(
+            true,
+            "Starting live room..."
+        );
+
+        /*
+         STEP 1
+         */
+        await loadCurrentUser();
+
+        /*
+         STEP 2
+         */
+        if (LiveState.user) {
+
+            await loadMyProfile();
+        }
+
+        /*
+         STEP 3
+         */
+        await loadRoom();
+
+        /*
+         STEP 4
+         */
+        await loadDiamondBalance();
+
+        /*
+         STEP 5
+         */
+        await loadFollowStatus();
+
+        /*
+         STEP 6
+         */
+        await loadChatHistory();
+
+        /*
+         STEP 7
+         */
+        await loadParticipants();
+
+        /*
+         STEP 8
+         */
+        subscribeToChat();
+
+        /*
+         STEP 9
+         */
+        await joinPresence();
+
+        /*
+         STEP 10
+         */
+        startHeartbeat();
+
+        /*
+         STEP 11
+         */
+        setupChatKeyboard();
+
+        setupButtons();
+
+        setupModalEvents();
+
+        setupVisibility();
+
+        renderGiftCatalog();
+
+        showToast(
+            "Welcome to the live room.",
+            "success"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Live room initialization failed:",
+            error
+        );
+
+        showToast(
+            "Live room could not start.",
+            "error"
+        );
+
+    } finally {
+
+        setLoading(false);
+    }
+}
+
+
+/* =========================================================
+   62. START
+   ========================================================= */
+
+if (
+    document.readyState ===
+    "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        initializeLiveRoom
+    );
+
+} else {
+
+    initializeLiveRoom();
+}
+
+
+/* =========================================================
+   63. GLOBAL API
+   ========================================================= */
+
+window.LiveRoom = {
+
+    state:
+        LiveState,
+
+    sendChat:
+        sendChatMessage,
+
+    sendGift:
+        sendGift,
+
+    follow:
+        toggleFollow,
+
+    heart:
+        sendHeart,
+
+    share:
+        shareRoom,
+
+    leave:
+        leaveLive,
+
+    requestSeat:
+        requestSeat,
+
+    leaveSeat:
+        leaveSeat,
+
+    openGift:
+        openGiftModal,
+
+    openRanking:
+        openRanking,
+
+    toggleMic:
+        toggleMic,
+
+    toggleCamera:
+        toggleCamera,
+
+    toggleSpeaker:
+        toggleSpeaker
+};
+
+
+/* =========================================================
+   PART 2 COMPLETE
+   ========================================================= */
+</script>

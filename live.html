@@ -1,5840 +1,2029 @@
-<!DOCTYPE html>  <html lang="en">  
-<head>  
-<meta charset="UTF-8">  
-<meta name="viewport" content="width=device-width,initial-scale=1.0">  <meta name="theme-color" content="#087f73">  
-<meta name="mobile-web-app-capable" content="yes">  
-<meta name="apple-mobile-web-app-capable" content="yes">  
-<meta name="apple-mobile-web-app-status-bar-style" content="default">  
-<meta name="apple-mobile-web-app-title" content="P2P Social">  <link rel="manifest" href="./manifest.json">  
-<link rel="icon" href="./p2p-logo.svg" type="image/svg+xml">  <title>P2P Social</title>  <style>  
-  
-*{  
-  box-sizing:border-box;  
-  margin:0;  
-  padding:0;  
-  font-family:Arial,sans-serif;  
-}  
-  
-html,body{  
-  min-height:100%;  
-}  
-  
-body{  
-  background:#f5f7fb;  
-  color:#172033;  
-  padding-bottom:78px;  
-}  
-  
-button{  
-  font-family:Arial,sans-serif;  
-}  
-  
-button:active{  
-  transform:scale(.97);  
-}  
-  
-#app{  
-  display:none;  
-}  
-  
-/* =====================================================  
-   AUTH  
-===================================================== */  
-  
-#checkingAuth{  
-  position:fixed;  
-  inset:0;  
-  background:#075e54;  
-  color:white;  
-  display:flex;  
-  align-items:center;  
-  justify-content:center;  
-  flex-direction:column;  
-  gap:12px;  
-  z-index:99999;  
-}  
-  
-.auth-logo{  
-  width:62px;  
-  height:62px;  
-  border-radius:18px;  
-  background:#087f73;  
-  display:flex;  
-  align-items:center;  
-  justify-content:center;  
-  font-size:30px;  
-  box-shadow:0 8px 25px rgba(0,0,0,.2);  
-}  
-  
-.auth-loading{  
-  font-size:14px;  
-  opacity:.9;  
-}  
-  
-/* =====================================================  
-   HEADER  
-===================================================== */  
-  
-header{  
-  background:linear-gradient(135deg,#075e54,#087f73);  
-  color:white;  
-  padding:18px;  
-  border-radius:0 0 22px 22px;  
-}  
-  
-.top{  
-  display:flex;  
-  align-items:center;  
-  justify-content:space-between;  
-  gap:10px;  
-}  
-  
-.logo-area{  
-  display:flex;  
-  align-items:center;  
-  gap:10px;  
-  min-width:0;  
-}  
-  
-.logo{  
-  width:45px;  
-  height:45px;  
-  border-radius:14px;  
-  background:linear-gradient(135deg,#064e46,#10a889);  
-  position:relative;  
-  display:flex;  
-  justify-content:center;  
-  align-items:center;  
-  flex-shrink:0;  
-  box-shadow:0 6px 15px rgba(0,0,0,.18);  
-}  
-  
-.logo .p-left{  
-  position:absolute;  
-  left:8px;  
-  top:10px;  
-  width:13px;  
-  height:25px;  
-  border:4px solid white;  
-  border-right:0;  
-  border-radius:8px 0 0 8px;  
-}  
-  
-.logo .p-right{  
-  position:absolute;  
-  right:8px;  
-  top:10px;  
-  width:13px;  
-  height:25px;  
-  border:4px solid white;  
-  border-left:0;  
-  border-radius:0 8px 8px 0;  
-}  
-  
-.logo .center{  
-  width:12px;  
-  height:12px;  
-  background:white;  
-  border-radius:50%;  
-  position:absolute;  
-  z-index:5;  
-}  
-  
-.logo .dot{  
-  width:4px;  
-  height:4px;  
-  background:#087f73;  
-  border-radius:50%;  
-  position:absolute;  
-  top:4px;  
-  left:4px;  
-}  
-  
-.brand{  
-  font-size:21px;  
-  font-weight:bold;  
-  white-space:nowrap;  
-}  
-  
-.brand span{  
-  color:#b9fff1;  
-}  
-  
-.top-actions{  
-  display:flex;  
-  align-items:center;  
-  gap:6px;  
-}  
-  
-.auth-btn{  
-  border:none;  
-  border-radius:9px;  
-  padding:8px 10px;  
-  font-size:12px;  
-  font-weight:bold;  
-  cursor:pointer;  
-}  
-  
-.logout-btn{  
-  background:#e74c3c;  
-  color:white;  
-}  
-  
-.notification-wrap{  
-  position:relative;  
-}  
-  
-.notification{  
-  width:38px;  
-  height:38px;  
-  border:none;  
-  background:transparent;  
-  color:white;  
-  font-size:23px;  
-  cursor:pointer;  
-  position:relative;  
-}  
-  
-.notification-badge{  
-  position:absolute;  
-  top:-2px;  
-  right:-2px;  
-  min-width:18px;  
-  height:18px;  
-  padding:0 5px;  
-  border-radius:20px;  
-  background:#e74c3c;  
-  color:white;  
-  font-size:10px;  
-  font-weight:bold;  
-  display:none;  
-  align-items:center;  
-  justify-content:center;  
-  border:2px solid #087f73;  
-}  
-  
-.notification-panel{  
-  display:none;  
-  position:absolute;  
-  right:0;  
-  top:45px;  
-  width:330px;  
-  max-width:calc(100vw - 24px);  
-  background:white;  
-  color:#172033;  
-  border-radius:16px;  
-  box-shadow:0 10px 35px rgba(0,0,0,.2);  
-  overflow:hidden;  
-  z-index:3000;  
-}  
-  
-.notification-panel.open{  
-  display:block;  
-}  
-  
-.notification-header{  
-  display:flex;  
-  align-items:center;  
-  justify-content:space-between;  
-  padding:14px;  
-  border-bottom:1px solid #edf0f4;  
-}  
-  
-.mark-all{  
-  border:none;  
-  background:none;  
-  color:#087f73;  
-  font-size:11px;  
-  font-weight:bold;  
-  cursor:pointer;  
-}  
-  
-.notification-list{  
-  max-height:380px;  
-  overflow-y:auto;  
-}  
-  
-.notification-item{  
-  display:flex;  
-  gap:10px;  
-  padding:12px 14px;  
-  border-bottom:1px solid #f0f2f5;  
-  cursor:pointer;  
-}  
-  
-.notification-item.unread{  
-  background:#edf9f6;  
-}  
-  
-.notification-icon{  
-  width:38px;  
-  height:38px;  
-  border-radius:50%;  
-  background:#dff3ee;  
-  display:flex;  
-  align-items:center;  
-  justify-content:center;  
-  flex-shrink:0;  
-  font-size:18px;  
-}  
-  
-.notification-content{  
-  min-width:0;  
-  flex:1;  
-}  
-  
-.notification-title{  
-  font-weight:bold;  
-  font-size:13px;  
-}  
-  
-.notification-body{  
-  font-size:12px;  
-  color:#687386;  
-  margin-top:3px;  
-  line-height:1.4;  
-}  
-  
-.notification-time{  
-  font-size:10px;  
-  color:#9299a5;  
-  margin-top:5px;  
-}  
-  
-.no-notifications{  
-  padding:30px 15px;  
-  text-align:center;  
-  color:#858d99;  
-  font-size:13px;  
-}  
-  
-.user-info{  
-  display:flex;  
-  align-items:center;  
-  gap:5px;  
-  margin-top:12px;  
-  font-size:13px;  
-}  
-  
-.premium-user-badge{  
-  font-size:13px;  
-  font-weight:bold;  
-}  
-  
-.search{  
-  margin-top:18px;  
-  background:white;  
-  color:#172033;  
-  border-radius:14px;  
-  padding:12px 15px;  
-  display:flex;  
-  align-items:center;  
-  gap:10px;  
-}  
-  
-.search input{  
-  border:none;  
-  outline:none;  
-  width:100%;  
-  font-size:15px;  
-}  
-  
-/* =====================================================  
-   PREMIUM QUICK CARD  
-===================================================== */  
-  
-.premium-summary{  
-  margin:16px 18px 0;  
-  background:white;  
-  border-radius:18px;  
-  padding:16px;  
-  box-shadow:0 4px 15px rgba(0,0,0,.06);  
-}  
-  
-.premium-summary-top{  
-  display:flex;  
-  align-items:center;  
-  justify-content:space-between;  
-  gap:10px;  
-}  
-  
-.premium-summary-title{  
-  font-size:17px;  
-  font-weight:bold;  
-}  
-  
-.premium-current{  
-  padding:6px 10px;  
-  border-radius:20px;  
-  background:#f1f3f6;  
-  font-size:11px;  
-  font-weight:bold;  
-}  
-  
-.premium-summary-text{  
-  color:#687386;  
-  font-size:12px;  
-  line-height:1.5;  
-  margin-top:8px;  
-}  
-  
-.premium-detail-btn{  
-  width:100%;  
-  margin-top:12px;  
-  border:none;  
-  border-radius:10px;  
-  padding:11px;  
-  background:#087f73;  
-  color:white;  
-  font-weight:bold;  
-  cursor:pointer;  
-}  
-  
-/* =====================================================  
-   WALLET  
-===================================================== */  
-  
-.wallet{  
-  margin:18px;  
-  background:linear-gradient(135deg,#172033,#29364f);  
-  color:white;  
-  border-radius:20px;  
-  padding:20px;  
-  box-shadow:0 8px 25px rgba(0,0,0,.12);  
-}  
-  
-.wallet-title{  
-  font-size:14px;  
-  opacity:.8;  
-}  
-  
-.wallet-balance{  
-  font-size:28px;  
-  font-weight:bold;  
-  margin:8px 0;  
-}  
-  
-.wallet-balance-label{  
-  font-size:11px;  
-  opacity:.7;  
-}  
-  
-.wallet-row{  
-  display:flex;  
-  justify-content:space-between;  
-  margin-top:15px;  
-  font-size:14px;  
-}  
-  
-.wallet-row strong{  
-  font-size:15px;  
-}  
-  
-.wallet-buttons{  
-  display:flex;  
-  gap:10px;  
-  margin-top:18px;  
-}  
-  
-.wallet-buttons button{  
-  flex:1;  
-  border:none;  
-  padding:11px;  
-  border-radius:10px;  
-  cursor:pointer;  
-  font-weight:bold;  
-}  
-  
-.deposit{  
-  background:#16a085;  
-  color:white;  
-}  
-  
-.wallet-button{  
-  background:white;  
-  color:#172033;  
-}  
-  
-/* =====================================================  
-   SECTIONS  
-===================================================== */  
-  
-section{  
-  padding:5px 18px 18px;  
-}  
-  
-.section-title{  
-  display:flex;  
-  justify-content:space-between;  
-  align-items:center;  
-  margin-bottom:12px;  
-}  
-  
-.section-title h2,  
-.posts-title h2{  
-  font-size:19px;  
-}  
-  
-.see-all{  
-  color:#087f73;  
-  font-size:13px;  
-  font-weight:bold;  
-  cursor:pointer;  
-}  
-  
-/* =====================================================  
-   LIVE  
-===================================================== */  
-  
-.live-container{  
-  display:flex;  
-  gap:14px;  
-  overflow-x:auto;  
-  padding-bottom:5px;  
-}  
-  
-.live-card{  
-  min-width:125px;  
-  background:white;  
-  border-radius:15px;  
-  overflow:hidden;  
-  box-shadow:0 3px 12px rgba(0,0,0,.07);  
-  cursor:pointer;  
-}  
-  
-.live-image{  
-  height:125px;  
-  background:linear-gradient(135deg,#ff6b6b,#6c5ce7);  
-  position:relative;  
-  display:flex;  
-  justify-content:center;  
-  align-items:center;  
-  font-size:45px;  
-}  
-  
-.live-badge{  
-  position:absolute;  
-  top:8px;  
-  left:8px;  
-  background:#e74c3c;  
-  color:white;  
-  padding:4px 7px;  
-  border-radius:6px;  
-  font-size:10px;  
-  font-weight:bold;  
-}  
-  
-.viewers{  
-  position:absolute;  
-  bottom:7px;  
-  right:7px;  
-  background:rgba(0,0,0,.6);  
-  color:white;  
-  padding:4px 7px;  
-  border-radius:8px;  
-  font-size:10px;  
-}  
-  
-.live-name{  
-  padding:10px;  
-  font-size:13px;  
-  font-weight:bold;  
-}  
-  
-/* =====================================================  
-   P2P  
-===================================================== */  
-  
-.p2p-header-actions{  
-  display:flex;  
-  align-items:center;  
-  gap:8px;  
-}  
-  
-.create-offer-btn,  
-.refresh-btn{  
-  border:none;  
-  border-radius:9px;  
-  padding:8px 10px;  
-  cursor:pointer;  
-  font-weight:bold;  
-  font-size:11px;  
-}  
-  
-.create-offer-btn{  
-  background:#087f73;  
-  color:white;  
-}  
-  
-.refresh-btn{  
-  background:#eaf7f4;  
-  color:#087f73;  
-}  
-  
-.p2p-offers{  
-  display:flex;  
-  flex-direction:column;  
-  gap:12px;  
-}  
-  
-.p2p-card{  
-  background:white;  
-  border-radius:16px;  
-  padding:16px;  
-  box-shadow:0 3px 12px rgba(0,0,0,.06);  
-  position:relative;  
-}  
-  
-.pin-label{  
-  position:absolute;  
-  top:10px;  
-  right:10px;  
-  font-size:10px;  
-  background:#fff4d6;  
-  color:#9a6b00;  
-  padding:4px 7px;  
-  border-radius:7px;  
-  font-weight:bold;  
-}  
-  
-.p2p-card-header{  
-  display:flex;  
-  justify-content:space-between;  
-  align-items:center;  
-  gap:10px;  
-}  
-  
-.seller{  
-  display:flex;  
-  align-items:center;  
-  gap:9px;  
-  min-width:0;  
-}  
-  
-.avatar{  
-  width:40px;  
-  height:40px;  
-  border-radius:50%;  
-  background:#dfeeea;  
-  display:flex;  
-  align-items:center;  
-  justify-content:center;  
-  font-weight:bold;  
-  color:#087f73;  
-  flex-shrink:0;  
-  overflow:hidden;  
-}  
-  
-.avatar img{  
-  width:100%;  
-  height:100%;  
-  object-fit:cover;  
-}  
-  
-.username{  
-  font-weight:bold;  
-  font-size:14px;  
-  overflow:hidden;  
-  text-overflow:ellipsis;  
-  white-space:nowrap;  
-}  
-  
-.online{  
-  color:#16a085;  
-  font-size:11px;  
-  margin-top:3px;  
-}  
-  
-.rate{  
-  text-align:right;  
-  flex-shrink:0;  
-}  
-  
-.rate strong{  
-  display:block;  
-  font-size:17px;  
-}  
-  
-.rate small{  
-  color:#777;  
-}  
-  
-.trade-info{  
-  display:flex;  
-  justify-content:space-between;  
-  gap:10px;  
-  margin:15px 0;  
-  font-size:13px;  
-}  
-  
-.buy-btn{  
-  width:100%;  
-  border:none;  
-  padding:12px;  
-  border-radius:10px;  
-  font-weight:bold;  
-  cursor:pointer;  
-  background:#087f73;  
-  color:white;  
-}  
-  
-.offer-type{  
-  display:inline-block;  
-  margin-bottom:8px;  
-  padding:4px 7px;  
-  border-radius:6px;  
-  background:#eaf7f4;  
-  color:#087f73;  
-  font-size:10px;  
-  font-weight:bold;  
-}  
-  
-.no-offers,  
-.no-posts,  
-.loading-posts{  
-  background:white;  
-  border-radius:16px;  
-  padding:25px 18px;  
-  text-align:center;  
-  color:#7b8492;  
-  box-shadow:0 3px 12px rgba(0,0,0,.05);  
-}  
-  
-.no-offers-icon{  
-  font-size:32px;  
-  margin-bottom:8px;  
-}  
-  
-.no-offers strong{  
-  display:block;  
-  color:#172033;  
-  margin-bottom:5px;  
-}  
-  
-/* =====================================================  
-   POSTS  
-===================================================== */  
-  
-.posts-section{  
-  padding-top:0;  
-}  
-  
-.posts-title{  
-  display:flex;  
-  justify-content:space-between;  
-  align-items:center;  
-  margin-bottom:12px;  
-}  
-  
-.create-post-btn{  
-  border:none;  
-  background:#087f73;  
-  color:white;  
-  padding:9px 12px;  
-  border-radius:10px;  
-  font-weight:bold;  
-  cursor:pointer;  
-}  
-  
-.posts-feed{  
-  display:flex;  
-  flex-direction:column;  
-  gap:12px;  
-}  
-  
-.post-card{  
-  background:white;  
-  border-radius:16px;  
-  padding:16px;  
-  box-shadow:0 3px 12px rgba(0,0,0,.06);  
-  position:relative;  
-}  
-  
-.post-pin{  
-  display:inline-block;  
-  margin-bottom:9px;  
-  background:#fff4d6;  
-  color:#9a6b00;  
-  border-radius:7px;  
-  padding:5px 8px;  
-  font-size:10px;  
-  font-weight:bold;  
-}  
-  
-.post-header{  
-  display:flex;  
-  align-items:center;  
-  gap:10px;  
-  cursor:pointer;  
-}  
-  
-.post-avatar{  
-  width:42px;  
-  height:42px;  
-  border-radius:50%;  
-  object-fit:cover;  
-  background:#dfeeea;  
-  display:flex;  
-  align-items:center;  
-  justify-content:center;  
-  color:#087f73;  
-  font-weight:bold;  
-  flex-shrink:0;  
-  overflow:hidden;  
-}  
-  
-.post-avatar img{  
-  width:100%;  
-  height:100%;  
-  object-fit:cover;  
-}  
-  
-.post-user-info{  
-  flex:1;  
-  min-width:0;  
-}  
-  
-.post-name{  
-  font-weight:bold;  
-  font-size:14px;  
-  overflow:hidden;  
-  text-overflow:ellipsis;  
-}  
-  
-.post-handle{  
-  color:#7a8494;  
-  font-size:12px;  
-  margin-top:3px;  
-}  
-  
-.post-time{  
-  color:#8a93a1;  
-  font-size:11px;  
-  white-space:nowrap;  
-}  
-  
-.post-menu{  
-  border:none;  
-  background:none;  
-  font-size:18px;  
-  cursor:pointer;  
-}  
-  
-.post-content{  
-  margin-top:13px;  
-  color:#303b4d;  
-  font-size:14px;  
-  line-height:1.55;  
-  white-space:pre-wrap;  
-  word-break:break-word;  
-}  
-  
-.post-media{  
-  margin-top:13px;  
-  border-radius:13px;  
-  overflow:hidden;  
-  background:#edf0f4;  
-}  
-  
-.post-media img,  
-.post-media video{  
-  width:100%;  
-  max-height:500px;  
-  object-fit:cover;  
-  display:block;  
-}  
-  
-.post-type-label{  
-  display:inline-block;  
-  margin-top:10px;  
-  background:#edf8f5;  
-  color:#087f73;  
-  padding:4px 7px;  
-  border-radius:6px;  
-  font-size:10px;  
-  font-weight:bold;  
-}  
-  
-.post-actions{  
-  display:flex;  
-  gap:18px;  
-  margin-top:15px;  
-  padding-top:12px;  
-  border-top:1px solid #edf0f4;  
-  flex-wrap:wrap;  
-}  
-  
-.post-action{  
-  border:none;  
-  background:transparent;  
-  color:#687386;  
-  cursor:pointer;  
-  font-size:13px;  
-}  
-  
-.post-action.liked{  
-  color:#e74c3c;  
-  font-weight:bold;  
-}  
-  
-/* =====================================================  
-   COMMENTS  
-===================================================== */  
-  
-.comments-box{  
-  margin-top:12px;  
-  border-top:1px solid #edf0f4;  
-  padding-top:10px;  
-}  
-  
-.comment{  
-  display:flex;  
-  gap:8px;  
-  margin-bottom:9px;  
-}  
-  
-.comment-avatar{  
-  width:32px;  
-  height:32px;  
-  border-radius:50%;  
-  background:#dfeeea;  
-  display:flex;  
-  justify-content:center;  
-  align-items:center;  
-  color:#087f73;  
-  font-weight:bold;  
-  flex-shrink:0;  
-  overflow:hidden;  
-}  
-  
-.comment-avatar img{  
-  width:100%;  
-  height:100%;  
-  object-fit:cover;  
-}  
-  
-.comment-body{  
-  background:#f5f7fb;  
-  border-radius:12px;  
-  padding:8px 10px;  
-  flex:1;  
-  position:relative;  
-}  
-  
-.comment-name{  
-  font-size:12px;  
-  font-weight:bold;  
-  padding-right:20px;  
-}  
-  
-.comment-text{  
-  font-size:13px;  
-  color:#303b4d;  
-  margin-top:3px;  
-  white-space:pre-wrap;  
-  word-break:break-word;  
-}  
-  
-.comment-delete{  
-  position:absolute;  
-  top:6px;  
-  right:7px;  
-  border:none;  
-  background:none;  
-  color:#e74c3c;  
-  font-size:11px;  
-  cursor:pointer;  
-}  
-  
-.comment-input-row{  
-  display:flex;  
-  gap:7px;  
-  margin-top:10px;  
-}  
-  
-.comment-input{  
-  flex:1;  
-  border:1px solid #dfe4eb;  
-  border-radius:10px;  
-  padding:9px 11px;  
-  outline:none;  
-  font-size:13px;  
-}  
-  
-.comment-send{  
-  border:none;  
-  background:#087f73;  
-  color:white;  
-  border-radius:10px;  
-  padding:0 13px;  
-  cursor:pointer;  
-  font-weight:bold;  
-}  
-  
-.load-more{  
-  width:100%;  
-  margin-top:5px;  
-  border:none;  
-  background:white;  
-  color:#087f73;  
-  padding:13px;  
-  border-radius:12px;  
-  font-weight:bold;  
-  cursor:pointer;  
-  box-shadow:0 3px 12px rgba(0,0,0,.05);  
-}  
-  
-/* =====================================================  
-   MODALS  
-===================================================== */  
-  
-.modal{  
-  display:none;  
-  position:fixed;  
-  inset:0;  
-  background:rgba(0,0,0,.55);  
-  z-index:5000;  
-  align-items:center;  
-  justify-content:center;  
-  padding:20px;  
-}  
-  
-.modal-content{  
-  width:100%;  
-  max-width:500px;  
-  max-height:90vh;  
-  overflow-y:auto;  
-  background:white;  
-  border-radius:18px;  
-  padding:20px;  
-}  
-  
-.modal-header{  
-  display:flex;  
-  justify-content:space-between;  
-  align-items:center;  
-  margin-bottom:15px;  
-}  
-  
-.modal-header h3{  
-  font-size:19px;  
-}  
-  
-.close-modal{  
-  border:none;  
-  background:none;  
-  font-size:25px;  
-  cursor:pointer;  
-}  
-  
-/* =====================================================  
-   PREMIUM MODAL  
-===================================================== */  
-  
-.premium-intro{  
-  color:#687386;  
-  font-size:13px;  
-  line-height:1.5;  
-  margin-bottom:15px;  
-}  
-  
-.premium-plan{  
-  border:1px solid #e4e8ed;  
-  border-radius:15px;  
-  padding:15px;  
-  margin-bottom:12px;  
-}  
-  
-.premium-plan.green{  
-  border-left:5px solid #16a085;  
-}  
-  
-.premium-plan.blue{  
-  border-left:5px solid #3498db;  
-}  
-  
-.premium-plan.purple{  
-  border-left:5px solid #8e44ad;  
-}  
-  
-.plan-title{  
-  font-size:16px;  
-  font-weight:bold;  
-}  
-  
-.plan-description{  
-  color:#687386;  
-  font-size:12px;  
-  line-height:1.5;  
-  margin-top:6px;  
-}  
-  
-.plan-prices{  
-  display:grid;  
-  grid-template-columns:1fr 1fr;  
-  gap:7px;  
-  margin-top:10px;  
-}  
-  
-.plan-price{  
-  background:#f6f8fa;  
-  padding:8px;  
-  border-radius:8px;  
-  font-size:11px;  
-  font-weight:bold;  
-}  
-  
-.premium-rules{  
-  margin-top:15px;  
-}  
-  
-.premium-rules h4{  
-  margin-bottom:8px;  
-}  
-  
-.rule{  
-  display:flex;  
-  gap:8px;  
-  margin:8px 0;  
-  color:#4d5869;  
-  font-size:12px;  
-  line-height:1.45;  
-}  
-  
-.rule-icon{  
-  flex-shrink:0;  
-}  
-  
-.threshold-box{  
-  background:#f7f3ff;  
-  border:1px solid #e3d6ff;  
-  border-radius:13px;  
-  padding:13px;  
-  margin-top:14px;  
-}  
-  
-.threshold-box strong{  
-  color:#7137a8;  
-}  
-  
-.info-box{  
-  background:#f5f7fb;  
-  border-radius:12px;  
-  padding:13px;  
-  margin-top:10px;  
-  font-size:12px;  
-  color:#596477;  
-  line-height:1.5;  
-}  
-  
-/* =====================================================  
-   CREATE POST  
-===================================================== */  
-  
-.post-textarea{  
-  width:100%;  
-  min-height:130px;  
-  resize:vertical;  
-  border:1px solid #dfe4eb;  
-  border-radius:12px;  
-  padding:12px;  
-  outline:none;  
-  font-size:14px;  
-}  
-  
-.visibility-label{  
-  display:block;  
-  margin:12px 0 6px;  
-  font-size:13px;  
-  font-weight:bold;  
-}  
-  
-.visibility-select,  
-.media-type-select{  
-  width:100%;  
-  border:1px solid #dfe4eb;  
-  border-radius:10px;  
-  padding:11px;  
-  background:white;  
-}  
-  
-.media-section{  
-  margin-top:12px;  
-}  
-  
-.media-label{  
-  display:block;  
-  font-size:13px;  
-  font-weight:bold;  
-  margin-bottom:7px;  
-}  
-  
-.media-note{  
-  font-size:11px;  
-  color:#7a8494;  
-  margin-top:6px;  
-  line-height:1.4;  
-}  
-  
-.media-input{  
-  width:100%;  
-  border:1px solid #dfe4eb;  
-  border-radius:10px;  
-  padding:10px;  
-}  
-  
-.media-preview{  
-  margin-top:10px;  
-  border-radius:10px;  
-  overflow:hidden;  
-  background:#f1f3f6;  
-}  
-  
-.media-preview img,  
-.media-preview video{  
-  width:100%;  
-  max-height:280px;  
-  display:block;  
-  object-fit:cover;  
-}  
-  
-.locked-feature{  
-  background:#f7f8fa;  
-  border:1px dashed #ccd2da;  
-  border-radius:11px;  
-  padding:12px;  
-  color:#687386;  
-  font-size:12px;  
-  line-height:1.45;  
-}  
-  
-.publish-btn{  
-  width:100%;  
-  margin-top:14px;  
-  border:none;  
-  background:#087f73;  
-  color:white;  
-  padding:12px;  
-  border-radius:10px;  
-  font-weight:bold;  
-  cursor:pointer;  
-}  
-  
-/* =====================================================  
-   BOTTOM NAV  
-===================================================== */  
-  
-.bottom-nav{  
-  position:fixed;  
-  bottom:0;  
-  left:0;  
-  right:0;  
-  height:68px;  
-  background:white;  
-  border-top:1px solid #ddd;  
-  display:flex;  
-  justify-content:space-around;  
-  align-items:center;  
-  z-index:1000;  
-}  
-  
-.nav-item{  
-  text-align:center;  
-  color:#777;  
-  font-size:11px;  
-  cursor:pointer;  
-}  
-  
-.nav-item span{  
-  display:block;  
-  font-size:22px;  
-  margin-bottom:3px;  
-}  
-  
-.nav-item.active{  
-  color:#087f73;  
-  font-weight:bold;  
-}  
-  
-/* =====================================================  
-   MOBILE  
-===================================================== */  
-  
-@media(max-width:450px){  
-  
-  header{  
-    padding:16px 12px;  
-  }  
-  
-  .brand{  
-    font-size:19px;  
-  }  
-  
-  .wallet{  
-    margin:16px 12px;  
-  }  
-  
-  .premium-summary{  
-    margin:14px 12px 0;  
-  }  
-  
-  .wallet-balance{  
-    font-size:27px;  
-  }  
-  
-  .post-actions{  
-    gap:12px;  
-  }  
-  
-  .post-action{  
-    font-size:12px;  
-  }  
-  
-  .trade-info{  
-    flex-direction:column;  
-    gap:7px;  
-  }  
-  
-  .notification-panel{  
-    right:-45px;  
-  }  
-  
-  .plan-prices{  
-    grid-template-columns:1fr;  
-  }  
-  
-}  
-  
-</style>  </head>  <body>  <!-- =====================================================  
-     AUTH CHECK  
-===================================================== -->  <div id="checkingAuth">    <div class="auth-logo">  
-    P2P  
-  </div>    <div>  
-    <strong>P2P Social</strong>  
-  </div>    <div class="auth-loading">  
-    Checking login...  
-  </div>  </div>  <!-- =====================================================  
-     APP  
-===================================================== -->  <div id="app">  <header>    <div class="top">  <div class="logo-area">  
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live • P2P Social</title>
 
-  <div class="logo">  
-    <div class="p-left"></div>  
-    <div class="p-right"></div>  
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <div class="center">  
-      <div class="dot"></div>  
-    </div>  
-  </div>  
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
 
-  <div class="brand">  
-    P2P <span>Social</span>  
-  </div>  
+html,
+body{
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  font-family:Arial,Helvetica,sans-serif;
+  background:#f5f7fb;
+  color:#172033;
+}
 
-</div>  
+button,
+input{
+  font-family:inherit;
+}
 
-<div class="top-actions">  
+#authScreen{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#f5f7fb;
+}
 
-  <button  
-    id="logoutBtn"  
-    class="auth-btn logout-btn"  
-    onclick="logout()">  
-    Logout  
-  </button>  
+.authBox{
+  background:#fff;
+  width:90%;
+  max-width:380px;
+  padding:30px 22px;
+  border-radius:18px;
+  text-align:center;
+  box-shadow:0 8px 30px rgba(0,0,0,.12);
+}
 
-  <div class="notification-wrap">  
+.authLogo{
+  font-size:42px;
+  margin-bottom:12px;
+}
 
-    <button  
-      id="notificationButton"  
-      class="notification"  
-      onclick="toggleNotificationPanel(event)">  
-      🔔  
+.authTitle{
+  font-size:22px;
+  font-weight:800;
+  margin-bottom:8px;
+}
 
-      <span  
-        id="notificationBadge"  
-        class="notification-badge">  
-        0  
-      </span>  
+.authText{
+  color:#687386;
+  font-size:14px;
+}
 
-    </button>  
+#liveApp{
+  position:fixed;
+  inset:0;
+  display:none;
+  background:#172033;
+}
 
-    <div  
-      id="notificationPanel"  
-      class="notification-panel">  
+.liveBackground{
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at 50% 30%,rgba(8,127,115,.22),transparent 42%),
+    linear-gradient(180deg,#172033 0%,#111827 100%);
+}
 
-      <div class="notification-header">  
+.liveVideo{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  background:#172033;
+  display:none;
+}
 
-        <strong>  
-          Notifications  
-        </strong>  
+.livePlaceholder{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  text-align:center;
+  padding:30px;
+  color:#fff;
+}
 
-        <button  
-          class="mark-all"  
-          onclick="markAllNotificationsRead()">  
-          Mark all read  
-        </button>  
+.livePlaceholderIcon{
+  width:100px;
+  height:100px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#087f73;
+  font-size:44px;
+  margin-bottom:18px;
+  box-shadow:0 10px 35px rgba(0,0,0,.3);
+}
 
-      </div>  
+.livePlaceholderTitle{
+  font-size:25px;
+  font-weight:800;
+  margin-bottom:8px;
+}
 
-      <div  
-        id="notificationList"  
-        class="notification-list">  
+.livePlaceholderText{
+  font-size:14px;
+  opacity:.8;
+  max-width:330px;
+  line-height:1.5;
+}
 
-        <div class="no-notifications">  
-          Loading notifications...  
-        </div>  
+.topBar{
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  z-index:20;
+  padding:14px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:linear-gradient(180deg,rgba(0,0,0,.7),transparent);
+}
 
-      </div>  
+.liveInfo{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
 
-    </div>  
+.liveAvatar{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  background:#087f73;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-weight:800;
+  overflow:hidden;
+  border:2px solid rgba(255,255,255,.8);
+  flex-shrink:0;
+}
 
-  </div>  
+.liveAvatar img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.liveUserInfo{
+  min-width:0;
+  color:#fff;
+}
+
+.liveUsername{
+  font-size:15px;
+  font-weight:800;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.liveStatus{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:12px;
+  margin-top:3px;
+  opacity:.9;
+}
+
+.liveDot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#e74c3c;
+  display:inline-block;
+}
+
+.topActions{
+  display:flex;
+  gap:8px;
+}
+
+.iconButton{
+  width:42px;
+  height:42px;
+  border:0;
+  border-radius:50%;
+  background:rgba(23,32,51,.8);
+  color:#fff;
+  cursor:pointer;
+  font-size:19px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  backdrop-filter:blur(8px);
+}
+
+.iconButton:active{
+  transform:scale(.95);
+}
+
+.liveBadge{
+  position:absolute;
+  top:72px;
+  left:14px;
+  z-index:20;
+  padding:7px 11px;
+  border-radius:9px;
+  background:#e74c3c;
+  color:#fff;
+  font-size:12px;
+  font-weight:800;
+}
+
+.viewerBadge{
+  position:absolute;
+  top:72px;
+  right:14px;
+  z-index:20;
+  padding:7px 11px;
+  border-radius:9px;
+  background:rgba(23,32,51,.8);
+  color:#fff;
+  font-size:12px;
+  backdrop-filter:blur(8px);
+}
+
+.bottomArea{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  z-index:20;
+  padding:14px;
+  padding-bottom:calc(14px + env(safe-area-inset-bottom));
+  background:linear-gradient(0deg,rgba(0,0,0,.82),transparent);
+}
+
+.comments{
+  max-height:180px;
+  overflow-y:auto;
+  margin-bottom:10px;
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+
+.comments::-webkit-scrollbar{
+  width:3px;
+}
+
+.comment{
+  width:max-content;
+  max-width:85%;
+  padding:7px 10px;
+  border-radius:12px;
+  background:rgba(23,32,51,.78);
+  color:#fff;
+  font-size:13px;
+  line-height:1.35;
+  backdrop-filter:blur(8px);
+}
+
+.comment strong{
+  margin-right:5px;
+}
+
+.commentForm{
+  display:flex;
+  gap:8px;
+}
+
+.commentInput{
+  flex:1;
+  min-width:0;
+  height:44px;
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:22px;
+  padding:0 16px;
+  outline:none;
+  background:rgba(255,255,255,.12);
+  color:#fff;
+  backdrop-filter:blur(10px);
+}
+
+.commentInput::placeholder{
+  color:rgba(255,255,255,.7);
+}
+
+.sendComment{
+  width:44px;
+  height:44px;
+  border:0;
+  border-radius:50%;
+  background:#087f73;
+  color:#fff;
+  cursor:pointer;
+  font-size:18px;
+}
+
+.reactionButtons{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+.reactionButton{
+  width:44px;
+  height:44px;
+  border:0;
+  border-radius:50%;
+  background:rgba(23,32,51,.82);
+  color:#fff;
+  cursor:pointer;
+  font-size:20px;
+  backdrop-filter:blur(8px);
+}
+
+.reactionButton:active{
+  transform:scale(.9);
+}
+
+.createPanel{
+  position:absolute;
+  inset:0;
+  z-index:100;
+  display:none;
+  align-items:flex-end;
+  justify-content:center;
+  background:rgba(0,0,0,.6);
+}
+
+.createBox{
+  width:100%;
+  max-width:520px;
+  background:#fff;
+  border-radius:20px 20px 0 0;
+  padding:20px;
+  max-height:90vh;
+  overflow:auto;
+}
+
+.createHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:18px;
+}
+
+.createTitle{
+  font-size:20px;
+  font-weight:800;
+}
+
+.closeCreate{
+  width:38px;
+  height:38px;
+  border:0;
+  border-radius:50%;
+  background:#f5f7fb;
+  color:#172033;
+  cursor:pointer;
+  font-size:20px;
+}
+
+.createLabel{
+  display:block;
+  font-size:13px;
+  font-weight:700;
+  margin-bottom:7px;
+}
+
+.createInput{
+  width:100%;
+  height:44px;
+  border:1px solid #dfe4ec;
+  border-radius:10px;
+  padding:0 12px;
+  outline:none;
+  margin-bottom:14px;
+}
+
+.createTextarea{
+  width:100%;
+  min-height:90px;
+  resize:none;
+  border:1px solid #dfe4ec;
+  border-radius:10px;
+  padding:12px;
+  outline:none;
+  margin-bottom:14px;
+}
+
+.startLiveButton{
+  width:100%;
+  height:48px;
+  border:0;
+  border-radius:11px;
+  background:#087f73;
+  color:#fff;
+  font-size:15px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.stopLiveButton{
+  width:100%;
+  height:48px;
+  border:0;
+  border-radius:11px;
+  background:#e74c3c;
+  color:#fff;
+  font-size:15px;
+  font-weight:800;
+  cursor:pointer;
+  display:none;
+  margin-top:8px;
+}
+
+.messageBox{
+  position:fixed;
+  left:50%;
+  bottom:30px;
+  transform:translateX(-50%);
+  z-index:99999;
+  background:#172033;
+  color:#fff;
+  padding:11px 16px;
+  border-radius:10px;
+  font-size:13px;
+  display:none;
+  max-width:90%;
+  text-align:center;
+}
+
+.ownerTreasury{
+  position:absolute;
+  right:14px;
+  bottom:180px;
+  z-index:25;
+  display:none;
+  width:185px;
+  padding:12px;
+  border-radius:13px;
+  background:rgba(23,32,51,.9);
+  color:#fff;
+  backdrop-filter:blur(10px);
+  box-shadow:0 8px 25px rgba(0,0,0,.25);
+}
+
+.ownerTreasuryTitle{
+  font-size:12px;
+  font-weight:800;
+  margin-bottom:6px;
+}
+
+.ownerTreasuryBalance{
+  font-size:17px;
+  font-weight:800;
+}
+
+.ownerTreasurySub{
+  font-size:11px;
+  opacity:.7;
+  margin-top:3px;
+}
+
+@media(max-width:600px){
+  .comments{
+    max-height:145px;
+  }
+
+  .ownerTreasury{
+    bottom:170px;
+    width:165px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div id="authScreen">
+  <div class="authBox">
+    <div class="authLogo">🔴</div>
+    <div class="authTitle">P2P Social Live</div>
+    <div class="authText" id="authText">Checking your account...</div>
+  </div>
+</div>
+
+<div id="liveApp">
+
+  <div class="liveBackground"></div>
+
+  <video
+    id="liveVideo"
+    class="liveVideo"
+    autoplay
+    muted
+    playsinline>
+  </video>
+
+  <div id="livePlaceholder" class="livePlaceholder">
+    <div class="livePlaceholderIcon">🔴</div>
+    <div class="livePlaceholderTitle">Live Room</div>
+    <div class="livePlaceholderText">
+      Welcome to P2P Social Live
+    </div>
+  </div>
+
+  <div class="topBar">
+
+    <div class="liveInfo">
+
+      <div class="liveAvatar" id="liveAvatar">
+        U
+      </div>
+
+      <div class="liveUserInfo">
+        <div class="liveUsername" id="liveUsername">
+          Live User
+        </div>
+
+        <div class="liveStatus">
+          <span class="liveDot"></span>
+          <span id="liveState">LIVE</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="topActions">
+
+      <button
+        class="iconButton"
+        onclick="shareLive()"
+        title="Share">
+        ↗
+      </button>
+
+      <button
+        class="iconButton"
+        onclick="closeLive()"
+        title="Close">
+        ✕
+      </button>
+
+    </div>
+
+  </div>
+
+  <div class="liveBadge">
+    LIVE
+  </div>
+
+  <div class="viewerBadge">
+    👁 <span id="viewerCount">1</span>
+  </div>
+
+  <div
+    id="ownerTreasury"
+    class="ownerTreasury">
+
+    <div class="ownerTreasuryTitle">
+      💎 Owner Treasury
+    </div>
+
+    <div
+      id="ownerTreasuryBalance"
+      class="ownerTreasuryBalance">
+      0 💎
+    </div>
+
+    <div class="ownerTreasurySub">
+      Diamond treasury
+    </div>
+
+  </div>
+
+  <div class="bottomArea">
+
+    <div
+      id="comments"
+      class="comments">
+    </div>
+
+    <div class="reactionButtons">
+
+      <button
+        class="reactionButton"
+        onclick="sendReaction('❤️')">
+        ❤️
+      </button>
+
+      <button
+        class="reactionButton"
+        onclick="sendReaction('🔥')">
+        🔥
+      </button>
+
+      <button
+        class="reactionButton"
+        onclick="sendReaction('👏')">
+        👏
+      </button>
+
+      <button
+        class="reactionButton"
+        onclick="sendReaction('💎')">
+        💎
+      </button>
+
+    </div>
+
+    <form
+      id="commentForm"
+      class="commentForm"
+      onsubmit="sendComment(event)">
+
+      <input
+        id="commentInput"
+        class="commentInput"
+        maxlength="500"
+        autocomplete="off"
+        placeholder="Say something...">
+
+      <button
+        class="sendComment"
+        type="submit">
+        ➤
+      </button>
+
+    </form>
+
+  </div>
 
 </div>
 
-  </div>    <div class="user-info">  Logged in as:  
+<div
+  id="createPanel"
+  class="createPanel">
 
-<strong id="usernameDisplay">  
-  User  
-</strong>  
+  <div class="createBox">
 
-<span  
-  id="headerPremiumBadge"  
-  class="premium-user-badge">  
-</span>
+    <div class="createHeader">
 
-  </div>    <div class="search">  🔎  
+      <div class="createTitle">
+        🔴 Create Live
+      </div>
 
-<input  
-  type="text"  
-  id="searchInput"  
-  placeholder="Search users, live rooms...">
+      <button
+        class="closeCreate"
+        onclick="closeCreateLive()">
+        ✕
+      </button>
 
-  </div>  </header>  <!-- =====================================================  
-     PREMIUM SUMMARY  
-===================================================== -->  <div class="premium-summary">    <div class="premium-summary-top">  <div class="premium-summary-title">  
-  Premium Membership  
-</div>  
+    </div>
 
-<div  
-  id="currentPremiumLabel"  
-  class="premium-current">  
-  Free  
-</div>
+    <label class="createLabel">
+      Live title
+    </label>
 
-  </div>    <div class="premium-summary-text">  Unlock picture posts, video posts, promotion,  
-and Live depending on your membership level.
+    <input
+      id="createLiveTitle"
+      class="createInput"
+      maxlength="100"
+      placeholder="Enter live title">
 
-  </div>  <button  
-class="premium-detail-btn"  
-onclick="openPremiumDetails()">
+    <label class="createLabel">
+      Description
+    </label>
 
-⭐ View Premium Details
+    <textarea
+      id="createLiveDescription"
+      class="createTextarea"
+      maxlength="500"
+      placeholder="Describe your live..."></textarea>
 
-  </button>  </div>  <!-- =====================================================  
-     WALLET  
-===================================================== -->  <div class="wallet">    <div class="wallet-title">  
-    Total Wallet Balance  
-  </div>    <div  
-    id="balanceDisplay"  
-    class="wallet-balance">  
-    0.00 USDT  
-  </div>    <div class="wallet-balance-label">  
-    USDT and 💎 Diamond are separate balances  
-  </div>    <div class="wallet-row">  <span>  
-  💵 USDT  
-</span>  
+    <button
+      id="startLiveButton"
+      class="startLiveButton"
+      onclick="startLive()">
+      🔴 Start Live
+    </button>
 
-<strong id="usdtDisplay">  
-  0.00  
-</strong>
+    <button
+      id="stopLiveButton"
+      class="stopLiveButton"
+      onclick="stopLive()">
+      ⛔ Stop Live
+    </button>
 
-  </div>    <div class="wallet-row">  <span>  
-  💎 Diamond  
-</span>  
-
-<strong id="diamondDisplay">  
-  0  
-</strong>
-
-  </div>    <div class="wallet-buttons">  <button  
-  class="deposit"  
-  onclick="openDeposit()">  
-  💎 Send  
-</button>  
-
-<button  
-  class="wallet-button"  
-  onclick="openWallet()">  
-  🟢 Buy / 🤝 Trade  
-</button>
-
-  </div>  </div>  <!-- =====================================================  
-     LIVE  
-===================================================== -->  <section>    <div class="section-title">  <h2>  
-  🔴 Top Live  
-</h2>  
-
-<span  
-  class="see-all"  
-  onclick="openLive()">  
-  See all 10  
-</span>
-
-  </div>    <div class="live-container">  <div  
-  class="live-card"  
-  onclick="openLive()">  
-
-  <div class="live-image">  
-
-    👩  
-
-    <span class="live-badge">  
-      LIVE  
-    </span>  
-
-    <span class="viewers">  
-      ***  
-    </span>  
-
-  </div>  
-
-  <div class="live-name">  
-    🟣Premium Max
-  </div>  
-
-</div>  
-
-<div  
-  class="live-card"  
-  onclick="openLive()">  
-
-  <div class="live-image">  
-
-    👨  
-
-    <span class="live-badge">  
-      LIVE  
-    </span>  
-
-    <span class="viewers">  
-      ***  
-    </span>  
-
-  </div>  
-
-  <div class="live-name">  
-    🟣Premium Max  
-  </div>  
-
-</div>  
-
-<div  
-  class="live-card"  
-  onclick="openLive()">  
-
-  <div class="live-image">  
-
-    👩‍🦱  
-
-    <span class="live-badge">  
-      LIVE  
-    </span>  
-
-    <span class="viewers">  
-      ***  
-    </span>  
-
-  </div>  
-
-  <div class="live-name">  
-    🟣Premium Max  
-  </div>  
+  </div>
 
 </div>
 
-  </div>  </section>  <!-- =====================================================  
-     P2P  
-===================================================== -->  <section>    <div class="section-title">  <h2>  
-  🔄 Available Offers  
-</h2>  
-
-<div class="p2p-header-actions">  
-
-  <button  
-    class="create-offer-btn"  
-    onclick="createOffer()">  
-    + Create Offer  
-  </button>  
-
-  <button  
-    class="refresh-btn"  
-    onclick="loadAvailableOffers()">  
-    🔃  
-  </button>  
-
+<div
+  id="messageBox"
+  class="messageBox">
 </div>
 
-  </div>    <div  
-    id="p2pOffersContainer"  
-    class="p2p-offers">  <div class="no-offers">  
+<script>
+const SUPABASE_URL =
+  "https://mbsvuwrgigqfporxwpfr.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
+
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
+
+let currentUser = null;
+let currentProfile = null;
+let currentLiveId = null;
+let liveChannel = null;
+let commentChannel = null;
+let isHost = false;
+let localStream = null;
+let viewerCount = 1;
+
+const PREMIUM_MAX_MIN_LEVEL = 3;
+
+function escapeHtml(value){
+  return String(value ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+function showMessage(message){
+  const box =
+    document.getElementById("messageBox");
+
+  box.textContent = message;
+  box.style.display = "block";
+
+  clearTimeout(window.messageTimer);
+
+  window.messageTimer =
+    setTimeout(()=>{
+      box.style.display = "none";
+    },3000);
+}
+
+function getFirstValue(obj, keys, fallback=""){
+  for(const key of keys){
+    if(
+      obj &&
+      obj[key] !== undefined &&
+      obj[key] !== null &&
+      obj[key] !== ""
+    ){
+      return obj[key];
+    }
+  }
+
+  return fallback;
+}
+
+function getUserLevel(profile){
+  const value =
+    getFirstValue(
+      profile,
+      [
+        "level",
+        "user_level",
+        "account_level",
+        "membership_level"
+      ],
+      0
+    );
+
+  const number =
+    parseInt(value,10);
+
+  return Number.isFinite(number)
+    ? number
+    : 0;
+}
+
+function normalizePremiumTier(profile){
+  return String(
+    getFirstValue(
+      profile,
+      [
+        "premium_tier",
+        "premium",
+        "subscription_tier",
+        "plan",
+        "membership"
+      ],
+      ""
+    )
+  ).toLowerCase().trim();
+}
+
+function hasPremiumMax(){
+  if(!currentProfile) return false;
+
+  const tier =
+    normalizePremiumTier(currentProfile);
+
+  return [
+    "premium max",
+    "premium_max",
+    "premium-max",
+    "max",
+    "premiummax"
+  ].includes(tier);
+}
+
+function canCreateLive(){
+  return (
+    hasPremiumMax() &&
+    getUserLevel(currentProfile) >=
+      PREMIUM_MAX_MIN_LEVEL
+  );
+}
+
+async function requireLogin(){
+  const {
+    data,
+    error
+  } =
+    await supabaseClient.auth.getSession();
+
+  if(error || !data.session){
+    window.location.href =
+      "./login.html";
+
+    return false;
+  }
+
+  currentUser =
+    data.session.user;
+
+  return true;
+}
+
+async function loadProfile(){
+
+  if(!currentUser) return null;
+
+  let result =
+    await supabaseClient
+      .from("profiles")
+      .select("*")
+      .eq("id",currentUser.id)
+      .maybeSingle();
+
+  if(result.data){
+    currentProfile =
+      result.data;
+
+    return currentProfile;
+  }
+
+  result =
+    await supabaseClient
+      .from("users")
+      .select("*")
+      .eq("id",currentUser.id)
+      .maybeSingle();
+
+  if(result.data){
+    currentProfile =
+      result.data;
+
+    return currentProfile;
+  }
+
+  currentProfile = {
+    id:currentUser.id,
+    username:
+      currentUser.user_metadata?.username ||
+      currentUser.email?.split("@")[0] ||
+      "User"
+  };
+
+  return currentProfile;
+}
+
+function getUsername(){
+
+  return getFirstValue(
+    currentProfile,
+    [
+      "username",
+      "user_name",
+      "name",
+      "display_name"
+    ],
+    currentUser?.email?.split("@")[0] ||
+    "User"
+  );
+}
+
+function getAvatar(){
+
+  return getFirstValue(
+    currentProfile,
+    [
+      "avatar_url",
+      "avatar",
+      "profile_image",
+      "photo_url",
+      "image_url"
+    ],
+    ""
+  );
+}
+
+function updateLiveUser(){
+
+  const username =
+    getUsername();
+
+  document.getElementById(
+    "liveUsername"
+  ).textContent = username;
+
+  const avatar =
+    getAvatar();
+
+  const avatarBox =
+    document.getElementById(
+      "liveAvatar"
+    );
+
+  if(avatar){
+
+    avatarBox.innerHTML =
+      '<img src="' +
+      escapeHtml(avatar) +
+      '" alt="">';
+
+  }else{
+
+    avatarBox.textContent =
+      username
+        .charAt(0)
+        .toUpperCase();
+
+  }
+}
+
+function openCreateLive(){
+
+  if(!currentUser){
+    showMessage("Please login first.");
+    return;
+  }
+
+  if(!canCreateLive()){
+
+    showMessage(
+      "Premium Max and Level 3+ are required to create Live."
+    );
+
+    return;
+  }
+
+  document.getElementById(
+    "createPanel"
+  ).style.display = "flex";
+}
+
+function closeCreateLive(){
+
+  document.getElementById(
+    "createPanel"
+  ).style.display = "none";
+}
+
+async function startLive(){
+
+  if(!canCreateLive()){
+
+    showMessage(
+      "Premium Max and Level 3+ are required."
+    );
+
+    return;
+  }
+
+  const title =
+    document.getElementById(
+      "createLiveTitle"
+    ).value.trim();
+
+  const description =
+    document.getElementById(
+      "createLiveDescription"
+    ).value.trim();
+
+  if(!title){
+
+    showMessage(
+      "Enter a live title."
+    );
 
-  <div class="no-offers-icon">  
-    🔄  
-  </div>  
+    return;
+  }
 
-  <strong>  
-    Loading available offers...  
-  </strong>  
+  const startButton =
+    document.getElementById(
+      "startLiveButton"
+    );
 
-  <small>  
-    Please wait.  
-  </small>  
+  startButton.disabled = true;
+  startButton.textContent =
+    "Starting...";
 
-</div>
+  try{
 
-  </div>  </section>  <!-- =====================================================  
-     POSTS  
-===================================================== -->  <section class="posts-section">    <div class="posts-title">  <h2>  
-  📝 Public Posts  
-</h2>  
+    const payload = {
+      host_id:currentUser.id,
+      title:title,
+      description:description,
+      status:"live",
+      is_live:true
+    };
+
+    let result =
+      await supabaseClient
+        .from("live_rooms")
+        .insert(payload)
+        .select("*")
+        .single();
 
-<div  
-  style="  
-    display:flex;  
-    gap:7px;  
-    align-items:center;  
-  ">  
+    if(result.error){
 
-  <span  
-    class="see-all"  
-    onclick="loadPosts(true)">  
-    🔃 Refresh  
-  </span>  
+      const fallbackPayload = {
+        user_id:currentUser.id,
+        title:title,
+        description:description,
+        status:"live",
+        is_live:true
+      };
 
-  <button  
-    class="create-post-btn"  
-    onclick="openCreatePost()">  
-    + Post  
-  </button>  
+      result =
+        await supabaseClient
+          .from("live")
+          .insert(fallbackPayload)
+          .select("*")
+          .single();
+    }
 
-</div>
+    if(result.error){
 
-  </div>    <div  
-    id="postsFeed"  
-    class="posts-feed">  <div class="loading-posts">  
-  Loading public posts...  
-</div>
+      throw result.error;
+    }
 
-  </div>  <button  
-id="loadMoreBtn"  
-class="load-more"  
-onclick="loadMorePosts()"  
-style="display:none;">
+    currentLiveId =
+      result.data.id;
 
-➕ Load more posts
+    isHost = true;
 
-  </button>  </section>  <!-- =====================================================  
-     PREMIUM DETAILS MODAL  
-===================================================== -->  <div  
-  id="premiumModal"  
-  class="modal">    <div class="modal-content">  <div class="modal-header">  
+    closeCreateLive();
 
-  <h3>  
-    ⭐ Premium Membership  
-  </h3>  
+    document.getElementById(
+      "liveState"
+    ).textContent = "LIVE";
 
-  <button  
-    class="close-modal"  
-    onclick="closePremiumDetails()">  
-    ×  
-  </button>  
+    document.getElementById(
+      "startLiveButton"
+    ).style.display = "none";
 
-</div>  
+    document.getElementById(
+      "stopLiveButton"
+    ).style.display = "block";
 
-<div class="premium-intro">  
+    showMessage(
+      "Your Live room is open."
+    );
+
+    await startCamera();
+
+    await subscribeToLive();
 
-  Choose the membership level that matches  
-  how you want to use P2P Social.  
+  }catch(error){
 
-</div>  
+    console.error(error);
 
-<!-- FREE -->  
+    showMessage(
+      "Unable to create Live room."
+    );
 
-<div class="premium-plan">  
+  }finally{
 
-  <div class="plan-title">  
-    ⚪ Free  
-  </div>  
+    startButton.disabled = false;
+    startButton.textContent =
+      "🔴 Start Live";
+  }
+}
 
-  <div class="plan-description">  
+async function startCamera(){
 
-    + Post text, comment, like, P2P trade  
-    and other basic social features.  
+  if(!isHost) return;
 
-  </div>  
+  if(!navigator.mediaDevices ||
+     !navigator.mediaDevices.getUserMedia){
 
-</div>  
+    showMessage(
+      "Camera is not available in this browser."
+    );
 
-<!-- PREMIUM -->  
+    return;
+  }
 
-<div class="premium-plan green">  
+  try{
 
-  <div class="plan-title">  
-    🟢 Premium  
-  </div>  
+    localStream =
+      await navigator.mediaDevices.getUserMedia({
+        video:true,
+        audio:true
+      });
 
-  <div class="plan-description">  
+    const video =
+      document.getElementById(
+        "liveVideo"
+      );
 
-    + Picture posts<br>  
-    + Promote inside photo<br>  
-    + All Free features  
+    video.srcObject =
+      localStream;
 
-  </div>  
+    video.style.display =
+      "block";
 
-  <div class="plan-prices">  
+    document.getElementById(
+      "livePlaceholder"
+    ).style.display =
+      "none";
 
-    <div class="plan-price">  
-      1 Month — 2 USDT  
-    </div>  
+  }catch(error){
 
-    <div class="plan-price">  
-      3 Months — 6 USDT  
-    </div>  
+    console.error(error);
 
-    <div class="plan-price">  
-      6 Months — 12 USDT  
-    </div>  
+    showMessage(
+      "Camera permission was not granted."
+    );
+  }
+}
 
-    <div class="plan-price">  
-      1 Year — 24 USDT  
-    </div>  
+async function stopLive(){
 
-  </div>  
+  if(!isHost || !currentLiveId){
 
-</div>  
+    closeLive();
+    return;
+  }
 
-<!-- PREMIUM PLUS -->  
+  try{
 
-<div class="premium-plan blue">  
+    let result =
+      await supabaseClient
+        .from("live_rooms")
+        .update({
+          status:"ended",
+          is_live:false,
+          ended_at:new Date().toISOString()
+        })
+        .eq("id",currentLiveId);
 
-  <div class="plan-title">  
-    🔵 Premium+  
-  </div>  
+    if(result.error){
 
-  <div class="plan-description">  
+      await supabaseClient
+        .from("live")
+        .update({
+          status:"ended",
+          is_live:false,
+          ended_at:new Date().toISOString()
+        })
+        .eq("id",currentLiveId);
+    }
 
-    + Video posts<br>  
-    + Promote inside video<br>  
-    + Picture-post features<br>  
-    + All Free features  
+  }catch(error){
 
-  </div>  
+    console.error(error);
 
-  <div class="plan-prices">  
+  }finally{
 
-    <div class="plan-price">  
-      1 Month — 5.42 USDT  
-    </div>  
+    stopCamera();
 
-    <div class="plan-price">  
-      3 Months — 16.26 USDT  
-    </div>  
+    showMessage(
+      "Live ended."
+    );
 
-    <div class="plan-price">  
-      6 Months — 32.52 USDT  
-    </div>  
+    setTimeout(()=>{
+      window.location.href =
+        "./index.html";
+    },800);
+  }
+}
 
-    <div class="plan-price">  
-      1 Year — 65.04 USDT  
-    </div>  
+function stopCamera(){
 
-  </div>  
+  if(localStream){
 
-</div>  
+    localStream
+      .getTracks()
+      .forEach(track=>{
+        track.stop();
+      });
 
-<!-- PREMIUM MAX -->  
+    localStream = null;
+  }
 
-<div class="premium-plan purple">  
-
-  <div class="plan-title">  
-    🟣 Premium Max  
-  </div>  
-
-  <div class="plan-description">  
-
-    + Picture posts<br>  
-    + Promote inside photo<br>  
-    + Video posts<br>  
-    + Promote inside video<br>  
-    + Create Live rooms<br>  
-    + Premium+ features  
-
-  </div>  
-
-  <div class="plan-prices">  
-
-    <div class="plan-price">  
-      1 Month — 108.5 USDT  
-    </div>  
-
-    <div class="plan-price">  
-      3 Months — 325.5 USDT  
-    </div>  
-
-    <div class="plan-price">  
-      6 Months — 651 USDT  
-    </div>  
-
-    <div class="plan-price">  
-      1 Year — 1,302 USDT  
-    </div>  
-
-  </div>  
-
-</div>  
-
-<!-- THRESHOLDS -->  
-
-<div class="threshold-box">  
-
-  <strong>  
-    🟣 Premium Max — Level 3+  
-  </strong>  
-
-  <div  
-    style="  
-      margin-top:6px;  
-      font-size:12px;  
-      color:#5d5570;  
-      line-height:1.5;  
-    ">  
-
-    Premium Max Live creation is intended for  
-    Level 3+ accounts. The account level should  
-    be checked by the platform before a Live room  
-    is created.  
-
-  </div>  
-
-</div>  
-
-<!-- PIN RULES -->  
-
-<div class="premium-rules">  
-
-  <h4>  
-    📌 Pinned-item rules  
-  </h4>  
-
-  <div class="rule">  
-
-    <span class="rule-icon">  
-      📌  
-    </span>  
-
-    <span>  
-      Available Offers show up to 5 offers initially.  
-    </span>  
-
-  </div>  
-
-  <div class="rule">  
-
-    <span class="rule-icon">  
-      ⭐  
-    </span>  
-
-    <span>  
-      Admin can pin up to 3 offers.  
-    </span>  
-
-  </div>  
-
-  <div class="rule">  
-
-    <span class="rule-icon">  
-      💳  
-    </span>  
-
-    <span>  
-      Additional paid promotion can be used  
-      according to the platform's promotion rules.  
-    </span>  
-
-  </div>  
-
-  <div class="rule">  
-
-    <span class="rule-icon">  
-      📝  
-    </span>  
-
-    <span>  
-      Public Posts initially show up to 10 posts.  
-    </span>  
-
-  </div>  
-
-  <div class="rule">  
-
-    <span class="rule-icon">  
-      📌  
-    </span>  
-
-    <span>  
-      Admin can pin up to 3 posts.  
-    </span>  
-
-  </div>  
-
-</div>  
-
-<!-- LIVE EARNINGS -->  
-
-<div class="premium-rules">  
-
-  <h4>  
-    🔴 Live-room earning rules  
-  </h4>  
-
-  <div class="info-box">  
-
-    Premium Max users can create Live rooms.  
-    Viewer gifts/earnings should be recorded  
-    separately from USDT wallet funds and should  
-    follow the platform's Live earning and  
-    settlement rules.  
-
-  </div>  
-
-</div>  
-
-<!-- DISPUTES -->  
-
-<div class="premium-rules">  
-
-  <h4>  
-    ⚖️ P2P dispute rules  
-  </h4>  
-
-  <div class="info-box">  
-
-    A disputed P2P order should remain protected  
-    until the dispute process is completed.  
-    Funds should not be released simply because  
-    one side reports completion. Evidence,  
-    payment status and admin resolution should  
-    be checked before final settlement.  
-
-  </div>  
-
-</div>
-
-  </div>  </div>  <!-- =====================================================  
-     CREATE POST MODAL  
-===================================================== -->  <div  
-  id="createPostModal"  
-  class="modal">    <div class="modal-content">  <div class="modal-header">  
-
-  <h3>  
-    Create Post  
-  </h3>  
-
-  <button  
-    class="close-modal"  
-    onclick="closeCreatePost()">  
-    ×  
-  </button>  
-
-</div>  
-
-<textarea  
-  id="postContentInput"  
-  class="post-textarea"  
-  maxlength="5000"  
-  placeholder="What's on your mind?"></textarea>  
-
-<label class="visibility-label">  
-  Post visibility  
-</label>  
-
-<select  
-  id="postVisibility"  
-  class="visibility-select">  
-
-  <option value="public">  
-    🌍 Public  
-  </option>  
-
-  <option value="private">  
-    🔒 Private  
-  </option>  
-
-</select>  
-
-<div class="media-section">  
-
-  <label class="media-label">  
-    Post type  
-  </label>  
-
-  <select  
-    id="mediaType"  
-    class="media-type-select"  
-    onchange="updateMediaControls()">  
-
-    <option value="text">  
-      📝 Text  
-    </option>  
-
-    <option value="image">  
-      🖼️ Picture  
-    </option>  
-
-    <option value="video">  
-      🎥 Video  
-    </option>  
-
-  </select>  
-
-</div>  
-
-<div  
-  id="mediaControls"  
-  class="media-section">  
-</div>  
-
-<div  
-  id="promotionNotice"  
-  class="media-section">  
-</div>  
-
-<button  
-  id="publishPostBtn"  
-  class="publish-btn"  
-  onclick="createPost()">  
-
-  Publish Post  
-
-</button>
-
-  </div>  </div>  <!-- =====================================================  
-     BOTTOM NAV  
-===================================================== -->  <nav class="bottom-nav">    <div  
-    class="nav-item active"  
-    onclick="goHome()">  <span>  
-  🏠  
-</span>  
-
-Home
-
-  </div>    <div  
-    class="nav-item"  
-    onclick="openLive()">  <span>  
-  🔴  
-</span>  
-
-Live
-
-  </div>    <div  
-    class="nav-item"  
-    onclick="openWallet()">  <span>  
-  🔄  
-</span>  
-
-P2P
-
-  </div>    <div  
-    class="nav-item"  
-    onclick="openMessages()">  <span>  
-  💬  
-</span>  
-
-Messages
-
-  </div>    <div  
-    class="nav-item"  
-    onclick="openProfile()">  <span>  
-  👤  
-</span>  
-
-Profile
-
-  </div>  </nav>  </div>  <!-- =====================================================  
-     SUPABASE  
-===================================================== -->  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <script>  
-  
-/* =====================================================  
-   SUPABASE  
-===================================================== */  
-  
-const SUPABASE_URL =  
-"https://mbsvuwrgigqfporxwpfr.supabase.co";  
-  
-const SUPABASE_PUBLISHABLE_KEY =  
-"sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";  
-  
-const supabaseClient =  
-window.supabase.createClient(  
-  SUPABASE_URL,  
-  SUPABASE_PUBLISHABLE_KEY  
-);  
-  
-/* =====================================================  
-   GLOBAL STATE  
-===================================================== */  
-  
-let currentSession = null;  
-  
-let currentProfile = null;  
-  
-let currentPremiumTier = "free";  
-  
-let currentLevel = 0;  
-  
-let isAdmin = false;  
-  
-let allPosts = [];  
-  
-let displayedPostCount = 10;  
-  
-let commentsOpen = {};  
-  
-let notificationChannel = null;  
-  
-/*  
-  Premium Max requirement.  
-  Change this constant if your database uses  
-  another Level 3+ definition.  
-*/  
-const PREMIUM_MAX_MIN_LEVEL = 3;  
-  
-/*  
-  Display limits.  
-*/  
-const TOP_LIVE_LIMIT = 10;  
-  
-const AVAILABLE_OFFERS_LIMIT = 5;  
-  
-const INITIAL_POST_LIMIT = 10;  
-  
-const ADMIN_PIN_LIMIT = 3;  
-  
-/* =====================================================  
-   LOGIN PROTECTION  
-===================================================== */  
-  
-async function startApp(){  
-  
-  try{  
-  
-    const {  
-      data,  
-      error  
-    } =  
-    await supabaseClient.auth.getSession();  
-  
-    if(error){  
-  
-      console.error(error);  
-  
-      redirectToLogin();  
-  
-      return;  
-  
-    }  
-  
-    if(  
-      !data ||  
-      !data.session  
-    ){  
-  
-      redirectToLogin();  
-  
-      return;  
-  
-    }  
-  
-    currentSession =  
-      data.session;  
-  
-    document.getElementById(  
-      "checkingAuth"  
-    ).style.display="none";  
-  
-    document.getElementById(  
-      "app"  
-    ).style.display="block";  
-  
-    await initializeDashboard();  
-  
-  }catch(error){  
-  
-    console.error(  
-      "Authentication error:",  
-      error  
-    );  
-  
-    redirectToLogin();  
-  
-  }  
-  
-}  
-  
-function redirectToLogin(){  
-  
-  window.location.replace(  
-    "./login.html"  
-  );  
-  
-}  
-  
-/* =====================================================  
-   AUTH STATE  
-===================================================== */  
-  
-supabaseClient.auth.onAuthStateChange(  
-  async(event,session)=>{  
-  
-    if(  
-      event==="SIGNED_OUT"  
-    ){  
-  
-      currentSession=null;  
-  
-      redirectToLogin();  
-  
-      return;  
-  
-    }  
-  
-    if(  
-      event==="SIGNED_IN" &&  
-      session  
-    ){  
-  
-      currentSession=session;  
-  
-    }  
-  
-  }  
-);  
-  
-/* =====================================================  
-   INITIALIZE  
-===================================================== */  
-  
-async function initializeDashboard(){  
-  
-  if(!currentSession){  
-  
-    redirectToLogin();  
-  
-    return;  
-  
-  }  
-  
-  await updateUserUI();  
-  
-  await Promise.allSettled([  
-  
-    loadAvailableOffers(),  
-  
-    loadNotifications(),  
-  
-    loadPosts(false)  
-  
-  ]);  
-  
-  subscribeToNotifications();  
-  
-}  
-  
-/* =====================================================  
-   USER / PREMIUM  
-===================================================== */  
-  
-async function updateUserUI(){  
-  
-  if(!currentSession){  
-  
-    redirectToLogin();  
-  
-    return;  
-  
-  }  
-  
-  const user =  
-    currentSession.user;  
-  
-  let username =  
-    user.user_metadata?.username ||  
-    user.email?.split("@")[0] ||  
-    "User";  
-  
-  /*  
-    Select * keeps this page compatible with  
-    profiles tables containing additional fields.  
-  */  
-  
-  const {  
-    data:profile,  
-    error  
-  } =  
-  await supabaseClient  
-    .from("profiles")  
-    .select("*")  
-    .eq(  
-      "id",  
-      user.id  
-    )  
-    .maybeSingle();  
-  
-  if(error){  
-  
-    console.log(  
-      "Profile:",  
-      error.message  
-    );  
-  
-  }  
-  
-  currentProfile =  
-    profile || {};  
-  
-  if(profile){  
-  
-    username =  
-      profile.username ||  
-      username;  
-  
-    currentPremiumTier =  
-      normalizePremiumTier(  
-        profile  
-      );  
-  
-    currentLevel =  
-      getUserLevel(  
-        profile  
-      );  
-  
-    isAdmin =  
-      detectAdmin(  
-        profile  
-      );  
-  
-    updateWalletDisplay(  
-      profile  
-    );  
-  
-  }else{  
-  
-    currentPremiumTier =  
-      "free";  
-  
-    currentLevel =  
-      0;  
-  
-    isAdmin =  
-      false;  
-  
-    updateWalletDisplay({});  
-  
-  }  
-  
-  document.getElementById(  
-    "usernameDisplay"  
-  ).textContent =  
-    username;  
-  
-  updatePremiumUI();  
-  
-}  
-  
-/* =====================================================  
-   PREMIUM DETECTION  
-===================================================== */  
-  
-function normalizePremiumTier(profile){  
-  
-  if(!profile){  
-  
-    return "free";  
-  
-  }  
-  
-  const values=[  
-  
-    profile.premium_tier,  
-  
-    profile.subscription_tier,  
-  
-    profile.membership,  
-  
-    profile.plan,  
-  
-    profile.premium_plan,  
-  
-    profile.account_tier  
-  
-  ];  
-  
-  let value =  
-    values.find(  
-      v =>  
-        v !== null &&  
-        v !== undefined &&  
-        String(v).trim()!==""  
-    );  
-  
-  if(!value){  
-  
-    return "free";  
-  
-  }  
-  
-  value =  
-    String(value)  
-      .toLowerCase()  
-      .trim()  
-      .replace(/\s+/g,"");  
-  
-  if(  
-    value==="premiummax" ||  
-    value==="max" ||  
-    value==="premium_max"  
-  ){  
-  
-    return "premium_max";  
-  
-  }  
-  
-  if(  
-    value==="premium+" ||  
-    value==="premiumplus" ||  
-    value==="premium_plus" ||  
-    value==="plus"  
-  ){  
-  
-    return "premium_plus";  
-  
-  }  
-  
-  if(  
-    value==="premium"  
-  ){  
-  
-    return "premium";  
-  
-  }  
-  
-  return "free";  
-  
-}  
-  
-function getUserLevel(profile){  
-  
-  const values=[  
-  
-    profile.level,  
-  
-    profile.user_level,  
-  
-    profile.account_level,  
-  
-    profile.rank_level  
-  
-  ];  
-  
-  for(  
-    const value of values  
-  ){  
-  
-    if(  
-      value!==null &&  
-      value!==undefined &&  
-      value!==""  
-    ){  
-  
-      const number =  
-        Number(value);  
-  
-      if(  
-        !Number.isNaN(number)  
-      ){  
-  
-        return number;  
-  
-      }  
-  
-    }  
-  
-  }  
-  
-  return 0;  
-  
-}  
-  
-function detectAdmin(profile){  
-  
-  if(!profile){  
-  
-    return false;  
-  
-  }  
-  
-  if(  
-    profile.is_admin===true  
-  ){  
-  
-    return true;  
-  
-  }  
-  
-  if(  
-    String(  
-      profile.role||""  
-    ).toLowerCase()==="admin"  
-  ){  
-  
-    return true;  
-  
-  }  
-  
-  if(  
-    String(  
-      profile.account_role||""  
-    ).toLowerCase()==="admin"  
-  ){  
-  
-    return true;  
-  
-  }  
-  
-  return false;  
-  
-}  
-  
-/* =====================================================  
-   PREMIUM CAPABILITIES  
-===================================================== */  
-  
-function hasPremium(){  
-  
-  return [  
-    "premium",  
-    "premium_plus",  
-    "premium_max"  
-  ].includes(  
-    currentPremiumTier  
-  );  
-  
-}  
-  
-function hasPremiumPlus(){  
-  
-  return [  
-    "premium_plus",  
-    "premium_max"  
-  ].includes(  
-    currentPremiumTier  
-  );  
-  
-}  
-  
-function hasPremiumMax(){  
-  
-  return (  
-    currentPremiumTier===  
-    "premium_max"  
-  );  
-  
-}  
-  
-function canPostImage(){  
-  
-  return hasPremium();  
-  
-}  
-  
-function canPostVideo(){  
-  
-  return hasPremiumPlus();  
-  
-}  
-  
-function canCreateLive(){  
-  
-  return (  
-    hasPremiumMax() &&  
-    currentLevel>=  
-    PREMIUM_MAX_MIN_LEVEL  
-  );  
-  
-}  
-  
-function premiumLabel(){  
-  
-  switch(  
-    currentPremiumTier  
-  ){  
-  
-    case "premium":  
-      return "🟢 Premium";  
-  
-    case "premium_plus":  
-      return "🔵 Premium+";  
-  
-    case "premium_max":  
-      return "🟣 Premium Max";  
-  
-    default:  
-      return "Free";  
-  
-  }  
-  
-}  
-  
-function updatePremiumUI(){  
-  
-  const label =  
-    premiumLabel();  
-  
-  const current =  
-    document.getElementById(  
-      "currentPremiumLabel"  
-    );  
-  
-  const header =  
-    document.getElementById(  
-      "headerPremiumBadge"  
-    );  
-  
-  if(current){  
-  
-    current.textContent =  
-      label;  
-  
-  }  
-  
-  if(header){  
-  
-    header.textContent =  
-      label==="Free"  
-        ?""  
-        :label;  
-  
-  }  
-  
-}  
-  
-/* =====================================================  
-   WALLET  
-===================================================== */  
-  
-function updateWalletDisplay(  
-  profile  
-){  
-  
-  /*  
-    USDT field candidates.  
-  */  
-  
-  const usdt =  
-    getFirstValue(  
-      profile,  
-      [  
-        "usdt_balance",  
-        "balance_usdt",  
-        "wallet_usdt",  
-        "usdt"  
-      ]  
-    );  
-  
-  /*  
-    Diamond is intentionally separate  
-    from USDT.  
-  */  
-  
-  const diamond =  
-    getFirstValue(  
-      profile,  
-      [  
-        "diamond_balance",  
-        "diamonds",  
-        "balance_diamond",  
-        "diamond"  
-      ]  
-    );  
-  
-  const usdtNumber =  
-    Number(usdt)||0;  
-  
-  const diamondNumber =  
-    Number(diamond)||0;  
-  
-  document.getElementById(  
-    "usdtDisplay"  
-  ).textContent =  
-    usdtNumber.toLocaleString(  
-      undefined,  
-      {  
-        minimumFractionDigits:2,  
-        maximumFractionDigits:8  
-      }  
-    );  
-  
-  document.getElementById(  
-    "diamondDisplay"  
-  ).textContent =  
-    diamondNumber.toLocaleString();  
-  
-  /*  
-    Main wallet display is USDT.  
-    Diamonds are NOT converted to USDT.  
-  */  
-  
-  document.getElementById(  
-    "balanceDisplay"  
-  ).textContent =  
-    usdtNumber.toLocaleString(  
-      undefined,  
-      {  
-        minimumFractionDigits:2,  
-        maximumFractionDigits:8  
-      }  
-    )+  
-    " USDT";  
-  
-}  
-  
-/* =====================================================  
-   PREMIUM DETAILS  
-===================================================== */  
-  
-function openPremiumDetails(){  
-  
-  document.getElementById(  
-    "premiumModal"  
-  ).style.display="flex";  
-  
-}  
-  
-function closePremiumDetails(){  
-  
-  document.getElementById(  
-    "premiumModal"  
-  ).style.display="none";  
-  
-}  
-  
-/* =====================================================  
-   NAVIGATION  
-===================================================== */  
-  
-function requireLogin(){  
-  
-  if(!currentSession){  
-  
-    redirectToLogin();  
-  
-    return false;  
-  
-  }  
-  
-  return true;  
-  
-}  
-  
-function goHome(){  
-  
-  if(!requireLogin())return;  
-  
-  window.scrollTo({  
-    top:0,  
-    behavior:"smooth"  
-  });  
-  
-}  
-  
-function openLive(){  
-  
-  if(!requireLogin())return;  
-  
-  /*  
-    Premium Max Level 3+ is required  
-    to CREATE Live. Viewing Live remains  
-    available through live.html.  
-  */  
-  
-  window.location.href =  
-    "./live.html";  
-  
-}  
-  
-function openWallet(){  
-  
-  if(!requireLogin())return;  
-  
-  window.location.href =  
-    "./wallet.html";  
-  
-}  
-  
-function openMessages(){  
-  
-  if(!requireLogin())return;  
-  
-  window.location.href =  
-    "./message.html";  
-  
-}  
-  
-function openProfile(){  
-  
-  if(!requireLogin())return;  
-  
-  window.location.href =  
-    "./profile.html";  
-  
-}  
-  
-function openUserProfile(  
-  userId  
-){  
-  
-  if(!requireLogin())return;  
-  
-  window.location.href =  
-    "./profile.html?id="+  
-    encodeURIComponent(userId);  
-  
-}  
-  
-function openP2POffer(  
-  offerId  
-){  
-  
-  if(!requireLogin())return;  
-  
-  window.location.href =  
-    "./p2p-order.html?offer="+  
-    encodeURIComponent(  
-      offerId  
-    );  
-  
-}  
-  
-function openDeposit(){  
-  
-  if(!requireLogin())return;  
-  
-  window.location.href =  
-    "./wallet.html";  
-  
-}  
-  
-function createOffer(){  
-  
-  if(!requireLogin())return;  
-  
-  window.location.href =  
-    "./wallet.html";  
-  
-}  
-  
-/* =====================================================  
-   LOGOUT  
-===================================================== */  
-  
-async function logout(){  
-  
-  try{  
-  
-    const {  
-      error  
-    } =  
-    await supabaseClient.auth.signOut();  
-  
-    if(error){  
-  
-      alert(  
-        "Logout failed: "+  
-        error.message  
-      );  
-  
-      return;  
-  
-    }  
-  
-    currentSession=null;  
-  
-    redirectToLogin();  
-  
-  }catch(error){  
-  
-    console.error(error);  
-  
-    redirectToLogin();  
-  
-  }  
-  
-}  
-  
-/* =====================================================  
-   P2P OFFERS  
-===================================================== */  
-  
-async function loadAvailableOffers(){  
-  
-  const container =  
-    document.getElementById(  
-      "p2pOffersContainer"  
-    );  
-  
-  try{  
-  
-    let result =  
-      await supabaseClient  
-        .from("p2p_offers")  
-        .select("*")  
-        .limit(50);  
-  
-    if(result.error){  
-  
-      result =  
-        await supabaseClient  
-          .from("offers")  
-          .select("*")  
-          .limit(50);  
-  
-    }  
-  
-    if(result.error){  
-  
-      renderNoOffers();  
-  
-      return;  
-  
-    }  
-  
-    const offers =  
-      (result.data||[])  
-        .filter(  
-          isOfferAvailable  
-        );  
-  
-    if(!offers.length){  
-  
-      renderNoOffers();  
-  
-      return;  
-  
-    }  
-  
-    await renderAvailableOffers(  
-      offers  
-    );  
-  
-  }catch(error){  
-  
-    console.error(error);  
-  
-    renderNoOffers();  
-  
-  }  
-  
-}  
-  
-function isOfferAvailable(  
-  offer  
-){  
-  
-  if(!offer)return false;  
-  
-  const status =  
-    String(  
-      offer.status??""  
-    )  
-    .toLowerCase()  
-    .trim();  
-  
-  if([  
-    "closed",  
-    "cancelled",  
-    "canceled",  
-    "completed",  
-    "inactive",  
-    "disabled",  
-    "sold"  
-  ].includes(status)){  
-  
-    return false;  
-  
-  }  
-  
-  if(  
-    offer.is_active===false ||  
-    offer.active===false  
-  ){  
-  
-    return false;  
-  
-  }  
-  
-  const amountValue =  
-    getFirstValue(  
-      offer,  
-      [  
-        "available_amount",  
-        "available",  
-        "remaining_amount",  
-        "amount"  
-      ]  
-    );  
-  
-  if(  
-    amountValue!==null &&  
-    amountValue!==""  
-  ){  
-  
-    const amount =  
-      Number(amountValue);  
-  
-    if(  
-      !Number.isNaN(amount) &&  
-      amount<=0  
-    ){  
-  
-      return false;  
-  
-    }  
-  
-  }  
-  
-  return true;  
-  
-}  
-  
-async function renderAvailableOffers(  
-  offers  
-){  
-  
-  const container =  
-    document.getElementById(  
-      "p2pOffersContainer"  
-    );  
-  
-  const userIds = [  
-    ...new Set(  
-      offers  
-        .map(  
-          offer =>  
-            offer.user_id||  
-            offer.seller_id||  
-            offer.owner_id||  
-            offer.created_by  
-        )  
-        .filter(Boolean)  
-    )  
-  ];  
-  
-  let profiles=[];  
-  
-  if(userIds.length){  
-  
-    const result =  
-      await supabaseClient  
-        .from("profiles")  
-        .select(  
-          "id,username,avatar_url"  
-        )  
-        .in(  
-          "id",  
-          userIds  
-        );  
-  
-    if(!result.error){  
-  
-      profiles =  
-        result.data||[];  
-  
-    }  
-  
-  }  
-  
-  const profileMap={};  
-  
-  profiles.forEach(  
-    profile=>{  
-  
-      profileMap[  
-        profile.id  
-      ]=profile;  
-  
-    }  
-  );  
-  
-  /*  
-    Pinned offers first,  
-    then normal offers.  
-  */  
-  
-  const sorted =  
-    [...offers].sort(  
-      (a,b)=>{  
-  
-        const aPinned =  
-          Boolean(  
-            a.is_pinned||  
-            a.pinned  
-          );  
-  
-        const bPinned =  
-          Boolean(  
-            b.is_pinned||  
-            b.pinned  
-          );  
-  
-        return Number(bPinned)-  
-               Number(aPinned);  
-  
-      }  
-    );  
-  
-  container.innerHTML="";  
-  
-  sorted  
-    .slice(  
-      0,  
-      AVAILABLE_OFFERS_LIMIT  
-    )  
-    .forEach(  
-      offer=>{  
-  
-        container.appendChild(  
-          createOfferCard(  
-            offer,  
-            profileMap  
-          )  
-        );  
-  
-      }  
-    );  
-  
-}  
-  
-function createOfferCard(  
-  offer,  
-  profileMap  
-){  
-  
-  const card =  
-    document.createElement(  
-      "div"  
-    );  
-  
-  card.className =  
-    "p2p-card";  
-  
-  const userId =  
-    offer.user_id||  
-    offer.seller_id||  
-    offer.owner_id||  
-    offer.created_by||  
-    "";  
-  
-  const profile =  
-    profileMap[userId]||{};  
-  
-  const username =  
-    profile.username||  
-    offer.username||  
-    offer.seller_username||  
-    "Available trader";  
-  
-  const avatarUrl =  
-    profile.avatar_url||  
-    offer.avatar_url||  
-    "";  
-  
-  const initial =  
-    username  
-      .charAt(0)  
-      .toUpperCase()||  
-    "U";  
-  
-  const typeRaw =  
-    getFirstValue(  
-      offer,  
-      [  
-        "type",  
-        "trade_type",  
-        "side",  
-        "offer_type"  
-      ]  
-    );  
-  
-  const type =  
-    String(typeRaw||"buy")  
-      .toLowerCase();  
-  
-  const rate =  
-    getFirstValue(  
-      offer,  
-      [  
-        "rate",  
-        "price",  
-        "exchange_rate",  
-        "price_per_usdt"  
-      ]  
-    );  
-  
-  const amount =  
-    getFirstValue(  
-      offer,  
-      [  
-        "available_amount",  
-        "available",  
-        "remaining_amount",  
-        "amount"  
-      ]  
-    );  
-  
-  const min =  
-    getFirstValue(  
-      offer,  
-      [  
-        "min_amount",  
-        "minimum_amount",  
-        "min"  
-      ]  
-    );  
-  
-  const max =  
-    getFirstValue(  
-      offer,  
-      [  
-        "max_amount",  
-        "maximum_amount",  
-        "max"  
-      ]  
-    );  
-  
-  const normalizedType =  
-    type.includes("sell")  
-      ?"sell"  
-      :"buy";  
-  
-  const label =  
-    normalizedType==="sell"  
-      ?"SELL USDT"  
-      :"BUY USDT";  
-  
-  const avatarHTML =  
-    avatarUrl  
-      ?  
-      `<div class="avatar">  
-        <img  
-          src="${escapeHtml(avatarUrl)}"  
-          alt="Profile">  
-      </div>`  
-      :  
-      `<div class="avatar">  
-        ${escapeHtml(initial)}  
-      </div>`;  
-  
-  const pinned =  
-    Boolean(  
-      offer.is_pinned||  
-      offer.pinned  
-    );  
-  
-  card.innerHTML=`  
-  
-    ${  
-      pinned  
-        ?  
-        `  
-        <div class="pin-label">  
-          📌 Pinned  
-        </div>  
-        `  
-        :""  
-    }  
-  
-    <div class="offer-type">  
-      ${escapeHtml(label)}  
-    </div>  
-  
-    <div class="p2p-card-header">  
-  
-      <div class="seller">  
-  
-        ${avatarHTML}  
-  
-        <div>  
-  
-          <div class="username">  
-            ${escapeHtml(username)}  
-          </div>  
-  
-          <div class="online">  
-            ● Available  
-          </div>  
-  
-        </div>  
-  
-      </div>  
-  
-      ${  
-        rate!==null &&  
-        rate!==""  
-        ?  
-        `  
-        <div class="rate">  
-  
-          <strong>  
-            ${escapeHtml(  
-              formatNumber(rate)  
-            )} ETB  
-          </strong>  
-  
-          <small>  
-            1 USDT  
-          </small>  
-  
-        </div>  
-        `  
-        :""  
-      }  
-  
-    </div>  
-  
-    <div class="trade-info">  
-  
-      ${  
-        amount!==null &&  
-        amount!==""  
-        ?  
-        `  
-        <span>  
-          Available:  
-          <strong>  
-            ${escapeHtml(  
-              formatNumber(amount)  
-            )} USDT  
-          </strong>  
-        </span>  
-        `  
-        :  
-        `<span>  
-          Available offer  
-        </span>`  
-      }  
-  
-      ${  
-        min!==null &&  
-        min!==""  
-        ?  
-        `  
-        <span>  
-          Min:  
-          ${escapeHtml(  
-            formatNumber(min)  
-          )} ETB  
-        </span>  
-        `  
-        :""  
-      }  
-  
-      ${  
-        max!==null &&  
-        max!==""  
-        ?  
-        `  
-        <span>  
-          Max:  
-          ${escapeHtml(  
-            formatNumber(max)  
-          )} ETB  
-        </span>  
-        `  
-        :""  
-      }  
-  
-    </div>  
-  
-    <button  
-      class="buy-btn"  
-      onclick="  
-        openP2POffer(  
-          '${escapeJs(offer.id)}'  
-        );  
-      ">  
-  
-      ${  
-        normalizedType==="sell"  
-          ?"Buy USDT"  
-          :"View Offer"  
-      }  
-  
-    </button>  
-  
-  `;  
-  
-  return card;  
-  
-}  
-  
-function renderNoOffers(){  
-  
-  document.getElementById(  
-    "p2pOffersContainer"  
-  ).innerHTML=`  
-  
-    <div class="no-offers">  
-  
-      <div class="no-offers-icon">  
-        🔄  
-      </div>  
-  
-      <strong>  
-        No available offers yet.  
-      </strong>  
-  
-      <small>  
-        Available P2P offers will appear here  
-        when traders create them.  
-      </small>  
-  
-    </div>  
-  
-  `;  
-  
-}  
-  
-/* =====================================================  
-   POSTS  
-===================================================== */  
-  
-async function loadPosts(  
-  shuffle=false  
-){  
-  
-  if(!requireLogin())return;  
-  
-  const feed =  
-    document.getElementById(  
-      "postsFeed"  
-    );  
-  
-  feed.innerHTML=`  
-    <div class="loading-posts">  
-      Loading public posts...  
-    </div>  
-  `;  
-  
-  const {  
-    data:posts,  
-    error  
-  } =  
-  await supabaseClient  
-    .from("posts")  
-    .select("*")  
-    .or(  
-      "visibility.eq.public,visibility.is.null"  
-    )  
-    .order(  
-      "created_at",  
-      {  
-        ascending:false  
-      }  
-    )  
-    .limit(100);  
-  
-  if(error){  
-  
-    console.error(  
-      "Posts:",  
-      error  
-    );  
-  
-    feed.innerHTML=`  
-      <div class="no-posts">  
-  
-        Could not load posts.  
-  
-        <br>  
-  
-        <small>  
-          ${escapeHtml(  
-            error.message  
-          )}  
-        </small>  
-  
-      </div>  
-    `;  
-  
-    return;  
-  
-  }  
-  
-  allPosts =  
-    posts||[];  
-  
-  if(shuffle){  
-  
-    allPosts.sort(  
-      ()=>Math.random()-.5  
-    );  
-  
-  }  
-  
-  displayedPostCount =  
-    INITIAL_POST_LIMIT;  
-  
-  await renderPosts();  
-  
-}  
-  
-async function loadMorePosts(){  
-  
-  if(  
-    displayedPostCount>=  
-    allPosts.length  
-  ){  
-  
-    return;  
-  
-  }  
-  
-  displayedPostCount+=  
-    INITIAL_POST_LIMIT;  
-  
-  await renderPosts();  
-  
-}  
-  
-async function renderPosts(){  
-  
-  if(!requireLogin())return;  
-  
-  const feed =  
-    document.getElementById(  
-      "postsFeed"  
-    );  
-  
-  const visiblePosts =  
-    allPosts.slice(  
-      0,  
-      displayedPostCount  
-    );  
-  
-  if(!visiblePosts.length){  
-  
-    feed.innerHTML=`  
-      <div class="no-posts">  
-        No public posts yet.  
-      </div>  
-    `;  
-  
-    document.getElementById(  
-      "loadMoreBtn"  
-    ).style.display="none";  
-  
-    return;  
-  
-  }  
-  
-  const postIds =  
-    visiblePosts.map(  
-      p=>p.id  
-    );  
-  
-  const userIds=[  
-    ...new Set(  
-      visiblePosts  
-        .map(  
-          p=>p.user_id  
-        )  
-        .filter(Boolean)  
-    )  
-  ];  
-  
-  const profileMap={};  
-  
-  if(userIds.length){  
-  
-    const {  
-      data  
-    } =  
-    await supabaseClient  
-      .from("profiles")  
-      .select(  
-        "id,username,avatar_url"  
-      )  
-      .in(  
-        "id",  
-        userIds  
-      );  
-  
-    (data||[]).forEach(  
-      profile=>{  
-  
-        profileMap[  
-          profile.id  
-        ]=profile;  
-  
-      }  
-    );  
-  
-  }  
-  
-  /* ===================================================  
-     LIKES  
-  =================================================== */  
-  
-  let likes=[];  
-  
-  if(postIds.length){  
-  
-    const {  
-      data  
-    } =  
-    await supabaseClient  
-      .from("post_likes")  
-      .select(  
-        "post_id,user_id"  
-      )  
-      .in(  
-        "post_id",  
-        postIds  
-      );  
-  
-    likes =  
-      data||[];  
-  
-  }  
-  
-  const likeCount={};  
-  
-  likes.forEach(  
-    like=>{  
-  
-      likeCount[  
-        like.post_id  
-      ] =  
-        (  
-          likeCount[  
-            like.post_id  
-          ]||0  
-        )+1;  
-  
-    }  
-  );  
-  
-  const myLikes =  
-    new Set(  
-      likes  
-        .filter(  
-          like=>  
-            like.user_id===  
-            currentSession.user.id  
-        )  
-        .map(  
-          like=>  
-            like.post_id  
-        )  
-    );  
-  
-  /* ===================================================  
-     COMMENTS  
-  =================================================== */  
-  
-  let comments=[];  
-  
-  if(postIds.length){  
-  
-    const {  
-      data  
-    } =  
-    await supabaseClient  
-      .from("post_comments")  
-      .select(  
-        "id,post_id,user_id,comment,created_at"  
-      )  
-      .in(  
-        "post_id",  
-        postIds  
-      )  
-      .order(  
-        "created_at",  
-        {  
-          ascending:true  
-        }  
-      );  
-  
-    comments =  
-      data||[];  
-  
-  }  
-  
-  const commentUserIds=[  
-    ...new Set(  
-      comments  
-        .map(  
-          c=>c.user_id  
-        )  
-        .filter(Boolean)  
-    )  
-  ];  
-  
-  if(commentUserIds.length){  
-  
-    const {  
-      data  
-    } =  
-    await supabaseClient  
-      .from("profiles")  
-      .select(  
-        "id,username,avatar_url"  
-      )  
-      .in(  
-        "id",  
-        commentUserIds  
-      );  
-  
-    (data||[]).forEach(  
-      profile=>{  
-  
-        profileMap[  
-          profile.id  
-        ]=profile;  
-  
-      }  
-    );  
-  
-  }  
-  
-  feed.innerHTML="";  
-  
-  visiblePosts.forEach(  
-    post=>{  
-  
-      const profile =  
-        profileMap[  
-          post.user_id  
-        ]||{};  
-  
-      const username =  
-        profile.username||  
-        "User";  
-  
-      const avatar =  
-        profile.avatar_url||  
-        "";  
-  
-      const initial =  
-        username  
-          .charAt(0)  
-          .toUpperCase()||  
-        "U";  
-  
-      const postComments =  
-        comments.filter(  
-          c=>  
-            String(c.post_id)===  
-            String(post.id)  
-        );  
-  
-      const isOwner =  
-        currentSession.user.id===  
-        post.user_id;  
-  
-      const card =  
-        document.createElement(  
-          "article"  
-        );  
-  
-      card.className =  
-        "post-card";  
-  
-      const avatarHTML =  
-        avatar  
-          ?  
-          `<div class="post-avatar">  
-  
-            <img  
-              src="${escapeHtml(avatar)}"  
-              alt="Profile">  
-  
-          </div>`  
-          :  
-          `<div class="post-avatar">  
-  
-            ${escapeHtml(initial)}  
-  
-          </div>`;  
-  
-      const mediaHTML =  
-        renderPostMedia(  
-          post  
-        );  
-  
-      const isPinned =  
-        Boolean(  
-          post.is_pinned||  
-          post.pinned  
-        );  
-  
-      card.innerHTML=`  
-  
-        ${  
-          isPinned  
-            ?  
-            `  
-            <div class="post-pin">  
-              📌 Pinned  
-            </div>  
-            `  
-            :""  
-        }  
-  
-        <div  
-          class="post-header"  
-          onclick="  
-            openUserProfile(  
-              '${escapeJs(post.user_id)}'  
-            );  
-          ">  
-  
-          ${avatarHTML}  
-  
-          <div class="post-user-info">  
-  
-            <div class="post-name">  
-              ${escapeHtml(username)}  
-            </div>  
-  
-            <div class="post-handle">  
-              @${escapeHtml(username)}  
-            </div>  
-  
-          </div>  
-  
-          <div class="post-time">  
-            ${escapeHtml(  
-              formatPostTime(  
-                post.created_at  
-              )  
-            )}  
-          </div>  
-  
-          ${  
-            isOwner  
-              ?  
-              `  
-              <button  
-                class="post-menu"  
-                onclick="  
-                  event.stopPropagation();  
-                  deletePost(  
-                    '${escapeJs(post.id)}'  
-                  );  
-                ">  
-                🗑️  
-              </button>  
-              `  
-              :""  
-          }  
-  
-        </div>  
-  
-        <div class="post-content">  
-          ${escapeHtml(  
-            post.content||""  
-          )}  
-        </div>  
-  
-        ${mediaHTML}  
-  
-        <div class="post-actions">  
-  
-          <button  
-            class="post-action ${  
-              myLikes.has(post.id)  
-                ?"liked"  
-                :""  
-            }"  
-            onclick="  
-              event.stopPropagation();  
-              likePost(  
-                '${escapeJs(post.id)}'  
-              );  
-            ">  
-  
-            ${  
-              myLikes.has(post.id)  
-                ?"♥ Liked"  
-                :"♡ Like"  
-            }  
-  
-            <span>  
-              ${likeCount[post.id]||0}  
-            </span>  
-  
-          </button>  
-  
-          <button  
-            class="post-action"  
-            onclick="  
-              event.stopPropagation();  
-              toggleComments(  
-                '${escapeJs(post.id)}'  
-              );  
-            ">  
-  
-            💬 Comments  
-  
-            <span>  
-              ${postComments.length}  
-            </span>  
-  
-          </button>  
-  
-          <button  
-            class="post-action"  
-            onclick="  
-              event.stopPropagation();  
-              sharePost(  
-                '${escapeJs(post.id)}'  
-              );  
-            ">  
-  
-            ↗ Share  
-  
-          </button>  
-  
-        </div>  
-  
-        <div  
-          id="comments-${escapeHtml(post.id)}"  
-          class="comments-box"  
-          style="  
-            display:${  
-              commentsOpen[post.id]  
-                ?"block"  
-                :"none"  
-            };  
-          ">  
-  
-          ${renderComments(  
-            post.id,  
-            postComments,  
-            profileMap  
-          )}  
-  
-        </div>  
-  
-      `;  
-  
-      feed.appendChild(  
-        card  
-      );  
-  
-    }  
-  );  
-  
-  document.getElementById(  
-    "loadMoreBtn"  
-  ).style.display =  
-    displayedPostCount<  
-    allPosts.length  
-      ?"block"  
-      :"none";  
-  
-}  
-  
-/* =====================================================  
-   POST MEDIA  
-===================================================== */  
-  
-function renderPostMedia(  
-  post  
-){  
-  
-  const mediaUrl =  
-    post.media_url||  
-    post.image_url||  
-    post.video_url||  
-    "";  
-  
-  if(!mediaUrl){  
-  
-    return "";  
-  
-  }  
-  
-  const type =  
-    String(  
-      post.media_type||  
-      post.post_type||  
-      ""  
-    ).toLowerCase();  
-  
-  if(  
-    type==="video"||  
-    post.video_url  
-  ){  
-  
-    return `  
-  
-      <div class="post-media">  
-  
-        <video  
-          src="${escapeHtml(mediaUrl)}"  
-          controls  
-          playsinline  
-          preload="metadata">  
-        </video>  
-  
-      </div>  
-  
-      <div class="post-type-label">  
-        🎥 Video  
-      </div>  
-  
-    `;  
-  
-  }  
-  
-  return `  
-  
-    <div class="post-media">  
-  
-      <img  
-        src="${escapeHtml(mediaUrl)}"  
-        alt="Post image"  
-        loading="lazy">  
-  
-    </div>  
-  
-    <div class="post-type-label">  
-      🖼️ Picture  
-    </div>  
-  
-  `;  
-  
-}  
-  
-/* =====================================================  
-   LIKE  
-===================================================== */  
-  
-async function likePost(  
-  postId  
-){  
-  
-  if(!requireLogin())return;  
-  
-  const userId =  
-    currentSession.user.id;  
-  
-  const {  
-    data:existing,  
-    error:checkError  
-  } =  
-  await supabaseClient  
-    .from("post_likes")  
-    .select("post_id")  
-    .eq(  
-      "post_id",  
-      postId  
-    )  
-    .eq(  
-      "user_id",  
-      userId  
-    )  
-    .maybeSingle();  
-  
-  if(checkError){  
-  
-    alert(  
-      "Could not check like."  
-    );  
-  
-    return;  
-  
-  }  
-  
-  if(existing){  
-  
-    const {  
-      error  
-    } =  
-    await supabaseClient  
-      .from("post_likes")  
-      .delete()  
-      .eq(  
-        "post_id",  
-        postId  
-      )  
-      .eq(  
-        "user_id",  
-        userId  
-      );  
-  
-    if(error){  
-  
-      alert(error.message);  
-  
-      return;  
-  
-    }  
-  
-  }else{  
-  
-    const {  
-      error  
-    } =  
-    await supabaseClient  
-      .from("post_likes")  
-      .insert({  
-        post_id:postId,  
-        user_id:userId  
-      });  
-  
-    if(error){  
-  
-      alert(error.message);  
-  
-      return;  
-  
-    }  
-  
-  }  
-  
-  await renderPosts();  
-  
-}  
-  
-/* =====================================================  
-   COMMENTS  
-===================================================== */  
-  
-function toggleComments(  
-  postId  
-){  
-  
-  commentsOpen[postId] =  
-    !commentsOpen[postId];  
-  
-  const box =  
-    document.getElementById(  
-      "comments-"+postId  
-    );  
-  
-  if(box){  
-  
-    box.style.display =  
-      commentsOpen[postId]  
-        ?"block"  
-        :"none";  
-  
-  }  
-  
-  if(  
-    commentsOpen[postId]  
-  ){  
-  
-    refreshSinglePostComments(  
-      postId  
-    );  
-  
-  }  
-  
-}  
-  
-async function refreshSinglePostComments(  
-  postId  
-){  
-  
-  const box =  
-    document.getElementById(  
-      "comments-"+postId  
-    );  
-  
-  if(!box)return;  
-  
-  const {  
-    data,  
-    error  
-  } =  
-  await supabaseClient  
-    .from("post_comments")  
-    .select(  
-      "id,post_id,user_id,comment,created_at"  
-    )  
-    .eq(  
-      "post_id",  
-      postId  
-    )  
-    .order(  
-      "created_at",  
-      {  
-        ascending:true  
-      }  
-    );  
-  
-  if(error){  
-  
-    console.error(error);  
-  
-    return;  
-  
-  }  
-  
-  const comments =  
-    data||[];  
-  
-  const userIds=[  
-    ...new Set(  
-      comments  
-        .map(  
-          c=>c.user_id  
-        )  
-        .filter(Boolean)  
-    )  
-  ];  
-  
-  const profileMap={};  
-  
-  if(userIds.length){  
-  
-    const {  
-      data:profiles  
-    } =  
-    await supabaseClient  
-      .from("profiles")  
-      .select(  
-        "id,username,avatar_url"  
-      )  
-      .in(  
-        "id",  
-        userIds  
-      );  
-  
-    (profiles||[]).forEach(  
-      profile=>{  
-  
-        profileMap[  
-          profile.id  
-        ]=profile;  
-  
-      }  
-    );  
-  
-  }  
-  
-  box.innerHTML =  
-    renderComments(  
-      postId,  
-      comments,  
-      profileMap  
-    );  
-  
-}  
-  
-function renderComments(  
-  postId,  
-  comments,  
-  profileMap  
-){  
-  
-  let html="";  
-  
-  comments.forEach(  
-    comment=>{  
-  
-      const profile =  
-        profileMap[  
-          comment.user_id  
-        ]||{};  
-  
-      const username =  
-        profile.username||  
-        "User";  
-  
-      const avatar =  
-        profile.avatar_url||  
-        "";  
-  
-      const initial =  
-        username  
-          .charAt(0)  
-          .toUpperCase()||  
-        "U";  
-  
-      const isOwner =  
-        currentSession &&  
-        currentSession.user.id===  
-        comment.user_id;  
-  
-      const avatarHTML =  
-        avatar  
-          ?  
-          `<div class="comment-avatar">  
-  
-            <img  
-              src="${escapeHtml(avatar)}"  
-              alt="Profile">  
-  
-          </div>`  
-          :  
-          `<div class="comment-avatar">  
-  
-            ${escapeHtml(initial)}  
-  
-          </div>`;  
-  
-      html+=`  
-  
-        <div class="comment">  
-  
-          ${avatarHTML}  
-  
-          <div class="comment-body">  
-  
-            <div class="comment-name">  
-              ${escapeHtml(username)}  
-            </div>  
-  
-            <div class="comment-text">  
-              ${escapeHtml(  
-                comment.comment||""  
-              )}  
-            </div>  
-  
-            ${  
-              isOwner  
-                ?  
-                `  
-                <button  
-                  class="comment-delete"  
-                  onclick="  
-                    deleteComment(  
-                      '${escapeJs(comment.id)}',  
-                      '${escapeJs(postId)}'  
-                    );  
-                  ">  
-                  Delete  
-                </button>  
-                `  
-                :""  
-            }  
-  
-          </div>  
-  
-        </div>  
-  
-      `;  
-  
-    }  
-  );  
-  
-  html+=`  
-  
-    <div class="comment-input-row">  
-  
-      <input  
-        id="comment-input-${escapeHtml(postId)}"  
-        class="comment-input"  
-        maxlength="1000"  
-        placeholder="Write a comment...">  
-  
-      <button  
-        class="comment-send"  
-        onclick="  
-          addComment(  
-            '${escapeJs(postId)}'  
-          );  
-        ">  
-        Send  
-      </button>  
-  
-    </div>  
-  
-  `;  
-  
-  return html;  
-  
-}  
-  
-async function addComment(  
-  postId  
-){  
-  
-  if(!requireLogin())return;  
-  
-  const input =  
-    document.getElementById(  
-      "comment-input-"+postId  
-    );  
-  
-  if(!input)return;  
-  
-  const text =  
-    input.value.trim();  
-  
-  if(!text)return;  
-  
-  const {  
-    error  
-  } =  
-  await supabaseClient  
-    .from("post_comments")  
-    .insert({  
-      post_id:postId,  
-      user_id:currentSession.user.id,  
-      comment:text  
-    });  
-  
-  if(error){  
-  
-    alert(  
-      "Could not add comment: "+  
-      error.message  
-    );  
-  
-    return;  
-  
-  }  
-  
-  input.value="";  
-  
-  await refreshSinglePostComments(  
-    postId  
-  );  
-  
-  await renderPosts();  
-  
-}  
-  
-async function deleteComment(  
-  commentId,  
-  postId  
-){  
-  
-  if(!requireLogin())return;  
-  
-  const {  
-    data:comment,  
-    error:loadError  
-  } =  
-  await supabaseClient  
-    .from("post_comments")  
-    .select("user_id")  
-    .eq(  
-      "id",  
-      commentId  
-    )  
-    .maybeSingle();  
-  
-  if(loadError||!comment){  
-  
-    alert(  
-      "Comment not found."  
-    );  
-  
-    return;  
-  
-  }  
-  
-  if(  
-    comment.user_id!==  
-    currentSession.user.id  
-  ){  
-  
-    alert(  
-      "You can only delete your own comment."  
-    );  
-  
-    return;  
-  
-  }  
-  
-  if(  
-    !confirm(  
-      "Delete this comment?"  
-    )  
-  ){  
-  
-    return;  
-  
-  }  
-  
-  const {  
-    error  
-  } =  
-  await supabaseClient  
-    .from("post_comments")  
-    .delete()  
-    .eq(  
-      "id",  
-      commentId  
-    )  
-    .eq(  
-      "user_id",  
-      currentSession.user.id  
-    );  
-  
-  if(error){  
-  
-    alert(error.message);  
-  
-    return;  
-  
-  }  
-  
-  await refreshSinglePostComments(  
-    postId  
-  );  
-  
-  await renderPosts();  
-  
-}  
-  
-/* =====================================================  
-   CREATE POST UI  
-===================================================== */  
-  
-function openCreatePost(){  
-  
-  if(!requireLogin())return;  
-  
-  document.getElementById(  
-    "createPostModal"  
-  ).style.display="flex";  
-  
-  document.getElementById(  
-    "postContentInput"  
-  ).focus();  
-  
-  document.getElementById(  
-    "mediaType"  
-  ).value="text";  
-  
-  updateMediaControls();  
-  
-}  
-  
-function closeCreatePost(){  
-  
-  document.getElementById(  
-    "createPostModal"  
-  ).style.display="none";  
-  
-}  
-  
-function updateMediaControls(){  
-  
-  const type =  
-    document.getElementById(  
-      "mediaType"  
-    ).value;  
-  
-  const controls =  
-    document.getElementById(  
-      "mediaControls"  
-    );  
-  
-  const notice =  
-    document.getElementById(  
-      "promotionNotice"  
-    );  
-  
-  controls.innerHTML="";  
-  
-  notice.innerHTML="";  
-  
-  if(type==="text"){  
-  
-    notice.innerHTML=`  
-  
-      <div class="info-box">  
-  
-        ⚪ Free users can publish text posts.  
-  
-      </div>  
-  
-    `;  
-  
-    return;  
-  
-  }  
-  
-  if(type==="image"){  
-  
-    if(!canPostImage()){  
-  
-      controls.innerHTML=`  
-  
-        <div class="locked-feature">  
-  
-          🔒 <strong>Picture posts require 🟢 Premium.</strong>  
-  
-          <br><br>  
-  
-          Upgrade to Premium, Premium+ or Premium Max  
-          to publish picture posts.  
-  
-        </div>  
-  
-      `;  
-  
-      return;  
-  
-    }  
-  
-    controls.innerHTML=`  
-  
-      <label class="media-label">  
-        Picture URL  
-      </label>  
-  
-      <input  
-        id="mediaUrlInput"  
-        class="media-input"  
-        type="url"  
-        placeholder="https://example.com/image.jpg"  
-        oninput="previewMedia()">  
-  
-      <div class="media-note">  
-  
-        Your post table needs a media URL field  
-        such as media_url or image_url.  
-  
-      </div>  
-  
-      <div  
-        id="mediaPreview"  
-        class="media-preview">  
-      </div>  
-  
-    `;  
-  
-    notice.innerHTML=`  
-  
-      <div class="info-box">  
-  
-        🟢 Premium:  
-        picture post + promotion inside photo.  
-  
-        <br><br>  
-  
-        Additional paid promotion can be handled  
-        by your platform promotion system.  
-  
-      </div>  
-  
-    `;  
-  
-    return;  
-  
-  }  
-  
-  if(type==="video"){  
-  
-    if(!canPostVideo()){  
-  
-      controls.innerHTML=`  
-  
-        <div class="locked-feature">  
-  
-          🔒 <strong>  
-            Video posts require 🔵 Premium+.  
-          </strong>  
-  
-          <br><br>  
-  
-          Premium+ and Premium Max can publish  
-          video posts.  
-  
-        </div>  
-  
-      `;  
-  
-      return;  
-  
-    }  
-  
-    controls.innerHTML=`  
-  
-      <label class="media-label">  
-        Video URL  
-      </label>  
-  
-      <input  
-        id="mediaUrlInput"  
-        class="media-input"  
-        type="url"  
-        placeholder="https://example.com/video.mp4"  
-        oninput="previewMedia()">  
-  
-      <div class="media-note">  
-  
-        Use a publicly accessible video URL or  
-        connect this field to your Supabase Storage  
-        upload system.  
-  
-      </div>  
-  
-      <div  
-        id="mediaPreview"  
-        class="media-preview">  
-      </div>  
-  
-    `;  
-  
-    notice.innerHTML=`  
-  
-      <div class="info-box">  
-  
-        🔵 Premium+:  
-        video post + promotion inside video.  
-  
-        <br><br>  
-  
-        🟣 Premium Max includes all Premium+  
-        video features.  
-  
-      </div>  
-  
-    `;  
-  
-  }  
-  
-}  
-  
-function previewMedia(){  
-  
-  const type =  
-    document.getElementById(  
-      "mediaType"  
-    ).value;  
-  
-  const input =  
-    document.getElementById(  
-      "mediaUrlInput"  
-    );  
-  
-  const preview =  
-    document.getElementById(  
-      "mediaPreview"  
-    );  
-  
-  if(  
-    !input||  
-    !preview  
-  ){  
-  
-    return;  
-  
-  }  
-  
-  const url =  
-    input.value.trim();  
-  
-  if(!url){  
-  
-    preview.innerHTML="";  
-  
-    return;  
-  
-  }  
-  
-  if(type==="image"){  
-  
-    preview.innerHTML=`  
-  
-      <img  
-        src="${escapeHtml(url)}"  
-        alt="Preview">  
-  
-    `;  
-  
-  }  
-  
-  if(type==="video"){  
-  
-    preview.innerHTML=`  
-  
-      <video  
-        src="${escapeHtml(url)}"  
-        controls  
-        playsinline>  
-      </video>  
-  
-    `;  
-  
-  }  
-  
-}  
-  
-/* =====================================================  
-   CREATE POST  
-===================================================== */  
-  
-async function createPost(){  
-  
-  if(!requireLogin())return;  
-  
-  const content =  
-    document.getElementById(  
-      "postContentInput"  
-    ).value.trim();  
-  
-  const visibility =  
-    document.getElementById(  
-      "postVisibility"  
-    ).value;  
-  
-  const mediaType =  
-    document.getElementById(  
-      "mediaType"  
-    ).value;  
-  
-  if(!content){  
-  
-    alert(  
-      "Write something first."  
-    );  
-  
-    return;  
-  
-  }  
-  
-  if(  
-    mediaType==="image" &&  
-    !canPostImage()  
-  ){  
-  
-    alert(  
-      "Picture posts require Premium."  
-    );  
-  
-    return;  
-  
-  }  
-  
-  if(  
-    mediaType==="video" &&  
-    !canPostVideo()  
-  ){  
-  
-    alert(  
-      "Video posts require Premium+."  
-    );  
-  
-    return;  
-  
-  }  
-  
-  let mediaUrl="";  
-  
-  if(  
-    mediaType==="image"||  
-    mediaType==="video"  
-  ){  
-  
-    const input =  
-      document.getElementById(  
-        "mediaUrlInput"  
-      );  
-  
-    mediaUrl =  
-      input?.value.trim()||"";  
-  
-    if(!mediaUrl){  
-  
-      alert(  
-        "Add a media URL first."  
-      );  
-  
-      return;  
-  
-    }  
-  
-  }  
-  
-  const button =  
-    document.getElementById(  
-      "publishPostBtn"  
-    );  
-  
-  button.disabled=true;  
-  
-  button.textContent =  
-    "Publishing...";  
-  
-  /*  
-    Insert core fields first.  
-    This keeps compatibility with the  
-    existing posts table.  
-  */  
-  
-  const payload={  
-  
-    user_id:  
-      currentSession.user.id,  
-  
-    content:  
-      content,  
-  
-    visibility:  
-      visibility  
-  
-  };  
-  
-  /*  
-    Media fields are added only for  
-    media posts. Your Supabase posts table  
-    must contain matching columns.  
-  */  
-  
-  if(mediaType!=="text"){  
-  
-    payload.media_url =  
-      mediaUrl;  
-  
-    payload.media_type =  
-      mediaType;  
-  
-  }  
-  
-  const {  
-    error  
-  } =  
-  await supabaseClient  
-    .from("posts")  
-    .insert(payload);  
-  
-  button.disabled=false;  
-  
-  button.textContent =  
-    "Publish Post";  
-  
-  if(error){  
-  
-    console.error(error);  
-  
-    alert(  
-      "Could not publish post: "+  
-      error.message+  
-      "\n\nIf this is a media post, make sure your posts table has media_url and media_type columns."  
-    );  
-  
-    return;  
-  
-  }  
-  
-  document.getElementById(  
-    "postContentInput"  
-  ).value="";  
-  
-  document.getElementById(  
-    "postVisibility"  
-  ).value="public";  
-  
-  document.getElementById(  
-    "mediaType"  
-  ).value="text";  
-  
-  closeCreatePost();  
-  
-  await loadPosts(false);  
-  
-}  
-  
-/* =====================================================  
-   DELETE POST  
-===================================================== */  
-  
-async function deletePost(  
-  postId  
-){  
-  
-  if(!requireLogin())return;  
-  
-  const {  
-    data:post,  
-    error:loadError  
-  } =  
-  await supabaseClient  
-    .from("posts")  
-    .select("user_id")  
-    .eq(  
-      "id",  
-      postId  
-    )  
-    .maybeSingle();  
-  
-  if(loadError||!post){  
-  
-    alert(  
-      "Post not found."  
-    );  
-  
-    return;  
-  
-  }  
-  
-  if(  
-    post.user_id!==  
-    currentSession.user.id  
-  ){  
-  
-    alert(  
-      "You can only delete your own post."  
-    );  
-  
-    return;  
-  
-  }  
-  
-  if(  
-    !confirm(  
-      "Delete this post?"  
-    )  
-  ){  
-  
-    return;  
-  
-  }  
-  
-  const {  
-    error  
-  } =  
-  await supabaseClient  
-    .from("posts")  
-    .delete()  
-    .eq(  
-      "id",  
-      postId  
-    )  
-    .eq(  
-      "user_id",  
-      currentSession.user.id  
-    );  
-  
-  if(error){  
-  
-    alert(error.message);  
-  
-    return;  
-  
-  }  
-  
-  await loadPosts(false);  
-  
-}  
-  
-/* =====================================================  
-   SHARE  
-===================================================== */  
-  
-async function sharePost(  
-  postId  
-){  
-  
-  if(!requireLogin())return;  
-  
-  const shareUrl =  
-    window.location.origin+  
-    window.location.pathname+  
-    "?post="+  
-    encodeURIComponent(  
-      postId  
-    );  
-  
-  if(  
-    navigator.share  
-  ){  
-  
-    try{  
-  
-      await navigator.share({  
-  
-        title:  
-          "P2P Social",  
-  
-        text:  
-          "Check out this post on P2P Social",  
-  
-        url:  
-          shareUrl  
-  
-      });  
-  
-    }catch(error){  
-  
-      if(  
-        error.name!=="AbortError"  
-      ){  
-  
-        console.log(error);  
-  
-      }  
-  
-    }  
-  
-    return;  
-  
-  }  
-  
-  try{  
-  
-    await navigator.clipboard.writeText(  
-      shareUrl  
-    );  
-  
-    alert(  
-      "Post link copied."  
-    );  
-  
-  }catch(error){  
-  
-    prompt(  
-      "Copy this post link:",  
-      shareUrl  
-    );  
-  
-  }  
-  
-}  
-  
-/* =====================================================  
-   NOTIFICATIONS  
-===================================================== */  
-  
-async function loadNotifications(){  
-  
-  if(!currentSession){  
-  
-    resetNotifications();  
-  
-    return;  
-  
-  }  
-  
-  const {  
-    data,  
-    error  
-  } =  
-  await supabaseClient  
-    .from("notifications")  
-    .select(`  
-      id,  
-      user_id,  
-      type,  
-      title,  
-      body,  
-      link,  
-      is_read,  
-      created_at  
-    `)  
-    .eq(  
-      "user_id",  
-      currentSession.user.id  
-    )  
-    .order(  
-      "created_at",  
-      {  
-        ascending:false  
-      }  
-    )  
-    .limit(50);  
-  
-  if(error){  
-  
-    console.log(  
-      "Notifications:",  
-      error.message  
-    );  
-  
-    return;  
-  
-  }  
-  
-  renderNotifications(  
-    data||[]  
-  );  
-  
-}  
-  
-function renderNotifications(  
-  notifications  
-){  
-  
-  const list =  
-    document.getElementById(  
-      "notificationList"  
-    );  
-  
-  const badge =  
-    document.getElementById(  
-      "notificationBadge"  
-    );  
-  
-  if(!notifications.length){  
-  
-    list.innerHTML=`  
-  
-      <div class="no-notifications">  
-        🔔 No notifications yet.  
-      </div>  
-  
-    `;  
-  
-    badge.style.display="none";  
-  
-    return;  
-  
-  }  
-  
-  const unread =  
-    notifications.filter(  
-      n=>!n.is_read  
-    ).length;  
-  
-  if(unread){  
-  
-    badge.textContent =  
-      unread>99  
-        ?"99+"  
-        :unread;  
-  
-    badge.style.display =  
-      "flex";  
-  
-  }else{  
-  
-    badge.style.display =  
-      "none";  
-  
-  }  
-  
-  list.innerHTML="";  
-  
-  notifications.forEach(  
-    notification=>{  
-  
-      const item =  
-        document.createElement(  
-          "div"  
-        );  
-  
-      item.className =  
-        "notification-item"+  
-        (  
-          notification.is_read  
-            ?""  
-            :" unread"  
-        );  
-  
-      item.innerHTML=`  
-  
-        <div class="notification-icon">  
-  
-          ${notificationIcon(  
-            notification.type  
-          )}  
-  
-        </div>  
-  
-        <div class="notification-content">  
-  
-          <div class="notification-title">  
-            ${escapeHtml(  
-              notification.title||  
-              "Notification"  
-            )}  
-          </div>  
-  
-          <div class="notification-body">  
-            ${escapeHtml(  
-              notification.body||""  
-            )}  
-          </div>  
-  
-          <div class="notification-time">  
-            ${escapeHtml(  
-              formatPostTime(  
-                notification.created_at  
-              )  
-            )}  
-          </div>  
-  
-        </div>  
-  
-      `;  
-  
-      item.addEventListener(  
-        "click",  
-        async()=>{  
-  
-          if(  
-            !notification.is_read  
-          ){  
-  
-            await markNotificationRead(  
-              notification.id  
-            );  
-  
-          }  
-  
-          if(  
-            notification.link  
-          ){  
-  
-            window.location.href =  
-              notification.link;  
-  
-          }else{  
-  
-            openMessages();  
-  
-          }  
-  
-        }  
-      );  
-  
-      list.appendChild(  
-        item  
-      );  
-  
-    }  
-  );  
-  
-}  
-  
-function notificationIcon(  
-  type  
-){  
-  
-  switch(type){  
-  
-    case "message":  
-      return "💬";  
-  
-    case "like":  
-      return "❤️";  
-  
-    case "comment":  
-      return "💬";  
-  
-    case "follow":  
-      return "👤";  
-  
-    case "wallet":  
-      return "💰";  
-  
-    case "deposit":  
-      return "💵";  
-  
-    case "withdraw":  
-      return "🏦";  
-  
-    case "trade":  
-      return "🔄";  
-  
-    case "premium":  
-      return "⭐";  
-  
-    case "live":  
-      return "🔴";  
-  
-    default:  
-      return "🔔";  
-  
-  }  
-  
-}  
-  
-async function markNotificationRead(  
-  id  
-){  
-  
-  if(!currentSession)return;  
-  
-  await supabaseClient  
-    .from("notifications")  
-    .update({  
-      is_read:true  
-    })  
-    .eq(  
-      "id",  
-      id  
-    )  
-    .eq(  
-      "user_id",  
-      currentSession.user.id  
-    );  
-  
-  await loadNotifications();  
-  
-}  
-  
-async function markAllNotificationsRead(){  
-  
-  if(!currentSession)return;  
-  
-  const {  
-    error  
-  } =  
-  await supabaseClient  
-    .from("notifications")  
-    .update({  
-      is_read:true  
-    })  
-    .eq(  
-      "user_id",  
-      currentSession.user.id  
-    )  
-    .eq(  
-      "is_read",  
-      false  
-    );  
-  
-  if(error){  
-  
-    alert(  
-      "Could not mark notifications as read."  
-    );  
-  
-    return;  
-  
-  }  
-  
-  await loadNotifications();  
-  
-}  
-  
-function resetNotifications(){  
-  
-  document.getElementById(  
-    "notificationBadge"  
-  ).style.display="none";  
-  
-  document.getElementById(  
-    "notificationList"  
-  ).innerHTML=`  
-  
-    <div class="no-notifications">  
-      Login to see notifications.  
-    </div>  
-  
-  `;  
-  
-}  
-  
-function toggleNotificationPanel(  
-  event  
-){  
-  
-  if(event){  
-  
-    event.stopPropagation();  
-  
-  }  
-  
-  if(!requireLogin())return;  
-  
-  const panel =  
-    document.getElementById(  
-      "notificationPanel"  
-    );  
-  
-  panel.classList.toggle(  
-    "open"  
-  );  
-  
-  if(  
-    panel.classList.contains(  
-      "open"  
-    )  
-  ){  
-  
-    loadNotifications();  
-  
-  }  
-  
-}  
-  
-document.addEventListener(  
-  "click",  
-  event=>{  
-  
-    const panel =  
-      document.getElementById(  
-        "notificationPanel"  
-      );  
-  
-    const button =  
-      document.getElementById(  
-        "notificationButton"  
-      );  
-  
-    if(  
-      panel &&  
-      !panel.contains(  
-        event.target  
-      ) &&  
-      button &&  
-      !button.contains(  
-        event.target  
-      )  
-    ){  
-  
-      panel.classList.remove(  
-        "open"  
-      );  
-  
-    }  
-  
-  }  
-);  
-  
-function subscribeToNotifications(){  
-  
-  if(!currentSession)return;  
-  
-  if(notificationChannel){  
-  
-    supabaseClient.removeChannel(  
-      notificationChannel  
-    );  
-  
-  }  
-  
-  const userId =  
-    currentSession.user.id;  
-  
-  notificationChannel =  
-    supabaseClient  
-      .channel(  
-        "notifications-"+userId  
-      )  
-      .on(  
-        "postgres_changes",  
-        {  
-          event:"INSERT",  
-          schema:"public",  
-          table:"notifications",  
-          filter:  
-            "user_id=eq."+userId  
-        },  
-        payload=>{  
-  
-          loadNotifications();  
-  
-          if(  
-            !document.hidden  
-          ){  
-  
-            showNewNotificationPopup(  
-              payload.new  
-            );  
-  
-          }  
-  
-        }  
-      )  
-      .subscribe();  
-  
-}  
-  
-function showNewNotificationPopup(  
-  notification  
-){  
-  
-  if(  
-    "Notification" in window &&  
-    Notification.permission==="granted"  
-  ){  
-  
-    try{  
-  
-      new Notification(  
-        notification.title||  
-        "New notification",  
-        {  
-          body:  
-            notification.body||""  
-        }  
-      );  
-  
-    }catch(error){  
-  
-      console.log(error);  
-  
-    }  
-  
-  }  
-  
-}  
-  
-/* =====================================================  
-   HELPERS  
-===================================================== */  
-  
-function getFirstValue(  
-  object,  
-  keys  
-){  
-  
-  if(!object)return null;  
-  
-  for(  
-    const key of keys  
-  ){  
-  
-    if(  
-      Object.prototype.hasOwnProperty.call(  
-        object,  
-        key  
-      )  
-    ){  
-  
-      if(  
-        object[key]!==null &&  
-        object[key]!==undefined &&  
-        object[key]!==""  
-      ){  
-  
-        return object[key];  
-  
-      }  
-  
-    }  
-  
-  }  
-  
-  return null;  
-  
-}  
-  
-function formatNumber(  
-  value  
-){  
-  
-  const number =  
-    Number(value);  
-  
-  if(  
-    Number.isNaN(number)  
-  ){  
-  
-    return String(value);  
-  
-  }  
-  
-  return number.toLocaleString(  
-    undefined,  
-    {  
-      maximumFractionDigits:8  
-    }  
-  );  
-  
-}  
-  
-function formatPostTime(  
-  date  
-){  
-  
-  if(!date)return "";  
-  
-  const d =  
-    new Date(date);  
-  
-  if(  
-    Number.isNaN(  
-      d.getTime()  
-    )  
-  ){  
-  
-    return "";  
-  
-  }  
-  
-  const now =  
-    new Date();  
-  
-  const diff =  
-    Math.floor(  
-      (now-d)/1000  
-    );  
-  
-  if(diff<60){  
-  
-    return "just now";  
-  
-  }  
-  
-  if(diff<3600){  
-  
-    return Math.floor(  
-      diff/60  
-    )+"m ago";  
-  
-  }  
-  
-  if(diff<86400){  
-  
-    return Math.floor(  
-      diff/3600  
-    )+"h ago";  
-  
-  }  
-  
-  if(diff<604800){  
-  
-    return Math.floor(  
-      diff/86400  
-    )+"d ago";  
-  
-  }  
-  
-  return d.toLocaleDateString();  
-  
-}  
-  
-function escapeHtml(  
-  value  
-){  
-  
-  return String(  
-    value??""  
-  )  
-  .replace(  
-    /&/g,  
-    "&amp;"  
-  )  
-  .replace(  
-    /</g,  
-    "&lt;"  
-  )  
-  .replace(  
-    />/g,  
-    "&gt;"  
-  )  
-  .replace(  
-    /"/g,  
-    "&quot;"  
-  )  
-  .replace(  
-    /'/g,  
-    "&#039;"  
-  );  
-  
-}  
-  
-function escapeJs(  
-  value  
-){  
-  
-  return String(  
-    value??""  
-  )  
-  .replace(  
-    /\\/g,  
-    "\\\\"  
-  )  
-  .replace(  
-    /'/g,  
-    "\\'"  
-  )  
-  .replace(  
-    /"/g,  
-    '\\"'  
-  )  
-  .replace(  
-    /\n/g,  
-    "\\n"  
-  )  
-  .replace(  
-    /\r/g,  
-    "\\r"  
-  );  
-  
-}  
-  
-/* =====================================================  
-   CLOSE MODALS WHEN CLICKING BACKDROP  
-===================================================== */  
-  
-document.addEventListener(  
-  "click",  
-  event=>{  
-  
-    const premiumModal =  
-      document.getElementById(  
-        "premiumModal"  
-      );  
-  
-    const postModal =  
-      document.getElementById(  
-        "createPostModal"  
-      );  
-  
-    if(  
-      event.target===  
-      premiumModal  
-    ){  
-  
-      closePremiumDetails();  
-  
-    }  
-  
-    if(  
-      event.target===  
-      postModal  
-    ){  
-  
-      closeCreatePost();  
-  
-    }  
-  
-  }  
-);  
-  
-/* =====================================================  
-   ESC KEY  
-===================================================== */  
-  
-document.addEventListener(  
-  "keydown",  
-  event=>{  
-  
-    if(  
-      event.key==="Escape"  
-    ){  
-  
-      closePremiumDetails();  
-  
-      closeCreatePost();  
-  
-    }  
-  
-  }  
-);  
-  
-/* =====================================================  
-   START APP  
-===================================================== */  
-  
-startApp();  
-  
-</script>  </body>  
+  const video =
+    document.getElementById(
+      "liveVideo"
+    );
+
+  video.srcObject = null;
+  video.style.display = "none";
+
+  document.getElementById(
+    "livePlaceholder"
+  ).style.display = "flex";
+}
+
+async function loadLiveFromUrl(){
+
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+
+  const liveId =
+    params.get("id") ||
+    params.get("live_id") ||
+    params.get("room");
+
+  if(!liveId){
+
+    document.getElementById(
+      "liveState"
+    ).textContent =
+      "READY";
+
+    return;
+  }
+
+  currentLiveId =
+    liveId;
+
+  await loadLiveRoom(liveId);
+}
+
+async function loadLiveRoom(liveId){
+
+  let result =
+    await supabaseClient
+      .from("live_rooms")
+      .select("*")
+      .eq("id",liveId)
+      .maybeSingle();
+
+  if(!result.data){
+
+    result =
+      await supabaseClient
+        .from("live")
+        .select("*")
+        .eq("id",liveId)
+        .maybeSingle();
+  }
+
+  if(result.error){
+
+    console.error(result.error);
+    return;
+  }
+
+  if(!result.data){
+
+    showMessage(
+      "Live room not found."
+    );
+
+    return;
+  }
+
+  const room =
+    result.data;
+
+  const hostId =
+    getFirstValue(
+      room,
+      [
+        "host_id",
+        "user_id",
+        "owner_id",
+        "creator_id"
+      ],
+      ""
+    );
+
+  if(
+    hostId &&
+    currentUser &&
+    hostId === currentUser.id
+  ){
+    isHost = true;
+  }
+
+  const title =
+    getFirstValue(
+      room,
+      [
+        "title",
+        "name"
+      ],
+      "Live Room"
+    );
+
+  document.title =
+    title +
+    " • P2P Social";
+
+  const description =
+    getFirstValue(
+      room,
+      [
+        "description",
+        "caption"
+      ],
+      "Welcome to P2P Social Live"
+    );
+
+  document.querySelector(
+    ".livePlaceholderTitle"
+  ).textContent =
+    title;
+
+  document.querySelector(
+    ".livePlaceholderText"
+  ).textContent =
+    description;
+
+  if(hostId){
+
+    await loadHostProfile(hostId);
+  }
+
+  await subscribeToLive();
+  await loadComments();
+
+  if(isHost){
+
+    document.getElementById(
+      "stopLiveButton"
+    ).style.display =
+      "block";
+
+    document.getElementById(
+      "startLiveButton"
+    ).style.display =
+      "none";
+
+    document.getElementById(
+      "ownerTreasury"
+    ).style.display =
+      "block";
+
+    await loadOwnerTreasury();
+  }
+}
+
+async function loadHostProfile(hostId){
+
+  let result =
+    await supabaseClient
+      .from("profiles")
+      .select("*")
+      .eq("id",hostId)
+      .maybeSingle();
+
+  if(!result.data){
+
+    result =
+      await supabaseClient
+        .from("users")
+        .select("*")
+        .eq("id",hostId)
+        .maybeSingle();
+  }
+
+  if(!result.data) return;
+
+  const profile =
+    result.data;
+
+  const username =
+    getFirstValue(
+      profile,
+      [
+        "username",
+        "user_name",
+        "name",
+        "display_name"
+      ],
+      "Live User"
+    );
+
+  document.getElementById(
+    "liveUsername"
+  ).textContent =
+    username;
+
+  const avatar =
+    getFirstValue(
+      profile,
+      [
+        "avatar_url",
+        "avatar",
+        "profile_image",
+        "photo_url",
+        "image_url"
+      ],
+      ""
+    );
+
+  const avatarBox =
+    document.getElementById(
+      "liveAvatar"
+    );
+
+  if(avatar){
+
+    avatarBox.innerHTML =
+      '<img src="' +
+      escapeHtml(avatar) +
+      '" alt="">';
+
+  }else{
+
+    avatarBox.textContent =
+      username
+        .charAt(0)
+        .toUpperCase();
+  }
+}
+
+async function subscribeToLive(){
+
+  if(!currentLiveId) return;
+
+  if(liveChannel){
+
+    await supabaseClient
+      .removeChannel(liveChannel);
+  }
+
+  liveChannel =
+    supabaseClient
+      .channel(
+        "live-room-" +
+        currentLiveId
+      )
+      .on(
+        "broadcast",
+        {
+          event:"reaction"
+        },
+        payload=>{
+          if(payload?.payload?.emoji){
+            showReaction(
+              payload.payload.emoji
+            );
+          }
+        }
+      )
+      .on(
+        "broadcast",
+        {
+          event:"viewer"
+        },
+        payload=>{
+          if(
+            payload?.payload?.count
+          ){
+            viewerCount =
+              payload.payload.count;
+
+            document.getElementById(
+              "viewerCount"
+            ).textContent =
+              viewerCount;
+          }
+        }
+      )
+      .subscribe();
+
+  commentChannel =
+    liveChannel;
+}
+
+async function loadComments(){
+
+  if(!currentLiveId) return;
+
+  const tables = [
+    "live_comments",
+    "comments"
+  ];
+
+  for(const table of tables){
+
+    const result =
+      await supabaseClient
+        .from(table)
+        .select("*")
+        .eq("live_id",currentLiveId)
+        .order("created_at",{
+          ascending:true
+        })
+        .limit(100);
+
+    if(!result.error){
+
+      const comments =
+        result.data || [];
+
+      comments.forEach(
+        addCommentToScreen
+      );
+
+      return;
+    }
+  }
+}
+
+function addCommentToScreen(comment){
+
+  const container =
+    document.getElementById(
+      "comments"
+    );
+
+  const username =
+    getFirstValue(
+      comment,
+      [
+        "username",
+        "user_name",
+        "name"
+      ],
+      "User"
+    );
+
+  const text =
+    getFirstValue(
+      comment,
+      [
+        "comment",
+        "text",
+        "body",
+        "content"
+      ],
+      ""
+    );
+
+  if(!text) return;
+
+  const div =
+    document.createElement("div");
+
+  div.className =
+    "comment";
+
+  div.innerHTML =
+    "<strong>" +
+    escapeHtml(username) +
+    "</strong> " +
+    escapeHtml(text);
+
+  container.appendChild(div);
+
+  while(
+    container.children.length > 100
+  ){
+    container.removeChild(
+      container.firstChild
+    );
+  }
+
+  container.scrollTop =
+    container.scrollHeight;
+}
+
+async function sendComment(event){
+
+  event.preventDefault();
+
+  if(!currentUser){
+
+    showMessage(
+      "Please login first."
+    );
+
+    return;
+  }
+
+  if(!currentLiveId){
+
+    showMessage(
+      "No active Live room."
+    );
+
+    return;
+  }
+
+  const input =
+    document.getElementById(
+      "commentInput"
+    );
+
+  const text =
+    input.value.trim();
+
+  if(!text) return;
+
+  input.value = "";
+
+  const username =
+    getUsername();
+
+  let saved = false;
+
+  const result =
+    await supabaseClient
+      .from("live_comments")
+      .insert({
+        live_id:currentLiveId,
+        user_id:currentUser.id,
+        username:username,
+        comment:text,
+        text:text
+      });
+
+  if(!result.error){
+
+    saved = true;
+
+  }else{
+
+    const fallback =
+      await supabaseClient
+        .from("comments")
+        .insert({
+          live_id:currentLiveId,
+          user_id:currentUser.id,
+          username:username,
+          text:text
+        });
+
+    if(!fallback.error){
+      saved = true;
+    }
+  }
+
+  if(saved){
+
+    addCommentToScreen({
+      username:username,
+      text:text
+    });
+
+  }else{
+
+    addCommentToScreen({
+      username:username,
+      text:text
+    });
+  }
+}
+
+async function sendReaction(emoji){
+
+  showReaction(emoji);
+
+  if(!liveChannel) return;
+
+  try{
+
+    await liveChannel.send({
+      type:"broadcast",
+      event:"reaction",
+      payload:{
+        emoji:emoji,
+        user_id:currentUser?.id || null
+      }
+    });
+
+  }catch(error){
+
+    console.error(error);
+  }
+}
+
+function showReaction(emoji){
+
+  const reaction =
+    document.createElement("div");
+
+  reaction.textContent =
+    emoji;
+
+  reaction.style.position =
+    "fixed";
+
+  reaction.style.left =
+    (20 + Math.random()*60) +
+    "%";
+
+  reaction.style.bottom =
+    "120px";
+
+  reaction.style.zIndex =
+    "80";
+
+  reaction.style.fontSize =
+    "34px";
+
+  reaction.style.pointerEvents =
+    "none";
+
+  reaction.style.transition =
+    "transform 2s ease, opacity 2s ease";
+
+  document.body.appendChild(
+    reaction
+  );
+
+  requestAnimationFrame(()=>{
+    reaction.style.transform =
+      "translateY(-180px) scale(1.4)";
+
+    reaction.style.opacity =
+      "0";
+  });
+
+  setTimeout(()=>{
+    reaction.remove();
+  },2000);
+}
+
+async function updateViewerCount(){
+
+  if(!liveChannel) return;
+
+  viewerCount++;
+
+  document.getElementById(
+    "viewerCount"
+  ).textContent =
+    viewerCount;
+
+  try{
+
+    await liveChannel.send({
+      type:"broadcast",
+      event:"viewer",
+      payload:{
+        count:viewerCount
+      }
+    });
+
+  }catch(error){
+    console.error(error);
+  }
+}
+
+async function loadOwnerTreasury(){
+
+  if(!isHost) return;
+
+  let balance = 0;
+
+  const possibleTables = [
+    "owner_treasury",
+    "treasury",
+    "diamond_treasury"
+  ];
+
+  for(
+    const table of possibleTables
+  ){
+
+    const result =
+      await supabaseClient
+        .from(table)
+        .select("*")
+        .limit(1)
+        .maybeSingle();
+
+    if(!result.error && result.data){
+
+      balance =
+        Number(
+          getFirstValue(
+            result.data,
+            [
+              "diamond_balance",
+              "diamonds",
+              "balance",
+              "total_diamonds"
+            ],
+            0
+          )
+        ) || 0;
+
+      break;
+    }
+  }
+
+  document.getElementById(
+    "ownerTreasuryBalance"
+  ).textContent =
+    Number(balance).toLocaleString() +
+    " 💎";
+}
+
+async function shareLive(){
+
+  const url =
+    window.location.href;
+
+  try{
+
+    if(
+      navigator.share
+    ){
+
+      await navigator.share({
+        title:
+          document.title,
+        text:
+          "Join my P2P Social Live",
+        url:url
+      });
+
+    }else if(
+      navigator.clipboard
+    ){
+
+      await navigator.clipboard.writeText(
+        url
+      );
+
+      showMessage(
+        "Live link copied."
+      );
+
+    }else{
+
+      showMessage(
+        url
+      );
+    }
+
+  }catch(error){
+
+    console.error(error);
+  }
+}
+
+function closeLive(){
+
+  if(isHost){
+
+    const shouldStop =
+      confirm(
+        "End this Live?"
+      );
+
+    if(shouldStop){
+
+      stopLive();
+    }
+
+    return;
+  }
+
+  stopCamera();
+
+  if(liveChannel){
+
+    supabaseClient
+      .removeChannel(
+        liveChannel
+      );
+
+    liveChannel = null;
+  }
+
+  window.location.href =
+    "./index.html";
+}
+
+document
+  .getElementById("createPanel")
+  .addEventListener(
+    "click",
+    event=>{
+      if(
+        event.target.id ===
+        "createPanel"
+      ){
+        closeCreateLive();
+      }
+    }
+  );
+
+document.addEventListener(
+  "keydown",
+  event=>{
+    if(event.key === "Escape"){
+      closeCreateLive();
+    }
+  }
+);
+
+window.addEventListener(
+  "beforeunload",
+  ()=>{
+    stopCamera();
+
+    if(liveChannel){
+      supabaseClient
+        .removeChannel(
+          liveChannel
+        );
+    }
+  }
+);
+
+async function startApp(){
+
+  const loggedIn =
+    await requireLogin();
+
+  if(!loggedIn) return;
+
+  await loadProfile();
+
+  updateLiveUser();
+
+  document.getElementById(
+    "authScreen"
+  ).style.display =
+    "none";
+
+  document.getElementById(
+    "liveApp"
+  ).style.display =
+    "block";
+
+  await loadLiveFromUrl();
+
+  if(!currentLiveId){
+
+    if(canCreateLive()){
+
+      openCreateLive();
+
+    }else{
+
+      showMessage(
+        "Viewing Live is available. Premium Max + Level 3+ is required to create Live."
+      );
+    }
+  }
+
+  await updateViewerCount();
+}
+
+supabaseClient.auth.onAuthStateChange(
+  async(event,session)=>{
+
+    if(
+      event === "SIGNED_OUT" ||
+      !session
+    ){
+
+      window.location.href =
+        "./login.html";
+
+    }
+
+  }
+);
+
+startApp();
+</script>
+
+</body>
 </html>

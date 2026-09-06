@@ -2247,7 +2247,1116 @@ if(blockchainRefreshTimer)
 clearInterval(blockchainRefreshTimer);
 });
 
+/* =====================================================
+TRADES
+===================================================== */
+
+async function loadTrades(){
+
+const container=
+document.getElementById(
+"trades"
+);
+
+if(!container)return;
+
+container.innerHTML=
+'<div class="empty">Loading trades...</div>';
+
+const {data,error}=
+await supabaseClient
+.from("p2p_trades")
+.select("*")
+.or(
+`buyer_id.eq.${currentUser.id},seller_id.eq.${currentUser.id}`
+)
+.order(
+"created_at",
+{ascending:false}
+);
+
+if(error){
+
+container.innerHTML=
+emptyHtml(
+"🤝",
+"Could not load trades.",
+getErrorMessage(error)
+);
+
+return;
+
+}
+
+myTrades=data||[];
+
+const count=
+document.getElementById(
+"tradeCount"
+);
+
+if(count)
+count.textContent=
+myTrades.length;
+
+renderTrades();
+
+}
+
+/* =====================================================
+TRADE RENDER
+===================================================== */
+
+function renderTrades(){
+
+const container=
+document.getElementById(
+"trades"
+);
+
+if(!container)return;
+
+if(!myTrades.length){
+
+container.innerHTML=
+emptyHtml(
+"🤝",
+"No trades yet."
+);
+
+return;
+
+}
+
+container.innerHTML="";
+
+const items=
+tradesExpanded
+?myTrades
+:myTrades.slice(0,3);
+
+items.forEach(trade=>{
+
+const status=
+normalizeStatus(
+trade.status
+);
+
+const amount=
+Number(
+trade.amount||
+trade.trade_amount||
+0
+);
+
+const price=
+Number(
+trade.price||
+trade.order_price||
+0
+);
+
+const value=
+calculatePairValue(
+amount,
+price
+);
+
+const fee=
+Number(
+trade.platform_fee||
+trade.fee||
+calculatePlatformFee(value)
+)||0;
+
+const total=
+value+fee;
+
+const buyer=
+String(
+trade.buyer_id||
+""
+);
+
+const seller=
+String(
+trade.seller_id||
+""
+);
+
+const isBuyer=
+buyer===String(
+currentUser.id
+);
+
+const expiry=
+trade.expires_at||
+trade.expiry_at||
+trade.expires_on||
+null;
+
+const card=
+document.createElement("div");
+
+card.className=
+"trade-card";
+
+card.innerHTML=`
+
+<div class="trade-main">
+
+<div class="row">
+
+<div>
+
+<div class="trade-number">
+Trade #${escapeHtml(
+String(
+trade.trade_number||
+trade.id||
+""
+).slice(0,12)
+)}
+</div>
+
+<div class="offer-meta">
+${escapeHtml(
+trade.pair||
+trade.trading_pair||
+"USDT / USDT"
+)}
+</div>
+
+</div>
+
+<span class="status ${statusClass(status)}">
+${escapeHtml(status)}
+</span>
+
+</div>
+
+<div class="trade-info">
+
+${detail(
+"Amount",
+money(amount)+" USDT"
+)}
+
+${detail(
+"Price",
+money(price)
+)}
+
+${detail(
+"Trade value",
+money(value)
+)}
+
+${detail(
+"Platform fee",
+money(fee)
+)}
+
+${detail(
+"Total",
+money(total)
+)}
+
+${detail(
+"Role",
+isBuyer?"Buyer":"Seller"
+)}
+
+${
+trade.trader_commission!=null
+?detail(
+"Trader commission",
+money(trade.trader_commission)
+)
+:""
+}
+
+${
+expiry
+?`
+<div class="trade-expiry">
+⏱️ Expiry: ${escapeHtml(
+formatDate(expiry)
+)}
+</div>
+`
+:""
+}
+
+${renderTradeActions(trade,isBuyer,status)}
+
+</div>
+
+</div>
+`;
+
+container.appendChild(card);
+
+});
+
+const button=
+document.getElementById(
+"tradeViewButton"
+);
+
+if(button)
+button.textContent=
+tradesExpanded
+?"Show 3"
+:"View All";
+
+}
+
+/* =====================================================
+TRADE ACTIONS
+===================================================== */
+
+function renderTradeActions(
+trade,
+isBuyer,
+status
+){
+
+const tradeId=
+escapeJs(trade.id);
+
+let html="";
+
+if(
+["closed","expired","cancelled","completed","released"]
+.includes(status)
+){
+
+html+=`
+<button
+type="button"
+class="message-open-btn"
+onclick="openTradeMessage('${tradeId}')">
+💬 Open Message
+</button>
+`;
+
+return html;
+
+}
+
+if(isBuyer&&
+["pending","open","active"].includes(status)
+){
+
+html+=`
+<button
+type="button"
+class="payment-btn"
+onclick="confirmBuyerPayment('${tradeId}')">
+💰 I Have Paid
+</button>
+`;
+
+}
+
+if(!isBuyer&&status==="paid"){
+
+html+=`
+<button
+type="button"
+class="release-btn"
+onclick="releaseTrade('${tradeId}')">
+💵 Release Trade
+</button>
+`;
+
+}
+
+if(
+["pending","open","active","paid","disputed"]
+.includes(status)
+){
+
+html+=`
+<button
+type="button"
+class="dispute-btn"
+onclick="openDispute('${tradeId}')">
+⚠️ Open Dispute
+</button>
+`;
+
+}
+
+if(isBuyer&&
+["pending","open","active"].includes(status)
+){
+
+html+=`
+<button
+type="button"
+class="cancel-btn"
+style="width:100%;margin-top:8px;padding:10px;border-radius:9px;"
+onclick="cancelTrade('${tradeId}')">
+❌ Cancel Trade
+</button>
+`;
+
+}
+
+html+=`
+<button
+type="button"
+class="message-open-btn"
+onclick="openTradeMessage('${tradeId}')">
+💬 Open Message
+</button>
+`;
+
+return html;
+
+}
+
+/* =====================================================
+BUYER PAYMENT
+===================================================== */
+
+async function confirmBuyerPayment(tradeId){
+
+if(!confirm(
+"Confirm that you have paid?"
+))
+return;
+
+try{
+
+const {error}=
+await supabaseClient.rpc(
+"buyer_confirm_payment",
+{
+p_trade_id:tradeId
+}
+);
+
+if(error)
+throw error;
+
+toast(
+"Payment marked as sent.",
+"success"
+);
+
+await loadAll();
+
+}catch(error){
+
+toast(
+getErrorMessage(error),
+"error"
+);
+
+}
+
+}
+
+/* =====================================================
+SELLER RELEASE
+===================================================== */
+
+async function releaseTrade(tradeId){
+
+if(!confirm(
+"Release the trade to the buyer?"
+))
+return;
+
+try{
+
+const {error}=
+await supabaseClient.rpc(
+"seller_release_trade",
+{
+p_trade_id:tradeId
+}
+);
+
+if(error)
+throw error;
+
+toast(
+"Trade released.",
+"success"
+);
+
+await loadAll();
+
+}catch(error){
+
+toast(
+getErrorMessage(error),
+"error"
+);
+
+}
+
+}
+
+/* =====================================================
+BUYER CANCEL
+===================================================== */
+
+async function cancelTrade(tradeId){
+
+if(!confirm(
+"Cancel this trade?"
+))
+return;
+
+try{
+
+const {error}=
+await supabaseClient.rpc(
+"buyer_cancel_trade",
+{
+p_trade_id:tradeId
+}
+);
+
+if(error)
+throw error;
+
+toast(
+"Trade cancelled.",
+"success"
+);
+
+await loadAll();
+
+}catch(error){
+
+toast(
+getErrorMessage(error),
+"error"
+);
+
+}
+
+}
+
+/* =====================================================
+DISPUTE
+===================================================== */
+
+function openDispute(tradeId){
+
+selectedTradeId=tradeId;
+
+const reason=
+document.getElementById(
+"disputeReason"
+);
+
+if(reason)
+reason.value="";
+
+document.getElementById(
+"disputeModal"
+)?.classList.add("show");
+
+}
+
+async function submitDispute(){
+
+if(!currentUser){
+showLogin();
+return;
+}
+
+if(!selectedTradeId){
+
+toast(
+"Trade not selected.",
+"error"
+);
+
+return;
+
+}
+
+const reason=
+String(
+document.getElementById(
+"disputeReason"
+)?.value||""
+).trim();
+
+if(reason.length<3){
+
+toast(
+"Explain the problem.",
+"warning"
+);
+
+return;
+
+}
+
+const button=
+document.getElementById(
+"disputeSubmitButton"
+);
+
+button.disabled=true;
+button.textContent="Opening...";
+
+try{
+
+const {error}=
+await supabaseClient.rpc(
+"open_p2p_dispute",
+{
+p_trade_id:selectedTradeId,
+p_reason:reason
+}
+);
+
+if(error)
+throw error;
+
+closeModal("disputeModal");
+
+selectedTradeId=null;
+
+toast(
+"Dispute opened.",
+"success"
+);
+
+await loadAll();
+
+}catch(error){
+
+toast(
+getErrorMessage(error),
+"error"
+);
+
+}finally{
+
+button.disabled=false;
+button.textContent=
+"Open Dispute";
+
+}
+
+}
+
+/* =====================================================
+MESSAGES FROM TRADES
+===================================================== */
+
+async function loadMessages(){
+
+const container=
+document.getElementById(
+"messages"
+);
+
+if(!container)return;
+
+if(!myTrades.length){
+
+container.innerHTML=`
+<div class="empty">
+<div class="empty-icon">💬</div>
+<strong>No pending messages</strong>
+<div style="margin-top:7px;">
+Pending orders, closed orders and disputes will appear here.
+</div>
+</div>
+`;
+
+return;
+
+}
+
+const recent=
+myTrades.slice(0,10);
+
+container.innerHTML="";
+
+recent.forEach(trade=>{
+
+const status=
+normalizeStatus(
+trade.status
+);
+
+const card=
+document.createElement("div");
+
+card.className="message-card "+
+(
+status==="disputed"
+?"dispute":
+["closed","expired","cancelled","completed","released"].includes(status)
+?"closed"
+:"pending"
+);
+
+card.innerHTML=`
+
+<div class="message-main">
+
+<div class="message-title">
+💬 Trade Message
+</div>
+
+<div class="message-meta">
+Trade #${escapeHtml(
+String(
+trade.trade_number||
+trade.id||
+""
+).slice(0,12)
+)}
+•
+${escapeHtml(status)}
+</div>
+
+<button
+type="button"
+class="message-open-btn"
+onclick="openTradeMessage('${escapeJs(trade.id)}')">
+Open
+</button>
+
+</div>
+`;
+
+container.appendChild(card);
+
+});
+
+}
+
+function openTradeMessage(tradeId){
+
+window.location.href=
+"message.html?trade="+
+encodeURIComponent(tradeId);
+
+}
+
+/* =====================================================
+TRANSACTIONS
+===================================================== */
+
+async function loadTransactions(){
+
+const container=
+document.getElementById(
+"transactions"
+);
+
+if(!container)return;
+
+container.innerHTML=
+'<div class="empty">Loading transactions...</div>';
+
+const {data,error}=
+await supabaseClient
+.from("usdt_ledger")
+.select("*")
+.eq(
+"user_id",
+currentUser.id
+)
+.order(
+"created_at",
+{ascending:false}
+)
+.limit(50);
+
+if(error){
+
+container.innerHTML=
+emptyHtml(
+"💳",
+"Could not load transactions.",
+getErrorMessage(error)
+);
+
+return;
+
+}
+
+myTransactions=data||[];
+
+renderTransactions();
+
+}
+
+function renderTransactions(){
+
+const container=
+document.getElementById(
+"transactions"
+);
+
+if(!container)return;
+
+if(!myTransactions.length){
+
+container.innerHTML=
+emptyHtml(
+"💳",
+"No transactions yet."
+);
+
+return;
+
+}
+
+container.innerHTML="";
+
+const items=
+transactionsExpanded
+?myTransactions
+:myTransactions.slice(0,5);
+
+items.forEach(transaction=>{
+
+const amount=
+Number(
+transaction.amount||
+transaction.value||
+0
+);
+
+const type=
+String(
+transaction.type||
+transaction.transaction_type||
+transaction.kind||
+"transaction"
+).toLowerCase();
+
+const positive=
+amount>=0;
+
+const card=
+document.createElement("div");
+
+card.className="transaction";
+
+card.innerHTML=`
+
+<div class="transaction-left">
+
+<div class="transaction-icon">
+${positive?"＋":"−"}
+</div>
+
+<div>
+
+<div class="transaction-title">
+${escapeHtml(type)}
+</div>
+
+<div class="transaction-date">
+${escapeHtml(
+formatDate(
+transaction.created_at
+)
+)}
+</div>
+
+</div>
+
+</div>
+
+<div class="transaction-amount ${
+positive
+?"positive"
+:"negative"
+}">
+
+${positive?"+":"−"}${money(
+Math.abs(amount)
+)} USDT
+
+</div>
+
+`;
+
+container.appendChild(card);
+
+});
+
+const button=
+document.getElementById(
+"transactionViewButton"
+);
+
+if(button)
+button.textContent=
+transactionsExpanded
+?"Show Less"
+:"View All";
+
+}
+
+/* =====================================================
+REALTIME
+===================================================== */
+
+function setupRealtime(){
+
+if(!currentUser)return;
+
+if(realtimeChannel){
+
+supabaseClient.removeChannel(
+realtimeChannel
+);
+
+}
+
+realtimeChannel=
+supabaseClient
+.channel(
+"wallet-realtime-"+currentUser.id
+)
+
+.on(
+"postgres_changes",
+{
+event:"*",
+schema:"public",
+table:"p2p_orders"
+},
+function(){
+loadAll();
+}
+)
+
+.on(
+"postgres_changes",
+{
+event:"*",
+schema:"public",
+table:"p2p_trades"
+},
+function(){
+loadAll();
+}
+)
+
+.on(
+"postgres_changes",
+{
+event:"*",
+schema:"public",
+table:"usdt_ledger"
+},
+function(){
+loadAll();
+}
+)
+
+.on(
+"postgres_changes",
+{
+event:"*",
+schema:"public",
+table:"profiles",
+filter:"id=eq."+currentUser.id
+},
+function(){
+loadAll();
+}
+)
+
+.subscribe();
+
+}
+
+/* =====================================================
+DATE
+===================================================== */
+
+function formatDate(value){
+
+if(!value)return"—";
+
+const date=
+new Date(value);
+
+if(Number.isNaN(
+date.getTime()
+))
+return String(value);
+
+return date.toLocaleString(
+"en-US",
+{
+year:"numeric",
+month:"short",
+day:"numeric",
+hour:"2-digit",
+minute:"2-digit"
+}
+);
+
+}
+
+/* =====================================================
+TOAST
+===================================================== */
+
+function toast(
+message,
+type="",
+duration=3500
+){
+
+const element=
+document.getElementById(
+"toast"
+);
+
+if(!element)return;
+
+clearTimeout(toastTimer);
+
+element.className=
+"toast show "+
+(type||"");
+
+element.textContent=
+String(message||"");
+
+toastTimer=
+setTimeout(
+()=>{
+element.className="toast";
+},
+duration
+);
+
+}
+
+/* =====================================================
+MODAL OUTSIDE CLICK
+===================================================== */
+
+document.addEventListener(
+"click",
+function(event){
+
+if(
+event.target.classList.contains(
+"modal"
+)
+){
+
+event.target.classList.remove(
+"show"
+);
+
+}
+
+}
+);
+
+/* =====================================================
+ESCAPE
+===================================================== */
+
+document.addEventListener(
+"keydown",
+function(event){
+
+if(event.key!=="Escape")
+return;
+
+document
+.querySelectorAll(".modal.show")
+.forEach(modal=>{
+modal.classList.remove("show");
+});
+
+}
+);
+
+/* =====================================================
+AUTO BLOCKCHAIN REFRESH
+===================================================== */
+
+let blockchainRefreshTimer=null;
+
+function startBlockchainRefresh(){
+
+if(blockchainRefreshTimer)
+clearInterval(
+blockchainRefreshTimer
+);
+
+blockchainRefreshTimer=
+setInterval(
+async function(){
+
+if(
+document.visibilityState===
+"visible" &&
+currentUser
+){
+
+await loadBlockchainBalance();
+updateBlockchainBalanceDisplay();
+
+}
+
+},
+60000
+);
+
+}
+
+/* =====================================================
+CLEANUP
+===================================================== */
+
+window.addEventListener(
+"beforeunload",
+function(){
+
+if(realtimeChannel){
+
+supabaseClient.removeChannel(
+realtimeChannel
+);
+
+realtimeChannel=null;
+
+}
+
+if(blockchainRefreshTimer)
+clearInterval(
+blockchainRefreshTimer
+);
+
+}
+);
+
+/* =====================================================
+INITIAL BLOCKCHAIN TIMER
+===================================================== */
+
 startBlockchainRefresh();
+
 </script>
 </body>
 </html>

@@ -11,7 +11,7 @@ const SUPABASE_SERVICE_ROLE_KEY =
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 const TRONGRID_API_KEY =
-  Deno.env.get("TRONGRID_API_KEY");
+  Deno.env.get("8978e772-a3b2-4db3-b9c9-3feff764c5f5");
 
 const supabase = createClient(
   SUPABASE_URL,

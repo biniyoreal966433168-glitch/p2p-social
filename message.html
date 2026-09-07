@@ -1,2459 +1,579 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profile • P2P Social</title>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-    }
-
-    body {
-      background: #0b0b0b;
-      color: #fff;
-      min-height: 100vh;
-      padding-bottom: 85px;
-    }
-
-    button,
-    input,
-    textarea,
-    select {
-      font: inherit;
-    }
-
-    button {
-      cursor: pointer;
-    }
-
-    .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      height: 72px;
-      background: #111;
-      border-bottom: 1px solid #242424;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0 15px;
-    }
-
-    .back-btn {
-      position: absolute;
-      left: 15px;
-      width: 40px;
-      height: 40px;
-      border: none;
-      border-radius: 50%;
-      background: #202020;
-      color: #fff;
-      font-size: 30px;
-      line-height: 35px;
-    }
-
-    .brand-center {
-      position: absolute;
-      top: 13px;
-      width: 10px;
-      height: 10px;
-      background: #19d36b;
-      border-radius: 50%;
-      box-shadow: 0 0 12px #19d36b;
-    }
-
-    .brand-text {
-      text-align: center;
-      margin-top: 12px;
-    }
-
-    .brand-text h1 {
-      font-size: 19px;
-      letter-spacing: .5px;
-    }
-
-    .brand-text p {
-      margin-top: 3px;
-      font-size: 9px;
-      color: #888;
-      letter-spacing: 2px;
-    }
-
-    .container {
-      width: min(650px, 94%);
-      margin: 18px auto;
-    }
-
-    .card {
-      background: #121212;
-      border: 1px solid #252525;
-      border-radius: 16px;
-      padding: 18px;
-      margin-bottom: 16px;
-      box-shadow: 0 8px 30px rgba(0,0,0,.2);
-    }
-
-    .profile-card {
-      text-align: center;
-    }
-
-    .avatar-wrap {
-      position: relative;
-      width: 105px;
-      height: 105px;
-      margin: 5px auto 14px;
-    }
-
-    .avatar {
-      width: 105px;
-      height: 105px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #242424;
-      border: 3px solid #2d2d2d;
-    }
-
-    .avatar-placeholder {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 40px;
-      color: #777;
-    }
-
-    .camera-btn {
-      position: absolute;
-      right: 0;
-      bottom: 0;
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      border: 2px solid #121212;
-      background: #222;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    #photoInput {
-      display: none;
-    }
-
-    .profile-name {
-      font-size: 24px;
-      font-weight: bold;
-      margin-bottom: 6px;
-    }
-
-    .user-id {
-      color: #777;
-      font-size: 13px;
-      margin-bottom: 9px;
-    }
-
-    .bio {
-      color: #aaa;
-      font-size: 14px;
-      margin-bottom: 10px;
-      line-height: 1.5;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    .profile-status {
-      display: inline-block;
-      padding: 6px 11px;
-      border-radius: 20px;
-      background: #1c2a21;
-      color: #55e78e;
-      font-size: 12px;
-      margin-bottom: 18px;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      border-top: 1px solid #252525;
-      border-bottom: 1px solid #252525;
-      padding: 15px 0;
-      margin-bottom: 15px;
-    }
-
-    .stat-value {
-      font-size: 20px;
-      font-weight: bold;
-    }
-
-    .stat-label {
-      color: #777;
-      font-size: 11px;
-      margin-top: 4px;
-    }
-
-    .profile-actions {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-
-    .profile-actions button,
-    .wallet-button {
-      border: none;
-      border-radius: 10px;
-      padding: 11px 8px;
-      font-weight: bold;
-      color: #fff;
-    }
-
-    .edit-btn {
-      background: #252525;
-    }
-
-    .lock-btn {
-      background: #7d3fc6;
-    }
-
-    .settings-btn {
-      background: #252525;
-    }
-
-    .section-title {
-      font-size: 18px;
-      font-weight: bold;
-      margin-bottom: 14px;
-    }
-
-    .balance-box {
-      background: #090909;
-      border: 1px solid #292929;
-      border-radius: 14px;
-      padding: 20px;
-      text-align: center;
-    }
-
-    .balance-title {
-      font-size: 28px;
-      margin-bottom: 7px;
-    }
-
-    .balance-value {
-      font-size: 28px;
-      font-weight: bold;
-      color: #f5d76e;
-    }
-
-    .wallet-actions {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-top: 15px;
-    }
-
-    .wallet-action {
-      border: none;
-      color: #fff;
-      padding: 11px 8px;
-      border-radius: 10px;
-      font-weight: bold;
-      font-size: 12px;
-    }
-
-    .transfer-action {
-      background: #7d3fc6;
-    }
-
-    .buy-action {
-      background: #16a085;
-    }
-
-    .sell-action {
-      background: #e74c3c;
-    }
-
-    .owner-treasury-title {
-      color: #f5d76e;
-      font-weight: bold;
-      font-size: 17px;
-      margin-bottom: 8px;
-    }
-
-    .owner-treasury-status {
-      color: #aaa;
-      background: #090909;
-      border-radius: 10px;
-      padding: 14px;
-    }
-
-    .admin-label {
-      color: #aaa;
-      font-size: 13px;
-      margin-bottom: 7px;
-      display: block;
-    }
-
-    .field {
-      margin-bottom: 13px;
-    }
-
-    input,
-    textarea,
-    select {
-      width: 100%;
-      border: 1px solid #303030;
-      background: #090909;
-      color: #fff;
-      border-radius: 10px;
-      padding: 12px;
-      outline: none;
-    }
-
-    input:focus,
-    textarea:focus,
-    select:focus {
-      border-color: #777;
-    }
-
-    textarea {
-      min-height: 100px;
-      resize: vertical;
-    }
-
-    select option {
-      background: #111;
-      color: #fff;
-    }
-
-    .admin-add-button,
-    .create-post-btn {
-      width: 100%;
-      border: none;
-      border-radius: 10px;
-      padding: 12px;
-      color: #fff;
-      font-weight: bold;
-    }
-
-    .admin-add-button {
-      background: #b28a16;
-    }
-
-    .create-post-btn {
-      background: #16a085;
-    }
-
-    .post-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .post-title {
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    .refresh-btn {
-      border: none;
-      background: #242424;
-      color: #fff;
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 12px;
-    }
-
-    .post {
-      border: 1px solid #292929;
-      background: #0d0d0d;
-      border-radius: 14px;
-      padding: 14px;
-      margin-bottom: 12px;
-    }
-
-    .post:last-child {
-      margin-bottom: 0;
-    }
-
-    .post-user {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .post-avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #252525;
-    }
-
-    .post-username {
-      font-weight: bold;
-      font-size: 14px;
-    }
-
-    .post-time {
-      color: #666;
-      font-size: 11px;
-      margin-top: 3px;
-    }
-
-    .post-content {
-      color: #ddd;
-      line-height: 1.55;
-      white-space: pre-wrap;
-      word-break: break-word;
-      margin-bottom: 13px;
-    }
-
-    .post-visibility {
-      color: #777;
-      font-size: 11px;
-      margin-bottom: 10px;
-    }
-
-    .post-actions {
-      display: flex;
-      gap: 7px;
-      flex-wrap: wrap;
-      border-top: 1px solid #242424;
-      padding-top: 10px;
-    }
-
-    .post-action {
-      border: none;
-      background: #1c1c1c;
-      color: #bbb;
-      padding: 8px 10px;
-      border-radius: 8px;
-      font-size: 12px;
-    }
-
-    .post-delete {
-      margin-left: auto;
-      color: #ff6b6b;
-    }
-
-    .empty {
-      color: #666;
-      text-align: center;
-      padding: 25px 10px;
-      font-size: 14px;
-    }
-
-    .modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.78);
-      z-index: 500;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 18px;
-    }
-
-    .modal.show {
-      display: flex;
-    }
-
-    .modal-box {
-      width: min(500px, 100%);
-      max-height: 90vh;
-      overflow-y: auto;
-      background: #151515;
-      border: 1px solid #303030;
-      border-radius: 16px;
-      padding: 18px;
-    }
-
-    .modal-title {
-      font-size: 19px;
-      font-weight: bold;
-      margin-bottom: 16px;
-    }
-
-    .modal-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 14px;
-    }
-
-    .cancel-btn,
-    .save-btn {
-      border: none;
-      border-radius: 10px;
-      padding: 11px;
-      font-weight: bold;
-    }
-
-    .cancel-btn {
-      background: #292929;
-      color: #fff;
-    }
-
-    .save-btn {
-      background: #16a085;
-      color: #fff;
-    }
-
-    .settings-list {
-      display: grid;
-      gap: 8px;
-    }
-
-    .settings-item {
-      width: 100%;
-      text-align: left;
-      border: none;
-      border-radius: 10px;
-      padding: 13px;
-      background: #222;
-      color: #fff;
-      font-weight: bold;
-    }
-
-    .settings-item.logout {
-      background: #3a1717;
-      color: #ff7474;
-    }
-
-    .bottom-nav {
-      position: fixed;
-      z-index: 300;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 72px;
-      background: #111;
-      border-top: 1px solid #292929;
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-
-    .nav-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      color: #777;
-      font-size: 11px;
-      cursor: pointer;
-    }
-
-    .nav-item span {
-      font-size: 20px;
-      line-height: 20px;
-    }
-
-    .nav-item.active {
-      color: #fff;
-    }
-
-    .loading {
-      opacity: .7;
-    }
-
-    .toast {
-      position: fixed;
-      z-index: 1000;
-      left: 50%;
-      bottom: 90px;
-      transform: translateX(-50%) translateY(20px);
-      background: #222;
-      color: #fff;
-      padding: 11px 15px;
-      border-radius: 10px;
-      border: 1px solid #333;
-      opacity: 0;
-      pointer-events: none;
-      transition: .25s;
-      font-size: 13px;
-      max-width: 90%;
-      text-align: center;
-    }
-
-    .toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
-
-    @media (max-width: 480px) {
-      .container {
-        width: 96%;
-      }
-
-      .card {
-        padding: 15px;
-      }
-
-      .wallet-actions {
-        grid-template-columns: 1fr;
-      }
-
-      .profile-actions {
-        grid-template-columns: 1fr 1fr 1fr;
-      }
-
-      .stats {
-        gap: 2px;
-      }
-
-      .stat-value {
-        font-size: 17px;
-      }
-
-      .stat-label {
-        font-size: 10px;
-      }
-
-      .bottom-nav {
-        height: 68px;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bitcoin Address Validator</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  background: #000;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.container {
+  width: 100%;
+  max-width: 500px;
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 15px;
+  padding: 25px;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  text-align: center;
+  color: #aaa;
+  margin-bottom: 25px;
+}
+
+textarea {
+  width: 100%;
+  min-height: 110px;
+  resize: none;
+  background: #000;
+  color: #fff;
+  border: 1px solid #444;
+  border-radius: 10px;
+  padding: 15px;
+  font-size: 15px;
+  outline: none;
+}
+
+textarea:focus {
+  border-color: #f7931a;
+}
+
+button {
+  width: 100%;
+  margin-top: 15px;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  background: #f7931a;
+  color: #000;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.result {
+  margin-top: 20px;
+  padding: 18px;
+  border-radius: 10px;
+  background: #000;
+  border: 1px solid #333;
+  display: none;
+}
+
+.valid {
+  border-color: #00c853;
+}
+
+.invalid {
+  border-color: #ff3333;
+}
+
+.status {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.valid .status {
+  color: #00c853;
+}
+
+.invalid .status {
+  color: #ff3333;
+}
+
+.info {
+  margin-top: 8px;
+  color: #ccc;
+  word-break: break-all;
+}
+
+.label {
+  color: #888;
+}
+</style>
 </head>
 
 <body>
 
-  <header class="topbar">
-    <button class="back-btn" onclick="goHome()">‹</button>
+<div class="container">
 
-    <div class="brand-text">
-      <h1>Profile • P2P Social</h1>
-      <p>CONNECT • TRADE • SHARE</p>
-    </div>
-  </header>
+  <h1>₿ Bitcoin Validator</h1>
+  <p class="subtitle">Check Bitcoin address validity and type</p>
 
-  <main class="container">
+  <textarea
+    id="address"
+    placeholder="Paste Bitcoin address here..."
+    autocomplete="off"
+    spellcheck="false"></textarea>
 
-    <section class="card profile-card">
+  <button onclick="validateAddress()">Check Address</button>
 
-      <div class="avatar-wrap">
-        <img id="profileAvatar" class="avatar" src="" alt="Profile">
-        <div id="avatarPlaceholder" class="avatar avatar-placeholder">U</div>
+  <div id="result" class="result">
+    <div id="status" class="status"></div>
 
-        <label class="camera-btn" for="photoInput">📷</label>
-        <input
-          id="photoInput"
-          type="file"
-          accept="image/*"
-          onchange="changeProfilePhoto(event)"
-        >
-      </div>
-
-      <div id="profileName" class="profile-name">Loading...</div>
-
-      <div class="user-id">
-        User ID: <span id="profileId">--</span>
-      </div>
-
-      <div id="profileBio" class="bio">No bio yet.</div>
-
-      <div id="profileStatus" class="profile-status">
-        🔓 Public profile
-      </div>
-
-      <div class="stats">
-        <div>
-          <div id="postsCount" class="stat-value">0</div>
-          <div class="stat-label">Posts</div>
-        </div>
-
-        <div>
-          <div id="followersCount" class="stat-value">0</div>
-          <div class="stat-label">Followers</div>
-        </div>
-
-        <div>
-          <div id="followingCount" class="stat-value">0</div>
-          <div class="stat-label">Following</div>
-        </div>
-
-        <div>
-          <div id="likesCount" class="stat-value">0</div>
-          <div class="stat-label">Likes</div>
-        </div>
-      </div>
-
-      <div class="profile-actions">
-        <button class="edit-btn" onclick="openEditProfile()">✏️ Edit</button>
-
-        <button
-          id="lockButton"
-          class="lock-btn"
-          onclick="toggleProfileLock()"
-        >
-          🔒 Lock
-        </button>
-
-        <button class="settings-btn" onclick="openSettings()">
-          ⚙️ Settings
-        </button>
-      </div>
-
-    </section>
-
-
-    <section class="card">
-
-      <div class="section-title">💎 Wallet</div>
-
-      <div class="balance-box">
-        <div class="balance-title">💎</div>
-
-        <div id="diamondBalance" class="balance-value">
-          0 💎
-        </div>
-      </div>
-
-      <div class="wallet-actions">
-
-        <button
-          class="wallet-action transfer-action"
-          onclick="openTransfer()"
-        >
-          Transfer 💎
-        </button>
-
-        <button
-          class="wallet-action buy-action"
-          onclick="openLive()"
-        >
-          🟢 Buy 💎
-        </button>
-
-        <button
-          class="wallet-action sell-action"
-          onclick="openWallet()"
-        >
-          🔴 Sell 💎
-        </button>
-
-      </div>
-
-    </section>
-
-
-    <section
-      id="ownerTreasurySection"
-      class="card"
-      style="display:none;"
-    >
-
-      <div class="section-title">💎 Owner Treasury</div>
-
-      <div class="owner-treasury-title">
-        Diamond Treasury
-      </div>
-
-      <div
-        id="ownerTreasuryStatus"
-        class="owner-treasury-status"
-      >
-        Loading treasury...
-      </div>
-
-    </section>
-
-
-    <section
-      id="adminSection"
-      class="card"
-      style="display:none;"
-    >
-
-      <div class="section-title">🛡️ Admin 💎</div>
-
-      <div
-        style="
-          font-weight:bold;
-          color:#f5d76e;
-          margin-bottom:12px;
-        "
-      >
-        💎 Add Diamonds
-      </div>
-
-      <div
-        class="admin-label"
-        style="margin-bottom:15px;"
-      >
-        Authorized administrator
-      </div>
-
-      <div class="field">
-        <label class="admin-label">Select user</label>
-
-        <select id="adminUserSelect">
-          <option value="">Select user</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label class="admin-label">Diamond amount</label>
-
-        <input
-          id="adminDiamondAmount"
-          type="number"
-          min="1"
-          step="1"
-          placeholder="Enter diamond amount"
-        >
-      </div>
-
-      <div class="field">
-        <label class="admin-label">Description</label>
-
-        <input
-          id="adminDiamondDescription"
-          type="text"
-          maxlength="200"
-          placeholder="Diamond transaction description"
-        >
-      </div>
-
-      <button
-        id="adminDiamondButton"
-        class="admin-add-button"
-        onclick="adminAddDiamond()"
-      >
-        ➕ Add 💎
-      </button>
-
-    </section>
-
-
-    <section class="card">
-
-      <div class="section-title">📝 Create Post</div>
-
-      <div class="field">
-        <textarea
-          id="postContent"
-          maxlength="5000"
-          placeholder="What's on your mind?"
-        ></textarea>
-      </div>
-
-      <div class="field">
-        <select id="postVisibility">
-          <option value="public">🌍 Public</option>
-          <option value="private">👥 Friends / Private</option>
-        </select>
-      </div>
-
-      <button
-        id="createPostButton"
-        class="create-post-btn"
-        onclick="createPost()"
-      >
-        Post
-      </button>
-
-    </section>
-
-
-    <section class="card">
-
-      <div class="post-header">
-        <div class="post-title">📄 Your Posts</div>
-
-        <button
-          class="refresh-btn"
-          onclick="loadPosts()"
-        >
-          Refresh
-        </button>
-      </div>
-
-      <div id="postsFeed">
-        <div class="empty">Loading posts...</div>
-      </div>
-
-    </section>
-
-  </main>
-
-
-  <!-- EDIT PROFILE MODAL -->
-
-  <div id="editProfileModal" class="modal">
-
-    <div class="modal-box">
-
-      <div class="modal-title">✏️ Edit Profile</div>
-
-      <div class="field">
-        <label class="admin-label">Username</label>
-
-        <input
-          id="editUsername"
-          maxlength="50"
-          placeholder="Username"
-        >
-      </div>
-
-      <div class="field">
-        <label class="admin-label">Bio</label>
-
-        <textarea
-          id="editBio"
-          maxlength="500"
-          placeholder="Write something about yourself..."
-        ></textarea>
-      </div>
-
-      <div class="modal-actions">
-
-        <button
-          class="cancel-btn"
-          onclick="closeEditProfile()"
-        >
-          Cancel
-        </button>
-
-        <button
-          id="saveProfileButton"
-          class="save-btn"
-          onclick="saveProfile()"
-        >
-          Save
-        </button>
-
-      </div>
-
+    <div class="info">
+      <span class="label">Address:</span>
+      <span id="checkedAddress"></span>
     </div>
 
+    <div class="info">
+      <span class="label">Network:</span>
+      <span id="network"></span>
+    </div>
+
+    <div class="info">
+      <span class="label">Type:</span>
+      <span id="addressType"></span>
+    </div>
   </div>
 
+</div>
 
-  <!-- SETTINGS MODAL -->
+<script>
+/*
+  Bitcoin Address Validator
+  Supports:
+  - Legacy P2PKH: 1...
+  - Legacy P2SH: 3...
+  - Native SegWit: bc1q...
+  - Taproot: bc1p...
+  - Testnet addresses
+*/
 
-  <div id="settingsModal" class="modal">
+const CHARSET =
+  "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
-    <div class="modal-box">
+function sha256(data) {
+  return crypto.subtle.digest("SHA-256", data);
+}
 
-      <div class="modal-title">⚙️ Settings</div>
+function hexToBytes(hex) {
+  const bytes = new Uint8Array(hex.length / 2);
 
-      <div class="settings-list">
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+  }
 
-        <button
-          class="settings-item"
-          onclick="openEditProfile();closeSettings();"
-        >
-          ✏️ Edit Profile
-        </button>
+  return bytes;
+}
 
-        <button
-          class="settings-item"
-          onclick="toggleProfileLock();closeSettings();"
-        >
-          🔒 Lock / Unlock Profile
-        </button>
+function base58Decode(str) {
+  let num = 0n;
 
-        <button
-          class="settings-item"
-          onclick="openTransfer();closeSettings();"
-        >
-          💎 Transfer Diamonds
-        </button>
+  for (const char of str) {
+    const index = CHARSET.indexOf(char);
 
-        <button
-          class="settings-item"
-          onclick="openLive();closeSettings();"
-        >
-          🟢 Buy 💎
-        </button>
-
-        <button
-          class="settings-item"
-          onclick="openWallet();closeSettings();"
-        >
-          🔴 Sell 💎
-        </button>
-
-        <button
-          class="settings-item"
-          onclick="openMessages();closeSettings();"
-        >
-          💬 Messages
-        </button>
-
-        <button
-          class="settings-item logout"
-          onclick="logout();"
-        >
-          🚪 Logout
-        </button>
-
-      </div>
-
-      <button
-        class="cancel-btn"
-        style="
-          width:100%;
-          margin-top:12px;
-        "
-        onclick="closeSettings();"
-      >
-        Close
-      </button>
-
-    </div>
-
-  </div>
-
-
-  <!-- TRANSFER MODAL -->
-
-  <div id="transferModal" class="modal">
-
-    <div class="modal-box">
-
-      <div class="modal-title">💎 Transfer Diamonds</div>
-
-      <div
-        style="
-          color:#aaa;
-          font-size:13px;
-          line-height:1.5;
-          margin-bottom:15px;
-        "
-      >
-        Transfer diamonds to another P2P Social user.
-      </div>
-
-      <div class="field">
-        <label class="admin-label">Recipient User ID</label>
-
-        <input
-          id="transferUserId"
-          type="text"
-          placeholder="Enter recipient User ID"
-        >
-      </div>
-
-      <div class="field">
-        <label class="admin-label">Diamond amount</label>
-
-        <input
-          id="transferAmount"
-          type="number"
-          min="1"
-          step="1"
-          placeholder="Enter amount"
-        >
-      </div>
-
-      <div class="modal-actions">
-
-        <button
-          class="cancel-btn"
-          onclick="closeTransfer()"
-        >
-          Cancel
-        </button>
-
-        <button
-          class="save-btn"
-          onclick="transferDiamond()"
-        >
-          Transfer 💎
-        </button>
-
-      </div>
-
-    </div>
-
-  </div>
-
-
-  <nav class="bottom-nav">
-
-    <div
-      class="nav-item"
-      onclick="goHome()"
-    >
-      <span>🏠</span>
-      Home
-    </div>
-
-    <div
-      class="nav-item"
-      onclick="openLive()"
-    >
-      <span>🟢</span>
-      Buy
-    </div>
-
-    <div
-      class="nav-item"
-      onclick="openWallet()"
-    >
-      <span>🔴</span>
-      Sell
-    </div>
-
-    <div
-      class="nav-item"
-      onclick="openMessages()"
-    >
-      <span>💬</span>
-      Messages
-    </div>
-
-    <div class="nav-item active">
-      <span>👤</span>
-      Profile
-    </div>
-
-  </nav>
-
-
-  <div id="toast" class="toast"></div>
-
-
-  <script>
-    const SUPABASE_URL =
-      "https://mbsvuwrgigqfporxwpfr.supabase.co";
-
-    const SUPABASE_PUBLISHABLE_KEY =
-      "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
-
-    const supabaseClient =
-      window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_PUBLISHABLE_KEY
-      );
-
-
-    let currentUser = null;
-    let currentProfile = null;
-
-
-    function escapeHtml(text) {
-      const div = document.createElement("div");
-      div.textContent = text == null ? "" : String(text);
-      return div.innerHTML;
+    if (index === -1) {
+      return null;
     }
 
+    num = num * 58n + BigInt(index);
+  }
 
-    function escapeJs(text) {
-      return String(text || "")
-        .replace(/\\/g, "\\\\")
-        .replace(/'/g, "\\'")
-        .replace(/"/g, '\\"')
-        .replace(/\r/g, "\\r")
-        .replace(/\n/g, "\\n");
+  let hex = num.toString(16);
+
+  if (hex.length % 2) {
+    hex = "0" + hex;
+  }
+
+  let bytes = hex ? hexToBytes(hex) : new Uint8Array();
+
+  let leadingZeros = 0;
+
+  for (const char of str) {
+    if (char === "1") {
+      leadingZeros++;
+    } else {
+      break;
     }
+  }
 
+  const result = new Uint8Array(leadingZeros + bytes.length);
+  result.set(bytes, leadingZeros);
 
-    function showToast(message) {
-      const toast = document.getElementById("toast");
+  return result;
+}
 
-      toast.textContent = message;
-      toast.classList.add("show");
+function base58CheckValid(address) {
+  const decoded = base58Decode(address);
 
-      clearTimeout(window.toastTimer);
+  if (!decoded || decoded.length !== 25) {
+    return null;
+  }
 
-      window.toastTimer = setTimeout(() => {
-        toast.classList.remove("show");
-      }, 2500);
-    }
+  const payload = decoded.slice(0, 21);
+  const checksum = decoded.slice(21);
 
+  return crypto.subtle.digest("SHA-256", payload)
+    .then(hash1 =>
+      crypto.subtle.digest("SHA-256", hash1)
+    )
+    .then(hash2 => {
+      const calculated = new Uint8Array(hash2).slice(0, 4);
 
-    function formatTime(dateString) {
-      if (!dateString) return "";
-
-      const date = new Date(dateString);
-
-      if (Number.isNaN(date.getTime())) {
-        return "";
-      }
-
-      return date.toLocaleString([], {
-        dateStyle: "medium",
-        timeStyle: "short"
-      });
-    }
-
-
-    async function init() {
-      try {
-        const {
-          data: {
-            session
-          }
-        } = await supabaseClient.auth.getSession();
-
-        if (!session) {
-          window.location.href = "login.html";
-          return;
-        }
-
-        currentUser = session.user;
-
-        await loadProfile();
-
-        await Promise.all([
-          loadStats(),
-          loadPosts()
-        ]);
-
-        if (
-          currentProfile &&
-          (
-            currentProfile.role === "owner" ||
-            currentProfile.role === "admin"
-          )
-        ) {
-          document.getElementById(
-            "adminSection"
-          ).style.display = "block";
-
-          await loadAdminUsers();
-        }
-
-        if (
-          currentProfile &&
-          currentProfile.role === "owner"
-        ) {
-          document.getElementById(
-            "ownerTreasurySection"
-          ).style.display = "block";
-
-          await loadTreasury();
-        }
-
-      } catch (error) {
-        console.error(error);
-        showToast("Unable to load profile.");
-      }
-    }
-
-
-    async function loadProfile() {
-      const {
-        data,
-        error
-      } = await supabaseClient
-        .from("profiles")
-        .select(
-          "id,username,bio,avatar_url,profile_locked,role,diamond_balance"
-        )
-        .eq("id", currentUser.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error(error);
-        showToast("Profile loading failed.");
-        return;
-      }
-
-      if (!data) {
-        const defaultUsername =
-          currentUser.email
-            ? currentUser.email.split("@")[0]
-            : "User";
-
-        const {
-          data: created,
-          error: createError
-        } = await supabaseClient
-          .from("profiles")
-          .insert({
-            id: currentUser.id,
-            username: defaultUsername,
-            bio: "",
-            diamond_balance: 0,
-            profile_locked: false
-          })
-          .select(
-            "id,username,bio,avatar_url,profile_locked,role,diamond_balance"
-          )
-          .single();
-
-        if (createError) {
-          console.error(createError);
-          showToast("Unable to create profile.");
-          return;
-        }
-
-        currentProfile = created;
-      } else {
-        currentProfile = data;
-      }
-
-      renderProfile();
-    }
-
-
-    function renderProfile() {
-      if (!currentProfile) return;
-
-      const name =
-        currentProfile.username ||
-        "User";
-
-      document.getElementById(
-        "profileName"
-      ).textContent = name;
-
-      document.getElementById(
-        "profileId"
-      ).textContent = currentProfile.id || "--";
-
-      document.getElementById(
-        "profileBio"
-      ).textContent =
-        currentProfile.bio ||
-        "No bio yet.";
-
-      const avatar =
-        document.getElementById("profileAvatar");
-
-      const placeholder =
-        document.getElementById("avatarPlaceholder");
-
-      if (currentProfile.avatar_url) {
-        avatar.src = currentProfile.avatar_url;
-        avatar.style.display = "block";
-        placeholder.style.display = "none";
-      } else {
-        avatar.style.display = "none";
-        placeholder.style.display = "flex";
-
-        placeholder.textContent =
-          name.charAt(0).toUpperCase();
-      }
-
-      const locked =
-        !!currentProfile.profile_locked;
-
-      const status =
-        document.getElementById("profileStatus");
-
-      const lockButton =
-        document.getElementById("lockButton");
-
-      if (locked) {
-        status.textContent =
-          "🔒 Private profile";
-
-        status.style.background =
-          "#302020";
-
-        status.style.color =
-          "#ff8585";
-
-        lockButton.textContent =
-          "🔓 Unlock";
-      } else {
-        status.textContent =
-          "🔓 Public profile";
-
-        status.style.background =
-          "#1c2a21";
-
-        status.style.color =
-          "#55e78e";
-
-        lockButton.textContent =
-          "🔒 Lock";
-      }
-
-      const balance =
-        Number(
-          currentProfile.diamond_balance || 0
-        );
-
-      document.getElementById(
-        "diamondBalance"
-      ).textContent =
-        balance.toLocaleString() + " 💎";
-    }
-
-
-    async function loadStats() {
-      if (!currentUser) return;
-
-      try {
-        const [
-          postsResult,
-          followersResult,
-          followingResult,
-          likesResult
-        ] = await Promise.all([
-
-          supabaseClient
-            .from("posts")
-            .select("id", {
-              count: "exact",
-              head: true
-            })
-            .eq("user_id", currentUser.id),
-
-          supabaseClient
-            .from("followers")
-            .select("id", {
-              count: "exact",
-              head: true
-            })
-            .eq("following_id", currentUser.id),
-
-          supabaseClient
-            .from("followers")
-            .select("id", {
-              count: "exact",
-              head: true
-            })
-            .eq("follower_id", currentUser.id),
-
-          supabaseClient
-            .from("post_likes")
-            .select(
-              "post_id,posts!inner(user_id)",
-              {
-                count: "exact",
-                head: true
-              }
-            )
-            .eq(
-              "posts.user_id",
-              currentUser.id
-            )
-
-        ]);
-
-        document.getElementById(
-          "postsCount"
-        ).textContent =
-          postsResult.count || 0;
-
-        document.getElementById(
-          "followersCount"
-        ).textContent =
-          followersResult.count || 0;
-
-        document.getElementById(
-          "followingCount"
-        ).textContent =
-          followingResult.count || 0;
-
-        document.getElementById(
-          "likesCount"
-        ).textContent =
-          likesResult.count || 0;
-
-      } catch (error) {
-        console.error(error);
-      }
-    }
-
-
-    async function loadTreasury() {
-      const status =
-        document.getElementById(
-          "ownerTreasuryStatus"
-        );
-
-      status.textContent =
-        "Loading treasury...";
-
-      const {
-        data,
-        error
-      } = await supabaseClient
-        .from("diamond_treasury")
-        .select("balance")
-        .limit(1)
-        .maybeSingle();
-
-      if (error) {
-        console.error(error);
-
-        status.textContent =
-          "Treasury unavailable.";
-
-        return;
-      }
-
-      const balance =
-        Number(data?.balance || 0);
-
-      status.textContent =
-        balance.toLocaleString() + " 💎 available";
-    }
-
-
-    async function loadAdminUsers() {
-      const select =
-        document.getElementById(
-          "adminUserSelect"
-        );
-
-      select.innerHTML =
-        `<option value="">Loading users...</option>`;
-
-      const {
-        data,
-        error
-      } = await supabaseClient
-        .from("profiles")
-        .select("id,username")
-        .order("username", {
-          ascending: true
-        });
-
-      if (error) {
-        console.error(error);
-
-        select.innerHTML =
-          `<option value="">Unable to load users</option>`;
-
-        return;
-      }
-
-      select.innerHTML =
-        `<option value="">Select user</option>`;
-
-      (data || []).forEach(user => {
-        const option =
-          document.createElement("option");
-
-        option.value = user.id;
-
-        option.textContent =
-          `${user.username || "User"} • ${user.id}`;
-
-        select.appendChild(option);
-      });
-    }
-
-
-    async function adminAddDiamond() {
-      if (!currentProfile) return;
-
-      if (
-        currentProfile.role !== "owner" &&
-        currentProfile.role !== "admin"
-      ) {
-        showToast("Not authorized.");
-        return;
-      }
-
-      const userId =
-        document.getElementById(
-          "adminUserSelect"
-        ).value;
-
-      const amount =
-        Number(
-          document.getElementById(
-            "adminDiamondAmount"
-          ).value
-        );
-
-      const description =
-        document.getElementById(
-          "adminDiamondDescription"
-        ).value.trim();
-
-      if (!userId) {
-        showToast("Select a user.");
-        return;
-      }
-
-      if (!Number.isFinite(amount) || amount <= 0) {
-        showToast("Enter a valid diamond amount.");
-        return;
-      }
-
-      const button =
-        document.getElementById(
-          "adminDiamondButton"
-        );
-
-      button.disabled = true;
-      button.textContent = "Adding...";
-
-      try {
-        const {
-          error
-        } = await supabaseClient.rpc(
-          "admin_add_diamond",
-          {
-            p_user_id: userId,
-            p_amount: amount,
-            p_description:
-              description ||
-              "Admin diamond addition"
-          }
-        );
-
-        if (error) {
-          console.error(error);
-          showToast(error.message || "Failed.");
-          return;
-        }
-
-        showToast(
-          `${amount.toLocaleString()} 💎 added.`
-        );
-
-        document.getElementById(
-          "adminDiamondAmount"
-        ).value = "";
-
-        document.getElementById(
-          "adminDiamondDescription"
-        ).value = "";
-
-        if (userId === currentUser.id) {
-          await loadProfile();
-        }
-
-        await loadTreasury();
-
-      } finally {
-        button.disabled = false;
-        button.textContent = "➕ Add 💎";
-      }
-    }
-
-
-    async function createPost() {
-      if (!currentUser) return;
-
-      const content =
-        document.getElementById(
-          "postContent"
-        ).value.trim();
-
-      const visibility =
-        document.getElementById(
-          "postVisibility"
-        ).value;
-
-      if (!content) {
-        showToast("Write something first.");
-        return;
-      }
-
-      const button =
-        document.getElementById(
-          "createPostButton"
-        );
-
-      button.disabled = true;
-      button.textContent = "Posting...";
-
-      try {
-        const {
-          error
-        } = await supabaseClient
-          .from("posts")
-          .insert({
-            user_id: currentUser.id,
-            content,
-            visibility
-          });
-
-        if (error) {
-          console.error(error);
-          showToast(error.message || "Post failed.");
-          return;
-        }
-
-        document.getElementById(
-          "postContent"
-        ).value = "";
-
-        showToast("Post created.");
-
-        await loadPosts();
-        await loadStats();
-
-      } finally {
-        button.disabled = false;
-        button.textContent = "Post";
-      }
-    }
-
-
-    async function loadPosts() {
-      const feed =
-        document.getElementById(
-          "postsFeed"
-        );
-
-      feed.innerHTML =
-        `<div class="empty">Loading posts...</div>`;
-
-      if (!currentUser) return;
-
-      const {
-        data: posts,
-        error
-      } = await supabaseClient
-        .from("posts")
-        .select("id,user_id,content,visibility,created_at")
-        .eq("user_id", currentUser.id)
-        .order("created_at", {
-          ascending: false
-        });
-
-      if (error) {
-        console.error(error);
-
-        feed.innerHTML =
-          `<div class="empty">Unable to load posts.</div>`;
-
-        return;
-      }
-
-      if (!posts || posts.length === 0) {
-        feed.innerHTML =
-          `<div class="empty">You have no posts yet.</div>`;
-
-        return;
-      }
-
-      const htmlParts = [];
-
-      for (const post of posts) {
-
-        let likesCount = 0;
-        let commentsCount = 0;
-        let liked = false;
-
-        const [
-          likesResult,
-          commentsResult,
-          likedResult
-        ] = await Promise.all([
-
-          supabaseClient
-            .from("post_likes")
-            .select("id", {
-              count: "exact",
-              head: true
-            })
-            .eq("post_id", post.id),
-
-          supabaseClient
-            .from("post_comments")
-            .select("id", {
-              count: "exact",
-              head: true
-            })
-            .eq("post_id", post.id),
-
-          supabaseClient
-            .from("post_likes")
-            .select("id")
-            .eq("post_id", post.id)
-            .eq("user_id", currentUser.id)
-            .maybeSingle()
-
-        ]);
-
-        likesCount =
-          likesResult.count || 0;
-
-        commentsCount =
-          commentsResult.count || 0;
-
-        liked =
-          !!likedResult.data;
-
-        const avatar =
-          currentProfile?.avatar_url || "";
-
-        const avatarHtml = avatar
-          ? `<img class="post-avatar" src="${escapeHtml(avatar)}" alt="avatar">`
-          : `<div class="post-avatar" style="display:flex;align-items:center;justify-content:center;">${escapeHtml((currentProfile?.username || "U").charAt(0).toUpperCase())}</div>`;
-
-        htmlParts.push(`
-          <article class="post">
-
-            <div class="post-user">
-              ${avatarHtml}
-
-              <div>
-                <div class="post-username">
-                  ${escapeHtml(currentProfile?.username || "User")}
-                </div>
-
-                <div class="post-time">
-                  ${escapeHtml(formatTime(post.created_at))}
-                </div>
-              </div>
-            </div>
-
-            <div class="post-visibility">
-              ${post.visibility === "private" ? "👥 Friends / Private" : "🌍 Public"}
-            </div>
-
-            <div class="post-content">
-              ${escapeHtml(post.content)}
-            </div>
-
-            <div class="post-actions">
-
-              <button
-                class="post-action"
-                onclick="toggleLike('${escapeJs(post.id)}')"
-              >
-                ${liked ? "❤️" : "🤍"} ${likesCount}
-              </button>
-
-              <button
-                class="post-action"
-                onclick="addComment('${escapeJs(post.id)}')"
-              >
-                💬 ${commentsCount}
-              </button>
-
-              <button
-                class="post-action"
-                onclick="sharePost('${escapeJs(post.id)}')"
-              >
-                ↗️ Share
-              </button>
-
-              <button
-                class="post-action post-delete"
-                onclick="deletePost('${escapeJs(post.id)}')"
-              >
-                🗑️ Delete
-              </button>
-
-            </div>
-
-          </article>
-        `);
-      }
-
-      feed.innerHTML =
-        htmlParts.join("");
-    }
-
-
-    async function toggleLike(postId) {
-      if (!currentUser) return;
-
-      const {
-        data: existing,
-        error: checkError
-      } = await supabaseClient
-        .from("post_likes")
-        .select("id")
-        .eq("post_id", postId)
-        .eq("user_id", currentUser.id)
-        .maybeSingle();
-
-      if (checkError) {
-        console.error(checkError);
-        return;
-      }
-
-      if (existing) {
-
-        const {
-          error
-        } = await supabaseClient
-          .from("post_likes")
-          .delete()
-          .eq("id", existing.id);
-
-        if (error) {
-          console.error(error);
-          return;
-        }
-
-      } else {
-
-        const {
-          error
-        } = await supabaseClient
-          .from("post_likes")
-          .insert({
-            post_id: postId,
-            user_id: currentUser.id
-          });
-
-        if (error) {
-          console.error(error);
-          return;
+      for (let i = 0; i < 4; i++) {
+        if (calculated[i] !== checksum[i]) {
+          return null;
         }
       }
 
-      await loadPosts();
-      await loadStats();
-    }
+      const version = payload[0];
 
-
-    async function addComment(postId) {
-      if (!currentUser) return;
-
-      const content =
-        prompt("Write your comment:");
-
-      if (content === null) return;
-
-      const clean =
-        content.trim();
-
-      if (!clean) return;
-
-      if (clean.length > 1000) {
-        showToast("Comment is too long.");
-        return;
+      if (version === 0x00) {
+        return {
+          valid: true,
+          network: "Bitcoin Mainnet",
+          type: "Legacy P2PKH"
+        };
       }
 
-      const {
-        error
-      } = await supabaseClient
-        .from("post_comments")
-        .insert({
-          post_id: postId,
-          user_id: currentUser.id,
-          content: clean
-        });
-
-      if (error) {
-        console.error(error);
-        showToast(error.message || "Comment failed.");
-        return;
+      if (version === 0x05) {
+        return {
+          valid: true,
+          network: "Bitcoin Mainnet",
+          type: "Legacy P2SH"
+        };
       }
 
-      showToast("Comment added.");
-      await loadPosts();
-    }
-
-
-    async function sharePost(postId) {
-      const shareUrl =
-        window.location.origin +
-        window.location.pathname +
-        "?post=" +
-        encodeURIComponent(postId);
-
-      const text =
-        "Check out my post on P2P Social.";
-
-      try {
-        if (
-          navigator.share
-        ) {
-          await navigator.share({
-            title: "P2P Social",
-            text,
-            url: shareUrl
-          });
-        } else if (
-          navigator.clipboard
-        ) {
-          await navigator.clipboard.writeText(
-            shareUrl
-          );
-
-          showToast(
-            "Post link copied."
-          );
-        } else {
-          prompt(
-            "Copy this link:",
-            shareUrl
-          );
-        }
-      } catch (error) {
-        if (error?.name !== "AbortError") {
-          console.error(error);
-        }
-      }
-    }
-
-
-    async function deletePost(postId) {
-      if (!currentUser) return;
-
-      const confirmed =
-        confirm(
-          "Delete this post?"
-        );
-
-      if (!confirmed) return;
-
-      await supabaseClient
-        .from("post_likes")
-        .delete()
-        .eq("post_id", postId);
-
-      await supabaseClient
-        .from("post_comments")
-        .delete()
-        .eq("post_id", postId);
-
-      const {
-        error
-      } = await supabaseClient
-        .from("posts")
-        .delete()
-        .eq("id", postId)
-        .eq("user_id", currentUser.id);
-
-      if (error) {
-        console.error(error);
-        showToast(error.message || "Delete failed.");
-        return;
+      if (version === 0x6f) {
+        return {
+          valid: true,
+          network: "Bitcoin Testnet",
+          type: "Testnet P2PKH"
+        };
       }
 
-      showToast("Post deleted.");
-
-      await loadPosts();
-      await loadStats();
-    }
-
-
-    function openEditProfile() {
-      if (!currentProfile) return;
-
-      document.getElementById(
-        "editUsername"
-      ).value =
-        currentProfile.username || "";
-
-      document.getElementById(
-        "editBio"
-      ).value =
-        currentProfile.bio || "";
-
-      document.getElementById(
-        "editProfileModal"
-      ).classList.add("show");
-    }
-
-
-    function closeEditProfile() {
-      document.getElementById(
-        "editProfileModal"
-      ).classList.remove("show");
-    }
-
-
-    async function saveProfile() {
-      if (!currentUser) return;
-
-      const username =
-        document.getElementById(
-          "editUsername"
-        ).value.trim();
-
-      const bio =
-        document.getElementById(
-          "editBio"
-        ).value.trim();
-
-      if (!username) {
-        showToast("Username is required.");
-        return;
+      if (version === 0xc4) {
+        return {
+          valid: true,
+          network: "Bitcoin Testnet",
+          type: "Testnet P2SH"
+        };
       }
 
-      const button =
-        document.getElementById(
-          "saveProfileButton"
-        );
+      return {
+        valid: false
+      };
+    });
+}
 
-      button.disabled = true;
-      button.textContent = "Saving...";
+/* ---------- Bech32 ---------- */
 
-      try {
-        const {
-          data,
-          error
-        } = await supabaseClient
-          .from("profiles")
-          .update({
-            username,
-            bio
-          })
-          .eq("id", currentUser.id)
-          .select(
-            "id,username,bio,avatar_url,profile_locked,role,diamond_balance"
-          )
-          .single();
+const BECH32_CHARSET =
+  "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
 
-        if (error) {
-          console.error(error);
-          showToast(error.message || "Save failed.");
-          return;
-        }
+function bech32Polymod(values) {
+  const generator = [
+    0x3b6a57b2,
+    0x26508e6d,
+    0x1ea119fa,
+    0x3d4233dd,
+    0x2a1462b3
+  ];
 
-        currentProfile = data;
+  let chk = 1;
 
-        renderProfile();
-        closeEditProfile();
+  for (const value of values) {
+    const top = chk >>> 25;
 
-        showToast("Profile updated.");
+    chk = ((chk & 0x1ffffff) << 5) ^ value;
 
-      } finally {
-        button.disabled = false;
-        button.textContent = "Save";
+    for (let i = 0; i < 5; i++) {
+      if ((top >> i) & 1) {
+        chk ^= generator[i];
       }
     }
+  }
 
+  return chk >>> 0;
+}
 
-    async function toggleProfileLock() {
-      if (!currentUser || !currentProfile) return;
+function bech32HrpExpand(hrp) {
+  const result = [];
 
-      const newValue =
-        !currentProfile.profile_locked;
+  for (const char of hrp) {
+    result.push(char.charCodeAt(0) >> 5);
+  }
 
-      const {
-        data,
-        error
-      } = await supabaseClient
-        .from("profiles")
-        .update({
-          profile_locked: newValue
-        })
-        .eq("id", currentUser.id)
-        .select(
-          "id,username,bio,avatar_url,profile_locked,role,diamond_balance"
-        )
-        .single();
+  result.push(0);
 
-      if (error) {
-        console.error(error);
-        showToast(error.message || "Unable to change lock.");
-        return;
-      }
+  for (const char of hrp) {
+    result.push(char.charCodeAt(0) & 31);
+  }
 
-      currentProfile = data;
+  return result;
+}
 
-      renderProfile();
+function verifyBech32(address) {
 
-      showToast(
-        newValue
-          ? "Profile locked."
-          : "Profile unlocked."
-      );
+  if (address.length < 8 || address.length > 90) {
+    return null;
+  }
+
+  const lower = address.toLowerCase();
+  const upper = address.toUpperCase();
+
+  if (address !== lower && address !== upper) {
+    return null;
+  }
+
+  const normalized = lower;
+
+  const separator = normalized.lastIndexOf("1");
+
+  if (separator < 1 || separator + 7 > normalized.length) {
+    return null;
+  }
+
+  const hrp = normalized.slice(0, separator);
+  const dataPart = normalized.slice(separator + 1);
+
+  const data = [];
+
+  for (const char of dataPart) {
+    const index = BECH32_CHARSET.indexOf(char);
+
+    if (index === -1) {
+      return null;
     }
 
+    data.push(index);
+  }
 
-    async function changeProfilePhoto(event) {
-      if (!currentUser) return;
+  const polymod = bech32Polymod(
+    bech32HrpExpand(hrp).concat(data)
+  );
 
-      const file =
-        event.target.files?.[0];
+  let encoding;
 
-      if (!file) return;
+  if (polymod === 1) {
+    encoding = "bech32";
+  } else if (polymod === 0x2bc830a3) {
+    encoding = "bech32m";
+  } else {
+    return null;
+  }
 
-      if (!file.type.startsWith("image/")) {
-        showToast("Please select an image.");
-        return;
-      }
+  const witnessVersion = data[0];
 
-      if (file.size > 5 * 1024 * 1024) {
-        showToast("Image must be under 5MB.");
-        return;
-      }
+  if (witnessVersion > 16) {
+    return null;
+  }
 
-      try {
-        const extension =
-          file.name.split(".").pop() ||
-          "jpg";
+  const program = convertBits(
+    data.slice(1, -6),
+    5,
+    8,
+    false
+  );
 
-        const path =
-          `${currentUser.id}/profile.${extension}`;
+  if (!program) {
+    return null;
+  }
 
-        const {
-          error: uploadError
-        } = await supabaseClient
-          .storage
-          .from("avatars")
-          .upload(
-            path,
-            file,
-            {
-              upsert: true,
-              contentType: file.type
-            }
-          );
+  if (program.length < 2 || program.length > 40) {
+    return null;
+  }
 
-        if (uploadError) {
-          console.error(uploadError);
-          showToast(
-            uploadError.message ||
-            "Photo upload failed."
-          );
-          return;
-        }
+  if (witnessVersion === 0) {
 
-        const {
-          data: publicData
-        } =
-          supabaseClient
-            .storage
-            .from("avatars")
-            .getPublicUrl(path);
-
-        const avatarUrl =
-          publicData.publicUrl +
-          "?t=" +
-          Date.now();
-
-        const {
-          data,
-          error
-        } = await supabaseClient
-          .from("profiles")
-          .update({
-            avatar_url: avatarUrl
-          })
-          .eq("id", currentUser.id)
-          .select(
-            "id,username,bio,avatar_url,profile_locked,role,diamond_balance"
-          )
-          .single();
-
-        if (error) {
-          console.error(error);
-          showToast(
-            error.message ||
-            "Unable to save photo."
-          );
-          return;
-        }
-
-        currentProfile = data;
-
-        renderProfile();
-
-        showToast(
-          "Profile photo updated."
-        );
-
-      } catch (error) {
-        console.error(error);
-        showToast("Photo upload failed.");
-      }
-
-      event.target.value = "";
+    if (encoding !== "bech32") {
+      return null;
     }
 
-
-    function openSettings() {
-      document.getElementById(
-        "settingsModal"
-      ).classList.add("show");
+    if (program.length === 20) {
+      return {
+        valid: true,
+        network: hrp === "bc"
+          ? "Bitcoin Mainnet"
+          : "Bitcoin Testnet",
+        type: "Native SegWit P2WPKH"
+      };
     }
 
-
-    function closeSettings() {
-      document.getElementById(
-        "settingsModal"
-      ).classList.remove("show");
+    if (program.length === 32) {
+      return {
+        valid: true,
+        network: hrp === "bc"
+          ? "Bitcoin Mainnet"
+          : "Bitcoin Testnet",
+        type: "Native SegWit P2WSH"
+      };
     }
 
+    return null;
+  }
 
-    function openTransfer() {
-      document.getElementById(
-        "transferModal"
-      ).classList.add("show");
+  if (witnessVersion === 1 && program.length === 32) {
+
+    if (encoding !== "bech32m") {
+      return null;
     }
 
+    return {
+      valid: true,
+      network: hrp === "bc"
+        ? "Bitcoin Mainnet"
+        : "Bitcoin Testnet",
+      type: "Taproot P2TR"
+    };
+  }
 
-    function closeTransfer() {
-      document.getElementById(
-        "transferModal"
-      ).classList.remove("show");
+  return {
+    valid: true,
+    network: hrp === "bc"
+      ? "Bitcoin Mainnet"
+      : "Bitcoin Testnet",
+    type: "SegWit"
+  };
+}
+
+function convertBits(data, fromBits, toBits, pad) {
+
+  let acc = 0;
+  let bits = 0;
+  const ret = [];
+  const maxv = (1 << toBits) - 1;
+  const maxAcc = (1 << (fromBits + toBits - 1)) - 1;
+
+  for (const value of data) {
+
+    if (value < 0 || (value >> fromBits)) {
+      return null;
     }
 
+    acc = ((acc << fromBits) | value) & maxAcc;
+    bits += fromBits;
 
-    async function transferDiamond() {
-      const recipientId =
-        document.getElementById(
-          "transferUserId"
-        ).value.trim();
+    while (bits >= toBits) {
+      bits -= toBits;
+      ret.push((acc >> bits) & maxv);
+    }
+  }
 
-      const amount =
-        Number(
-          document.getElementById(
-            "transferAmount"
-          ).value
-        );
+  if (pad) {
 
-      if (!recipientId) {
-        showToast("Enter recipient User ID.");
-        return;
-      }
-
-      if (recipientId === currentUser.id) {
-        showToast("You cannot transfer to yourself.");
-        return;
-      }
-
-      if (!Number.isFinite(amount) || amount <= 0) {
-        showToast("Enter a valid amount.");
-        return;
-      }
-
-      if (
-        Number(currentProfile?.diamond_balance || 0) <
-        amount
-      ) {
-        showToast("Insufficient diamonds.");
-        return;
-      }
-
-      /*
-        Transfer must be handled by a secure
-        Supabase RPC/function on the server.
-
-        This prevents users from changing
-        diamond balances directly from the browser.
-      */
-
-      const {
-        data,
-        error
-      } = await supabaseClient.rpc(
-        "transfer_diamond",
-        {
-          p_recipient_id: recipientId,
-          p_amount: amount
-        }
-      );
-
-      if (error) {
-        console.error(error);
-        showToast(
-          error.message ||
-          "Transfer failed."
-        );
-        return;
-      }
-
-      showToast(
-        `${amount.toLocaleString()} 💎 transferred.`
-      );
-
-      document.getElementById(
-        "transferUserId"
-      ).value = "";
-
-      document.getElementById(
-        "transferAmount"
-      ).value = "";
-
-      closeTransfer();
-
-      await loadProfile();
+    if (bits) {
+      ret.push((acc << (toBits - bits)) & maxv);
     }
 
+  } else {
 
-    function goHome() {
-      window.location.href =
-        "index.html";
+    if (bits >= fromBits) {
+      return null;
     }
 
+    if (((acc << (toBits - bits)) & maxv) !== 0) {
+      return null;
+    }
+  }
 
-    function openLive() {
-      window.location.href =
-        "live.html";
+  return ret;
+}
+
+/* ---------- Main validation ---------- */
+
+async function validateAddress() {
+
+  const input = document
+    .getElementById("address")
+    .value
+    .trim();
+
+  const result = document.getElementById("result");
+  const status = document.getElementById("status");
+  const checkedAddress =
+    document.getElementById("checkedAddress");
+  const network =
+    document.getElementById("network");
+  const addressType =
+    document.getElementById("addressType");
+
+  result.style.display = "block";
+
+  checkedAddress.textContent = input;
+  network.textContent = "-";
+  addressType.textContent = "-";
+
+  if (!input) {
+    result.className = "result invalid";
+    status.textContent = "❌ Invalid";
+    return;
+  }
+
+  let validation = null;
+
+  /* Bech32 / Bech32m */
+
+  if (
+    input.toLowerCase().startsWith("bc1") ||
+    input.toLowerCase().startsWith("tb1")
+  ) {
+    validation = verifyBech32(input);
+  }
+
+  /* Base58Check */
+
+  else {
+    validation = await base58CheckValid(input);
+  }
+
+  if (validation && validation.valid) {
+
+    result.className = "result valid";
+
+    status.textContent = "✅ Valid Bitcoin Address";
+
+    network.textContent = validation.network;
+    addressType.textContent = validation.type;
+
+  } else {
+
+    result.className = "result invalid";
+
+    status.textContent = "❌ Invalid Bitcoin Address";
+  }
+}
+
+/* Enter key */
+
+document
+  .getElementById("address")
+  .addEventListener("keydown", function(event) {
+
+    if (event.ctrlKey && event.key === "Enter") {
+      validateAddress();
     }
 
-
-    function openWallet() {
-      window.location.href =
-        "wallet.html";
-    }
-
-
-    function openMessages() {
-      window.location.href =
-        "message.html";
-    }
-
-
-    async function logout() {
-      const confirmed =
-        confirm("Logout from P2P Social?");
-
-      if (!confirmed) return;
-
-      const {
-        error
-      } = await supabaseClient.auth.signOut();
-
-      if (error) {
-        console.error(error);
-        showToast("Logout failed.");
-        return;
-      }
-
-      window.location.href =
-        "login.html";
-    }
-
-
-    document
-      .getElementById("editProfileModal")
-      .addEventListener("click", function(event) {
-        if (event.target === this) {
-          closeEditProfile();
-        }
-      });
-
-
-    document
-      .getElementById("settingsModal")
-      .addEventListener("click", function(event) {
-        if (event.target === this) {
-          closeSettings();
-        }
-      });
-
-
-    document
-      .getElementById("transferModal")
-      .addEventListener("click", function(event) {
-        if (event.target === this) {
-          closeTransfer();
-        }
-      });
-
-
-    supabaseClient.auth.onAuthStateChange(
-      (event, session) => {
-        if (!session) {
-          window.location.href =
-            "login.html";
-        }
-      }
-    );
-
-
-    init();
-  </script>
+  });
+</script>
 
 </body>
 </html>

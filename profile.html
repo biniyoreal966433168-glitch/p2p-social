@@ -1,1321 +1,861 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Profile • P2P Social</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<style>
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-  font-family:Arial,sans-serif;
-}
-
-body{
-  background:#f5f7fb;
-  color:#172033;
-  padding-bottom:85px;
-}
-
-button,input,textarea,select{
-  font-family:inherit;
-}
-
-button{
-  cursor:pointer;
-}
-
-header{
-  background:linear-gradient(135deg,#075e54,#087f73);
-  color:white;
-  padding:14px 18px;
-  border-radius:0 0 22px 22px;
-}
-
-.header-row{
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-
-.back-btn{
-  border:none;
-  background:rgba(255,255,255,.15);
-  color:white;
-  width:40px;
-  height:40px;
-  border-radius:50%;
-  font-size:25px;
-  flex-shrink:0;
-}
-
-.brand-header{
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-.brand-icon{
-  width:42px;
-  height:42px;
-  border-radius:13px;
-  background:linear-gradient(135deg,#064e46,#10a889);
-  position:relative;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  box-shadow:0 5px 14px rgba(0,0,0,.18);
-  flex-shrink:0;
-}
-
-.brand-p-left{
-  position:absolute;
-  left:8px;
-  top:10px;
-  width:12px;
-  height:23px;
-  border:4px solid white;
-  border-right:0;
-  border-radius:8px 0 0 8px;
-}
-
-.brand-p-right{
-  position:absolute;
-  right:8px;
-  top:10px;
-  width:12px;
-  height:23px;
-  border:4px solid white;
-  border-left:0;
-  border-radius:0 8px 8px 0;
-}
-
-.brand-center{
-  width:12px;
-  height:12px;
-  background:white;
-  border-radius:50%;
-  position:absolute;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  z-index:5;
-}
-
-.brand-dot{
-  width:4px;
-  height:4px;
-  background:#087f73;
-  border-radius:50%;
-}
-
-.brand-text{
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-}
-
-.brand-text h1{
-  font-size:18px;
-  line-height:1;
-  font-weight:800;
-  color:white;
-}
-
-.brand-text h1 span{
-  color:#b8fff1;
-}
-
-.brand-text p{
-  margin-top:5px;
-  font-size:7px;
-  color:rgba(255,255,255,.78);
-  letter-spacing:.6px;
-}
-
-/* PROFILE */
-
-.profile-card{
-  background:white;
-  margin:16px;
-  border-radius:20px;
-  padding:20px;
-  box-shadow:0 4px 15px rgba(0,0,0,.07);
-}
-
-.profile-top{
-  display:flex;
-  align-items:center;
-  gap:15px;
-}
-
-.profile-photo-wrap{
-  position:relative;
-  width:82px;
-  height:82px;
-  flex-shrink:0;
-}
-
-.profile-photo{
-  width:82px;
-  height:82px;
-  border-radius:50%;
-  object-fit:cover;
-  background:#dfeeea;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:#087f73;
-  font-size:30px;
-  font-weight:bold;
-  overflow:hidden;
-}
-
-.photo-button{
-  position:absolute;
-  right:-2px;
-  bottom:-2px;
-  width:29px;
-  height:29px;
-  border:none;
-  border-radius:50%;
-  background:#087f73;
-  color:white;
-  font-size:14px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.profile-info{
-  min-width:0;
-}
-
-.profile-name-row{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  flex-wrap:wrap;
-}
-
-.profile-name{
-  font-size:20px;
-  font-weight:bold;
-  word-break:break-word;
-}
-
-.profile-id{
-  margin-top:5px;
-  color:#7a8494;
-  font-size:12px;
-}
-
-.profile-bio{
-  margin-top:5px;
-  color:#596579;
-  font-size:13px;
-  word-break:break-word;
-}
-
-.lock-status{
-  margin-top:7px;
-  display:inline-flex;
-  align-items:center;
-  gap:5px;
-  padding:5px 8px;
-  border-radius:8px;
-  background:#f1f4f8;
-  color:#596579;
-  font-size:11px;
-  font-weight:bold;
-}
-
-.stats{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:8px;
-  margin-top:20px;
-  border-top:1px solid #edf0f4;
-  padding-top:16px;
-}
-
-.stat{
-  text-align:center;
-}
-
-.stat strong{
-  display:block;
-  font-size:18px;
-}
-
-.stat span{
-  display:block;
-  color:#7a8494;
-  font-size:11px;
-  margin-top:4px;
-}
-
-.profile-buttons{
-  display:flex;
-  gap:8px;
-  margin-top:17px;
-}
-
-.profile-buttons button{
-  flex:1;
-  border:none;
-  padding:11px;
-  border-radius:10px;
-  font-weight:bold;
-}
-
-.edit-btn{
-  background:#087f73;
-  color:white;
-}
-
-.settings-btn{
-  background:#edf7f5;
-  color:#087f73;
-}
-
-.lock-btn{
-  background:#f1f4f8;
-  color:#172033;
-}
-
-/* WALLET */
-
-.section{
-  margin:16px;
-}
-
-.section-title{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:12px;
-}
-
-.section-title h2{
-  font-size:19px;
-}
-
-.wallet{
-  background:linear-gradient(135deg,#172033,#29364f);
-  color:white;
-  border-radius:18px;
-  padding:18px;
-  box-shadow:0 5px 18px rgba(0,0,0,.1);
-}
-
-.wallet-label{
-  opacity:.75;
-  font-size:13px;
-}
-
-.wallet-balances{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:10px;
-  margin-top:9px;
-}
-
-.balance-box{
-  background:rgba(255,255,255,.08);
-  border-radius:12px;
-  padding:12px;
-  min-width:0;
-}
-
-.balance-title{
-  font-size:12px;
-  opacity:.7;
-}
-
-.balance-value{
-  font-size:21px;
-  font-weight:bold;
-  margin-top:5px;
-  word-break:break-word;
-}
-
-.wallet-actions{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:8px;
-  margin-top:15px;
-}
-
-.wallet-action{
-  border:none;
-  color:white;
-  padding:11px 7px;
-  border-radius:10px;
-  font-weight:bold;
-  font-size:12px;
-}
-
-.transfer-action{
-  background:#7d3fc6;
-}
-
-.buy-action{
-  background:#16a085;
-}
-
-.sell-action{
-  background:#e74c3c;
-}
-
-/* OWNER TREASURY */
-
-.owner-treasury-section{
-  display:none;
-}
-
-.owner-treasury-card{
-  background:linear-gradient(135deg,#172033,#29364f);
-  color:white;
-  border-radius:18px;
-  padding:18px;
-  box-shadow:0 5px 18px rgba(0,0,0,.1);
-}
-
-.owner-treasury-top{
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-
-.owner-treasury-icon{
-  width:46px;
-  height:46px;
-  border-radius:13px;
-  background:rgba(255,255,255,.08);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:24px;
-  flex-shrink:0;
-}
-
-.owner-treasury-title{
-  font-size:17px;
-  font-weight:bold;
-}
-
-.owner-treasury-status{
-  margin-top:4px;
-  font-size:11px;
-  opacity:.7;
-}
-
-.owner-treasury-balance{
-  margin-top:18px;
-  font-size:27px;
-  font-weight:bold;
-  word-break:break-word;
-}
-
-.owner-treasury-label{
-  margin-top:5px;
-  font-size:11px;
-  opacity:.7;
-}
-
-/* ADMIN */
-
-.admin-section{
-  display:none;
-}
-
-.admin-card{
-  background:white;
-  border-radius:18px;
-  padding:18px;
-  box-shadow:0 4px 15px rgba(0,0,0,.07);
-  border:1px solid #eadcf7;
-}
-
-.admin-title{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  font-size:18px;
-  font-weight:bold;
-  margin-bottom:6px;
-}
-
-.admin-role{
-  color:#087f73;
-  font-size:12px;
-  margin-bottom:15px;
-}
-
-.admin-card label{
-  display:block;
-  font-size:12px;
-  font-weight:bold;
-  color:#596579;
-  margin-bottom:6px;
-}
-
-.admin-card select,
-.admin-card input,
-.admin-card textarea{
-  width:100%;
-  border:1px solid #dfe4eb;
-  border-radius:10px;
-  padding:11px;
-  margin-bottom:12px;
-  outline:none;
-  background:white;
-}
-
-.admin-card textarea{
-  resize:vertical;
-  min-height:70px;
-}
-
-.admin-add-button{
-  width:100%;
-  border:none;
-  background:#7d3fc6;
-  color:white;
-  padding:12px;
-  border-radius:10px;
-  font-weight:bold;
-}
-
-.admin-message{
-  margin-top:12px;
-  padding:10px;
-  border-radius:9px;
-  font-size:12px;
-  display:none;
-}
-
-.admin-message.success{
-  display:block;
-  background:#e8f8f3;
-  color:#087f73;
-}
-
-.admin-message.error{
-  display:block;
-  background:#fdecec;
-  color:#c0392b;
-}
-
-/* CREATE POST */
-
-.create-box{
-  background:white;
-  border-radius:17px;
-  padding:16px;
-  box-shadow:0 3px 12px rgba(0,0,0,.06);
-}
-
-.create-box textarea{
-  width:100%;
-  min-height:100px;
-  resize:vertical;
-  border:1px solid #dfe4eb;
-  border-radius:12px;
-  padding:12px;
-  outline:none;
-  font-size:14px;
-}
-
-.post-options{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  margin-top:10px;
-}
-
-.post-options select{
-  flex:1;
-  border:1px solid #dfe4eb;
-  border-radius:9px;
-  padding:10px;
-}
-
-.create-post-btn{
-  border:none;
-  background:#087f73;
-  color:white;
-  padding:10px 15px;
-  border-radius:9px;
-  font-weight:bold;
-}
-
-/* POSTS */
-
-.posts-feed{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
-
-.post-card{
-  background:white;
-  border-radius:17px;
-  padding:16px;
-  box-shadow:0 3px 12px rgba(0,0,0,.06);
-}
-
-.post-header{
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-.post-avatar{
-  width:43px;
-  height:43px;
-  border-radius:50%;
-  object-fit:cover;
-  background:#dfeeea;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:#087f73;
-  font-weight:bold;
-  flex-shrink:0;
-}
-
-.post-user{
-  flex:1;
-  min-width:0;
-}
-
-.post-name-row{
-  display:flex;
-  align-items:center;
-  gap:4px;
-  flex-wrap:wrap;
-}
-
-.post-name{
-  font-weight:bold;
-  font-size:14px;
-}
-
-.post-meta{
-  color:#8a93a1;
-  font-size:11px;
-  margin-top:3px;
-}
-
-.post-menu{
-  border:none;
-  background:transparent;
-  font-size:20px;
-  color:#687386;
-}
-
-.post-content{
-  margin-top:13px;
-  font-size:14px;
-  line-height:1.55;
-  white-space:pre-wrap;
-  word-break:break-word;
-}
-
-.post-actions{
-  display:flex;
-  gap:15px;
-  margin-top:15px;
-  padding-top:12px;
-  border-top:1px solid #edf0f4;
-  flex-wrap:wrap;
-}
-
-.post-action{
-  border:none;
-  background:transparent;
-  color:#687386;
-  font-size:13px;
-}
-
-.post-action.liked{
-  color:#e74c3c;
-  font-weight:bold;
-}
-
-.comments-box{
-  margin-top:12px;
-  border-top:1px solid #edf0f4;
-  padding-top:10px;
-}
-
-.comments-box.hidden{
-  display:none;
-}
-
-.comment{
-  display:flex;
-  gap:8px;
-  margin-bottom:9px;
-}
-
-.comment-avatar{
-  width:32px;
-  height:32px;
-  border-radius:50%;
-  object-fit:cover;
-  background:#dfeeea;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:#087f73;
-  font-weight:bold;
-  flex-shrink:0;
-}
-
-.comment-body{
-  background:#f5f7fb;
-  border-radius:11px;
-  padding:8px 10px;
-  flex:1;
-  min-width:0;
-}
-
-.comment-top{
-  display:flex;
-  justify-content:space-between;
-  gap:8px;
-}
-
-.comment-name{
-  font-weight:bold;
-  font-size:12px;
-}
-
-.comment-delete{
-  border:none;
-  background:transparent;
-  color:#e74c3c;
-  font-size:11px;
-}
-
-.comment-text{
-  font-size:13px;
-  margin-top:3px;
-  white-space:pre-wrap;
-  word-break:break-word;
-}
-
-.comment-input-row{
-  display:flex;
-  gap:7px;
-  margin-top:10px;
-}
-
-.comment-input{
-  flex:1;
-  min-width:0;
-  border:1px solid #dfe4eb;
-  border-radius:10px;
-  padding:9px;
-  outline:none;
-}
-
-.comment-send{
-  border:none;
-  background:#087f73;
-  color:white;
-  border-radius:10px;
-  padding:0 13px;
-  font-weight:bold;
-}
-
-.view-comments{
-  border:none;
-  background:transparent;
-  color:#087f73;
-  font-size:12px;
-  font-weight:bold;
-  margin-top:8px;
-}
-
-.empty{
-  background:white;
-  border-radius:16px;
-  padding:25px;
-  text-align:center;
-  color:#7b8492;
-}
-
-/* MODALS */
-
-.modal{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.5);
-  z-index:3000;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-}
-
-.modal.show{
-  display:flex;
-}
-
-.modal-box{
-  width:100%;
-  max-width:430px;
-  background:white;
-  border-radius:18px;
-  padding:20px;
-  max-height:90vh;
-  overflow-y:auto;
-}
-
-.modal-box h3{
-  margin-bottom:15px;
-}
-
-.modal-box input,
-.modal-box textarea{
-  width:100%;
-  border:1px solid #dfe4eb;
-  border-radius:10px;
-  padding:11px;
-  margin-bottom:10px;
-  outline:none;
-}
-
-.modal-box textarea{
-  min-height:100px;
-  resize:vertical;
-}
-
-.modal-buttons{
-  display:flex;
-  gap:8px;
-}
-
-.modal-buttons button{
-  flex:1;
-  border:none;
-  padding:11px;
-  border-radius:10px;
-  font-weight:bold;
-}
-
-.cancel-btn{
-  background:#edf0f4;
-  color:#172033;
-}
-
-.save-btn{
-  background:#087f73;
-  color:white;
-}
-
-.settings-list{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-
-.settings-item{
-  width:100%;
-  border:none;
-  background:#f5f7fb;
-  padding:13px;
-  border-radius:10px;
-  text-align:left;
-  font-weight:bold;
-}
-
-.settings-item.logout{
-  color:#e74c3c;
-}
-
-/* BOTTOM NAV */
-
-.bottom-nav{
-  position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  height:68px;
-  background:white;
-  border-top:1px solid #ddd;
-  display:flex;
-  justify-content:space-around;
-  align-items:center;
-  z-index:2000;
-}
-
-.nav-item{
-  text-align:center;
-  color:#777;
-  font-size:11px;
-  min-width:55px;
-  cursor:pointer;
-}
-
-.nav-item span{
-  display:block;
-  font-size:22px;
-  margin-bottom:3px;
-}
-
-.nav-item.active{
-  color:#087f73;
-  font-weight:bold;
-}
-
-input[type=file]{
-  display:none;
-}
-
-button:disabled{
-  opacity:.6;
-  cursor:not-allowed;
-}
-
-@media(max-width:450px){
-
-  header{
-    padding:12px;
-  }
-
-  .profile-card,
-  .section{
-    margin-left:12px;
-    margin-right:12px;
-  }
-
-  .profile-top{
-    align-items:flex-start;
-  }
-
-  .profile-name{
-    font-size:18px;
-  }
-
-  .stats{
-    gap:3px;
-  }
-
-  .stat strong{
-    font-size:16px;
-  }
-
-  .post-options{
-    flex-direction:column;
-    align-items:stretch;
-  }
-
-  .post-options select,
-  .create-post-btn{
-    width:100%;
-  }
-
-  .wallet-actions{
-    grid-template-columns:1fr;
-  }
-
-  .wallet-action{
-    width:100%;
-  }
-
-  .brand-icon{
-    width:38px;
-    height:38px;
-  }
-
-  .brand-p-left,
-  .brand-p-right{
-    top:9px;
-    height:20px;
-  }
-
-  .brand-p-left{
-    left:7px;
-  }
-
-  .brand-p-right{
-    right:7px;
-  }
-
-  .brand-center{
-    width:10px;
-    height:10px;
-  }
-
-  .brand-dot{
-    width:3px;
-    height:3px;
-  }
-
-  .brand-text h1{
-    font-size:15px;
-  }
-
-  .brand-text p{
-    font-size:6px;
-  }
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile • P2P Social</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #0b0b0b;
+      color: #fff;
+      min-height: 100vh;
+      padding-bottom: 85px;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: 72px;
+      background: #111;
+      border-bottom: 1px solid #242424;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 15px;
+    }
+
+    .back-btn {
+      position: absolute;
+      left: 15px;
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 50%;
+      background: #202020;
+      color: #fff;
+      font-size: 30px;
+      line-height: 35px;
+    }
+
+    .brand-center {
+      position: absolute;
+      top: 13px;
+      width: 10px;
+      height: 10px;
+      background: #19d36b;
+      border-radius: 50%;
+      box-shadow: 0 0 12px #19d36b;
+    }
+
+    .brand-text {
+      text-align: center;
+      margin-top: 12px;
+    }
+
+    .brand-text h1 {
+      font-size: 19px;
+      letter-spacing: .5px;
+    }
+
+    .brand-text p {
+      margin-top: 3px;
+      font-size: 9px;
+      color: #888;
+      letter-spacing: 2px;
+    }
+
+    .container {
+      width: min(650px, 94%);
+      margin: 18px auto;
+    }
+
+    .card {
+      background: #121212;
+      border: 1px solid #252525;
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.2);
+    }
+
+    .profile-card {
+      text-align: center;
+    }
+
+    .avatar-wrap {
+      position: relative;
+      width: 105px;
+      height: 105px;
+      margin: 5px auto 14px;
+    }
+
+    .avatar {
+      width: 105px;
+      height: 105px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #242424;
+      border: 3px solid #2d2d2d;
+    }
+
+    .avatar-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      color: #777;
+    }
+
+    .camera-btn {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 2px solid #121212;
+      background: #222;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #photoInput {
+      display: none;
+    }
+
+    .profile-name {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .user-id {
+      color: #777;
+      font-size: 13px;
+      margin-bottom: 9px;
+    }
+
+    .bio {
+      color: #aaa;
+      font-size: 14px;
+      margin-bottom: 10px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .profile-status {
+      display: inline-block;
+      padding: 6px 11px;
+      border-radius: 20px;
+      background: #1c2a21;
+      color: #55e78e;
+      font-size: 12px;
+      margin-bottom: 18px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      border-top: 1px solid #252525;
+      border-bottom: 1px solid #252525;
+      padding: 15px 0;
+      margin-bottom: 15px;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .stat-label {
+      color: #777;
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    .profile-actions {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .profile-actions button,
+    .wallet-button {
+      border: none;
+      border-radius: 10px;
+      padding: 11px 8px;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    .edit-btn {
+      background: #252525;
+    }
+
+    .lock-btn {
+      background: #7d3fc6;
+    }
+
+    .settings-btn {
+      background: #252525;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 14px;
+    }
+
+    .balance-box {
+      background: #090909;
+      border: 1px solid #292929;
+      border-radius: 14px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .balance-title {
+      font-size: 28px;
+      margin-bottom: 7px;
+    }
+
+    .balance-value {
+      font-size: 28px;
+      font-weight: bold;
+      color: #f5d76e;
+    }
+
+    .wallet-actions {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 15px;
+    }
+
+    .wallet-action {
+      border: none;
+      color: #fff;
+      padding: 11px 8px;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 12px;
+    }
+
+    .transfer-action {
+      background: #7d3fc6;
+    }
+
+    .buy-action {
+      background: #16a085;
+    }
+
+    .sell-action {
+      background: #e74c3c;
+    }
+
+    .owner-treasury-title {
+      color: #f5d76e;
+      font-weight: bold;
+      font-size: 17px;
+      margin-bottom: 8px;
+    }
+
+    .owner-treasury-status {
+      color: #aaa;
+      background: #090909;
+      border-radius: 10px;
+      padding: 14px;
+    }
+
+    .admin-label {
+      color: #aaa;
+      font-size: 13px;
+      margin-bottom: 7px;
+      display: block;
+    }
+
+    .field {
+      margin-bottom: 13px;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      border: 1px solid #303030;
+      background: #090909;
+      color: #fff;
+      border-radius: 10px;
+      padding: 12px;
+      outline: none;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: #777;
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    select option {
+      background: #111;
+      color: #fff;
+    }
+
+    .admin-add-button,
+    .create-post-btn {
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      padding: 12px;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    .admin-add-button {
+      background: #b28a16;
+    }
+
+    .create-post-btn {
+      background: #16a085;
+    }
+
+    .post-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .post-title {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .refresh-btn {
+      border: none;
+      background: #242424;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+    }
+
+    .post {
+      border: 1px solid #292929;
+      background: #0d0d0d;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .post:last-child {
+      margin-bottom: 0;
+    }
+
+    .post-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .post-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #252525;
+    }
+
+    .post-username {
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .post-time {
+      color: #666;
+      font-size: 11px;
+      margin-top: 3px;
+    }
+
+    .post-content {
+      color: #ddd;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin-bottom: 13px;
+    }
+
+    .post-visibility {
+      color: #777;
+      font-size: 11px;
+      margin-bottom: 10px;
+    }
+
+    .post-actions {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      border-top: 1px solid #242424;
+      padding-top: 10px;
+    }
+
+    .post-action {
+      border: none;
+      background: #1c1c1c;
+      color: #bbb;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+    }
+
+    .post-delete {
+      margin-left: auto;
+      color: #ff6b6b;
+    }
+
+    .empty {
+      color: #666;
+      text-align: center;
+      padding: 25px 10px;
+      font-size: 14px;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.78);
+      z-index: 500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-box {
+      width: min(500px, 100%);
+      max-height: 90vh;
+      overflow-y: auto;
+      background: #151515;
+      border: 1px solid #303030;
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    .modal-title {
+      font-size: 19px;
+      font-weight: bold;
+      margin-bottom: 16px;
+    }
+
+    .modal-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .cancel-btn,
+    .save-btn {
+      border: none;
+      border-radius: 10px;
+      padding: 11px;
+      font-weight: bold;
+    }
+
+    .cancel-btn {
+      background: #292929;
+      color: #fff;
+    }
+
+    .save-btn {
+      background: #16a085;
+      color: #fff;
+    }
+
+    .settings-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .settings-item {
+      width: 100%;
+      text-align: left;
+      border: none;
+      border-radius: 10px;
+      padding: 13px;
+      background: #222;
+      color: #fff;
+      font-weight: bold;
+    }
+
+    .settings-item.logout {
+      background: #3a1717;
+      color: #ff7474;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      z-index: 300;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 72px;
+      background: #111;
+      border-top: 1px solid #292929;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      color: #777;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .nav-item span {
+      font-size: 20px;
+      line-height: 20px;
+    }
+
+    .nav-item.active {
+      color: #fff;
+    }
+
+    .loading {
+      opacity: .7;
+    }
+
+    .toast {
+      position: fixed;
+      z-index: 1000;
+      left: 50%;
+      bottom: 90px;
+      transform: translateX(-50%) translateY(20px);
+      background: #222;
+      color: #fff;
+      padding: 11px 15px;
+      border-radius: 10px;
+      border: 1px solid #333;
+      opacity: 0;
+      pointer-events: none;
+      transition: .25s;
+      font-size: 13px;
+      max-width: 90%;
+      text-align: center;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        width: 96%;
+      }
+
+      .card {
+        padding: 15px;
+      }
+
+      .wallet-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .profile-actions {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+
+      .stats {
+        gap: 2px;
+      }
+
+      .stat-value {
+        font-size: 17px;
+      }
+
+      .stat-label {
+        font-size: 10px;
+      }
+
+      .bottom-nav {
+        height: 68px;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<header>
-  <div class="header-row">
-
+  <header class="topbar">
     <button class="back-btn" onclick="goHome()">‹</button>
 
-    <div class="brand-header">
-
-      <div class="brand-icon">
-        <div class="brand-p-left"></div>
-        <div class="brand-p-right"></div>
-
-        <div class="brand-center">
-          <div class="brand-dot"></div>
-        </div>
-      </div>
-
-      <div class="brand-text">
-        <h1>P2P <span>Social</span></h1>
-        <p>CONNECT • TRADE • SHARE</p>
-      </div>
-
+    <div class="brand-text">
+      <h1>Profile • P2P Social</h1>
+      <p>CONNECT • TRADE • SHARE</p>
     </div>
+  </header>
 
-  </div>
-</header>
+  <main class="container">
 
-<!-- PROFILE -->
+    <section class="card profile-card">
 
-<div class="profile-card">
+      <div class="avatar-wrap">
+        <img id="profileAvatar" class="avatar" src="" alt="Profile">
+        <div id="avatarPlaceholder" class="avatar avatar-placeholder">U</div>
 
-  <div class="profile-top">
-
-    <div class="profile-photo-wrap">
-
-      <div id="profilePhotoBox" class="profile-photo">
-        U
+        <label class="camera-btn" for="photoInput">📷</label>
+        <input
+          id="photoInput"
+          type="file"
+          accept="image/*"
+          onchange="changeProfilePhoto(event)"
+        >
       </div>
 
-      <label class="photo-button" for="photoInput">
-        📷
-      </label>
+      <div id="profileName" class="profile-name">Loading...</div>
 
-      <input
-        id="photoInput"
-        type="file"
-        accept="image/*"
-        onchange="changeProfilePhoto(event)"
-      >
-
-    </div>
-
-    <div class="profile-info">
-
-      <div class="profile-name-row">
-
-        <div id="profileName" class="profile-name">
-          Loading...
-        </div>
-
+      <div class="user-id">
+        User ID: <span id="profileId">--</span>
       </div>
 
-      <div id="profileId" class="profile-id">
-        User ID: --
-      </div>
+      <div id="profileBio" class="bio">No bio yet.</div>
 
-      <div id="profileBio" class="profile-bio">
-        No bio yet.
-      </div>
-
-      <div id="lockStatus" class="lock-status">
+      <div id="profileStatus" class="profile-status">
         🔓 Public profile
       </div>
 
-    </div>
+      <div class="stats">
+        <div>
+          <div id="postsCount" class="stat-value">0</div>
+          <div class="stat-label">Posts</div>
+        </div>
 
-  </div>
+        <div>
+          <div id="followersCount" class="stat-value">0</div>
+          <div class="stat-label">Followers</div>
+        </div>
 
-  <div class="stats">
+        <div>
+          <div id="followingCount" class="stat-value">0</div>
+          <div class="stat-label">Following</div>
+        </div>
 
-    <div class="stat">
-      <strong id="postCount">0</strong>
-      <span>Posts</span>
-    </div>
+        <div>
+          <div id="likesCount" class="stat-value">0</div>
+          <div class="stat-label">Likes</div>
+        </div>
+      </div>
 
-    <div class="stat">
-      <strong id="followersCount">0</strong>
-      <span>Followers</span>
-    </div>
+      <div class="profile-actions">
+        <button class="edit-btn" onclick="openEditProfile()">✏️ Edit</button>
 
-    <div class="stat">
-      <strong id="followingCount">0</strong>
-      <span>Following</span>
-    </div>
+        <button
+          id="lockButton"
+          class="lock-btn"
+          onclick="toggleProfileLock()"
+        >
+          🔒 Lock
+        </button>
 
-    <div class="stat">
-      <strong id="likeCount">0</strong>
-      <span>Likes</span>
-    </div>
+        <button class="settings-btn" onclick="openSettings()">
+          ⚙️ Settings
+        </button>
+      </div>
 
-  </div>
+    </section>
 
-  <div class="profile-buttons">
 
-    <button
-      class="edit-btn"
-      onclick="openEditProfile()"
-    >
-      ✏️ Edit
-    </button>
+    <section class="card">
 
-    <button
-      id="lockButton"
-      class="lock-btn"
-      onclick="toggleProfileLock()"
-    >
-      🔒 Lock
-    </button>
-
-    <button
-      class="settings-btn"
-      onclick="openSettings()"
-    >
-      ⚙️ Settings
-    </button>
-
-  </div>
-
-</div>
-
-<!-- WALLET -->
-
-<section class="section">
-
-  <div class="section-title">
-    <h2>💎 Wallet</h2>
-  </div>
-
-  <div class="wallet">
-
-    <div class="wallet-label">
-      Diamond Balance
-    </div>
-
-    <div class="wallet-balances">
+      <div class="section-title">💎 Wallet</div>
 
       <div class="balance-box">
+        <div class="balance-title">💎</div>
 
-        <div class="balance-title">
-          💎
-        </div>
-
-        <div
-          id="diamondBalance"
-          class="balance-value"
-        >
+        <div id="diamondBalance" class="balance-value">
           0 💎
         </div>
-
       </div>
 
-    </div>
+      <div class="wallet-actions">
 
-    <div class="wallet-actions">
-
-      <button
-        class="wallet-action transfer-action"
-        onclick="openTransfer()"
-      >
-        Transfer 💎
-      </button>
-
-      <button
-        class="wallet-action buy-action"
-        onclick="openLive()"
-      >
-        🟢 Buy 💎
-      </button>
-
-      <button
-        class="wallet-action sell-action"
-        onclick="openWallet()"
-      >
-        🔴 Sell 💎
-      </button>
-
-    </div>
-
-  </div>
-
-</section>
-
-<!-- OWNER TREASURY -->
-
-<section
-  id="ownerTreasurySection"
-  class="section owner-treasury-section"
->
-
-  <div class="section-title">
-    <h2>💎 Owner Treasury</h2>
-  </div>
-
-  <div class="owner-treasury-card">
-
-    <div class="owner-treasury-top">
-
-      <div class="owner-treasury-icon">
-        💎
-      </div>
-
-      <div>
-
-        <div class="owner-treasury-title">
-          Diamond Treasury
-        </div>
-
-        <div
-          id="ownerTreasuryStatus"
-          class="owner-treasury-status"
+        <button
+          class="wallet-action transfer-action"
+          onclick="openTransfer()"
         >
-          Loading treasury...
-        </div>
+          Transfer 💎
+        </button>
+
+        <button
+          class="wallet-action buy-action"
+          onclick="openLive()"
+        >
+          🟢 Buy 💎
+        </button>
+
+        <button
+          class="wallet-action sell-action"
+          onclick="openWallet()"
+        >
+          🔴 Sell 💎
+        </button>
 
       </div>
 
-    </div>
+    </section>
 
-    <div
-      id="ownerTreasuryBalance"
-      class="owner-treasury-balance"
-    >
-      Loading...
-    </div>
 
-    <div class="owner-treasury-label">
-      Owner Diamond Treasury
-    </div>
-
-  </div>
-
-</section>
-
-<!-- ADMIN -->
-
-<section
-  id="adminSection"
-  class="section admin-section"
->
-
-  <div class="section-title">
-    <h2>🛡️ Admin 💎</h2>
-  </div>
-
-  <div class="admin-card">
-
-    <div class="admin-title">
-      💎 Add Diamonds
-    </div>
-
-    <div
-      id="adminRole"
-      class="admin-role"
-    >
-      Authorized administrator
-    </div>
-
-    <label for="adminUser">
-      Select user
-    </label>
-
-    <select id="adminUser">
-      <option value="">Loading users...</option>
-    </select>
-
-    <label for="adminDiamondAmount">
-      Diamond amount
-    </label>
-
-    <input
-      id="adminDiamondAmount"
-      type="number"
-      min="1"
-      step="1"
-      placeholder="Enter diamond amount"
+    <section
+      id="ownerTreasurySection"
+      class="card"
+      style="display:none;"
     >
 
-    <label for="adminDiamondDescription">
-      Description
-    </label>
+      <div class="section-title">💎 Owner Treasury</div>
 
-    <textarea
-      id="adminDiamondDescription"
-      maxlength="300"
-      placeholder="Example: Approved diamond reward"
-    ></textarea>
+      <div class="owner-treasury-title">
+        Diamond Treasury
+      </div>
 
-    <button
-      id="adminDiamondButton"
-      class="admin-add-button"
-      onclick="adminAddDiamond()"
+      <div
+        id="ownerTreasuryStatus"
+        class="owner-treasury-status"
+      >
+        Loading treasury...
+      </div>
+
+    </section>
+
+
+    <section
+      id="adminSection"
+      class="card"
+      style="display:none;"
     >
-      ➕ Add 💎
-    </button>
 
-    <div
-      id="adminMessage"
-      class="admin-message"
-    ></div>
+      <div class="section-title">🛡️ Admin 💎</div>
 
-  </div>
+      <div
+        style="
+          font-weight:bold;
+          color:#f5d76e;
+          margin-bottom:12px;
+        "
+      >
+        💎 Add Diamonds
+      </div>
 
-</section>
+      <div
+        class="admin-label"
+        style="margin-bottom:15px;"
+      >
+        Authorized administrator
+      </div>
 
-<!-- CREATE POST -->
+      <div class="field">
+        <label class="admin-label">Select user</label>
 
-<section class="section">
+        <select id="adminUserSelect">
+          <option value="">Select user</option>
+        </select>
+      </div>
 
-  <div class="section-title">
-    <h2>📝 Create Post</h2>
-  </div>
+      <div class="field">
+        <label class="admin-label">Diamond amount</label>
 
-  <div class="create-box">
+        <input
+          id="adminDiamondAmount"
+          type="number"
+          min="1"
+          step="1"
+          placeholder="Enter diamond amount"
+        >
+      </div>
 
-    <textarea
-      id="postContent"
-      maxlength="5000"
-      placeholder="What's on your mind?"
-    ></textarea>
+      <div class="field">
+        <label class="admin-label">Description</label>
 
-    <div class="post-options">
+        <input
+          id="adminDiamondDescription"
+          type="text"
+          maxlength="200"
+          placeholder="Diamond transaction description"
+        >
+      </div>
 
-      <select id="postVisibility">
+      <button
+        id="adminDiamondButton"
+        class="admin-add-button"
+        onclick="adminAddDiamond()"
+      >
+        ➕ Add 💎
+      </button>
 
-        <option value="public">
-          🌍 Public
-        </option>
+    </section>
 
-        <option value="private">
-          👥 Friends / Private
-        </option>
 
-      </select>
+    <section class="card">
+
+      <div class="section-title">📝 Create Post</div>
+
+      <div class="field">
+        <textarea
+          id="postContent"
+          maxlength="5000"
+          placeholder="What's on your mind?"
+        ></textarea>
+      </div>
+
+      <div class="field">
+        <select id="postVisibility">
+          <option value="public">🌍 Public</option>
+          <option value="private">👥 Friends / Private</option>
+        </select>
+      </div>
 
       <button
         id="createPostButton"
@@ -1325,149 +865,149 @@ button:disabled{
         Post
       </button>
 
+    </section>
+
+
+    <section class="card">
+
+      <div class="post-header">
+        <div class="post-title">📄 Your Posts</div>
+
+        <button
+          class="refresh-btn"
+          onclick="loadPosts()"
+        >
+          Refresh
+        </button>
+      </div>
+
+      <div id="postsFeed">
+        <div class="empty">Loading posts...</div>
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- EDIT PROFILE MODAL -->
+
+  <div id="editProfileModal" class="modal">
+
+    <div class="modal-box">
+
+      <div class="modal-title">✏️ Edit Profile</div>
+
+      <div class="field">
+        <label class="admin-label">Username</label>
+
+        <input
+          id="editUsername"
+          maxlength="50"
+          placeholder="Username"
+        >
+      </div>
+
+      <div class="field">
+        <label class="admin-label">Bio</label>
+
+        <textarea
+          id="editBio"
+          maxlength="500"
+          placeholder="Write something about yourself..."
+        ></textarea>
+      </div>
+
+      <div class="modal-actions">
+
+        <button
+          class="cancel-btn"
+          onclick="closeEditProfile()"
+        >
+          Cancel
+        </button>
+
+        <button
+          id="saveProfileButton"
+          class="save-btn"
+          onclick="saveProfile()"
+        >
+          Save
+        </button>
+
+      </div>
+
     </div>
 
   </div>
 
-</section>
 
-<!-- POSTS -->
+  <!-- SETTINGS MODAL -->
 
-<section class="section">
+  <div id="settingsModal" class="modal">
 
-  <div class="section-title">
+    <div class="modal-box">
 
-    <h2>📄 Your Posts</h2>
+      <div class="modal-title">⚙️ Settings</div>
 
-    <button
-      class="view-comments"
-      onclick="loadPosts()"
-    >
-      Refresh
-    </button>
+      <div class="settings-list">
 
-  </div>
+        <button
+          class="settings-item"
+          onclick="openEditProfile();closeSettings();"
+        >
+          ✏️ Edit Profile
+        </button>
 
-  <div
-    id="postsFeed"
-    class="posts-feed"
-  >
-    <div class="empty">
-      Loading posts...
-    </div>
-  </div>
+        <button
+          class="settings-item"
+          onclick="toggleProfileLock();closeSettings();"
+        >
+          🔒 Lock / Unlock Profile
+        </button>
 
-</section>
+        <button
+          class="settings-item"
+          onclick="openTransfer();closeSettings();"
+        >
+          💎 Transfer Diamonds
+        </button>
 
-<!-- EDIT PROFILE -->
+        <button
+          class="settings-item"
+          onclick="openLive();closeSettings();"
+        >
+          🟢 Buy 💎
+        </button>
 
-<div id="editModal" class="modal">
+        <button
+          class="settings-item"
+          onclick="openWallet();closeSettings();"
+        >
+          🔴 Sell 💎
+        </button>
 
-  <div class="modal-box">
+        <button
+          class="settings-item"
+          onclick="openMessages();closeSettings();"
+        >
+          💬 Messages
+        </button>
 
-    <h3>✏️ Edit Profile</h3>
+        <button
+          class="settings-item logout"
+          onclick="logout();"
+        >
+          🚪 Logout
+        </button>
 
-    <input
-      id="editUsername"
-      maxlength="50"
-      placeholder="Username"
-    >
-
-    <textarea
-      id="editBio"
-      maxlength="300"
-      placeholder="Bio"
-    ></textarea>
-
-    <div class="modal-buttons">
-
-      <button
-        class="cancel-btn"
-        onclick="closeEditProfile()"
-      >
-        Cancel
-      </button>
-
-      <button
-        id="saveProfileButton"
-        class="save-btn"
-        onclick="saveProfile()"
-      >
-        Save
-      </button>
-
-    </div>
-
-  </div>
-
-</div>
-
-<!-- SETTINGS -->
-
-<div id="settingsModal" class="modal">
-
-  <div class="modal-box">
-
-    <h3>⚙️ Settings</h3>
-
-    <div class="settings-list">
-
-      <button
-        class="settings-item"
-        onclick="openEditProfile();closeSettings();"
-      >
-        ✏️ Edit Profile
-      </button>
-
-      <button
-        class="settings-item"
-        onclick="toggleProfileLock();closeSettings();"
-      >
-        🔒 Lock / Unlock Profile
-      </button>
-
-      <button
-        class="settings-item"
-        onclick="openTransfer();closeSettings();"
-      >
-        Transfer 💎
-      </button>
-
-      <button
-        class="settings-item"
-        onclick="openLive();closeSettings();"
-      >
-        🟢 Buy 💎
-      </button>
-
-      <button
-        class="settings-item"
-        onclick="openWallet();closeSettings();"
-      >
-        🔴 Sell 💎
-      </button>
-
-      <button
-        class="settings-item"
-        onclick="openMessages();closeSettings();"
-      >
-        💬 Messages
-      </button>
-
-      <button
-        class="settings-item logout"
-        onclick="logout();"
-      >
-        🚪 Logout
-      </button>
+      </div>
 
       <button
         class="cancel-btn"
         style="
           width:100%;
-          padding:11px;
-          border:none;
-          border-radius:10px;
+          margin-top:12px;
         "
         onclick="closeSettings();"
       >
@@ -1478,2665 +1018,1442 @@ button:disabled{
 
   </div>
 
-</div>
 
-<!-- BOTTOM NAV -->
+  <!-- TRANSFER MODAL -->
 
-<nav class="bottom-nav">
+  <div id="transferModal" class="modal">
 
-  <div
-    class="nav-item"
-    onclick="goHome()"
-  >
-    <span>🏠</span>
-    Home
-  </div>
+    <div class="modal-box">
 
-  <div
-    class="nav-item"
-    onclick="openLive()"
-  >
-    <span>🟢</span>
-    Buy
-  </div>
+      <div class="modal-title">💎 Transfer Diamonds</div>
 
-  <div
-    class="nav-item"
-    onclick="openWallet()"
-  >
-    <span>🔴</span>
-    Sell
-  </div>
-
-  <div
-    class="nav-item"
-    onclick="openMessages()"
-  >
-    <span>💬</span>
-    Messages
-  </div>
-
-  <div class="nav-item active">
-    <span>👤</span>
-    Profile
-  </div>
-
-</nav>
-
-<script>
-
-/* =====================================================
-SUPABASE
-===================================================== */
-
-const SUPABASE_URL =
-"https://mbsvuwrgigqfporxwpfr.supabase.co";
-
-const SUPABASE_PUBLISHABLE_KEY =
-"sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
-
-const supabaseClient =
-window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY
-);
-
-/* =====================================================
-GLOBAL STATE
-===================================================== */
-
-let currentSession = null;
-let currentProfile = null;
-let allProfiles = {};
-let allComments = [];
-
-/* =====================================================
-START
-===================================================== */
-
-async function startApp(){
-
-  const {
-    data,
-    error
-  } =
-  await supabaseClient.auth.getSession();
-
-  if(error){
-
-    console.error(error);
-    showLogin();
-    return;
-
-  }
-
-  currentSession =
-    data.session;
-
-  if(!currentSession){
-
-    showLogin();
-    return;
-
-  }
-
-  await loadProfile();
-  await loadPosts();
-
-}
-
-/* =====================================================
-LOGIN
-===================================================== */
-
-function showLogin(){
-
-  alert("Please login first.");
-
-  window.location.href =
-    "login.html";
-
-}
-
-/* =====================================================
-LOAD PROFILE
-===================================================== */
-
-async function loadProfile(){
-
-  if(!currentSession)return;
-
-  const user =
-    currentSession.user;
-
-  const {
-    data:profile,
-    error
-  } =
-  await supabaseClient
-    .from("profiles")
-    .select("*")
-    .eq("id",user.id)
-    .maybeSingle();
-
-  if(error){
-
-    console.error(
-      "Profile error:",
-      error
-    );
-
-  }
-
-  currentProfile =
-    profile || {};
-
-  const username =
-    currentProfile.username ||
-    user.user_metadata?.username ||
-    user.email?.split("@")[0] ||
-    "User";
-
-  const bio =
-    currentProfile.bio ||
-    "No bio yet.";
-
-  document.getElementById(
-    "profileName"
-  ).textContent =
-    username;
-
-  document.getElementById(
-    "profileBio"
-  ).textContent =
-    bio;
-
-  await loadUserNumber(user.id);
-
-  const avatar =
-    currentProfile.avatar_url || "";
-
-  setProfilePhoto(
-    avatar,
-    username
-  );
-
-  await loadDiamondBalance(
-    user.id
-  );
-
-  document.getElementById(
-    "editUsername"
-  ).value =
-    username;
-
-  document.getElementById(
-    "editBio"
-  ).value =
-    currentProfile.bio || "";
-
-  updateLockUI();
-
-  await loadStats();
-
-  setupAdminPanel();
-
-  await loadOwnerTreasury();
-
-}
-
-/* =====================================================
-DIAMOND BALANCE
-===================================================== */
-
-async function loadDiamondBalance(
-  userId
-){
-
-  const element =
-    document.getElementById(
-      "diamondBalance"
-    );
-
-  if(!element)return;
-
-  element.textContent =
-    "Loading...";
-
-  const {
-    data,
-    error
-  } =
-  await supabaseClient
-    .from("diamond_balances")
-    .select("balance")
-    .eq("user_id",userId)
-    .maybeSingle();
-
-  if(error){
-
-    console.error(
-      "Diamond balance error:",
-      error
-    );
-
-    element.textContent =
-      "0 💎";
-
-    return;
-
-  }
-
-  const balance =
-    Number(
-      data?.balance || 0
-    );
-
-  element.textContent =
-    Math.floor(balance)
-      .toLocaleString() +
-    " 💎";
-
-}
-
-/* =====================================================
-TRANSFER
-===================================================== */
-
-function openTransfer(){
-
-  window.location.href =
-    "wallet.html";
-
-}
-
-/* =====================================================
-OWNER TREASURY
-===================================================== */
-
-async function loadOwnerTreasury(){
-
-  const section =
-    document.getElementById(
-      "ownerTreasurySection"
-    );
-
-  const balanceElement =
-    document.getElementById(
-      "ownerTreasuryBalance"
-    );
-
-  const statusElement =
-    document.getElementById(
-      "ownerTreasuryStatus"
-    );
-
-  if(
-    !section ||
-    !balanceElement ||
-    !statusElement
-  ){
-    return;
-  }
-
-  if(
-    !currentSession ||
-    !currentProfile ||
-    currentProfile.role !== "owner"
-  ){
-
-    section.style.display =
-      "none";
-
-    return;
-
-  }
-
-  section.style.display =
-    "block";
-
-  balanceElement.textContent =
-    "Loading...";
-
-  statusElement.textContent =
-    "Reading Supabase treasury";
-
-  const {
-    data,
-    error
-  } =
-  await supabaseClient
-    .from("diamond_treasury")
-    .select("balance")
-    .limit(1)
-    .maybeSingle();
-
-  if(error){
-
-    console.error(
-      "Owner treasury error:",
-      error
-    );
-
-    balanceElement.textContent =
-      "Unavailable";
-
-    statusElement.textContent =
-      "Could not read treasury balance";
-
-    return;
-
-  }
-
-  const balance =
-    Number(
-      data?.balance || 0
-    );
-
-  balanceElement.textContent =
-    Math.floor(balance)
-      .toLocaleString() +
-    " 💎";
-
-  statusElement.textContent =
-    "Real Supabase treasury balance";
-
-}
-
-/* =====================================================
-USER NUMBER
-===================================================== */
-
-async function loadUserNumber(
-  userId
-){
-
-  const {
-    data,
-    error
-  } =
-  await supabaseClient
-    .from("profiles")
-    .select(
-      "id,created_at,user_number"
-    )
-    .eq("id",userId)
-    .maybeSingle();
-
-  if(
-    !error &&
-    data &&
-    data.user_number != null
-  ){
-
-    document.getElementById(
-      "profileId"
-    ).textContent =
-      "User ID: " +
-      String(
-        data.user_number
-      ).padStart(2,"0");
-
-    return;
-
-  }
-
-  const {
-    data:allUsers,
-    error:allError
-  } =
-  await supabaseClient
-    .from("profiles")
-    .select(
-      "id,created_at"
-    )
-    .order(
-      "created_at",
-      {ascending:true}
-    );
-
-  if(
-    allError ||
-    !allUsers
-  ){
-
-    document.getElementById(
-      "profileId"
-    ).textContent =
-      "User ID: " +
-      userId.substring(0,8);
-
-    return;
-
-  }
-
-  const index =
-    allUsers.findIndex(
-      item =>
-        item.id === userId
-    );
-
-  if(index === -1){
-
-    document.getElementById(
-      "profileId"
-    ).textContent =
-      "User ID: " +
-      userId.substring(0,8);
-
-    return;
-
-  }
-
-  const number =
-    String(
-      index + 1
-    ).padStart(2,"0");
-
-  document.getElementById(
-    "profileId"
-  ).textContent =
-    "User ID: " +
-    number;
-
-}
-
-/* =====================================================
-PROFILE PHOTO
-===================================================== */
-
-function setProfilePhoto(
-  avatar,
-  username
-){
-
-  const oldBox =
-    document.getElementById(
-      "profilePhotoBox"
-    );
-
-  if(!oldBox)return;
-
-  if(avatar){
-
-    const img =
-      document.createElement(
-        "img"
-      );
-
-    img.id =
-      "profilePhotoBox";
-
-    img.className =
-      "profile-photo";
-
-    img.src =
-      avatar;
-
-    img.alt =
-      "Profile photo";
-
-    oldBox.replaceWith(img);
-
-  }else{
-
-    oldBox.textContent =
-      username
-        .charAt(0)
-        .toUpperCase();
-
-    oldBox.className =
-      "profile-photo";
-
-  }
-
-}
-
-/* =====================================================
-CHANGE PHOTO
-===================================================== */
-
-async function changeProfilePhoto(
-  event
-){
-
-  if(!currentSession)return;
-
-  const file =
-    event.target.files[0];
-
-  if(!file)return;
-
-  if(
-    !file.type.startsWith("image/")
-  ){
-
-    alert(
-      "Please select an image."
-    );
-
-    return;
-
-  }
-
-  if(
-    file.size >
-    5 * 1024 * 1024
-  ){
-
-    alert(
-      "Image must be smaller than 5 MB."
-    );
-
-    return;
-
-  }
-
-  const userId =
-    currentSession.user.id;
-
-  const extension =
-    file.name
-      .split(".")
-      .pop()
-      .toLowerCase();
-
-  const filePath =
-    userId +
-    "/profile." +
-    extension;
-
-  const {
-    error:uploadError
-  } =
-  await supabaseClient
-    .storage
-    .from("avatars")
-    .upload(
-      filePath,
-      file,
-      {
-        upsert:true,
-        contentType:file.type
-      }
-    );
-
-  if(uploadError){
-
-    console.error(
-      uploadError
-    );
-
-    alert(
-      "Photo upload failed.\n\n" +
-      uploadError.message
-    );
-
-    return;
-
-  }
-
-  const {data} =
-    supabaseClient
-      .storage
-      .from("avatars")
-      .getPublicUrl(
-        filePath
-      );
-
-  const avatarUrl =
-    data.publicUrl +
-    "?t=" +
-    Date.now();
-
-  const {
-    error:updateError
-  } =
-  await supabaseClient
-    .from("profiles")
-    .update({
-      avatar_url:
-        avatarUrl
-    })
-    .eq(
-      "id",
-      userId
-    );
-
-  if(updateError){
-
-    console.error(
-      updateError
-    );
-
-    alert(
-      "Could not save profile photo.\n\n" +
-      updateError.message
-    );
-
-    return;
-
-  }
-
-  currentProfile.avatar_url =
-    avatarUrl;
-
-  await loadProfile();
-  await loadPosts();
-
-  event.target.value = "";
-
-}
-
-/* =====================================================
-PROFILE LOCK
-===================================================== */
-
-function isProfileLocked(){
-
-  return Boolean(
-    currentProfile &&
-    (
-      currentProfile.profile_locked === true ||
-      currentProfile.is_locked === true ||
-      currentProfile.locked === true
-    )
-  );
-
-}
-
-/* =====================================================
-UPDATE LOCK UI
-===================================================== */
-
-function updateLockUI(){
-
-  const locked =
-    isProfileLocked();
-
-  const button =
-    document.getElementById(
-      "lockButton"
-    );
-
-  const status =
-    document.getElementById(
-      "lockStatus"
-    );
-
-  if(locked){
-
-    button.textContent =
-      "🔓 Unlock";
-
-    status.textContent =
-      "🔒 Locked profile";
-
-  }else{
-
-    button.textContent =
-      "🔒 Lock";
-
-    status.textContent =
-      "🔓 Public profile";
-
-  }
-
-}
-
-/* =====================================================
-LOCK / UNLOCK
-===================================================== */
-
-async function toggleProfileLock(){
-
-  if(!currentSession)return;
-
-  const locked =
-    isProfileLocked();
-
-  const newValue =
-    !locked;
-
-  const confirmed =
-    confirm(
-      newValue
-      ? "Lock your profile from viewers?"
-      : "Unlock your profile for viewers?"
-    );
-
-  if(!confirmed)return;
-
-  const {error} =
-    await supabaseClient
-      .from("profiles")
-      .update({
-        profile_locked:
-          newValue
-      })
-      .eq(
-        "id",
-        currentSession.user.id
-      );
-
-  if(error){
-
-    console.error(error);
-
-    alert(
-      "Could not change profile lock:\n\n" +
-      error.message +
-      "\n\nMake sure profiles.profile_locked exists."
-    );
-
-    return;
-
-  }
-
-  currentProfile.profile_locked =
-    newValue;
-
-  updateLockUI();
-
-  await loadPosts();
-
-}
-
-/* =====================================================
-EDIT PROFILE
-===================================================== */
-
-function openEditProfile(){
-
-  document
-    .getElementById(
-      "editModal"
-    )
-    .classList.add("show");
-
-}
-
-function closeEditProfile(){
-
-  document
-    .getElementById(
-      "editModal"
-    )
-    .classList.remove("show");
-
-}
-
-async function saveProfile(){
-
-  if(!currentSession)return;
-
-  const username =
-    document
-      .getElementById(
-        "editUsername"
-      )
-      .value
-      .trim();
-
-  const bio =
-    document
-      .getElementById(
-        "editBio"
-      )
-      .value
-      .trim();
-
-  if(!username){
-
-    alert(
-      "Username is required."
-    );
-
-    return;
-
-  }
-
-  if(username.length > 50){
-
-    alert(
-      "Username is too long."
-    );
-
-    return;
-
-  }
-
-  const button =
-    document.getElementById(
-      "saveProfileButton"
-    );
-
-  button.disabled =
-    true;
-
-  const {error} =
-    await supabaseClient
-      .from("profiles")
-      .update({
-        username:username,
-        bio:bio
-      })
-      .eq(
-        "id",
-        currentSession.user.id
-      );
-
-  button.disabled =
-    false;
-
-  if(error){
-
-    console.error(error);
-
-    if(error.code === "23505"){
-
-      alert(
-        "That username is already taken."
-      );
-
-    }else{
-
-      alert(
-        "Could not update profile:\n\n" +
-        error.message
-      );
-
-    }
-
-    return;
-
-  }
-
-  closeEditProfile();
-
-  await loadProfile();
-  await loadPosts();
-
-}
-
-/* =====================================================
-SETTINGS
-===================================================== */
-
-function openSettings(){
-
-  document
-    .getElementById(
-      "settingsModal"
-    )
-    .classList.add("show");
-
-}
-
-function closeSettings(){
-
-  document
-    .getElementById(
-      "settingsModal"
-    )
-    .classList.remove("show");
-
-}
-
-/* =====================================================
-STATS
-===================================================== */
-
-async function loadStats(){
-
-  if(!currentSession)return;
-
-  const userId =
-    currentSession.user.id;
-
-  const {
-    count:postCount
-  } =
-  await supabaseClient
-    .from("posts")
-    .select(
-      "id",
-      {
-        count:"exact",
-        head:true
-      }
-    )
-    .eq(
-      "user_id",
-      userId
-    );
-
-  document.getElementById(
-    "postCount"
-  ).textContent =
-    postCount || 0;
-
-  const {
-    data:userPosts
-  } =
-  await supabaseClient
-    .from("posts")
-    .select("id")
-    .eq(
-      "user_id",
-      userId
-    );
-
-  let totalLikes =
-    0;
-
-  if(
-    userPosts &&
-    userPosts.length
-  ){
-
-    const postIds =
-      userPosts.map(
-        post => post.id
-      );
-
-    const {count} =
-      await supabaseClient
-        .from("post_likes")
-        .select(
-          "post_id",
-          {
-            count:"exact",
-            head:true
-          }
-        )
-        .in(
-          "post_id",
-          postIds
-        );
-
-    totalLikes =
-      count || 0;
-
-  }
-
-  document.getElementById(
-    "likeCount"
-  ).textContent =
-    totalLikes;
-
-  const {
-    count:followers,
-    error:followersError
-  } =
-  await supabaseClient
-    .from("followers")
-    .select(
-      "follower_id",
-      {
-        count:"exact",
-        head:true
-      }
-    )
-    .eq(
-      "following_id",
-      userId
-    );
-
-  document.getElementById(
-    "followersCount"
-  ).textContent =
-    followersError
-    ? "0"
-    : followers || 0;
-
-  const {
-    count:following,
-    error:followingError
-  } =
-  await supabaseClient
-    .from("followers")
-    .select(
-      "following_id",
-      {
-        count:"exact",
-        head:true
-      }
-    )
-    .eq(
-      "follower_id",
-      userId
-    );
-
-  document.getElementById(
-    "followingCount"
-  ).textContent =
-    followingError
-    ? "0"
-    : following || 0;
-
-}
-
-/* =====================================================
-ADMIN PANEL
-===================================================== */
-
-function setupAdminPanel(){
-
-  const role =
-    currentProfile?.role;
-
-  const section =
-    document.getElementById(
-      "adminSection"
-    );
-
-  const roleText =
-    document.getElementById(
-      "adminRole"
-    );
-
-  if(
-    role !== "owner" &&
-    role !== "admin"
-  ){
-
-    section.style.display =
-      "none";
-
-    return;
-
-  }
-
-  section.style.display =
-    "block";
-
-  roleText.textContent =
-    role === "owner"
-    ? "👑 Owner — authorized 💎 management"
-    : "🛡️ Admin — authorized 💎 management";
-
-  loadAdminUsers();
-
-}
-
-/* =====================================================
-ADMIN USERS
-===================================================== */
-
-async function loadAdminUsers(){
-
-  const select =
-    document.getElementById(
-      "adminUser"
-    );
-
-  select.innerHTML =
-    `<option value="">Loading users...</option>`;
-
-  const {
-    data,
-    error
-  } =
-  await supabaseClient
-    .from("profiles")
-    .select(
-      "id,username,user_number"
-    )
-    .order(
-      "user_number",
-      {ascending:true}
-    );
-
-  if(error){
-
-    console.error(
-      "Admin users error:",
-      error
-    );
-
-    select.innerHTML =
-      `<option value="">Could not load users</option>`;
-
-    return;
-
-  }
-
-  select.innerHTML =
-    `<option value="">Select user</option>`;
-
-  (data || []).forEach(
-    profile => {
-
-      const option =
-        document.createElement(
-          "option"
-        );
-
-      option.value =
-        profile.id;
-
-      const userNumber =
-        profile.user_number != null
-        ? String(
-            profile.user_number
-          ).padStart(2,"0")
-        : "";
-
-      option.textContent =
-        userNumber
-        ?
-        userNumber +
-        " — " +
-        (
-          profile.username ||
-          "User"
-        )
-        :
-        (
-          profile.username ||
-          "User"
-        );
-
-      select.appendChild(
-        option
-      );
-
-    }
-  );
-
-}
-
-/* =====================================================
-ADMIN ADD DIAMOND
-===================================================== */
-
-async function adminAddDiamond(){
-
-  const userId =
-    document.getElementById(
-      "adminUser"
-    ).value;
-
-  const amount =
-    Number(
-      document.getElementById(
-        "adminDiamondAmount"
-      ).value
-    );
-
-  const description =
-    document.getElementById(
-      "adminDiamondDescription"
-    ).value
-    .trim();
-
-  const button =
-    document.getElementById(
-      "adminDiamondButton"
-    );
-
-  const message =
-    document.getElementById(
-      "adminMessage"
-    );
-
-  message.className =
-    "admin-message";
-
-  message.textContent =
-    "";
-
-  if(!userId){
-
-    showAdminMessage(
-      "Please select a user.",
-      "error"
-    );
-
-    return;
-
-  }
-
-  if(
-    !Number.isFinite(amount) ||
-    amount <= 0 ||
-    !Number.isInteger(amount)
-  ){
-
-    showAdminMessage(
-      "Enter a valid whole-number diamond amount.",
-      "error"
-    );
-
-    return;
-
-  }
-
-  if(
-    amount > 1000000000
-  ){
-
-    showAdminMessage(
-      "Amount is too large.",
-      "error"
-    );
-
-    return;
-
-  }
-
-  const confirmed =
-    confirm(
-      "Add " +
-      amount.toLocaleString() +
-      " 💎 to the selected user?"
-    );
-
-  if(!confirmed)return;
-
-  button.disabled =
-    true;
-
-  button.textContent =
-    "Processing...";
-
-  const {
-    data,
-    error
-  } =
-  await supabaseClient.rpc(
-    "admin_add_diamond",
-    {
-      p_user_id:
-        userId,
-
-      p_amount:
-        amount,
-
-      p_description:
-        description ||
-        "Diamond reward"
-    }
-  );
-
-  button.disabled =
-    false;
-
-  button.textContent =
-    "➕ Add 💎";
-
-  if(error){
-
-    console.error(
-      "Admin Diamond error:",
-      error
-    );
-
-    showAdminMessage(
-      error.message,
-      "error"
-    );
-
-    return;
-
-  }
-
-  showAdminMessage(
-    "Success. New diamond balance: " +
-    Number(
-      data || 0
-    ).toLocaleString() +
-    " 💎",
-    "success"
-  );
-
-  document.getElementById(
-    "adminDiamondAmount"
-  ).value =
-    "";
-
-  document.getElementById(
-    "adminDiamondDescription"
-  ).value =
-    "";
-
-  await loadProfile();
-
-}
-
-/* =====================================================
-ADMIN MESSAGE
-===================================================== */
-
-function showAdminMessage(
-  text,
-  type
-){
-
-  const message =
-    document.getElementById(
-      "adminMessage"
-    );
-
-  message.textContent =
-    text;
-
-  message.className =
-    "admin-message " +
-    type;
-
-}
-
-/* =====================================================
-CREATE POST
-===================================================== */
-
-async function createPost(){
-
-  if(!currentSession)return;
-
-  const textarea =
-    document.getElementById(
-      "postContent"
-    );
-
-  const visibility =
-    document.getElementById(
-      "postVisibility"
-    ).value;
-
-  const content =
-    textarea.value.trim();
-
-  if(!content){
-
-    alert(
-      "Write something first."
-    );
-
-    return;
-
-  }
-
-  const button =
-    document.getElementById(
-      "createPostButton"
-    );
-
-  button.disabled =
-    true;
-
-  const {error} =
-    await supabaseClient
-      .from("posts")
-      .insert({
-        user_id:
-          currentSession.user.id,
-
-        content:
-          content,
-
-        visibility:
-          visibility
-      });
-
-  button.disabled =
-    false;
-
-  if(error){
-
-    console.error(error);
-
-    alert(
-      "Could not create post:\n\n" +
-      error.message
-    );
-
-    return;
-
-  }
-
-  textarea.value =
-    "";
-
-  await loadPosts();
-  await loadStats();
-
-}
-
-/* =====================================================
-LOAD POSTS
-===================================================== */
-
-async function loadPosts(){
-
-  if(!currentSession)return;
-
-  const feed =
-    document.getElementById(
-      "postsFeed"
-    );
-
-  feed.innerHTML =
-    `<div class="empty">Loading posts...</div>`;
-
-  const {
-    data:posts,
-    error
-  } =
-  await supabaseClient
-    .from("posts")
-    .select(
-      "id,user_id,content,visibility,created_at"
-    )
-    .eq(
-      "user_id",
-      currentSession.user.id
-    )
-    .order(
-      "created_at",
-      {ascending:false}
-    );
-
-  if(error){
-
-    console.error(error);
-
-    feed.innerHTML =
-      `<div class="empty">
-        Could not load posts.<br><br>
-        <small>
-          ${escapeHtml(error.message)}
-        </small>
-      </div>`;
-
-    return;
-
-  }
-
-  if(
-    !posts ||
-    posts.length === 0
-  ){
-
-    feed.innerHTML =
-      `<div class="empty">
-        You have not created any posts yet.
-      </div>`;
-
-    return;
-
-  }
-
-  const postIds =
-    posts.map(
-      post => post.id
-    );
-
-  await loadPostProfiles(
-    posts
-  );
-
-  const likes =
-    await loadLikes(
-      postIds
-    );
-
-  const comments =
-    await loadComments(
-      postIds
-    );
-
-  allComments =
-    comments;
-
-  renderPosts(
-    posts,
-    likes,
-    comments
-  );
-
-}
-
-/* =====================================================
-POST PROFILES
-===================================================== */
-
-async function loadPostProfiles(
-  posts
-){
-
-  const ids =
-    [
-      ...new Set(
-        posts.map(
-          post =>
-            post.user_id
-        )
-      )
-    ];
-
-  allProfiles = {};
-
-  if(!ids.length)return;
-
-  const {
-    data,
-    error
-  } =
-  await supabaseClient
-    .from("profiles")
-    .select(
-      "id,username,avatar_url"
-    )
-    .in(
-      "id",
-      ids
-    );
-
-  if(error){
-
-    console.error(error);
-
-    return;
-
-  }
-
-  (data || []).forEach(
-    profile => {
-
-      allProfiles[
-        profile.id
-      ] =
-        profile;
-
-    }
-  );
-
-}
-
-/* =====================================================
-LIKES
-===================================================== */
-
-async function loadLikes(
-  postIds
-){
-
-  if(!postIds.length)return [];
-
-  const {
-    data,
-    error
-  } =
-  await supabaseClient
-    .from("post_likes")
-    .select(
-      "post_id,user_id"
-    )
-    .in(
-      "post_id",
-      postIds
-    );
-
-  if(error){
-
-    console.error(
-      "Likes error:",
-      error
-    );
-
-    return [];
-
-  }
-
-  return data || [];
-
-}
-
-/* =====================================================
-COMMENTS
-===================================================== */
-
-async function loadComments(
-  postIds
-){
-
-  if(!postIds.length)return [];
-
-  const {
-    data,
-    error
-  } =
-  await supabaseClient
-    .from("post_comments")
-    .select(
-      "id,post_id,user_id,comment,created_at"
-    )
-    .in(
-      "post_id",
-      postIds
-    )
-    .order(
-      "created_at",
-      {ascending:true}
-    );
-
-  if(error){
-
-    console.error(
-      "Comments error:",
-      error
-    );
-
-    return [];
-
-  }
-
-  const commentUserIds =
-    [
-      ...new Set(
-        (data || []).map(
-          comment =>
-            comment.user_id
-        )
-      )
-    ];
-
-  if(
-    commentUserIds.length
-  ){
-
-    const {
-      data:commentProfiles,
-      error:profileError
-    } =
-    await supabaseClient
-      .from("profiles")
-      .select(
-        "id,username,avatar_url"
-      )
-      .in(
-        "id",
-        commentUserIds
-      );
-
-    if(!profileError){
-
-      (
-        commentProfiles || []
-      ).forEach(
-        profile => {
-
-          allProfiles[
-            profile.id
-          ] =
-            profile;
-
-        }
-      );
-
-    }
-
-  }
-
-  return data || [];
-
-}
-
-/* =====================================================
-RENDER POSTS
-===================================================== */
-
-function renderPosts(
-  posts,
-  likes,
-  comments
-){
-
-  const feed =
-    document.getElementById(
-      "postsFeed"
-    );
-
-  feed.innerHTML =
-    "";
-
-  posts.forEach(
-    post => {
-
-      const profile =
-        allProfiles[
-          post.user_id
-        ] || {};
-
-      const username =
-        profile.username ||
-        "User";
-
-      const avatar =
-        profile.avatar_url ||
-        "";
-
-      const initial =
-        username
-          .charAt(0)
-          .toUpperCase();
-
-      const postLikes =
-        likes.filter(
-          like =>
-            String(
-              like.post_id
-            ) ===
-            String(
-              post.id
-            )
-        );
-
-      const liked =
-        postLikes.some(
-          like =>
-            like.user_id ===
-            currentSession.user.id
-        );
-
-      const postComments =
-        comments.filter(
-          comment =>
-            String(
-              comment.post_id
-            ) ===
-            String(
-              post.id
-            )
-        );
-
-      const card =
-        document.createElement(
-          "article"
-        );
-
-      card.className =
-        "post-card";
-
-      card.innerHTML = `
-
-        <div class="post-header">
-
-          ${
-            avatar
-            ?
-            `<img
-              class="post-avatar"
-              src="${escapeHtml(avatar)}"
-              alt="Profile"
-            >`
-            :
-            `<div class="post-avatar">
-              ${escapeHtml(initial)}
-            </div>`
-          }
-
-          <div class="post-user">
-
-            <div class="post-name-row">
-
-              <div class="post-name">
-                ${escapeHtml(username)}
-              </div>
-
-            </div>
-
-            <div class="post-meta">
-
-              ${
-                post.visibility === "private"
-                ? "👥 Friends / Private"
-                : "🌍 Public"
-              }
-
-              ·
-
-              ${escapeHtml(
-                formatTime(
-                  post.created_at
-                )
-              )}
-
-            </div>
-
-          </div>
-
-          <button
-            class="post-menu"
-            title="Delete post"
-            onclick="deletePost('${escapeJs(post.id)}')"
-          >
-            ⋮
-          </button>
-
-        </div>
-
-        <div class="post-content">
-          ${escapeHtml(
-            post.content || ""
-          )}
-        </div>
-
-        <div class="post-actions">
-
-          <button
-            class="post-action ${liked ? "liked" : ""}"
-            onclick="likePost('${escapeJs(post.id)}')"
-          >
-            ${liked ? "❤️ Liked" : "♡ Like"}
-            <span>${postLikes.length}</span>
-          </button>
-
-          <button
-            class="post-action"
-            onclick="toggleComments('${escapeJs(post.id)}')"
-          >
-            💬 Comments
-            <span>${postComments.length}</span>
-          </button>
-
-          <button
-            class="post-action"
-            onclick="sharePost('${escapeJs(post.id)}')"
-          >
-            ↗️ Share
-          </button>
-
-        </div>
-
-        <button
-          id="view-comments-${escapeHtml(post.id)}"
-          class="view-comments"
-          onclick="toggleComments('${escapeJs(post.id)}')"
-        >
-          💬 View comments
-        </button>
-
-        <div
-          id="comments-${escapeHtml(post.id)}"
-          class="comments-box hidden"
-        >
-
-          ${renderComments(postComments)}
-
-          <div class="comment-input-row">
-
-            <input
-              id="comment-input-${escapeHtml(post.id)}"
-              class="comment-input"
-              maxlength="500"
-              placeholder="Write a comment..."
-              onkeydown="
-                if(event.key==='Enter'){
-                  event.preventDefault();
-                  sendComment('${escapeJs(post.id)}');
-                }
-              "
-            >
-
-            <button
-              class="comment-send"
-              onclick="sendComment('${escapeJs(post.id)}')"
-            >
-              Send
-            </button>
-
-          </div>
-
-        </div>
-      `;
-
-      feed.appendChild(
-        card
-      );
-
-    }
-  );
-
-}
-
-/* =====================================================
-COMMENTS RENDER
-===================================================== */
-
-function renderComments(
-  comments
-){
-
-  if(!comments.length){
-
-    return `
       <div
         style="
-          font-size:12px;
-          color:#8a93a1;
-          margin-bottom:8px;
+          color:#aaa;
+          font-size:13px;
+          line-height:1.5;
+          margin-bottom:15px;
         "
       >
-        No comments yet.
+        Transfer diamonds to another P2P Social user.
       </div>
-    `;
 
-  }
+      <div class="field">
+        <label class="admin-label">Recipient User ID</label>
 
-  return comments.map(
-    comment => {
+        <input
+          id="transferUserId"
+          type="text"
+          placeholder="Enter recipient User ID"
+        >
+      </div>
 
-      const profile =
-        allProfiles[
-          comment.user_id
-        ] || {};
+      <div class="field">
+        <label class="admin-label">Diamond amount</label>
 
-      const username =
-        profile.username ||
+        <input
+          id="transferAmount"
+          type="number"
+          min="1"
+          step="1"
+          placeholder="Enter amount"
+        >
+      </div>
+
+      <div class="modal-actions">
+
+        <button
+          class="cancel-btn"
+          onclick="closeTransfer()"
+        >
+          Cancel
+        </button>
+
+        <button
+          class="save-btn"
+          onclick="transferDiamond()"
+        >
+          Transfer 💎
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <nav class="bottom-nav">
+
+    <div
+      class="nav-item"
+      onclick="goHome()"
+    >
+      <span>🏠</span>
+      Home
+    </div>
+
+    <div
+      class="nav-item"
+      onclick="openLive()"
+    >
+      <span>🟢</span>
+      Buy
+    </div>
+
+    <div
+      class="nav-item"
+      onclick="openWallet()"
+    >
+      <span>🔴</span>
+      Sell
+    </div>
+
+    <div
+      class="nav-item"
+      onclick="openMessages()"
+    >
+      <span>💬</span>
+      Messages
+    </div>
+
+    <div class="nav-item active">
+      <span>👤</span>
+      Profile
+    </div>
+
+  </nav>
+
+
+  <div id="toast" class="toast"></div>
+
+
+  <script>
+    const SUPABASE_URL =
+      "https://mbsvuwrgigqfporxwpfr.supabase.co";
+
+    const SUPABASE_PUBLISHABLE_KEY =
+      "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
+
+    const supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
+      );
+
+
+    let currentUser = null;
+    let currentProfile = null;
+
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text == null ? "" : String(text);
+      return div.innerHTML;
+    }
+
+
+    function escapeJs(text) {
+      return String(text || "")
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '\\"')
+        .replace(/\r/g, "\\r")
+        .replace(/\n/g, "\\n");
+    }
+
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+
+      toast.textContent = message;
+      toast.classList.add("show");
+
+      clearTimeout(window.toastTimer);
+
+      window.toastTimer = setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2500);
+    }
+
+
+    function formatTime(dateString) {
+      if (!dateString) return "";
+
+      const date = new Date(dateString);
+
+      if (Number.isNaN(date.getTime())) {
+        return "";
+      }
+
+      return date.toLocaleString([], {
+        dateStyle: "medium",
+        timeStyle: "short"
+      });
+    }
+
+
+    async function init() {
+      try {
+        const {
+          data: {
+            session
+          }
+        } = await supabaseClient.auth.getSession();
+
+        if (!session) {
+          window.location.href = "login.html";
+          return;
+        }
+
+        currentUser = session.user;
+
+        await loadProfile();
+
+        await Promise.all([
+          loadStats(),
+          loadPosts()
+        ]);
+
+        if (
+          currentProfile &&
+          (
+            currentProfile.role === "owner" ||
+            currentProfile.role === "admin"
+          )
+        ) {
+          document.getElementById(
+            "adminSection"
+          ).style.display = "block";
+
+          await loadAdminUsers();
+        }
+
+        if (
+          currentProfile &&
+          currentProfile.role === "owner"
+        ) {
+          document.getElementById(
+            "ownerTreasurySection"
+          ).style.display = "block";
+
+          await loadTreasury();
+        }
+
+      } catch (error) {
+        console.error(error);
+        showToast("Unable to load profile.");
+      }
+    }
+
+
+    async function loadProfile() {
+      const {
+        data,
+        error
+      } = await supabaseClient
+        .from("profiles")
+        .select(
+          "id,username,bio,avatar_url,profile_locked,role,diamond_balance"
+        )
+        .eq("id", currentUser.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error(error);
+        showToast("Profile loading failed.");
+        return;
+      }
+
+      if (!data) {
+        const defaultUsername =
+          currentUser.email
+            ? currentUser.email.split("@")[0]
+            : "User";
+
+        const {
+          data: created,
+          error: createError
+        } = await supabaseClient
+          .from("profiles")
+          .insert({
+            id: currentUser.id,
+            username: defaultUsername,
+            bio: "",
+            diamond_balance: 0,
+            profile_locked: false
+          })
+          .select(
+            "id,username,bio,avatar_url,profile_locked,role,diamond_balance"
+          )
+          .single();
+
+        if (createError) {
+          console.error(createError);
+          showToast("Unable to create profile.");
+          return;
+        }
+
+        currentProfile = created;
+      } else {
+        currentProfile = data;
+      }
+
+      renderProfile();
+    }
+
+
+    function renderProfile() {
+      if (!currentProfile) return;
+
+      const name =
+        currentProfile.username ||
         "User";
 
+      document.getElementById(
+        "profileName"
+      ).textContent = name;
+
+      document.getElementById(
+        "profileId"
+      ).textContent = currentProfile.id || "--";
+
+      document.getElementById(
+        "profileBio"
+      ).textContent =
+        currentProfile.bio ||
+        "No bio yet.";
+
       const avatar =
-        profile.avatar_url ||
-        "";
+        document.getElementById("profileAvatar");
 
-      const initial =
-        username
-          .charAt(0)
-          .toUpperCase();
+      const placeholder =
+        document.getElementById("avatarPlaceholder");
 
-      const isOwner =
-        comment.user_id ===
-        currentSession.user.id;
+      if (currentProfile.avatar_url) {
+        avatar.src = currentProfile.avatar_url;
+        avatar.style.display = "block";
+        placeholder.style.display = "none";
+      } else {
+        avatar.style.display = "none";
+        placeholder.style.display = "flex";
 
-      return `
+        placeholder.textContent =
+          name.charAt(0).toUpperCase();
+      }
 
-        <div class="comment">
+      const locked =
+        !!currentProfile.profile_locked;
 
-          ${
-            avatar
-            ?
-            `<img
-              class="comment-avatar"
-              src="${escapeHtml(avatar)}"
-              alt="Profile"
-            >`
-            :
-            `<div class="comment-avatar">
-              ${escapeHtml(initial)}
-            </div>`
-          }
+      const status =
+        document.getElementById("profileStatus");
 
-          <div class="comment-body">
+      const lockButton =
+        document.getElementById("lockButton");
 
-            <div class="comment-top">
+      if (locked) {
+        status.textContent =
+          "🔒 Private profile";
 
-              <div class="comment-name">
-                ${escapeHtml(username)}
-              </div>
+        status.style.background =
+          "#302020";
 
-              ${
-                isOwner
-                ?
-                `<button
-                  class="comment-delete"
-                  onclick="deleteComment('${escapeJs(comment.id)}')"
-                >
-                  Delete
-                </button>`
-                :
-                ""
-              }
+        status.style.color =
+          "#ff8585";
 
-            </div>
+        lockButton.textContent =
+          "🔓 Unlock";
+      } else {
+        status.textContent =
+          "🔓 Public profile";
 
-            <div class="comment-text">
-              ${escapeHtml(
-                comment.comment || ""
-              )}
-            </div>
+        status.style.background =
+          "#1c2a21";
 
-          </div>
+        status.style.color =
+          "#55e78e";
 
-        </div>
+        lockButton.textContent =
+          "🔒 Lock";
+      }
 
-      `;
+      const balance =
+        Number(
+          currentProfile.diamond_balance || 0
+        );
 
+      document.getElementById(
+        "diamondBalance"
+      ).textContent =
+        balance.toLocaleString() + " 💎";
     }
-  ).join("");
 
-}
 
-/* =====================================================
-COMMENTS
-===================================================== */
+    async function loadStats() {
+      if (!currentUser) return;
 
-function toggleComments(
-  postId
-){
+      try {
+        const [
+          postsResult,
+          followersResult,
+          followingResult,
+          likesResult
+        ] = await Promise.all([
 
-  const box =
-    document.getElementById(
-      "comments-" +
-      postId
-    );
+          supabaseClient
+            .from("posts")
+            .select("id", {
+              count: "exact",
+              head: true
+            })
+            .eq("user_id", currentUser.id),
 
-  const button =
-    document.getElementById(
-      "view-comments-" +
-      postId
-    );
+          supabaseClient
+            .from("followers")
+            .select("id", {
+              count: "exact",
+              head: true
+            })
+            .eq("following_id", currentUser.id),
 
-  if(
-    !box ||
-    !button
-  )return;
+          supabaseClient
+            .from("followers")
+            .select("id", {
+              count: "exact",
+              head: true
+            })
+            .eq("follower_id", currentUser.id),
 
-  const hidden =
-    box.classList.toggle(
-      "hidden"
-    );
+          supabaseClient
+            .from("post_likes")
+            .select(
+              "post_id,posts!inner(user_id)",
+              {
+                count: "exact",
+                head: true
+              }
+            )
+            .eq(
+              "posts.user_id",
+              currentUser.id
+            )
 
-  button.textContent =
-    hidden
-    ? "💬 View comments"
-    : "🔽 Hide comments";
+        ]);
 
-}
+        document.getElementById(
+          "postsCount"
+        ).textContent =
+          postsResult.count || 0;
 
-/* =====================================================
-LIKE
-===================================================== */
+        document.getElementById(
+          "followersCount"
+        ).textContent =
+          followersResult.count || 0;
 
-async function likePost(
-  postId
-){
+        document.getElementById(
+          "followingCount"
+        ).textContent =
+          followingResult.count || 0;
 
-  if(!currentSession)return;
+        document.getElementById(
+          "likesCount"
+        ).textContent =
+          likesResult.count || 0;
 
-  const userId =
-    currentSession.user.id;
+      } catch (error) {
+        console.error(error);
+      }
+    }
 
-  const {
-    data:existing,
-    error:checkError
-  } =
-  await supabaseClient
-    .from("post_likes")
-    .select(
-      "post_id"
-    )
-    .eq(
-      "post_id",
-      postId
-    )
-    .eq(
-      "user_id",
-      userId
-    )
-    .maybeSingle();
 
-  if(checkError){
+    async function loadTreasury() {
+      const status =
+        document.getElementById(
+          "ownerTreasuryStatus"
+        );
 
-    console.error(
-      checkError
-    );
+      status.textContent =
+        "Loading treasury...";
 
-    alert(
-      "Could not check like:\n\n" +
-      checkError.message
-    );
+      const {
+        data,
+        error
+      } = await supabaseClient
+        .from("diamond_treasury")
+        .select("balance")
+        .limit(1)
+        .maybeSingle();
 
-    return;
+      if (error) {
+        console.error(error);
 
-  }
+        status.textContent =
+          "Treasury unavailable.";
 
-  if(existing){
+        return;
+      }
 
-    const {error} =
+      const balance =
+        Number(data?.balance || 0);
+
+      status.textContent =
+        balance.toLocaleString() + " 💎 available";
+    }
+
+
+    async function loadAdminUsers() {
+      const select =
+        document.getElementById(
+          "adminUserSelect"
+        );
+
+      select.innerHTML =
+        `<option value="">Loading users...</option>`;
+
+      const {
+        data,
+        error
+      } = await supabaseClient
+        .from("profiles")
+        .select("id,username")
+        .order("username", {
+          ascending: true
+        });
+
+      if (error) {
+        console.error(error);
+
+        select.innerHTML =
+          `<option value="">Unable to load users</option>`;
+
+        return;
+      }
+
+      select.innerHTML =
+        `<option value="">Select user</option>`;
+
+      (data || []).forEach(user => {
+        const option =
+          document.createElement("option");
+
+        option.value = user.id;
+
+        option.textContent =
+          `${user.username || "User"} • ${user.id}`;
+
+        select.appendChild(option);
+      });
+    }
+
+
+    async function adminAddDiamond() {
+      if (!currentProfile) return;
+
+      if (
+        currentProfile.role !== "owner" &&
+        currentProfile.role !== "admin"
+      ) {
+        showToast("Not authorized.");
+        return;
+      }
+
+      const userId =
+        document.getElementById(
+          "adminUserSelect"
+        ).value;
+
+      const amount =
+        Number(
+          document.getElementById(
+            "adminDiamondAmount"
+          ).value
+        );
+
+      const description =
+        document.getElementById(
+          "adminDiamondDescription"
+        ).value.trim();
+
+      if (!userId) {
+        showToast("Select a user.");
+        return;
+      }
+
+      if (!Number.isFinite(amount) || amount <= 0) {
+        showToast("Enter a valid diamond amount.");
+        return;
+      }
+
+      const button =
+        document.getElementById(
+          "adminDiamondButton"
+        );
+
+      button.disabled = true;
+      button.textContent = "Adding...";
+
+      try {
+        const {
+          error
+        } = await supabaseClient.rpc(
+          "admin_add_diamond",
+          {
+            p_user_id: userId,
+            p_amount: amount,
+            p_description:
+              description ||
+              "Admin diamond addition"
+          }
+        );
+
+        if (error) {
+          console.error(error);
+          showToast(error.message || "Failed.");
+          return;
+        }
+
+        showToast(
+          `${amount.toLocaleString()} 💎 added.`
+        );
+
+        document.getElementById(
+          "adminDiamondAmount"
+        ).value = "";
+
+        document.getElementById(
+          "adminDiamondDescription"
+        ).value = "";
+
+        if (userId === currentUser.id) {
+          await loadProfile();
+        }
+
+        await loadTreasury();
+
+      } finally {
+        button.disabled = false;
+        button.textContent = "➕ Add 💎";
+      }
+    }
+
+
+    async function createPost() {
+      if (!currentUser) return;
+
+      const content =
+        document.getElementById(
+          "postContent"
+        ).value.trim();
+
+      const visibility =
+        document.getElementById(
+          "postVisibility"
+        ).value;
+
+      if (!content) {
+        showToast("Write something first.");
+        return;
+      }
+
+      const button =
+        document.getElementById(
+          "createPostButton"
+        );
+
+      button.disabled = true;
+      button.textContent = "Posting...";
+
+      try {
+        const {
+          error
+        } = await supabaseClient
+          .from("posts")
+          .insert({
+            user_id: currentUser.id,
+            content,
+            visibility
+          });
+
+        if (error) {
+          console.error(error);
+          showToast(error.message || "Post failed.");
+          return;
+        }
+
+        document.getElementById(
+          "postContent"
+        ).value = "";
+
+        showToast("Post created.");
+
+        await loadPosts();
+        await loadStats();
+
+      } finally {
+        button.disabled = false;
+        button.textContent = "Post";
+      }
+    }
+
+
+    async function loadPosts() {
+      const feed =
+        document.getElementById(
+          "postsFeed"
+        );
+
+      feed.innerHTML =
+        `<div class="empty">Loading posts...</div>`;
+
+      if (!currentUser) return;
+
+      const {
+        data: posts,
+        error
+      } = await supabaseClient
+        .from("posts")
+        .select("id,user_id,content,visibility,created_at")
+        .eq("user_id", currentUser.id)
+        .order("created_at", {
+          ascending: false
+        });
+
+      if (error) {
+        console.error(error);
+
+        feed.innerHTML =
+          `<div class="empty">Unable to load posts.</div>`;
+
+        return;
+      }
+
+      if (!posts || posts.length === 0) {
+        feed.innerHTML =
+          `<div class="empty">You have no posts yet.</div>`;
+
+        return;
+      }
+
+      const htmlParts = [];
+
+      for (const post of posts) {
+
+        let likesCount = 0;
+        let commentsCount = 0;
+        let liked = false;
+
+        const [
+          likesResult,
+          commentsResult,
+          likedResult
+        ] = await Promise.all([
+
+          supabaseClient
+            .from("post_likes")
+            .select("id", {
+              count: "exact",
+              head: true
+            })
+            .eq("post_id", post.id),
+
+          supabaseClient
+            .from("post_comments")
+            .select("id", {
+              count: "exact",
+              head: true
+            })
+            .eq("post_id", post.id),
+
+          supabaseClient
+            .from("post_likes")
+            .select("id")
+            .eq("post_id", post.id)
+            .eq("user_id", currentUser.id)
+            .maybeSingle()
+
+        ]);
+
+        likesCount =
+          likesResult.count || 0;
+
+        commentsCount =
+          commentsResult.count || 0;
+
+        liked =
+          !!likedResult.data;
+
+        const avatar =
+          currentProfile?.avatar_url || "";
+
+        const avatarHtml = avatar
+          ? `<img class="post-avatar" src="${escapeHtml(avatar)}" alt="avatar">`
+          : `<div class="post-avatar" style="display:flex;align-items:center;justify-content:center;">${escapeHtml((currentProfile?.username || "U").charAt(0).toUpperCase())}</div>`;
+
+        htmlParts.push(`
+          <article class="post">
+
+            <div class="post-user">
+              ${avatarHtml}
+
+              <div>
+                <div class="post-username">
+                  ${escapeHtml(currentProfile?.username || "User")}
+                </div>
+
+                <div class="post-time">
+                  ${escapeHtml(formatTime(post.created_at))}
+                </div>
+              </div>
+            </div>
+
+            <div class="post-visibility">
+              ${post.visibility === "private" ? "👥 Friends / Private" : "🌍 Public"}
+            </div>
+
+            <div class="post-content">
+              ${escapeHtml(post.content)}
+            </div>
+
+            <div class="post-actions">
+
+              <button
+                class="post-action"
+                onclick="toggleLike('${escapeJs(post.id)}')"
+              >
+                ${liked ? "❤️" : "🤍"} ${likesCount}
+              </button>
+
+              <button
+                class="post-action"
+                onclick="addComment('${escapeJs(post.id)}')"
+              >
+                💬 ${commentsCount}
+              </button>
+
+              <button
+                class="post-action"
+                onclick="sharePost('${escapeJs(post.id)}')"
+              >
+                ↗️ Share
+              </button>
+
+              <button
+                class="post-action post-delete"
+                onclick="deletePost('${escapeJs(post.id)}')"
+              >
+                🗑️ Delete
+              </button>
+
+            </div>
+
+          </article>
+        `);
+      }
+
+      feed.innerHTML =
+        htmlParts.join("");
+    }
+
+
+    async function toggleLike(postId) {
+      if (!currentUser) return;
+
+      const {
+        data: existing,
+        error: checkError
+      } = await supabaseClient
+        .from("post_likes")
+        .select("id")
+        .eq("post_id", postId)
+        .eq("user_id", currentUser.id)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error(checkError);
+        return;
+      }
+
+      if (existing) {
+
+        const {
+          error
+        } = await supabaseClient
+          .from("post_likes")
+          .delete()
+          .eq("id", existing.id);
+
+        if (error) {
+          console.error(error);
+          return;
+        }
+
+      } else {
+
+        const {
+          error
+        } = await supabaseClient
+          .from("post_likes")
+          .insert({
+            post_id: postId,
+            user_id: currentUser.id
+          });
+
+        if (error) {
+          console.error(error);
+          return;
+        }
+      }
+
+      await loadPosts();
+      await loadStats();
+    }
+
+
+    async function addComment(postId) {
+      if (!currentUser) return;
+
+      const content =
+        prompt("Write your comment:");
+
+      if (content === null) return;
+
+      const clean =
+        content.trim();
+
+      if (!clean) return;
+
+      if (clean.length > 1000) {
+        showToast("Comment is too long.");
+        return;
+      }
+
+      const {
+        error
+      } = await supabaseClient
+        .from("post_comments")
+        .insert({
+          post_id: postId,
+          user_id: currentUser.id,
+          content: clean
+        });
+
+      if (error) {
+        console.error(error);
+        showToast(error.message || "Comment failed.");
+        return;
+      }
+
+      showToast("Comment added.");
+      await loadPosts();
+    }
+
+
+    async function sharePost(postId) {
+      const shareUrl =
+        window.location.origin +
+        window.location.pathname +
+        "?post=" +
+        encodeURIComponent(postId);
+
+      const text =
+        "Check out my post on P2P Social.";
+
+      try {
+        if (
+          navigator.share
+        ) {
+          await navigator.share({
+            title: "P2P Social",
+            text,
+            url: shareUrl
+          });
+        } else if (
+          navigator.clipboard
+        ) {
+          await navigator.clipboard.writeText(
+            shareUrl
+          );
+
+          showToast(
+            "Post link copied."
+          );
+        } else {
+          prompt(
+            "Copy this link:",
+            shareUrl
+          );
+        }
+      } catch (error) {
+        if (error?.name !== "AbortError") {
+          console.error(error);
+        }
+      }
+    }
+
+
+    async function deletePost(postId) {
+      if (!currentUser) return;
+
+      const confirmed =
+        confirm(
+          "Delete this post?"
+        );
+
+      if (!confirmed) return;
+
       await supabaseClient
         .from("post_likes")
         .delete()
-        .eq(
-          "post_id",
-          postId
-        )
-        .eq(
-          "user_id",
-          userId
+        .eq("post_id", postId);
+
+      await supabaseClient
+        .from("post_comments")
+        .delete()
+        .eq("post_id", postId);
+
+      const {
+        error
+      } = await supabaseClient
+        .from("posts")
+        .delete()
+        .eq("id", postId)
+        .eq("user_id", currentUser.id);
+
+      if (error) {
+        console.error(error);
+        showToast(error.message || "Delete failed.");
+        return;
+      }
+
+      showToast("Post deleted.");
+
+      await loadPosts();
+      await loadStats();
+    }
+
+
+    function openEditProfile() {
+      if (!currentProfile) return;
+
+      document.getElementById(
+        "editUsername"
+      ).value =
+        currentProfile.username || "";
+
+      document.getElementById(
+        "editBio"
+      ).value =
+        currentProfile.bio || "";
+
+      document.getElementById(
+        "editProfileModal"
+      ).classList.add("show");
+    }
+
+
+    function closeEditProfile() {
+      document.getElementById(
+        "editProfileModal"
+      ).classList.remove("show");
+    }
+
+
+    async function saveProfile() {
+      if (!currentUser) return;
+
+      const username =
+        document.getElementById(
+          "editUsername"
+        ).value.trim();
+
+      const bio =
+        document.getElementById(
+          "editBio"
+        ).value.trim();
+
+      if (!username) {
+        showToast("Username is required.");
+        return;
+      }
+
+      const button =
+        document.getElementById(
+          "saveProfileButton"
         );
 
-    if(error){
+      button.disabled = true;
+      button.textContent = "Saving...";
 
-      alert(
-        "Could not unlike post:\n\n" +
-        error.message
-      );
+      try {
+        const {
+          data,
+          error
+        } = await supabaseClient
+          .from("profiles")
+          .update({
+            username,
+            bio
+          })
+          .eq("id", currentUser.id)
+          .select(
+            "id,username,bio,avatar_url,profile_locked,role,diamond_balance"
+          )
+          .single();
 
-      return;
+        if (error) {
+          console.error(error);
+          showToast(error.message || "Save failed.");
+          return;
+        }
 
+        currentProfile = data;
+
+        renderProfile();
+        closeEditProfile();
+
+        showToast("Profile updated.");
+
+      } finally {
+        button.disabled = false;
+        button.textContent = "Save";
+      }
     }
 
-  }else{
 
-    const {error} =
-      await supabaseClient
-        .from("post_likes")
-        .insert({
-          post_id:
-            postId,
+    async function toggleProfileLock() {
+      if (!currentUser || !currentProfile) return;
 
-          user_id:
-            userId
-        });
+      const newValue =
+        !currentProfile.profile_locked;
 
-    if(error){
+      const {
+        data,
+        error
+      } = await supabaseClient
+        .from("profiles")
+        .update({
+          profile_locked: newValue
+        })
+        .eq("id", currentUser.id)
+        .select(
+          "id,username,bio,avatar_url,profile_locked,role,diamond_balance"
+        )
+        .single();
 
-      alert(
-        "Could not like post:\n\n" +
-        error.message
+      if (error) {
+        console.error(error);
+        showToast(error.message || "Unable to change lock.");
+        return;
+      }
+
+      currentProfile = data;
+
+      renderProfile();
+
+      showToast(
+        newValue
+          ? "Profile locked."
+          : "Profile unlocked."
       );
-
-      return;
-
     }
 
-  }
 
-  await loadPosts();
-  await loadStats();
+    async function changeProfilePhoto(event) {
+      if (!currentUser) return;
 
-}
+      const file =
+        event.target.files?.[0];
 
-/* =====================================================
-SEND COMMENT
-===================================================== */
+      if (!file) return;
 
-async function sendComment(
-  postId
-){
+      if (!file.type.startsWith("image/")) {
+        showToast("Please select an image.");
+        return;
+      }
 
-  if(!currentSession)return;
+      if (file.size > 5 * 1024 * 1024) {
+        showToast("Image must be under 5MB.");
+        return;
+      }
 
-  const input =
-    document.getElementById(
-      "comment-input-" +
-      postId
-    );
+      try {
+        const extension =
+          file.name.split(".").pop() ||
+          "jpg";
 
-  if(!input)return;
+        const path =
+          `${currentUser.id}/profile.${extension}`;
 
-  const comment =
-    input.value.trim();
+        const {
+          error: uploadError
+        } = await supabaseClient
+          .storage
+          .from("avatars")
+          .upload(
+            path,
+            file,
+            {
+              upsert: true,
+              contentType: file.type
+            }
+          );
 
-  if(!comment)return;
+        if (uploadError) {
+          console.error(uploadError);
+          showToast(
+            uploadError.message ||
+            "Photo upload failed."
+          );
+          return;
+        }
 
-  if(comment.length > 500){
+        const {
+          data: publicData
+        } =
+          supabaseClient
+            .storage
+            .from("avatars")
+            .getPublicUrl(path);
 
-    alert(
-      "Comment is too long."
-    );
+        const avatarUrl =
+          publicData.publicUrl +
+          "?t=" +
+          Date.now();
 
-    return;
+        const {
+          data,
+          error
+        } = await supabaseClient
+          .from("profiles")
+          .update({
+            avatar_url: avatarUrl
+          })
+          .eq("id", currentUser.id)
+          .select(
+            "id,username,bio,avatar_url,profile_locked,role,diamond_balance"
+          )
+          .single();
 
-  }
+        if (error) {
+          console.error(error);
+          showToast(
+            error.message ||
+            "Unable to save photo."
+          );
+          return;
+        }
 
-  const {error} =
-    await supabaseClient
-      .from("post_comments")
-      .insert({
-        post_id:
-          postId,
+        currentProfile = data;
 
-        user_id:
-          currentSession.user.id,
+        renderProfile();
 
-        comment:
-          comment
-      });
+        showToast(
+          "Profile photo updated."
+        );
 
-  if(error){
+      } catch (error) {
+        console.error(error);
+        showToast("Photo upload failed.");
+      }
 
-    console.error(
-      "Comment failed:",
-      error
-    );
-
-    alert(
-      "Comment failed:\n\n" +
-      error.message
-    );
-
-    return;
-
-  }
-
-  input.value =
-    "";
-
-  await loadPosts();
-
-}
-
-/* =====================================================
-DELETE COMMENT
-===================================================== */
-
-async function deleteComment(
-  commentId
-){
-
-  const confirmed =
-    confirm(
-      "Delete your comment?"
-    );
-
-  if(!confirmed)return;
-
-  const {error} =
-    await supabaseClient
-      .from("post_comments")
-      .delete()
-      .eq(
-        "id",
-        commentId
-      )
-      .eq(
-        "user_id",
-        currentSession.user.id
-      );
-
-  if(error){
-
-    console.error(error);
-
-    alert(
-      "Could not delete comment:\n\n" +
-      error.message
-    );
-
-    return;
-
-  }
-
-  await loadPosts();
-
-}
-
-/* =====================================================
-DELETE POST
-===================================================== */
-
-async function deletePost(
-  postId
-){
-
-  const confirmed =
-    confirm(
-      "Delete this post?"
-    );
-
-  if(!confirmed)return;
-
-  const {error} =
-    await supabaseClient
-      .from("posts")
-      .delete()
-      .eq(
-        "id",
-        postId
-      )
-      .eq(
-        "user_id",
-        currentSession.user.id
-      );
-
-  if(error){
-
-    console.error(error);
-
-    alert(
-      "Could not delete post:\n\n" +
-      error.message
-    );
-
-    return;
-
-  }
-
-  await loadPosts();
-  await loadStats();
-
-}
-
-/* =====================================================
-SHARE
-===================================================== */
-
-async function sharePost(
-  postId
-){
-
-  const url =
-    window.location.origin +
-    window.location.pathname +
-    "?post=" +
-    encodeURIComponent(
-      postId
-    );
-
-  if(navigator.share){
-
-    try{
-
-      await navigator.share({
-        title:
-          "P2P Social Post",
-
-        text:
-          "Check out this post.",
-
-        url:
-          url
-      });
-
-    }catch(error){
-
-      console.log(error);
-
+      event.target.value = "";
     }
 
-    return;
 
-  }
-
-  try{
-
-    await navigator.clipboard.writeText(
-      url
-    );
-
-    alert(
-      "Post link copied."
-    );
-
-  }catch(error){
-
-    alert(url);
-
-  }
-
-}
-
-/* =====================================================
-NAVIGATION
-===================================================== */
-
-function openWallet(){
-
-  window.location.href =
-    "wallet.html";
-
-}
-
-function openMessages(){
-
-  window.location.href =
-    "message.html";
-
-}
-
-function openLive(){
-
-  window.location.href =
-    "live.html";
-
-}
-
-function goHome(){
-
-  window.location.href =
-    "index.html";
-
-}
-
-/* =====================================================
-LOGOUT
-===================================================== */
-
-async function logout(){
-
-  const confirmed =
-    confirm(
-      "Do you want to log out?"
-    );
-
-  if(!confirmed)return;
-
-  const {error} =
-    await supabaseClient
-      .auth
-      .signOut();
-
-  if(error){
-
-    alert(
-      "Logout failed:\n\n" +
-      error.message
-    );
-
-    return;
-
-  }
-
-  window.location.href =
-    "login.html";
-
-}
-
-/* =====================================================
-FORMAT TIME
-===================================================== */
-
-function formatTime(
-  dateString
-){
-
-  const date =
-    new Date(
-      dateString
-    );
-
-  if(
-    isNaN(
-      date.getTime()
-    )
-  ){
-
-    return "";
-
-  }
-
-  const now =
-    new Date();
-
-  const seconds =
-    Math.floor(
-      (now - date) /
-      1000
-    );
-
-  if(seconds < 60){
-
-    return "now";
-
-  }
-
-  const minutes =
-    Math.floor(
-      seconds / 60
-    );
-
-  if(minutes < 60){
-
-    return minutes + "m";
-
-  }
-
-  const hours =
-    Math.floor(
-      minutes / 60
-    );
-
-  if(hours < 24){
-
-    return hours + "h";
-
-  }
-
-  const days =
-    Math.floor(
-      hours / 24
-    );
-
-  if(days < 7){
-
-    return days + "d";
-
-  }
-
-  return date.toLocaleDateString();
-
-}
-
-/* =====================================================
-ESCAPE HTML
-===================================================== */
-
-function escapeHtml(
-  text
-){
-
-  const div =
-    document.createElement(
-      "div"
-    );
-
-  div.textContent =
-    text == null
-    ? ""
-    : String(text);
-
-  return div.innerHTML;
-
-}
-
-/* =====================================================
-ESCAPE JS
-===================================================== */
-
-function escapeJs(
-  text
-){
-
-  return String(
-    text || ""
-  )
-  .replace(
-    /\\/g,
-    "\\\\"
-  )
-  .replace(
-    /'/g,
-    "\\'"
-  )
-  .replace(
-    /"/g,
-    '\\"'
-  )
-  .replace(
-    /\r/g,
-    "\\r"
-  )
-  .replace(
-    /\n/g,
-    "\\n"
-  );
-
-}
-
-/* =====================================================
-MODAL OUTSIDE CLICK
-===================================================== */
-
-document.addEventListener(
-  "click",
-  function(event){
-
-    const editModal =
-      document.getElementById(
-        "editModal"
-      );
-
-    const settingsModal =
+    function openSettings() {
       document.getElementById(
         "settingsModal"
+      ).classList.add("show");
+    }
+
+
+    function closeSettings() {
+      document.getElementById(
+        "settingsModal"
+      ).classList.remove("show");
+    }
+
+
+    function openTransfer() {
+      document.getElementById(
+        "transferModal"
+      ).classList.add("show");
+    }
+
+
+    function closeTransfer() {
+      document.getElementById(
+        "transferModal"
+      ).classList.remove("show");
+    }
+
+
+    async function transferDiamond() {
+      const recipientId =
+        document.getElementById(
+          "transferUserId"
+        ).value.trim();
+
+      const amount =
+        Number(
+          document.getElementById(
+            "transferAmount"
+          ).value
+        );
+
+      if (!recipientId) {
+        showToast("Enter recipient User ID.");
+        return;
+      }
+
+      if (recipientId === currentUser.id) {
+        showToast("You cannot transfer to yourself.");
+        return;
+      }
+
+      if (!Number.isFinite(amount) || amount <= 0) {
+        showToast("Enter a valid amount.");
+        return;
+      }
+
+      if (
+        Number(currentProfile?.diamond_balance || 0) <
+        amount
+      ) {
+        showToast("Insufficient diamonds.");
+        return;
+      }
+
+      /*
+        Transfer must be handled by a secure
+        Supabase RPC/function on the server.
+
+        This prevents users from changing
+        diamond balances directly from the browser.
+      */
+
+      const {
+        data,
+        error
+      } = await supabaseClient.rpc(
+        "transfer_diamond",
+        {
+          p_recipient_id: recipientId,
+          p_amount: amount
+        }
       );
 
-    if(
-      event.target ===
-      editModal
-    ){
+      if (error) {
+        console.error(error);
+        showToast(
+          error.message ||
+          "Transfer failed."
+        );
+        return;
+      }
 
-      closeEditProfile();
+      showToast(
+        `${amount.toLocaleString()} 💎 transferred.`
+      );
 
+      document.getElementById(
+        "transferUserId"
+      ).value = "";
+
+      document.getElementById(
+        "transferAmount"
+      ).value = "";
+
+      closeTransfer();
+
+      await loadProfile();
     }
 
-    if(
-      event.target ===
-      settingsModal
-    ){
 
-      closeSettings();
-
+    function goHome() {
+      window.location.href =
+        "index.html";
     }
 
-  }
-);
 
-/* =====================================================
-AUTH LISTENER
-===================================================== */
+    function openLive() {
+      window.location.href =
+        "live.html";
+    }
 
-supabaseClient.auth.onAuthStateChange(
-  function(
-    event,
-    session
-  ){
 
-    currentSession =
-      session;
+    function openWallet() {
+      window.location.href =
+        "wallet.html";
+    }
 
-    if(!session){
+
+    function openMessages() {
+      window.location.href =
+        "message.html";
+    }
+
+
+    async function logout() {
+      const confirmed =
+        confirm("Logout from P2P Social?");
+
+      if (!confirmed) return;
+
+      const {
+        error
+      } = await supabaseClient.auth.signOut();
+
+      if (error) {
+        console.error(error);
+        showToast("Logout failed.");
+        return;
+      }
 
       window.location.href =
         "login.html";
-
     }
 
-  }
-);
 
-/* =====================================================
-RUN
-===================================================== */
+    document
+      .getElementById("editProfileModal")
+      .addEventListener("click", function(event) {
+        if (event.target === this) {
+          closeEditProfile();
+        }
+      });
 
-startApp();
 
-</script>
+    document
+      .getElementById("settingsModal")
+      .addEventListener("click", function(event) {
+        if (event.target === this) {
+          closeSettings();
+        }
+      });
+
+
+    document
+      .getElementById("transferModal")
+      .addEventListener("click", function(event) {
+        if (event.target === this) {
+          closeTransfer();
+        }
+      });
+
+
+    supabaseClient.auth.onAuthStateChange(
+      (event, session) => {
+        if (!session) {
+          window.location.href =
+            "login.html";
+        }
+      }
+    );
+
+
+    init();
+  </script>
 
 </body>
 </html>

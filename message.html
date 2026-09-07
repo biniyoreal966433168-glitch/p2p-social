@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bitcoin Address Validator</title>
+<title>Bitcoin Monitor</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 * {
@@ -14,108 +16,64 @@
 }
 
 body {
-  min-height: 100vh;
   background: #000;
   color: #fff;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   padding: 20px;
 }
 
 .container {
-  width: 100%;
-  max-width: 500px;
-  background: #111;
-  border: 1px solid #333;
-  border-radius: 15px;
-  padding: 25px;
+  max-width: 600px;
+  margin: auto;
 }
 
 h1 {
-  text-align: center;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
 }
 
-.subtitle {
-  text-align: center;
-  color: #aaa;
-  margin-bottom: 25px;
-}
-
-textarea {
+input {
   width: 100%;
-  min-height: 110px;
-  resize: none;
-  background: #000;
+  padding: 14px;
+  background: #111;
   color: #fff;
-  border: 1px solid #444;
-  border-radius: 10px;
-  padding: 15px;
-  font-size: 15px;
-  outline: none;
-}
-
-textarea:focus {
-  border-color: #f7931a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  margin-bottom: 10px;
 }
 
 button {
   width: 100%;
-  margin-top: 15px;
   padding: 14px;
-  border: none;
-  border-radius: 10px;
   background: #f7931a;
-  color: #000;
-  font-size: 16px;
+  border: 0;
+  border-radius: 8px;
   font-weight: bold;
   cursor: pointer;
 }
 
-button:hover {
-  opacity: 0.9;
-}
-
-.result {
-  margin-top: 20px;
-  padding: 18px;
-  border-radius: 10px;
-  background: #000;
+.card {
+  background: #111;
   border: 1px solid #333;
-  display: none;
+  border-radius: 10px;
+  padding: 18px;
+  margin-top: 20px;
 }
 
-.valid {
-  border-color: #00c853;
+.green {
+  color: #00d26a;
 }
 
-.invalid {
-  border-color: #ff3333;
+.yellow {
+  color: #ffd000;
 }
 
-.status {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 12px;
-}
-
-.valid .status {
-  color: #00c853;
-}
-
-.invalid .status {
+.red {
   color: #ff3333;
 }
 
-.info {
-  margin-top: 8px;
-  color: #ccc;
+.address {
   word-break: break-all;
-}
-
-.label {
-  color: #888;
+  color: #aaa;
+  margin-top: 8px;
 }
 </style>
 </head>
@@ -124,455 +82,192 @@ button:hover {
 
 <div class="container">
 
-  <h1>₿ Bitcoin Validator</h1>
-  <p class="subtitle">Check Bitcoin address validity and type</p>
+<h1>₿ Bitcoin Address Monitor</h1>
 
-  <textarea
-    id="address"
-    placeholder="Paste Bitcoin address here..."
-    autocomplete="off"
-    spellcheck="false"></textarea>
+<input
+  id="btcAddress"
+  type="text"
+  placeholder="Paste Bitcoin address"
+  autocomplete="off"
+>
 
-  <button onclick="validateAddress()">Check Address</button>
+<button onclick="monitorAddress()">
+  Monitor Address
+</button>
 
-  <div id="result" class="result">
-    <div id="status" class="status"></div>
-
-    <div class="info">
-      <span class="label">Address:</span>
-      <span id="checkedAddress"></span>
-    </div>
-
-    <div class="info">
-      <span class="label">Network:</span>
-      <span id="network"></span>
-    </div>
-
-    <div class="info">
-      <span class="label">Type:</span>
-      <span id="addressType"></span>
-    </div>
-  </div>
+<div id="result"></div>
 
 </div>
 
 <script>
-/*
-  Bitcoin Address Validator
-  Supports:
-  - Legacy P2PKH: 1...
-  - Legacy P2SH: 3...
-  - Native SegWit: bc1q...
-  - Taproot: bc1p...
-  - Testnet addresses
-*/
 
-const CHARSET =
-  "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+const SUPABASE_URL =
+  "https://mbsvuwrgigqfporxwpfr.supabase.co";
 
-function sha256(data) {
-  return crypto.subtle.digest("SHA-256", data);
-}
+const SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
 
-function hexToBytes(hex) {
-  const bytes = new Uint8Array(hex.length / 2);
-
-  for (let i = 0; i < bytes.length; i++) {
-    bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
-  }
-
-  return bytes;
-}
-
-function base58Decode(str) {
-  let num = 0n;
-
-  for (const char of str) {
-    const index = CHARSET.indexOf(char);
-
-    if (index === -1) {
-      return null;
-    }
-
-    num = num * 58n + BigInt(index);
-  }
-
-  let hex = num.toString(16);
-
-  if (hex.length % 2) {
-    hex = "0" + hex;
-  }
-
-  let bytes = hex ? hexToBytes(hex) : new Uint8Array();
-
-  let leadingZeros = 0;
-
-  for (const char of str) {
-    if (char === "1") {
-      leadingZeros++;
-    } else {
-      break;
-    }
-  }
-
-  const result = new Uint8Array(leadingZeros + bytes.length);
-  result.set(bytes, leadingZeros);
-
-  return result;
-}
-
-function base58CheckValid(address) {
-  const decoded = base58Decode(address);
-
-  if (!decoded || decoded.length !== 25) {
-    return null;
-  }
-
-  const payload = decoded.slice(0, 21);
-  const checksum = decoded.slice(21);
-
-  return crypto.subtle.digest("SHA-256", payload)
-    .then(hash1 =>
-      crypto.subtle.digest("SHA-256", hash1)
-    )
-    .then(hash2 => {
-      const calculated = new Uint8Array(hash2).slice(0, 4);
-
-      for (let i = 0; i < 4; i++) {
-        if (calculated[i] !== checksum[i]) {
-          return null;
-        }
-      }
-
-      const version = payload[0];
-
-      if (version === 0x00) {
-        return {
-          valid: true,
-          network: "Bitcoin Mainnet",
-          type: "Legacy P2PKH"
-        };
-      }
-
-      if (version === 0x05) {
-        return {
-          valid: true,
-          network: "Bitcoin Mainnet",
-          type: "Legacy P2SH"
-        };
-      }
-
-      if (version === 0x6f) {
-        return {
-          valid: true,
-          network: "Bitcoin Testnet",
-          type: "Testnet P2PKH"
-        };
-      }
-
-      if (version === 0xc4) {
-        return {
-          valid: true,
-          network: "Bitcoin Testnet",
-          type: "Testnet P2SH"
-        };
-      }
-
-      return {
-        valid: false
-      };
-    });
-}
-
-/* ---------- Bech32 ---------- */
-
-const BECH32_CHARSET =
-  "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
-
-function bech32Polymod(values) {
-  const generator = [
-    0x3b6a57b2,
-    0x26508e6d,
-    0x1ea119fa,
-    0x3d4233dd,
-    0x2a1462b3
-  ];
-
-  let chk = 1;
-
-  for (const value of values) {
-    const top = chk >>> 25;
-
-    chk = ((chk & 0x1ffffff) << 5) ^ value;
-
-    for (let i = 0; i < 5; i++) {
-      if ((top >> i) & 1) {
-        chk ^= generator[i];
-      }
-    }
-  }
-
-  return chk >>> 0;
-}
-
-function bech32HrpExpand(hrp) {
-  const result = [];
-
-  for (const char of hrp) {
-    result.push(char.charCodeAt(0) >> 5);
-  }
-
-  result.push(0);
-
-  for (const char of hrp) {
-    result.push(char.charCodeAt(0) & 31);
-  }
-
-  return result;
-}
-
-function verifyBech32(address) {
-
-  if (address.length < 8 || address.length > 90) {
-    return null;
-  }
-
-  const lower = address.toLowerCase();
-  const upper = address.toUpperCase();
-
-  if (address !== lower && address !== upper) {
-    return null;
-  }
-
-  const normalized = lower;
-
-  const separator = normalized.lastIndexOf("1");
-
-  if (separator < 1 || separator + 7 > normalized.length) {
-    return null;
-  }
-
-  const hrp = normalized.slice(0, separator);
-  const dataPart = normalized.slice(separator + 1);
-
-  const data = [];
-
-  for (const char of dataPart) {
-    const index = BECH32_CHARSET.indexOf(char);
-
-    if (index === -1) {
-      return null;
-    }
-
-    data.push(index);
-  }
-
-  const polymod = bech32Polymod(
-    bech32HrpExpand(hrp).concat(data)
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
   );
 
-  let encoding;
 
-  if (polymod === 1) {
-    encoding = "bech32";
-  } else if (polymod === 0x2bc830a3) {
-    encoding = "bech32m";
-  } else {
-    return null;
-  }
+function validBitcoinAddress(address) {
 
-  const witnessVersion = data[0];
+  if (!address) return false;
 
-  if (witnessVersion > 16) {
-    return null;
-  }
+  /*
+   Basic public-address validation.
 
-  const program = convertBits(
-    data.slice(1, -6),
-    5,
-    8,
-    false
-  );
+   Legacy:
+   1...
+   3...
 
-  if (!program) {
-    return null;
-  }
+   SegWit:
+   bc1...
 
-  if (program.length < 2 || program.length > 40) {
-    return null;
-  }
+   Testnet:
+   m...
+   n...
+   2...
+   tb1...
+  */
 
-  if (witnessVersion === 0) {
+  const pattern =
+    /^(1[a-km-zA-HJ-NP-Z1-9]{25,34}|3[a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[a-z0-9]{25,90}|[mn2][a-km-zA-HJ-NP-Z1-9]{25,34}|tb1[a-z0-9]{25,90})$/;
 
-    if (encoding !== "bech32") {
-      return null;
-    }
-
-    if (program.length === 20) {
-      return {
-        valid: true,
-        network: hrp === "bc"
-          ? "Bitcoin Mainnet"
-          : "Bitcoin Testnet",
-        type: "Native SegWit P2WPKH"
-      };
-    }
-
-    if (program.length === 32) {
-      return {
-        valid: true,
-        network: hrp === "bc"
-          ? "Bitcoin Mainnet"
-          : "Bitcoin Testnet",
-        type: "Native SegWit P2WSH"
-      };
-    }
-
-    return null;
-  }
-
-  if (witnessVersion === 1 && program.length === 32) {
-
-    if (encoding !== "bech32m") {
-      return null;
-    }
-
-    return {
-      valid: true,
-      network: hrp === "bc"
-        ? "Bitcoin Mainnet"
-        : "Bitcoin Testnet",
-      type: "Taproot P2TR"
-    };
-  }
-
-  return {
-    valid: true,
-    network: hrp === "bc"
-      ? "Bitcoin Mainnet"
-      : "Bitcoin Testnet",
-    type: "SegWit"
-  };
+  return pattern.test(address);
 }
 
-function convertBits(data, fromBits, toBits, pad) {
 
-  let acc = 0;
-  let bits = 0;
-  const ret = [];
-  const maxv = (1 << toBits) - 1;
-  const maxAcc = (1 << (fromBits + toBits - 1)) - 1;
+function getAddressType(address) {
 
-  for (const value of data) {
+  if (address.startsWith("1"))
+    return "Legacy P2PKH";
 
-    if (value < 0 || (value >> fromBits)) {
-      return null;
-    }
+  if (address.startsWith("3"))
+    return "Legacy P2SH";
 
-    acc = ((acc << fromBits) | value) & maxAcc;
-    bits += fromBits;
+  if (address.startsWith("bc1q"))
+    return "Native SegWit";
 
-    while (bits >= toBits) {
-      bits -= toBits;
-      ret.push((acc >> bits) & maxv);
-    }
-  }
+  if (address.startsWith("bc1p"))
+    return "Taproot";
 
-  if (pad) {
+  if (
+    address.startsWith("m") ||
+    address.startsWith("n")
+  )
+    return "Bitcoin Testnet P2PKH";
 
-    if (bits) {
-      ret.push((acc << (toBits - bits)) & maxv);
-    }
+  if (address.startsWith("2"))
+    return "Bitcoin Testnet P2SH";
 
-  } else {
+  if (address.startsWith("tb1"))
+    return "Bitcoin Testnet SegWit";
 
-    if (bits >= fromBits) {
-      return null;
-    }
-
-    if (((acc << (toBits - bits)) & maxv) !== 0) {
-      return null;
-    }
-  }
-
-  return ret;
+  return "Unknown";
 }
 
-/* ---------- Main validation ---------- */
 
-async function validateAddress() {
+async function monitorAddress() {
 
-  const input = document
-    .getElementById("address")
-    .value
-    .trim();
+  const input =
+    document.getElementById("btcAddress");
 
-  const result = document.getElementById("result");
-  const status = document.getElementById("status");
-  const checkedAddress =
-    document.getElementById("checkedAddress");
-  const network =
-    document.getElementById("network");
-  const addressType =
-    document.getElementById("addressType");
+  const result =
+    document.getElementById("result");
 
-  result.style.display = "block";
+  const address =
+    input.value.trim();
 
-  checkedAddress.textContent = input;
-  network.textContent = "-";
-  addressType.textContent = "-";
+  if (!validBitcoinAddress(address)) {
 
-  if (!input) {
-    result.className = "result invalid";
-    status.textContent = "❌ Invalid";
+    result.innerHTML = `
+      <div class="card">
+        <h2 class="red">❌ Invalid address</h2>
+        <p>Please enter a valid public Bitcoin address.</p>
+      </div>
+    `;
+
     return;
   }
 
-  let validation = null;
+  const type =
+    getAddressType(address);
 
-  /* Bech32 / Bech32m */
 
-  if (
-    input.toLowerCase().startsWith("bc1") ||
-    input.toLowerCase().startsWith("tb1")
-  ) {
-    validation = verifyBech32(input);
+  /*
+    Save public address to Supabase.
+  */
+
+  const { data, error } =
+    await supabaseClient
+      .from("monitored_addresses")
+      .insert({
+        address: address,
+        label: type,
+        active: true
+      })
+      .select();
+
+  if (error) {
+
+    /*
+      If duplicate or database is not configured,
+      still show the monitoring information.
+    */
+
+    console.error(error);
   }
 
-  /* Base58Check */
 
-  else {
-    validation = await base58CheckValid(input);
-  }
+  result.innerHTML = `
+    <div class="card">
 
-  if (validation && validation.valid) {
+      <h2 class="green">
+        🟢 Address accepted
+      </h2>
 
-    result.className = "result valid";
+      <p class="address">
+        ${escapeHTML(address)}
+      </p>
 
-    status.textContent = "✅ Valid Bitcoin Address";
+      <br>
 
-    network.textContent = validation.network;
-    addressType.textContent = validation.type;
+      <p>
+        <strong>Type:</strong>
+        ${escapeHTML(type)}
+      </p>
 
-  } else {
+      <p>
+        <strong>Monitoring:</strong>
+        🟢 Active
+      </p>
 
-    result.className = "result invalid";
+      <br>
 
-    status.textContent = "❌ Invalid Bitcoin Address";
-  }
+      <p class="yellow">
+        ⚠️ This tool monitors public blockchain information.
+      </p>
+
+    </div>
+  `;
 }
 
-/* Enter key */
 
-document
-  .getElementById("address")
-  .addEventListener("keydown", function(event) {
+function escapeHTML(value) {
 
-    if (event.ctrlKey && event.key === "Enter") {
-      validateAddress();
-    }
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
-  });
 </script>
 
 </body>

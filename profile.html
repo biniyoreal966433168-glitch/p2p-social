@@ -344,15 +344,32 @@ header{
   word-break:break-word;
 }
 
-.wallet-button{
+.wallet-actions{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
   margin-top:15px;
-  width:100%;
+}
+
+.wallet-action{
   border:none;
-  background:#16a085;
   color:white;
-  padding:11px;
+  padding:11px 7px;
   border-radius:10px;
   font-weight:bold;
+  font-size:12px;
+}
+
+.transfer-action{
+  background:#7d3fc6;
+}
+
+.buy-action{
+  background:#16a085;
+}
+
+.sell-action{
+  background:#e74c3c;
 }
 
 /* OWNER TREASURY */
@@ -846,6 +863,7 @@ header{
   color:#777;
   font-size:11px;
   min-width:55px;
+  cursor:pointer;
 }
 
 .nav-item span{
@@ -903,6 +921,14 @@ button:disabled{
 
   .post-options select,
   .create-post-btn{
+    width:100%;
+  }
+
+  .wallet-actions{
+    grid-template-columns:1fr;
+  }
+
+  .wallet-action{
     width:100%;
   }
 
@@ -1077,7 +1103,7 @@ button:disabled{
 
 </div>
 
-<!-- DIAMOND WALLET -->
+<!-- WALLET -->
 
 <section class="section">
 
@@ -1110,62 +1136,30 @@ button:disabled{
 
     </div>
 
-    <button
-      class="wallet-button"
-      onclick="openWallet()"
-    >
-      🔴 Sell 💎
-    </button>
+    <div class="wallet-actions">
 
-  </div>
+      <button
+        class="wallet-action transfer-action"
+        onclick="openTransfer()"
+      >
+        Transfer 💎
+      </button>
 
-</section>
+      <button
+        class="wallet-action buy-action"
+        onclick="openLive()"
+      >
+        🟢 Buy 💎
+      </button>
 
-<!-- TRANSFER DIAMOND -->
+      <button
+        class="wallet-action sell-action"
+        onclick="openWallet()"
+      >
+        🔴 Sell 💎
+      </button>
 
-<section class="section">
-
-  <div class="section-title">
-    <h2>💎 Transfer</h2>
-  </div>
-
-  <div class="wallet">
-
-    <div class="wallet-label">
-      Send your diamonds to another user
     </div>
-
-    <button
-      class="wallet-button"
-      onclick="openWallet()"
-    >
-      💎 Transfer
-    </button>
-
-  </div>
-
-</section>
-
-<!-- BUY DIAMOND -->
-
-<section class="section">
-
-  <div class="section-title">
-    <h2>🟢 Buy 💎</h2>
-  </div>
-
-  <div class="wallet">
-
-    <div class="wallet-label">
-      Buy diamonds through P2P
-    </div>
-
-    <button
-      class="wallet-button"
-      onclick="openLive()"
-    >
-      🟢 Buy 💎
-    </button>
 
   </div>
 
@@ -1251,9 +1245,7 @@ button:disabled{
     </label>
 
     <select id="adminUser">
-      <option value="">
-        Loading users...
-      </option>
+      <option value="">Loading users...</option>
     </select>
 
     <label for="adminDiamondAmount">
@@ -1436,21 +1428,28 @@ button:disabled{
 
       <button
         class="settings-item"
-        onclick="openLive();"
+        onclick="openTransfer();closeSettings();"
+      >
+        Transfer 💎
+      </button>
+
+      <button
+        class="settings-item"
+        onclick="openLive();closeSettings();"
       >
         🟢 Buy 💎
       </button>
 
       <button
         class="settings-item"
-        onclick="openWallet();"
+        onclick="openWallet();closeSettings();"
       >
         🔴 Sell 💎
       </button>
 
       <button
         class="settings-item"
-        onclick="openMessages();"
+        onclick="openMessages();closeSettings();"
       >
         💬 Messages
       </button>
@@ -1737,6 +1736,17 @@ async function loadDiamondBalance(
     Math.floor(balance)
       .toLocaleString() +
     " 💎";
+
+}
+
+/* =====================================================
+TRANSFER
+===================================================== */
+
+function openTransfer(){
+
+  window.location.href =
+    "wallet.html";
 
 }
 
@@ -2909,9 +2919,7 @@ async function loadPosts(){
     );
 
   feed.innerHTML =
-    `<div class="empty">
-      Loading posts...
-    </div>`;
+    `<div class="empty">Loading posts...</div>`;
 
   const {
     data:posts,
@@ -4059,6 +4067,45 @@ function escapeJs(
   );
 
 }
+
+/* =====================================================
+MODAL OUTSIDE CLICK
+===================================================== */
+
+document.addEventListener(
+  "click",
+  function(event){
+
+    const editModal =
+      document.getElementById(
+        "editModal"
+      );
+
+    const settingsModal =
+      document.getElementById(
+        "settingsModal"
+      );
+
+    if(
+      event.target ===
+      editModal
+    ){
+
+      closeEditProfile();
+
+    }
+
+    if(
+      event.target ===
+      settingsModal
+    ){
+
+      closeSettings();
+
+    }
+
+  }
+);
 
 /* =====================================================
 AUTH LISTENER

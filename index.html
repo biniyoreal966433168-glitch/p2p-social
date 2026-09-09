@@ -3,6829 +3,2077 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="theme-color" content="#087f73">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="P2P Social">
-
-<link rel="manifest" href="./manifest.json">
-<link rel="icon" href="./p2p-logo.svg" type="image/svg+xml">
-
 <title>P2P Social</title>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
-*{
-box-sizing:border-box;
-margin:0;
-padding:0;
-font-family:Arial,sans-serif;
-}
-
-html,
+*{box-sizing:border-box}
 body{
-min-height:100%;
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#f5f5f5;
+  color:#222;
+  padding-bottom:78px
 }
-
-body{
-background:#f5f7fb;
-color:#172033;
-padding-bottom:78px;
-}
-
-button{
-font-family:Arial,sans-serif;
-}
-
-button:active{
-transform:scale(.97);
-}
-
-#app{
-display:none;
-}
-
-/* =====================================================
-AUTH
-===================================================== */
-
-#checkingAuth{
-position:fixed;
-inset:0;
-background:#075e54;
-color:white;
-display:flex;
-align-items:center;
-justify-content:center;
-flex-direction:column;
-gap:12px;
-z-index:99999;
-}
-
-.auth-logo{
-width:62px;
-height:62px;
-border-radius:18px;
-background:#087f73;
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:30px;
-box-shadow:0 8px 25px rgba(0,0,0,.2);
-}
-
-.auth-loading{
-font-size:14px;
-opacity:.9;
-}
-
-/* =====================================================
-HEADER
-===================================================== */
-
 header{
-background:linear-gradient(135deg,#075e54,#087f73);
-color:white;
-padding:18px;
-border-radius:0 0 22px 22px;
+  background:#fff;
+  border-bottom:1px solid #ddd;
+  position:sticky;
+  top:0;
+  z-index:50
 }
-
-.top{
-display:flex;
-align-items:center;
-justify-content:space-between;
-gap:10px;
+.header{
+  max-width:900px;
+  margin:auto;
+  padding:12px 16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between
 }
-
-.logo-area{
-display:flex;
-align-items:center;
-gap:10px;
-min-width:0;
-}
-
 .logo{
-width:45px;
-height:45px;
-border-radius:14px;
-background:linear-gradient(135deg,#064e46,#10a889);
-position:relative;
-display:flex;
-justify-content:center;
-align-items:center;
-flex-shrink:0;
-box-shadow:0 6px 15px rgba(0,0,0,.18);
+  font-size:20px;
+  font-weight:bold
 }
-
-.logo .p-left{
-position:absolute;
-left:8px;
-top:10px;
-width:13px;
-height:25px;
-border:4px solid white;
-border-right:0;
-border-radius:8px 0 0 8px;
+button{
+  border:0;
+  border-radius:8px;
+  padding:10px 14px;
+  cursor:pointer;
+  font-weight:bold
 }
-
-.logo .p-right{
-position:absolute;
-right:8px;
-top:10px;
-width:13px;
-height:25px;
-border:4px solid white;
-border-left:0;
-border-radius:0 8px 8px 0;
+.logout{
+  background:#eee
 }
-
-.logo .center{
-width:12px;
-height:12px;
-background:white;
-border-radius:50%;
-position:absolute;
-z-index:5;
+.container{
+  max-width:900px;
+  margin:auto;
+  padding:15px
 }
-
-.logo .dot{
-width:4px;
-height:4px;
-background:#087f73;
-border-radius:50%;
-position:absolute;
-top:4px;
-left:4px;
+.status{
+  text-align:center;
+  padding:12px;
+  background:#fff;
+  border-radius:10px;
+  margin-bottom:15px
 }
-
-.brand{
-font-size:21px;
-font-weight:bold;
-white-space:nowrap;
+.card{
+  background:#fff;
+  border-radius:12px;
+  padding:16px;
+  margin-bottom:15px;
+  box-shadow:0 1px 5px #ddd
 }
-
-.brand span{
-color:#b9fff1;
+.actions{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px
 }
-
-.top-actions{
-display:flex;
-align-items:center;
-gap:6px;
+.action{
+  background:#fff;
+  border:1px solid #ddd;
+  text-align:left;
+  padding:15px;
+  border-radius:12px
 }
-
-.auth-btn{
-border:none;
-border-radius:9px;
-padding:8px 10px;
-font-size:12px;
-font-weight:bold;
-cursor:pointer;
+.action b{
+  display:block;
+  font-size:16px;
+  margin-bottom:5px
 }
-
-.logout-btn{
-background:#e74c3c;
-color:white;
+.action span{
+  color:#777;
+  font-size:13px
 }
-
-.notification-wrap{
-position:relative;
-}
-
-.notification{
-width:38px;
-height:38px;
-border:none;
-background:transparent;
-color:white;
-font-size:23px;
-cursor:pointer;
-position:relative;
-}
-
-.notification-badge{
-position:absolute;
-top:-2px;
-right:-2px;
-min-width:18px;
-height:18px;
-padding:0 5px;
-border-radius:20px;
-background:#e74c3c;
-color:white;
-font-size:10px;
-font-weight:bold;
-display:none;
-align-items:center;
-justify-content:center;
-border:2px solid #087f73;
-}
-
-.notification-panel{
-display:none;
-position:absolute;
-right:0;
-top:45px;
-width:330px;
-max-width:calc(100vw - 24px);
-background:white;
-color:#172033;
-border-radius:16px;
-box-shadow:0 10px 35px rgba(0,0,0,.2);
-overflow:hidden;
-z-index:3000;
-}
-
-.notification-panel.open{
-display:block;
-}
-
-.notification-header{
-display:flex;
-align-items:center;
-justify-content:space-between;
-padding:14px;
-border-bottom:1px solid #edf0f4;
-}
-
-.mark-all{
-border:none;
-background:none;
-color:#087f73;
-font-size:11px;
-font-weight:bold;
-cursor:pointer;
-}
-
-.notification-list{
-max-height:380px;
-overflow-y:auto;
-}
-
-.notification-item{
-display:flex;
-gap:10px;
-padding:12px 14px;
-border-bottom:1px solid #f0f2f5;
-cursor:pointer;
-}
-
-.notification-item.unread{
-background:#edf9f6;
-}
-
-.notification-icon{
-width:38px;
-height:38px;
-border-radius:50%;
-background:#dff3ee;
-display:flex;
-align-items:center;
-justify-content:center;
-flex-shrink:0;
-font-size:18px;
-}
-
-.notification-content{
-min-width:0;
-flex:1;
-}
-
-.notification-title{
-font-weight:bold;
-font-size:13px;
-}
-
-.notification-body{
-font-size:12px;
-color:#687386;
-margin-top:3px;
-line-height:1.4;
-}
-
-.notification-time{
-font-size:10px;
-color:#9299a5;
-margin-top:5px;
-}
-
-.no-notifications{
-padding:30px 15px;
-text-align:center;
-color:#858d99;
-font-size:13px;
-}
-
-.user-info{
-display:flex;
-align-items:center;
-gap:5px;
-margin-top:12px;
-font-size:13px;
-}
-
-.premium-user-badge{
-font-size:13px;
-font-weight:bold;
-}
-
-.search{
-margin-top:18px;
-background:white;
-color:#172033;
-border-radius:14px;
-padding:12px 15px;
-display:flex;
-align-items:center;
-gap:10px;
-}
-
-.search input{
-border:none;
-outline:none;
-width:100%;
-font-size:15px;
-}
-
-/* =====================================================
-QUICK ACTIONS
-===================================================== */
-
-.quick-section{
-padding:16px 18px 5px;
-}
-
-.quick-grid{
-display:grid;
-grid-template-columns:repeat(2,1fr);
-gap:10px;
-}
-
-.quick-card{
-background:white;
-border:none;
-border-radius:15px;
-padding:14px;
-text-align:left;
-box-shadow:0 3px 12px rgba(0,0,0,.06);
-cursor:pointer;
-min-height:78px;
-}
-
-.quick-card-icon{
-font-size:25px;
-margin-bottom:7px;
-}
-
-.quick-card-title{
-font-size:13px;
-font-weight:bold;
-color:#172033;
-}
-
-.quick-card-text{
-font-size:10px;
-color:#7b8492;
-margin-top:4px;
-line-height:1.3;
-}
-
-.quick-card.primary{
-background:#087f73;
-}
-
-.quick-card.primary .quick-card-title,
-.quick-card.primary .quick-card-text{
-color:white;
-}
-
-/* =====================================================
-LIVE RATE
-===================================================== */
-
-.rate-box{
-margin:13px 18px 0;
-background:white;
-border-radius:17px;
-padding:16px;
-box-shadow:0 4px 15px rgba(0,0,0,.06);
-}
-
-.rate-header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-gap:10px;
-}
-
-.rate-title{
-font-size:16px;
-font-weight:bold;
-}
-
-.rate-status{
-font-size:10px;
-padding:5px 8px;
-border-radius:8px;
-background:#eaf7f4;
-color:#087f73;
-font-weight:bold;
-}
-
-.rate-main{
-display:flex;
-justify-content:space-between;
-align-items:end;
-margin-top:12px;
-gap:10px;
-}
-
-.rate-value{
-font-size:25px;
-font-weight:bold;
-color:#172033;
-}
-
-.rate-unit{
-font-size:11px;
-color:#7b8492;
-margin-top:3px;
-}
-
-.rate-change{
-font-size:12px;
-font-weight:bold;
-color:#16a085;
-}
-
-/* =====================================================
-SECTIONS
-===================================================== */
-
-section{
-padding:18px 18px 5px;
-}
-
-.section-title{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:12px;
-}
-
-.section-title h2,
-.posts-title h2{
-font-size:19px;
-}
-
-.see-all{
-color:#087f73;
-font-size:13px;
-font-weight:bold;
-cursor:pointer;
-}
-
-/* =====================================================
-P2P
-===================================================== */
-
-.p2p-header-actions{
-display:flex;
-align-items:center;
-gap:8px;
-}
-
-.create-offer-btn,
-.refresh-btn{
-border:none;
-border-radius:9px;
-padding:8px 10px;
-cursor:pointer;
-font-weight:bold;
-font-size:11px;
-}
-
-.create-offer-btn{
-background:#087f73;
-color:white;
-}
-
-.refresh-btn{
-background:#eaf7f4;
-color:#087f73;
-}
-
-.p2p-offers{
-display:flex;
-flex-direction:column;
-gap:12px;
-}
-
-.p2p-card{
-background:white;
-border-radius:16px;
-padding:16px;
-box-shadow:0 3px 12px rgba(0,0,0,.06);
-position:relative;
-}
-
-.pin-label{
-position:absolute;
-top:10px;
-right:10px;
-font-size:10px;
-background:#fff4d6;
-color:#9a6b00;
-padding:4px 7px;
-border-radius:7px;
-font-weight:bold;
-}
-
-.p2p-card-header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-gap:10px;
-}
-
-.seller{
-display:flex;
-align-items:center;
-gap:9px;
-min-width:0;
-}
-
-.avatar{
-width:40px;
-height:40px;
-border-radius:50%;
-background:#dfeeea;
-display:flex;
-align-items:center;
-justify-content:center;
-font-weight:bold;
-color:#087f73;
-flex-shrink:0;
-overflow:hidden;
-}
-
-.avatar img{
-width:100%;
-height:100%;
-object-fit:cover;
-}
-
-.username{
-font-weight:bold;
-font-size:14px;
-overflow:hidden;
-text-overflow:ellipsis;
-white-space:nowrap;
-}
-
-.online{
-color:#16a085;
-font-size:11px;
-margin-top:3px;
-}
-
 .rate{
-text-align:right;
-flex-shrink:0;
+  text-align:center
 }
-
-.rate strong{
-display:block;
-font-size:17px;
+.rate-value{
+  font-size:28px;
+  font-weight:bold;
+  margin:10px 0
 }
-
-.rate small{
-color:#777;
+.section-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:12px
 }
-
-.trade-info{
-display:flex;
-justify-content:space-between;
-gap:10px;
-margin:15px 0;
-font-size:13px;
+.section-title h2{
+  margin:0;
+  font-size:20px
 }
-
-.buy-btn{
-width:100%;
-border:none;
-padding:12px;
-border-radius:10px;
-font-weight:bold;
-cursor:pointer;
-background:#087f73;
-color:white;
+.offer,.post{
+  border:1px solid #ddd;
+  border-radius:10px;
+  padding:14px;
+  margin-bottom:10px
 }
-
-.offer-type{
-display:inline-block;
-margin-bottom:8px;
-padding:4px 7px;
-border-radius:6px;
-background:#eaf7f4;
-color:#087f73;
-font-size:10px;
-font-weight:bold;
+.offer-head,.post-head{
+  display:flex;
+  justify-content:space-between;
+  gap:10px
 }
-
-.no-offers,
-.no-posts,
-.loading-posts{
-background:white;
-border-radius:16px;
-padding:25px 18px;
-text-align:center;
-color:#7b8492;
-box-shadow:0 3px 12px rgba(0,0,0,.05);
+.badge{
+  padding:5px 8px;
+  border-radius:6px;
+  background:#eee;
+  font-size:12px
 }
-
-.no-offers-icon{
-font-size:32px;
-margin-bottom:8px;
+.buy{background:#dff5df}
+.sell{background:#ffe1e1}
+.empty{
+  text-align:center;
+  color:#777;
+  padding:20px
 }
-
-.no-offers strong{
-display:block;
-color:#172033;
-margin-bottom:5px;
-}
-
-/* =====================================================
-POSTS
-===================================================== */
-
-.posts-section{
-padding-top:18px;
-}
-
-.posts-title{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:12px;
-}
-
-.create-post-btn{
-border:none;
-background:#087f73;
-color:white;
-padding:9px 12px;
-border-radius:10px;
-font-weight:bold;
-cursor:pointer;
-}
-
-.posts-feed{
-display:flex;
-flex-direction:column;
-gap:12px;
-}
-
-.post-card{
-background:white;
-border-radius:16px;
-padding:16px;
-box-shadow:0 3px 12px rgba(0,0,0,.06);
-position:relative;
-}
-
-.post-pin{
-display:inline-block;
-margin-bottom:9px;
-background:#fff4d6;
-color:#9a6b00;
-border-radius:7px;
-padding:5px 8px;
-font-size:10px;
-font-weight:bold;
-}
-
-.post-header{
-display:flex;
-align-items:center;
-gap:10px;
-cursor:pointer;
-}
-
-.post-avatar{
-width:42px;
-height:42px;
-border-radius:50%;
-object-fit:cover;
-background:#dfeeea;
-display:flex;
-align-items:center;
-justify-content:center;
-color:#087f73;
-font-weight:bold;
-flex-shrink:0;
-overflow:hidden;
-}
-
-.post-avatar img{
-width:100%;
-height:100%;
-object-fit:cover;
-}
-
-.post-user-info{
-flex:1;
-min-width:0;
-}
-
-.post-name{
-font-weight:bold;
-font-size:14px;
-overflow:hidden;
-text-overflow:ellipsis;
-}
-
-.post-handle{
-color:#7a8494;
-font-size:12px;
-margin-top:3px;
-}
-
-.post-time{
-color:#8a93a1;
-font-size:11px;
-white-space:nowrap;
-}
-
-.post-menu{
-border:none;
-background:none;
-font-size:18px;
-cursor:pointer;
-}
-
-.post-content{
-margin-top:13px;
-color:#303b4d;
-font-size:14px;
-line-height:1.55;
-white-space:pre-wrap;
-word-break:break-word;
-}
-
-.post-media{
-margin-top:13px;
-border-radius:13px;
-overflow:hidden;
-background:#edf0f4;
-}
-
-.post-media img,
-.post-media video{
-width:100%;
-max-height:500px;
-object-fit:cover;
-display:block;
-}
-
-.post-type-label{
-display:inline-block;
-margin-top:10px;
-background:#edf8f5;
-color:#087f73;
-padding:4px 7px;
-border-radius:6px;
-font-size:10px;
-font-weight:bold;
-}
-
-.post-actions{
-display:flex;
-gap:18px;
-margin-top:15px;
-padding-top:12px;
-border-top:1px solid #edf0f4;
-flex-wrap:wrap;
-}
-
-.post-action{
-border:none;
-background:transparent;
-color:#687386;
-cursor:pointer;
-font-size:13px;
-}
-
-.post-action.liked{
-color:#e74c3c;
-font-weight:bold;
-}
-
-/* =====================================================
-COMMENTS
-===================================================== */
-
-.comments-box{
-margin-top:12px;
-border-top:1px solid #edf0f4;
-padding-top:10px;
-}
-
-.comment{
-display:flex;
-gap:8px;
-margin-bottom:9px;
-}
-
-.comment-avatar{
-width:32px;
-height:32px;
-border-radius:50%;
-background:#dfeeea;
-display:flex;
-justify-content:center;
-align-items:center;
-color:#087f73;
-font-weight:bold;
-flex-shrink:0;
-overflow:hidden;
-}
-
-.comment-avatar img{
-width:100%;
-height:100%;
-object-fit:cover;
-}
-
-.comment-body{
-background:#f5f7fb;
-border-radius:12px;
-padding:8px 10px;
-flex:1;
-position:relative;
-}
-
-.comment-name{
-font-size:12px;
-font-weight:bold;
-padding-right:20px;
-}
-
-.comment-text{
-font-size:13px;
-color:#303b4d;
-margin-top:3px;
-white-space:pre-wrap;
-word-break:break-word;
-}
-
-.comment-delete{
-position:absolute;
-top:6px;
-right:7px;
-border:none;
-background:none;
-color:#e74c3c;
-font-size:11px;
-cursor:pointer;
-}
-
-.comment-input-row{
-display:flex;
-gap:7px;
-margin-top:10px;
-}
-
-.comment-input{
-flex:1;
-border:1px solid #dfe4eb;
-border-radius:10px;
-padding:9px 11px;
-outline:none;
-font-size:13px;
-}
-
-.comment-send{
-border:none;
-background:#087f73;
-color:white;
-border-radius:10px;
-padding:0 13px;
-cursor:pointer;
-font-weight:bold;
-}
-
-.load-more{
-width:100%;
-margin-top:5px;
-border:none;
-background:white;
-color:#087f73;
-padding:13px;
-border-radius:12px;
-font-weight:bold;
-cursor:pointer;
-box-shadow:0 3px 12px rgba(0,0,0,.05);
-}
-
-/* =====================================================
-MODALS
-===================================================== */
-
 .modal{
-display:none;
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.55);
-z-index:5000;
-align-items:center;
-justify-content:center;
-padding:20px;
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.55);
+  z-index:100;
+  padding:20px;
+  overflow:auto
 }
-
-.modal-content{
-width:100%;
-max-width:500px;
-max-height:90vh;
-overflow-y:auto;
-background:white;
-border-radius:18px;
-padding:20px;
+.modal-box{
+  max-width:600px;
+  margin:30px auto;
+  background:#fff;
+  border-radius:14px;
+  padding:20px
 }
-
-.modal-header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:15px;
+.modal-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center
 }
-
-.modal-header h3{
-font-size:19px;
+.modal-head h2{
+  margin:0
 }
-
-.close-modal{
-border:none;
-background:none;
-font-size:25px;
-cursor:pointer;
+.close{
+  background:#eee;
+  font-size:18px
 }
-
-/* =====================================================
-VERIFY IDENTITY
-===================================================== */
-
-.verify-text{
-color:#687386;
-font-size:13px;
-line-height:1.5;
-margin-bottom:15px;
+label{
+  display:block;
+  margin-top:12px;
+  margin-bottom:5px;
+  font-weight:bold
 }
-
+input,select,textarea{
+  width:100%;
+  padding:11px;
+  border:1px solid #ccc;
+  border-radius:8px;
+  font-size:15px
+}
+textarea{
+  min-height:120px;
+  resize:vertical
+}
+.submit{
+  width:100%;
+  margin-top:15px;
+  background:#222;
+  color:#fff
+}
+.nav{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  height:70px;
+  background:#fff;
+  border-top:1px solid #ddd;
+  display:flex;
+  justify-content:space-around;
+  z-index:90
+}
+.nav a{
+  flex:1;
+  text-decoration:none;
+  color:#222;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  font-size:12px;
+  gap:3px
+}
+.nav-icon{
+  font-size:22px
+}
+.notification-btn{
+  position:relative;
+  background:#fff;
+  font-size:20px
+}
+.notification-count{
+  position:absolute;
+  top:0;
+  right:0;
+  min-width:17px;
+  height:17px;
+  background:red;
+  color:#fff;
+  border-radius:50%;
+  font-size:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center
+}
+.notification-list{
+  max-height:350px;
+  overflow:auto
+}
+.notification{
+  padding:12px;
+  border-bottom:1px solid #eee
+}
+.unread{
+  background:#f1f1f1;
+  font-weight:bold
+}
 .verify-status{
-padding:12px;
-border-radius:12px;
-background:#f5f7fb;
-font-size:13px;
-margin-bottom:14px;
+  padding:10px;
+  border-radius:8px;
+  background:#eee;
+  margin:12px 0
 }
-
-.verify-status strong{
-color:#087f73;
+.radio-row{
+  display:flex;
+  gap:15px;
+  margin-top:10px
 }
-
-.verify-form{
-display:flex;
-flex-direction:column;
-gap:10px;
+.radio-row label{
+  font-weight:normal
 }
-
-.verify-input,
-.verify-select{
-width:100%;
-border:1px solid #dfe4eb;
-border-radius:10px;
-padding:11px;
-outline:none;
-background:white;
-font-size:13px;
-}
-
-.verify-submit{
-border:none;
-background:#087f73;
-color:white;
-padding:12px;
-border-radius:10px;
-font-weight:bold;
-cursor:pointer;
-}
-
-/* =====================================================
-REFERRAL
-===================================================== */
-
-.referral-box{
-text-align:center;
-}
-
-.referral-icon{
-font-size:42px;
-margin-bottom:10px;
-}
-
-.referral-title{
-font-size:21px;
-font-weight:bold;
-}
-
-.referral-percent{
-font-size:36px;
-font-weight:bold;
-color:#087f73;
-margin:10px 0;
-}
-
-.referral-description{
-font-size:13px;
-color:#687386;
-line-height:1.5;
-}
-
-.referral-code-box{
-margin-top:15px;
-padding:13px;
-background:#f5f7fb;
-border-radius:12px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-gap:10px;
-}
-
-.referral-code{
-font-weight:bold;
-font-size:14px;
-word-break:break-all;
-}
-
-.copy-btn{
-border:none;
-background:#087f73;
-color:white;
-padding:8px 11px;
-border-radius:8px;
-font-weight:bold;
-cursor:pointer;
-}
-
-/* =====================================================
-TRANSFER
-===================================================== */
-
-.transfer-form{
-display:flex;
-flex-direction:column;
-gap:10px;
-}
-
-.transfer-label{
-font-size:12px;
-font-weight:bold;
-margin-top:4px;
-}
-
-.transfer-input{
-width:100%;
-border:1px solid #dfe4eb;
-border-radius:10px;
-padding:12px;
-outline:none;
-font-size:14px;
-}
-
-.transfer-note{
-font-size:11px;
-color:#7a8494;
-line-height:1.4;
-}
-
-.transfer-submit{
-border:none;
-background:#087f73;
-color:white;
-padding:12px;
-border-radius:10px;
-font-weight:bold;
-cursor:pointer;
-}
-
-/* =====================================================
-SUPPORT
-===================================================== */
-
-.support-list{
-display:flex;
-flex-direction:column;
-gap:10px;
-}
-
-.support-item{
-display:flex;
-align-items:center;
-gap:12px;
-padding:13px;
-background:#f5f7fb;
-border-radius:12px;
-cursor:pointer;
-}
-
-.support-icon{
-font-size:22px;
-}
-
-.support-info{
-flex:1;
-}
-
-.support-title{
-font-size:13px;
-font-weight:bold;
-}
-
-.support-text{
-font-size:11px;
-color:#7a8494;
-margin-top:3px;
-}
-
-/* =====================================================
-2FA
-===================================================== */
-
-.security-box{
-padding:13px;
-background:#f5f7fb;
-border-radius:12px;
-margin-bottom:14px;
-}
-
-.security-title{
-font-weight:bold;
-font-size:14px;
-}
-
-.security-text{
-font-size:12px;
-color:#687386;
-line-height:1.5;
-margin-top:5px;
-}
-
-.twofa-button{
-width:100%;
-border:none;
-background:#087f73;
-color:white;
-padding:12px;
-border-radius:10px;
-font-weight:bold;
-cursor:pointer;
-}
-
-/* =====================================================
-CREATE POST
-===================================================== */
-
-.post-textarea{
-width:100%;
-min-height:130px;
-resize:vertical;
-border:1px solid #dfe4eb;
-border-radius:12px;
-padding:12px;
-outline:none;
-font-size:14px;
-}
-
-.visibility-label{
-display:block;
-margin:12px 0 6px;
-font-size:13px;
-font-weight:bold;
-}
-
-.visibility-select,
-.media-type-select{
-width:100%;
-border:1px solid #dfe4eb;
-border-radius:10px;
-padding:11px;
-background:white;
-}
-
-.media-section{
-margin-top:12px;
-}
-
-.media-label{
-display:block;
-font-size:13px;
-font-weight:bold;
-margin-bottom:7px;
-}
-
-.media-note{
-font-size:11px;
-color:#7a8494;
-margin-top:6px;
-line-height:1.4;
-}
-
-.media-input{
-width:100%;
-border:1px solid #dfe4eb;
-border-radius:10px;
-padding:10px;
-}
-
-.media-preview{
-margin-top:10px;
-border-radius:10px;
-overflow:hidden;
-background:#f1f3f6;
-}
-
-.media-preview img,
-.media-preview video{
-width:100%;
-max-height:280px;
-display:block;
-object-fit:cover;
-}
-
-.locked-feature{
-background:#f7f8fa;
-border:1px dashed #ccd2da;
-border-radius:11px;
-padding:12px;
-color:#687386;
-font-size:12px;
-line-height:1.45;
-}
-
-.publish-btn{
-width:100%;
-margin-top:14px;
-border:none;
-background:#087f73;
-color:white;
-padding:12px;
-border-radius:10px;
-font-weight:bold;
-cursor:pointer;
-}
-
-/* =====================================================
-POST NEW AD
-===================================================== */
-
-.ad-form{
-display:flex;
-flex-direction:column;
-gap:10px;
-}
-
-.ad-input,
-.ad-select{
-width:100%;
-border:1px solid #dfe4eb;
-border-radius:10px;
-padding:11px;
-outline:none;
-background:white;
-font-size:13px;
-}
-
-.ad-label{
-font-size:12px;
-font-weight:bold;
-margin-top:4px;
-}
-
-.ad-submit{
-width:100%;
-border:none;
-background:#087f73;
-color:white;
-padding:12px;
-border-radius:10px;
-font-weight:bold;
-cursor:pointer;
-}
-
-.ad-note{
-font-size:11px;
-color:#7a8494;
-line-height:1.4;
-}
-
-/* =====================================================
-BOTTOM NAV
-===================================================== */
-
-.bottom-nav{
-position:fixed;
-bottom:0;
-left:0;
-right:0;
-height:68px;
-background:white;
-border-top:1px solid #ddd;
-display:flex;
-justify-content:space-around;
-align-items:center;
-z-index:1000;
-}
-
-.nav-item{
-text-align:center;
-color:#777;
-font-size:11px;
-cursor:pointer;
-}
-
-.nav-item span{
-display:block;
-font-size:22px;
-margin-bottom:3px;
-}
-
-.nav-item.active{
-color:#087f73;
-font-weight:bold;
-}
-
-/* =====================================================
-MOBILE
-===================================================== */
-
-@media(max-width:450px){
-
-header{
-padding:16px 12px;
-}
-
-.brand{
-font-size:19px;
-}
-
-.quick-section{
-padding-left:12px;
-padding-right:12px;
-}
-
-.rate-box{
-margin-left:12px;
-margin-right:12px;
-}
-
-section{
-padding-left:12px;
-padding-right:12px;
-}
-
-.trade-info{
-flex-direction:column;
-gap:7px;
-}
-
-.notification-panel{
-right:-45px;
-}
-
-.quick-grid{
-grid-template-columns:1fr 1fr;
-}
-
-}
-
-@media(max-width:350px){
-
-.quick-grid{
-grid-template-columns:1fr;
-}
-
+@media(max-width:600px){
+  .actions{
+    grid-template-columns:1fr
+  }
+  .container{
+    padding:10px
+  }
 }
 </style>
 </head>
 
 <body>
 
-<div id="checkingAuth">
-<div class="auth-logo">P2P</div>
-<div><strong>P2P Social</strong></div>
-<div class="auth-loading">Checking login...</div>
-</div>
-
-<div id="app">
-
-<!-- =====================================================
-HEADER
-===================================================== -->
-
 <header>
+  <div class="header">
+    <div class="logo">P2P Social</div>
 
-<div class="top">
-
-<div class="logo-area">
-
-<div class="logo">
-<div class="p-left"></div>
-<div class="p-right"></div>
-<div class="center">
-<div class="dot"></div>
-</div>
-</div>
-
-<div class="brand">
-P2P <span>Social</span>
-</div>
-
-</div>
-
-<div class="top-actions">
-
-<button
-id="logoutBtn"
-class="auth-btn logout-btn"
-onclick="logout()">
-Logout
-</button>
-
-<div class="notification-wrap">
-
-<button
-id="notificationButton"
-class="notification"
-onclick="toggleNotificationPanel(event)">
-🔔
-<span
-id="notificationBadge"
-class="notification-badge">
-0
-</span>
-</button>
-
-<div
-id="notificationPanel"
-class="notification-panel">
-
-<div class="notification-header">
-
-<strong>Notifications</strong>
-
-<button
-class="mark-all"
-onclick="markAllNotificationsRead()">
-Mark all read
-</button>
-
-</div>
-
-<div
-id="notificationList"
-class="notification-list">
-
-<div class="no-notifications">
-Loading notifications...
-</div>
-
-</div>
-
-</div>
-</div>
-
-</div>
-</div>
-
-<div class="user-info">
-Logged in as:
-<strong id="usernameDisplay">User</strong>
-<span
-id="headerPremiumBadge"
-class="premium-user-badge">
-</span>
-</div>
-
-<div class="search">
-🔎
-<input
-type="text"
-id="searchInput"
-placeholder="Search users, live rooms...">
-</div>
-
+    <div>
+      <button class="notification-btn" onclick="openModal('notificationsModal')">
+        🔔
+        <span id="notificationCount" class="notification-count">0</span>
+      </button>
+      <button class="logout" onclick="logout()">Logout</button>
+    </div>
+  </div>
 </header>
 
-<!-- =====================================================
-QUICK ACTIONS
-===================================================== -->
-
-<div class="quick-section">
-
-<div class="quick-grid">
-
-<button
-class="quick-card primary"
-onclick="openLiveRate()">
-
-<div class="quick-card-icon">
-📈
-</div>
-
-<div class="quick-card-title">
-Live Rate
-</div>
-
-<div class="quick-card-text">
-View current market rate
-</div>
-
-</button>
-
-<button
-class="quick-card"
-onclick="openVerifyIdentity()">
-
-<div class="quick-card-icon">
-🪪
-</div>
-
-<div class="quick-card-title">
-Verify identity
-</div>
-
-<div class="quick-card-text">
-Submit identity details
-</div>
-
-</button>
-
-<button
-class="quick-card"
-onclick="openReferral()">
-
-<div class="quick-card-icon">
-🎁
-</div>
-
-<div class="quick-card-title">
-Referral 30% commission
-</div>
-
-<div class="quick-card-text">
-Invite users and earn commission
-</div>
-
-</button>
-
-<button
-class="quick-card"
-onclick="openCreateAd()">
-
-<div class="quick-card-icon">
-📢
-</div>
-
-<div class="quick-card-title">
-Post new Ad
-</div>
-
-<div class="quick-card-text">
-Create a P2P trade offer
-</div>
-
-</button>
-
-<button
-class="quick-card"
-onclick="openTransfer()">
-
-<div class="quick-card-icon">
-💎
-</div>
-
-<div class="quick-card-title">
-Transfer 💎
-</div>
-
-<div class="quick-card-text">
-Send diamonds to another user
-</div>
-
-</button>
-
-<button
-class="quick-card"
-onclick="openSupport()">
-
-<div class="quick-card-icon">
-🛟
-</div>
-
-<div class="quick-card-title">
-Support
-</div>
-
-<div class="quick-card-text">
-Get help from P2P Social
-</div>
-
-</button>
-
-<button
-class="quick-card"
-onclick="openTwoFA()">
-
-<div class="quick-card-icon">
-🔐
-</div>
-
-<div class="quick-card-title">
-Enable 2FA
-</div>
-
-<div class="quick-card-text">
-Protect your account
-</div>
-
-</button>
-
-</div>
-
-</div>
-
-<!-- =====================================================
-LIVE RATE
-===================================================== -->
-
-<div class="rate-box">
-
-<div class="rate-header">
-
-<div class="rate-title">
-📈 Live Rate
-</div>
-
-<div
-id="rateStatus"
-class="rate-status">
-LIVE
-</div>
-
-</div>
-
-<div class="rate-main">
-
-<div>
-
-<div
-id="liveRateValue"
-class="rate-value">
-Loading...
-</div>
-
-<div
-id="liveRateUnit"
-class="rate-unit">
-USDT / 💎
-</div>
-
-</div>
-
-<div
-id="liveRateChange"
-class="rate-change">
-Updating
-</div>
-
-</div>
-
-</div>
-
-<!-- =====================================================
-P2P
-===================================================== -->
-
-<section>
-
-<div class="section-title">
-
-<h2>
-🔄 Available Offers
-</h2>
-
-<div class="p2p-header-actions">
-
-<button
-class="create-offer-btn"
-onclick="createOffer()">
-Post new Ad
-</button>
-
-<button
-class="refresh-btn"
-onclick="loadAvailableOffers()">
-🔃
-</button>
-
-</div>
-
-</div>
-
-<div
-id="p2pOffersContainer"
-class="p2p-offers">
-
-<div class="no-offers">
-
-<div class="no-offers-icon">
-🔄
-</div>
-
-<strong>
-Loading available offers...
-</strong>
-
-<small>
-Please wait.
-</small>
-
-</div>
-
-</div>
-
-</section>
-
-<!-- =====================================================
-POSTS
-===================================================== -->
-
-<section class="posts-section">
-
-<div class="posts-title">
-
-<h2>
-📝 Public Posts
-</h2>
-
-<div
-style="
-display:flex;
-gap:7px;
-align-items:center;
-">
-
-<span
-class="see-all"
-onclick="loadPosts(true)">
-🔃 Refresh
-</span>
-
-<button
-class="create-post-btn"
-onclick="openCreatePost()">
-Post
-</button>
-
-</div>
-
-</div>
-
-<div
-id="postsFeed"
-class="posts-feed">
-
-<div class="loading-posts">
-Loading public posts...
-</div>
-
-</div>
-
-<button
-id="loadMoreBtn"
-class="load-more"
-onclick="loadMorePosts()"
-style="display:none;">
-➕ Load more posts
-</button>
-
-</section>
-
-<!-- =====================================================
-VERIFY IDENTITY MODAL
-===================================================== -->
-
-<div
-id="verifyModal"
-class="modal">
-
-<div class="modal-content">
-
-<div class="modal-header">
-
-<h3>
-🪪 Verify Identity
-</h3>
-
-<button
-class="close-modal"
-onclick="closeVerifyIdentity()">
-×
-</button>
-
-</div>
-
-<div class="verify-text">
-Submit your identity details for admin review.
-Verification status is controlled by the backend.
-</div>
-
-<div class="verify-status">
-Status:
-<strong id="verificationStatus">
-Not submitted
-</strong>
-</div>
-
-<div class="verify-form">
-
-<select
-id="identityType"
-class="verify-select">
-
-<option value="passport">
-Passport
-</option>
-
-<option value="national_id">
-National ID
-</option>
-
-<option value="drivers_license">
-Driver's License
-</option>
-
-</select>
-
-<input
-id="identityName"
-class="verify-input"
-type="text"
-maxlength="120"
-placeholder="Full legal name">
-
-<input
-id="identityNumber"
-class="verify-input"
-type="text"
-maxlength="100"
-placeholder="ID / Passport number">
-
-<input
-id="identityCountry"
-class="verify-input"
-type="text"
-maxlength="80"
-placeholder="Country">
-
-<button
-id="verifySubmitBtn"
-class="verify-submit"
-onclick="submitVerification()">
-Submit for Review
-</button>
-
-</div>
-
-</div>
-</div>
-
-<!-- =====================================================
-REFERRAL MODAL
-===================================================== -->
-
-<div
-id="referralModal"
-class="modal">
-
-<div class="modal-content">
-
-<div class="modal-header">
-
-<h3>
-🎁 Referral Program
-</h3>
-
-<button
-class="close-modal"
-onclick="closeReferral()">
-×
-</button>
-
-</div>
-
-<div class="referral-box">
-
-<div class="referral-icon">
-🎁
-</div>
-
-<div class="referral-title">
-Referral Commission
-</div>
-
-<div class="referral-percent">
-30%
-</div>
-
-<div class="referral-description">
-Invite new users with your referral link and receive
-30% commission according to the platform's referral
-rules and settlement system.
-</div>
-
-<div class="referral-code-box">
-
-<div
-id="referralCode"
-class="referral-code">
-Loading...
-</div>
-
-<button
-class="copy-btn"
-onclick="copyReferralCode()">
-Copy
-</button>
-
-</div>
-
-</div>
-
-</div>
-</div>
-
-<!-- =====================================================
-CREATE AD MODAL
-===================================================== -->
-
-<div
-id="createAdModal"
-class="modal">
-
-<div class="modal-content">
-
-<div class="modal-header">
-
-<h3>
-📢 Post New Ad
-</h3>
-
-<button
-class="close-modal"
-onclick="closeCreateAd()">
-×
-</button>
-
-</div>
-
-<div class="ad-form">
-
-<label class="ad-label">
-Trade type
-</label>
-
-<select
-id="adType"
-class="ad-select">
-
-<option value="buy">
-Buy
-</option>
-
-<option value="sell">
-Sell
-</option>
-
-</select>
-
-<label class="ad-label">
-Asset
-</label>
-
-<select
-id="adAsset"
-class="ad-select">
-
-<option value="diamond">
-💎 Diamond
-</option>
-
-<option value="usdt">
-USDT
-</option>
-
-</select>
-
-<label class="ad-label">
-Rate
-</label>
-
-<input
-id="adRate"
-class="ad-input"
-type="number"
-min="0"
-step="0.00000001"
-placeholder="Price / rate">
-
-<label class="ad-label">
-Available amount
-</label>
-
-<input
-id="adAmount"
-class="ad-input"
-type="number"
-min="0"
-step="0.00000001"
-placeholder="Available amount">
-
-<label class="ad-label">
-Minimum amount
-</label>
-
-<input
-id="adMin"
-class="ad-input"
-type="number"
-min="0"
-step="0.00000001"
-placeholder="Minimum trade amount">
-
-<label class="ad-label">
-Maximum amount
-</label>
-
-<input
-id="adMax"
-class="ad-input"
-type="number"
-min="0"
-step="0.00000001"
-placeholder="Maximum trade amount">
-
-<label class="ad-label">
-Payment method
-</label>
-
-<input
-id="adPaymentMethod"
-class="ad-input"
-type="text"
-maxlength="100"
-placeholder="Payment method">
-
-<div class="ad-note">
-The final ad must be validated by secure database
-policies/RPCs before becoming an active P2P offer.
-</div>
-
-<button
-id="publishAdBtn"
-class="ad-submit"
-onclick="publishAd()">
-Publish Ad
-</button>
-
-</div>
-
-</div>
-</div>
-
-<!-- =====================================================
-TRANSFER MODAL
-===================================================== -->
-
-<div
-id="transferModal"
-class="modal">
-
-<div class="modal-content">
-
-<div class="modal-header">
-
-<h3>
-💎 Transfer Diamonds
-</h3>
-
-<button
-class="close-modal"
-onclick="closeTransfer()">
-×
-</button>
-
-</div>
-
-<div class="transfer-form">
-
-<label class="transfer-label">
-Recipient username or user ID
-</label>
-
-<input
-id="transferRecipient"
-class="transfer-input"
-type="text"
-maxlength="120"
-placeholder="Username or UUID">
-
-<label class="transfer-label">
-Diamond amount
-</label>
-
-<input
-id="transferAmount"
-class="transfer-input"
-type="number"
-min="0"
-step="1"
-placeholder="0">
-
-<div class="transfer-note">
-Diamond transfers must be processed by a secure
-backend RPC/transaction. The browser must never
-directly modify authoritative balances.
-</div>
-
-<button
-id="transferSubmitBtn"
-class="transfer-submit"
-onclick="submitDiamondTransfer()">
-Transfer 💎
-</button>
-
-</div>
-
-</div>
-</div>
-
-<!-- =====================================================
-SUPPORT MODAL
-===================================================== -->
-
-<div
-id="supportModal"
-class="modal">
-
-<div class="modal-content">
-
-<div class="modal-header">
-
-<h3>
-🛟 Support
-</h3>
-
-<button
-class="close-modal"
-onclick="closeSupport()">
-×
-</button>
-
-</div>
-
-<div class="support-list">
-
-<div
-class="support-item"
-onclick="openMessages()">
-
-<div class="support-icon">
-💬
-</div>
-
-<div class="support-info">
-
-<div class="support-title">
-Contact Support
-</div>
-
-<div class="support-text">
-Open messages and contact the support team.
-</div>
-
-</div>
-
-<div>
-›
-</div>
-
-</div>
-
-<div
-class="support-item"
-onclick="openP2PHelp()">
-
-<div class="support-icon">
-🔄
-</div>
-
-<div class="support-info">
-
-<div class="support-title">
-P2P Trade Help
-</div>
-
-<div class="support-text">
-Get help with P2P offers and orders.
-</div>
-
-</div>
-
-<div>
-›
-</div>
-
-</div>
-
-<div
-class="support-item"
-onclick="openSecurityHelp()">
-
-<div class="support-icon">
-🔐
-</div>
-
-<div class="support-info">
-
-<div class="support-title">
-Security Help
-</div>
-
-<div class="support-text">
-Account and security assistance.
-</div>
-
-</div>
-
-<div>
-›
-</div>
-
-</div>
-
-</div>
-
-</div>
-</div>
-
-<!-- =====================================================
-2FA MODAL
-===================================================== -->
-
-<div
-id="twoFAModal"
-class="modal">
-
-<div class="modal-content">
-
-<div class="modal-header">
-
-<h3>
-🔐 Two-Factor Authentication
-</h3>
-
-<button
-class="close-modal"
-onclick="closeTwoFA()">
-×
-</button>
-
-</div>
-
-<div class="security-box">
-
-<div class="security-title">
-Protect your account
-</div>
-
-<div class="security-text">
-Two-factor authentication should be enabled and
-verified through your authentication/security
-backend.
-</div>
-
-</div>
-
-<button
-id="twoFAButton"
-class="twofa-button"
-onclick="enableTwoFA()">
-Enable 2FA
-</button>
-
-</div>
-</div>
-
-<!-- =====================================================
-CREATE POST MODAL
-===================================================== -->
-
-<div
-id="createPostModal"
-class="modal">
-
-<div class="modal-content">
-
-<div class="modal-header">
-
-<h3>
-Create Post
-</h3>
-
-<button
-class="close-modal"
-onclick="closeCreatePost()">
-×
-</button>
-
-</div>
-
-<textarea
-id="postContentInput"
-class="post-textarea"
-maxlength="5000"
-placeholder="What's on your mind?"></textarea>
-
-<label class="visibility-label">
-Post visibility
-</label>
-
-<select
-id="postVisibility"
-class="visibility-select">
-
-<option value="public">
-🌍 Public
-</option>
-
-<option value="private">
-🔒 Private
-</option>
-
-</select>
-
-<div class="media-section">
-
-<label class="media-label">
-Post type
-</label>
-
-<select
-id="mediaType"
-class="media-type-select"
-onchange="updateMediaControls()">
-
-<option value="text">
-📝 Text
-</option>
-
-<option value="image">
-🖼️ Picture
-</option>
-
-<option value="video">
-🎥 Video
-</option>
-
-</select>
-
-</div>
-
-<div
-id="mediaControls"
-class="media-section">
-</div>
-
-<div
-id="promotionNotice"
-class="media-section">
-</div>
-
-<button
-id="publishPostBtn"
-class="publish-btn"
-onclick="createPost()">
-Publish Post
-</button>
-
-</div>
-</div>
-
-<!-- =====================================================
-BOTTOM NAV
-===================================================== -->
-
-<nav class="bottom-nav">
-
-<div
-class="nav-item active"
-onclick="goHome()">
-
-<span>
-🏠
-</span>
-
-Home
-
-</div>
-
-<div
-class="nav-item"
-onclick="openMarket()">
-
-<span>
-🔴
-</span>
-
-Market
-
-</div>
-
-<div
-class="nav-item"
-onclick="openP2P()">
-
-<span>
-🔄
-</span>
-
-P2P
-
-</div>
-
-<div
-class="nav-item"
-onclick="openMessages()">
-
-<span>
-💬
-</span>
-
-Messages
-
-</div>
-
-<div
-class="nav-item"
-onclick="openProfile()">
-
-<span>
-👤
-</span>
-
-Profile
-
-</div>
+<main class="container">
+
+  <div id="loginStatus" class="status">
+    Checking login...
+  </div>
+
+  <div class="card">
+    <h2>P2P Social</h2>
+    <div>
+      Logged in as:
+      <strong id="currentUser">User</strong>
+    </div>
+  </div>
+
+  <div class="actions">
+
+    <button class="action" onclick="openMarket()">
+      <b>📈 Live Rate</b>
+      <span>View current market rate</span>
+    </button>
+
+    <button class="action" onclick="openModal('verifyModal')">
+      <b>🪪 Verify identity</b>
+      <span>Submit identity details</span>
+    </button>
+
+    <button class="action" onclick="openModal('referralModal')">
+      <b>🎁 Referral 30% commission</b>
+      <span>Invite users and earn commission</span>
+    </button>
+
+    <button class="action" onclick="openModal('adModal')">
+      <b>📢 Post new Ad</b>
+      <span>Create a P2P trade offer</span>
+    </button>
+
+    <button class="action" onclick="openModal('diamondModal')">
+      <b>💎 Transfer 💎</b>
+      <span>Send diamonds to another user</span>
+    </button>
+
+    <button class="action" onclick="openModal('supportModal')">
+      <b>🛟 Support</b>
+      <span>Get help from P2P Social</span>
+    </button>
+
+    <button class="action" onclick="openModal('twofaModal')">
+      <b>🔐 Enable 2FA</b>
+      <span>Protect your account</span>
+    </button>
+
+  </div>
+
+  <div class="card rate">
+    <div class="section-title">
+      <h2>📈 Live Rate</h2>
+      <span class="badge">LIVE</span>
+    </div>
+
+    <div id="rateValue" class="rate-value">Loading...</div>
+    <div>USDT / 💎</div>
+    <small id="rateUpdated">Updating</small>
+  </div>
+
+  <div class="card">
+
+    <div class="section-title">
+      <h2>🔄 Available Offers</h2>
+      <div>
+        <button onclick="openModal('adModal')">Post new Ad</button>
+        <button onclick="loadOffers()">🔃</button>
+      </div>
+    </div>
+
+    <div id="offers">
+      <div class="empty">
+        🔄<br>
+        <b>Loading available offers...</b><br>
+        Please wait.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="card">
+
+    <div class="section-title">
+      <h2>📝 Public Posts</h2>
+
+      <div>
+        <button onclick="loadPosts()">🔃 Refresh</button>
+        <button onclick="openModal('postModal')">Post</button>
+      </div>
+    </div>
+
+    <div id="posts">
+      <div class="empty">
+        Loading public posts...
+      </div>
+    </div>
+
+    <button
+      id="loadMoreBtn"
+      style="width:100%;display:none"
+      onclick="loadMorePosts()">
+      ➕ Load more posts
+    </button>
+
+  </div>
+
+</main>
+
+<nav class="nav">
+
+  <a href="index.html">
+    <span class="nav-icon">🏠</span>
+    Home
+  </a>
+
+  <a href="live.html">
+    <span class="nav-icon">🔴</span>
+    Market
+  </a>
+
+  <a href="wallet.html">
+    <span class="nav-icon">🔄</span>
+    P2P
+  </a>
+
+  <a href="message.html">
+    <span class="nav-icon">💬</span>
+    Messages
+  </a>
+
+  <a href="profile.html">
+    <span class="nav-icon">👤</span>
+    Profile
+  </a>
 
 </nav>
 
+
+<!-- NOTIFICATIONS -->
+
+<div id="notificationsModal" class="modal">
+  <div class="modal-box">
+
+    <div class="modal-head">
+      <h2>Notifications</h2>
+      <button class="close" onclick="closeModal('notificationsModal')">×</button>
+    </div>
+
+    <div style="text-align:right;margin:10px 0">
+      <button onclick="markAllNotificationsRead()">
+        Mark all read
+      </button>
+    </div>
+
+    <div id="notificationList" class="notification-list">
+      <div class="empty">
+        Loading notifications...
+      </div>
+    </div>
+
+  </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- VERIFY -->
+
+<div id="verifyModal" class="modal">
+  <div class="modal-box">
+
+    <div class="modal-head">
+      <h2>🪪 Verify Identity</h2>
+      <button class="close" onclick="closeModal('verifyModal')">×</button>
+    </div>
+
+    <p>
+      Submit your identity details for admin review.
+      Verification status is controlled by the backend.
+    </p>
+
+    <div class="verify-status">
+      Status:
+      <strong id="verificationStatus">Not submitted</strong>
+    </div>
+
+    <div class="radio-row">
+      <label>
+        <input type="radio" name="identityType" value="passport">
+        Passport
+      </label>
+
+      <label>
+        <input type="radio" name="identityType" value="national_id">
+        National ID
+      </label>
+
+      <label>
+        <input type="radio" name="identityType" value="drivers_license">
+        Driver's License
+      </label>
+    </div>
+
+    <label>Document Number</label>
+    <input id="identityNumber" type="text">
+
+    <label>Full Name</label>
+    <input id="identityName" type="text">
+
+    <button class="submit" onclick="submitVerification()">
+      Submit for Review
+    </button>
+
+  </div>
+</div>
+
+
+<!-- REFERRAL -->
+
+<div id="referralModal" class="modal">
+  <div class="modal-box">
+
+    <div class="modal-head">
+      <h2>🎁 Referral Program</h2>
+      <button class="close" onclick="closeModal('referralModal')">×</button>
+    </div>
+
+    <div style="text-align:center">
+
+      <div style="font-size:45px">🎁</div>
+
+      <h3>Referral Commission</h3>
+
+      <div style="font-size:40px;font-weight:bold">
+        30%
+      </div>
+
+      <p>
+        Invite new users with your referral link and receive
+        30% commission according to the platform's referral
+        rules and settlement system.
+      </p>
+
+    </div>
+
+    <label>Your Referral Link</label>
+    <input id="referralLink" readonly>
+
+    <button
+      class="submit"
+      onclick="copyReferralLink()">
+      Copy
+    </button>
+
+  </div>
+</div>
+
+
+<!-- AD -->
+
+<div id="adModal" class="modal">
+  <div class="modal-box">
+
+    <div class="modal-head">
+      <h2>📢 Post New Ad</h2>
+      <button class="close" onclick="closeModal('adModal')">×</button>
+    </div>
+
+    <label>Trade type</label>
+
+    <select id="adTradeType">
+      <option value="buy">Buy</option>
+      <option value="sell">Sell</option>
+    </select>
+
+    <label>Asset</label>
+
+    <select id="adAsset">
+      <option value="diamond">💎 Diamond</option>
+      <option value="USDT">USDT</option>
+    </select>
+
+    <label>Rate</label>
+    <input id="adRate" type="number" step="any">
+
+    <label>Available amount</label>
+    <input id="adAvailable" type="number" step="any">
+
+    <label>Minimum amount</label>
+    <input id="adMinimum" type="number" step="any">
+
+    <label>Maximum amount</label>
+    <input id="adMaximum" type="number" step="any">
+
+    <label>Payment method</label>
+    <input id="adPaymentMethod" type="text">
+
+    <p style="font-size:13px;color:#777">
+      The final ad must be validated by secure database
+      policies/RPCs before becoming an active P2P offer.
+    </p>
+
+    <button class="submit" onclick="publishAd()">
+      Publish Ad
+    </button>
+
+  </div>
+</div>
+
+
+<!-- DIAMOND TRANSFER -->
+
+<div id="diamondModal" class="modal">
+  <div class="modal-box">
+
+    <div class="modal-head">
+      <h2>💎 Transfer Diamonds</h2>
+      <button class="close" onclick="closeModal('diamondModal')">×</button>
+    </div>
+
+    <label>Recipient username or user ID</label>
+    <input id="diamondRecipient" type="text">
+
+    <label>Diamond amount</label>
+    <input id="diamondAmount" type="number" min="1" step="1">
+
+    <p style="font-size:13px;color:#777">
+      Diamond transfers must be processed by a secure
+      backend RPC/transaction. The browser must never
+      directly modify authoritative balances.
+    </p>
+
+    <button class="submit" onclick="transferDiamonds()">
+      Transfer 💎
+    </button>
+
+  </div>
+</div>
+
+
+<!-- SUPPORT -->
+
+<div id="supportModal" class="modal">
+  <div class="modal-box">
+
+    <div class="modal-head">
+      <h2>🛟 Support</h2>
+      <button class="close" onclick="closeModal('supportModal')">×</button>
+    </div>
+
+    <div class="card">
+      <h3>💬 Contact Support</h3>
+      <p>
+        Open messages and contact the support team.
+      </p>
+      <button onclick="location.href='message.html'">
+        ›
+      </button>
+    </div>
+
+    <div class="card">
+      <h3>🔄 P2P Trade Help</h3>
+      <p>
+        Get help with P2P offers and orders.
+      </p>
+      <button onclick="location.href='message.html'">
+        ›
+      </button>
+    </div>
+
+    <div class="card">
+      <h3>🔐 Security Help</h3>
+      <p>
+        Account and security assistance.
+      </p>
+      <button onclick="location.href='message.html'">
+        ›
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- 2FA -->
+
+<div id="twofaModal" class="modal">
+  <div class="modal-box">
+
+    <div class="modal-head">
+      <h2>🔐 Two-Factor Authentication</h2>
+      <button class="close" onclick="closeModal('twofaModal')">×</button>
+    </div>
+
+    <h3>Protect your account</h3>
+
+    <p>
+      Two-factor authentication should be enabled and
+      verified through your authentication/security
+      backend.
+    </p>
+
+    <button class="submit" onclick="enable2FA()">
+      Enable 2FA
+    </button>
+
+  </div>
+</div>
+
+
+<!-- CREATE POST -->
+
+<div id="postModal" class="modal">
+  <div class="modal-box">
+
+    <div class="modal-head">
+      <h2>Create Post</h2>
+      <button class="close" onclick="closeModal('postModal')">×</button>
+    </div>
+
+    <label>Post visibility</label>
+
+    <select id="postVisibility">
+      <option value="public">🌍 Public</option>
+      <option value="private">🔒 Private</option>
+    </select>
+
+    <label>Post type</label>
+
+    <select id="postType" onchange="updatePostFields()">
+      <option value="text">📝 Text</option>
+      <option value="picture">🖼️ Picture</option>
+      <option value="video">🎥 Video</option>
+    </select>
+
+    <label>Content</label>
+    <textarea id="postContent"></textarea>
+
+    <div id="mediaField" style="display:none">
+
+      <label>Media URL</label>
+      <input id="postMediaUrl" type="url">
+
+    </div>
+
+    <button class="submit" onclick="publishPost()">
+      Publish Post
+    </button>
+
+  </div>
+</div>
+
 
 <script>
 
-/* =====================================================
-SUPABASE
-===================================================== */
-
 const SUPABASE_URL =
-"https://mbsvuwrgigqfporxwpfr.supabase.co";
+  "https://mbsvuwrgigqfporxwpfr.supabase.co";
 
-const SUPABASE_PUBLISHABLE_KEY =
-"sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
+const SUPABASE_KEY =
+  "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
 
 const supabaseClient =
-window.supabase.createClient(
-SUPABASE_URL,
-SUPABASE_PUBLISHABLE_KEY
-);
-
-/* =====================================================
-GLOBAL STATE
-===================================================== */
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
 
 let currentSession = null;
-let currentProfile = null;
-let currentPremiumTier = "free";
-let currentLevel = 0;
-let isAdmin = false;
+let currentUserData = null;
+let postsPage = 0;
+const POSTS_PER_PAGE = 10;
 
-let allPosts = [];
-let displayedPostCount = 10;
-let commentsOpen = {};
-let notificationChannel = null;
 
-/* =====================================================
-LIMITS
-===================================================== */
+/* ==============================
+   MODALS
+============================== */
 
-const PREMIUM_MAX_MIN_LEVEL = 3;
-const AVAILABLE_OFFERS_LIMIT = 5;
-const INITIAL_POST_LIMIT = 10;
+function openModal(id){
 
-/* =====================================================
-AUTH
-===================================================== */
+  const modal =
+    document.getElementById(id);
 
-async function startApp(){
+  if(modal){
+    modal.style.display = "block";
+  }
 
-try{
+  if(id === "notificationsModal"){
+    loadNotifications();
+  }
 
-const {
-data,
-error
-} =
-await supabaseClient.auth.getSession();
+  if(id === "referralModal"){
+    loadReferral();
+  }
 
-if(error){
-
-console.error(error);
-redirectToLogin();
-return;
+  if(id === "verifyModal"){
+    loadVerification();
+  }
 
 }
 
-if(
-!data ||
-!data.session
-){
+function closeModal(id){
 
-redirectToLogin();
-return;
+  const modal =
+    document.getElementById(id);
 
-}
-
-currentSession =
-data.session;
-
-document.getElementById(
-"checkingAuth"
-).style.display="none";
-
-document.getElementById(
-"app"
-).style.display="block";
-
-await initializeDashboard();
-
-}catch(error){
-
-console.error(
-"Authentication error:",
-error
-);
-
-redirectToLogin();
+  if(modal){
+    modal.style.display = "none";
+  }
 
 }
 
+window.addEventListener("click",function(e){
+
+  document.querySelectorAll(".modal").forEach(function(modal){
+
+    if(e.target === modal){
+      modal.style.display = "none";
+    }
+
+  });
+
+});
+
+
+/* ==============================
+   AUTH
+============================== */
+
+async function checkAuth(){
+
+  try{
+
+    const {
+      data,
+      error
+    } =
+    await supabaseClient.auth.getSession();
+
+    if(error){
+      throw error;
+    }
+
+    currentSession = data.session;
+
+    if(!currentSession){
+
+      document.getElementById("loginStatus").innerHTML =
+        "Not logged in";
+
+      setTimeout(function(){
+        location.href = "login.html";
+      },1000);
+
+      return;
+    }
+
+    const user =
+      currentSession.user;
+
+    document.getElementById("loginStatus").innerHTML =
+      "Logged in";
+
+    document.getElementById("currentUser").textContent =
+      user.email ||
+      user.user_metadata?.username ||
+      "User";
+
+    currentUserData = user;
+
+    await Promise.all([
+      loadOffers(),
+      loadPosts(),
+      loadNotifications(),
+      loadRate(),
+      loadVerification()
+    ]);
+
+  }catch(error){
+
+    console.error(error);
+
+    document.getElementById("loginStatus").innerHTML =
+      "Login error";
+
+  }
+
 }
 
-function redirectToLogin(){
-
-window.location.replace(
-"./login.html"
-);
-
-}
 
 supabaseClient.auth.onAuthStateChange(
-async(event,session)=>{
+  function(event,session){
 
-if(event==="SIGNED_OUT"){
+    currentSession = session;
 
-currentSession=null;
-
-redirectToLogin();
-
-return;
-
-}
-
-if(
-event==="SIGNED_IN" &&
-session
-){
-
-currentSession=session;
-
-}
-
-}
+  }
 );
 
-/* =====================================================
-INITIALIZE
-===================================================== */
 
-async function initializeDashboard(){
-
-if(!currentSession){
-
-redirectToLogin();
-return;
-
-}
-
-await updateUserUI();
-
-await Promise.allSettled([
-
-loadAvailableOffers(),
-loadNotifications(),
-loadPosts(false),
-loadLiveRate()
-
-]);
-
-subscribeToNotifications();
-
-}
-
-/* =====================================================
-USER
-===================================================== */
-
-async function updateUserUI(){
-
-if(!currentSession){
-
-redirectToLogin();
-return;
-
-}
-
-const user =
-currentSession.user;
-
-let username =
-user.user_metadata?.username ||
-user.email?.split("@")[0] ||
-"User";
-
-const {
-data:profile,
-error
-} =
-await supabaseClient
-.from("profiles")
-.select("*")
-.eq(
-"id",
-user.id
-)
-.maybeSingle();
-
-if(error){
-
-console.log(
-"Profile:",
-error.message
-);
-
-}
-
-currentProfile =
-profile || {};
-
-if(profile){
-
-username =
-profile.username ||
-username;
-
-currentPremiumTier =
-normalizePremiumTier(profile);
-
-currentLevel =
-getUserLevel(profile);
-
-isAdmin =
-detectAdmin(profile);
-
-}else{
-
-currentPremiumTier="free";
-currentLevel=0;
-isAdmin=false;
-
-}
-
-document.getElementById(
-"usernameDisplay"
-).textContent=username;
-
-updatePremiumBadge();
-
-updateVerificationStatus();
-
-}
-
-/* =====================================================
-PREMIUM STATE
-===================================================== */
-
-function normalizePremiumTier(profile){
-
-if(!profile)return "free";
-
-const values=[
-
-profile.premium_tier,
-profile.subscription_tier,
-profile.membership,
-profile.plan,
-profile.premium_plan,
-profile.account_tier
-
-];
-
-let value =
-values.find(
-v =>
-v!==null &&
-v!==undefined &&
-String(v).trim()!==""
-);
-
-if(!value)return "free";
-
-value =
-String(value)
-.toLowerCase()
-.trim()
-.replace(/\s+/g,"");
-
-if(
-value==="premiummax" ||
-value==="max" ||
-value==="premium_max"
-){
-
-return "premium_max";
-
-}
-
-if(
-value==="premium+" ||
-value==="premiumplus" ||
-value==="premium_plus" ||
-value==="plus"
-){
-
-return "premium_plus";
-
-}
-
-if(value==="premium"){
-
-return "premium";
-
-}
-
-return "free";
-
-}
-
-function getUserLevel(profile){
-
-const values=[
-
-profile.level,
-profile.user_level,
-profile.account_level,
-profile.rank_level
-
-];
-
-for(
-const value of values
-){
-
-if(
-value!==null &&
-value!==undefined &&
-value!==""
-){
-
-const number=Number(value);
-
-if(!Number.isNaN(number)){
-
-return number;
-
-}
-
-}
-
-}
-
-return 0;
-
-}
-
-function detectAdmin(profile){
-
-if(!profile)return false;
-
-if(profile.is_admin===true)return true;
-
-if(
-String(profile.role||"")
-.toLowerCase()==="admin"
-){
-
-return true;
-
-}
-
-if(
-String(profile.account_role||"")
-.toLowerCase()==="admin"
-){
-
-return true;
-
-}
-
-return false;
-
-}
-
-function hasPremium(){
-
-return [
-"premium",
-"premium_plus",
-"premium_max"
-].includes(currentPremiumTier);
-
-}
-
-function hasPremiumPlus(){
-
-return [
-"premium_plus",
-"premium_max"
-].includes(currentPremiumTier);
-
-}
-
-function canPostImage(){
-
-return hasPremium();
-
-}
-
-function canPostVideo(){
-
-return hasPremiumPlus();
-
-}
-
-function updatePremiumBadge(){
-
-const header =
-document.getElementById(
-"headerPremiumBadge"
-);
-
-if(!header)return;
-
-if(currentPremiumTier==="premium"){
-
-header.textContent="🟢 Premium";
-
-}else if(
-currentPremiumTier==="premium_plus"
-){
-
-header.textContent="🔵 Premium+";
-
-}else if(
-currentPremiumTier==="premium_max"
-){
-
-header.textContent="🟣 Premium Max";
-
-}else{
-
-header.textContent="";
-
-}
-
-}
-
-/* =====================================================
-LIVE RATE
-===================================================== */
-
-async function loadLiveRate(){
-
-const valueElement =
-document.getElementById(
-"liveRateValue"
-);
-
-const unitElement =
-document.getElementById(
-"liveRateUnit"
-);
-
-const changeElement =
-document.getElementById(
-"liveRateChange"
-);
-
-try{
-
-let data=null;
-
-const result =
-await supabaseClient
-.from("market_rates")
-.select("*")
-.order(
-"created_at",
-{
-ascending:false
-}
-)
-.limit(1)
-.maybeSingle();
-
-if(
-!result.error &&
-result.data
-){
-
-data=result.data;
-
-}
-
-if(!data){
-
-const fallback =
-await supabaseClient
-.from("rates")
-.select("*")
-.order(
-"created_at",
-{
-ascending:false
-}
-)
-.limit(1)
-.maybeSingle();
-
-if(
-!fallback.error &&
-fallback.data
-){
-
-data=fallback.data;
-
-}
-
-}
-
-if(!data){
-
-valueElement.textContent="—";
-
-unitElement.textContent="Rate unavailable";
-
-changeElement.textContent="Offline";
-
-return;
-
-}
-
-const rate =
-getFirstValue(
-data,
-[
-"rate",
-"price",
-"exchange_rate",
-"usdt_per_diamond",
-"diamond_price",
-"price_per_diamond"
-]
-);
-
-const unit =
-getFirstValue(
-data,
-[
-"unit",
-"symbol",
-"pair",
-"market"
-]
-);
-
-const change =
-getFirstValue(
-data,
-[
-"change_percent",
-"change",
-"percentage_change"
-]
-);
-
-valueElement.textContent =
-rate!==null
-?
-formatNumber(rate)
-:
-"—";
-
-unitElement.textContent =
-unit ||
-"USDT / 💎";
-
-changeElement.textContent =
-change!==null
-?
-String(change).includes("%")
-?
-String(change)
-:
-String(change)+"%"
-:
-"Live";
-
-}catch(error){
-
-console.error(
-"Live rate:",
-error
-);
-
-valueElement.textContent="—";
-unitElement.textContent="Rate unavailable";
-changeElement.textContent="Offline";
-
-}
-
-}
-
-function openLiveRate(){
-
-document
-.querySelector(".rate-box")
-?.scrollIntoView({
-behavior:"smooth",
-block:"center"
-});
-
-loadLiveRate();
-
-}
-
-/* =====================================================
-VERIFY IDENTITY
-===================================================== */
-
-function openVerifyIdentity(){
-
-if(!requireLogin())return;
-
-document.getElementById(
-"verifyModal"
-).style.display="flex";
-
-updateVerificationStatus();
-
-}
-
-function closeVerifyIdentity(){
-
-document.getElementById(
-"verifyModal"
-).style.display="none";
-
-}
-
-async function updateVerificationStatus(){
-
-if(!currentSession)return;
-
-const statusElement =
-document.getElementById(
-"verificationStatus"
-);
-
-if(!statusElement)return;
-
-let status =
-getFirstValue(
-currentProfile,
-[
-"verification_status",
-"kyc_status",
-"identity_status"
-]
-);
-
-if(status){
-
-statusElement.textContent =
-formatStatus(status);
-
-return;
-
-}
-
-const result =
-await supabaseClient
-.from("identity_verifications")
-.select("status")
-.eq(
-"user_id",
-currentSession.user.id
-)
-.order(
-"created_at",
-{
-ascending:false
-}
-)
-.limit(1)
-.maybeSingle();
-
-if(
-!result.error &&
-result.data
-){
-
-statusElement.textContent =
-formatStatus(result.data.status);
-
-}else{
-
-statusElement.textContent=
-"Not submitted";
-
-}
-
-}
-
-async function submitVerification(){
-
-if(!requireLogin())return;
-
-const button =
-document.getElementById(
-"verifySubmitBtn"
-);
-
-const identityType =
-document.getElementById(
-"identityType"
-).value;
-
-const fullName =
-document.getElementById(
-"identityName"
-).value.trim();
-
-const identityNumber =
-document.getElementById(
-"identityNumber"
-).value.trim();
-
-const country =
-document.getElementById(
-"identityCountry"
-).value.trim();
-
-if(
-!fullName ||
-!identityNumber ||
-!country
-){
-
-alert(
-"Please complete all identity fields."
-);
-
-return;
-
-}
-
-button.disabled=true;
-button.textContent="Submitting...";
-
-const payload={
-
-user_id:
-currentSession.user.id,
-
-identity_type:
-identityType,
-
-full_name:
-fullName,
-
-identity_number:
-identityNumber,
-
-country:
-country,
-
-status:
-"pending"
-
-};
-
-const {
-error
-} =
-await supabaseClient
-.from("identity_verifications")
-.insert(payload);
-
-button.disabled=false;
-button.textContent="Submit for Review";
-
-if(error){
-
-console.error(error);
-
-alert(
-"Could not submit verification: "+
-error.message
-);
-
-return;
-
-}
-
-alert(
-"Identity verification submitted for admin review."
-);
-
-await updateVerificationStatus();
-
-}
-
-/* =====================================================
-REFERRAL
-===================================================== */
-
-function openReferral(){
-
-if(!requireLogin())return;
-
-document.getElementById(
-"referralModal"
-).style.display="flex";
-
-loadReferral();
-
-}
-
-function closeReferral(){
-
-document.getElementById(
-"referralModal"
-).style.display="none";
-
-}
-
-async function loadReferral(){
-
-const element =
-document.getElementById(
-"referralCode"
-);
-
-const user =
-currentSession.user;
-
-let code =
-currentProfile?.referral_code ||
-currentProfile?.referralCode;
-
-if(!code){
-
-const result =
-await supabaseClient
-.from("profiles")
-.select("referral_code")
-.eq(
-"id",
-user.id
-)
-.maybeSingle();
-
-if(
-!result.error &&
-result.data
-){
-
-code=result.data.referral_code;
-
-}
-
-}
-
-if(!code){
-
-code=user.id;
-
-}
-
-const referralUrl =
-window.location.origin+
-"/register.html?ref="+
-encodeURIComponent(code);
-
-element.textContent=referralUrl;
-
-}
-
-async function copyReferralCode(){
-
-const element =
-document.getElementById(
-"referralCode"
-);
-
-const value =
-element.textContent;
-
-try{
-
-await navigator.clipboard.writeText(value);
-
-alert(
-"Referral link copied."
-);
-
-}catch(error){
-
-prompt(
-"Copy referral link:",
-value
-);
-
-}
-
-}
-
-/* =====================================================
-CREATE AD
-===================================================== */
-
-function openCreateAd(){
-
-if(!requireLogin())return;
-
-document.getElementById(
-"createAdModal"
-).style.display="flex";
-
-}
-
-function closeCreateAd(){
-
-document.getElementById(
-"createAdModal"
-).style.display="none";
-
-}
-
-function createOffer(){
-
-openCreateAd();
-
-}
-
-async function publishAd(){
-
-if(!requireLogin())return;
-
-const button =
-document.getElementById(
-"publishAdBtn"
-);
-
-const type =
-document.getElementById(
-"adType"
-).value;
-
-const asset =
-document.getElementById(
-"adAsset"
-).value;
-
-const rate =
-document.getElementById(
-"adRate"
-).value;
-
-const amount =
-document.getElementById(
-"adAmount"
-).value;
-
-const min =
-document.getElementById(
-"adMin"
-).value;
-
-const max =
-document.getElementById(
-"adMax"
-).value;
-
-const paymentMethod =
-document.getElementById(
-"adPaymentMethod"
-).value.trim();
-
-if(
-!rate ||
-!amount ||
-!paymentMethod
-){
-
-alert(
-"Please complete the required ad fields."
-);
-
-return;
-
-}
-
-if(Number(rate)<=0){
-
-alert("Rate must be greater than zero.");
-
-return;
-
-}
-
-if(Number(amount)<=0){
-
-alert("Available amount must be greater than zero.");
-
-return;
-
-}
-
-if(
-min &&
-Number(min)>Number(amount)
-){
-
-alert(
-"Minimum amount cannot exceed available amount."
-);
-
-return;
-
-}
-
-if(
-max &&
-Number(max)>Number(amount)
-){
-
-alert(
-"Maximum amount cannot exceed available amount."
-);
-
-return;
-
-}
-
-button.disabled=true;
-button.textContent="Publishing...";
-
-const payload={
-
-user_id:
-currentSession.user.id,
-
-type:type,
-
-asset:asset,
-
-rate:Number(rate),
-
-available_amount:Number(amount),
-
-min_amount:
-min
-?
-Number(min)
-:
-null,
-
-max_amount:
-max
-?
-Number(max)
-:
-null,
-
-payment_method:
-paymentMethod,
-
-status:
-"active",
-
-is_active:true
-
-};
-
-let result =
-await supabaseClient
-.from("p2p_offers")
-.insert(payload);
-
-if(result.error){
-
-result =
-await supabaseClient
-.from("offers")
-.insert(payload);
-
-}
-
-button.disabled=false;
-button.textContent="Publish Ad";
-
-if(result.error){
-
-console.error(
-"Publish ad:",
-result.error
-);
-
-alert(
-"Could not publish ad: "+
-result.error.message
-);
-
-return;
-
-}
-
-alert(
-"P2P ad published successfully."
-);
-
-closeCreateAd();
-
-await loadAvailableOffers();
-
-}
-
-/* =====================================================
-TRANSFER DIAMONDS
-===================================================== */
-
-function openTransfer(){
-
-if(!requireLogin())return;
-
-document.getElementById(
-"transferModal"
-).style.display="flex";
-
-}
-
-function closeTransfer(){
-
-document.getElementById(
-"transferModal"
-).style.display="none";
-
-}
-
-async function submitDiamondTransfer(){
-
-if(!requireLogin())return;
-
-const recipient =
-document.getElementById(
-"transferRecipient"
-).value.trim();
-
-const amount =
-Number(
-document.getElementById(
-"transferAmount"
-).value
-);
-
-const button =
-document.getElementById(
-"transferSubmitBtn"
-);
-
-if(!recipient){
-
-alert(
-"Enter the recipient username or user ID."
-);
-
-return;
-
-}
-
-if(
-!Number.isFinite(amount) ||
-amount<=0
-){
-
-alert(
-"Enter a valid diamond amount."
-);
-
-return;
-
-}
-
-if(
-recipient===
-currentSession.user.id
-){
-
-alert(
-"You cannot transfer diamonds to yourself."
-);
-
-return;
-
-}
-
-button.disabled=true;
-button.textContent="Processing...";
-
-let result;
-
-try{
-
-result =
-await supabaseClient.rpc(
-"transfer_diamonds",
-{
-p_recipient:recipient,
-p_amount:amount
-}
-);
-
-}catch(error){
-
-console.error(error);
-
-button.disabled=false;
-button.textContent="Transfer 💎";
-
-alert(
-"Transfer could not be processed."
-);
-
-return;
-
-}
-
-button.disabled=false;
-button.textContent="Transfer 💎";
-
-if(result.error){
-
-console.error(
-"Diamond transfer:",
-result.error
-);
-
-alert(
-"Transfer failed: "+
-result.error.message
-);
-
-return;
-
-}
-
-alert(
-"Diamond transfer completed."
-);
-
-document.getElementById(
-"transferRecipient"
-).value="";
-
-document.getElementById(
-"transferAmount"
-).value="";
-
-closeTransfer();
-
-}
-
-/* =====================================================
-SUPPORT
-===================================================== */
-
-function openSupport(){
-
-if(!requireLogin())return;
-
-document.getElementById(
-"supportModal"
-).style.display="flex";
-
-}
-
-function closeSupport(){
-
-document.getElementById(
-"supportModal"
-).style.display="none";
-
-}
-
-function openP2PHelp(){
-
-closeSupport();
-
-window.location.href=
-"./message.html?support=p2p";
-
-}
-
-function openSecurityHelp(){
-
-closeSupport();
-
-window.location.href=
-"./message.html?support=security";
-
-}
-
-/* =====================================================
-2FA
-===================================================== */
-
-function openTwoFA(){
-
-if(!requireLogin())return;
-
-document.getElementById(
-"twoFAModal"
-).style.display="flex";
-
-}
-
-function closeTwoFA(){
-
-document.getElementById(
-"twoFAModal"
-).style.display="none";
-
-}
-
-async function enableTwoFA(){
-
-if(!requireLogin())return;
-
-const button =
-document.getElementById(
-"twoFAButton"
-);
-
-button.disabled=true;
-button.textContent="Opening security settings...";
-
-try{
-
-window.location.href="./profile.html?security=2fa";
-
-}catch(error){
-
-console.error(error);
-
-button.disabled=false;
-button.textContent="Enable 2FA";
-
-}
-
-}
-
-/* =====================================================
-NAVIGATION
-===================================================== */
-
-function requireLogin(){
-
-if(!currentSession){
-
-redirectToLogin();
-
-return false;
-
-}
-
-return true;
-
-}
-
-function goHome(){
-
-if(!requireLogin())return;
-
-window.scrollTo({
-top:0,
-behavior:"smooth"
-});
-
-}
-
-function openMarket(){
-
-if(!requireLogin())return;
-
-window.location.href="./market.html";
-
-}
-
-function openP2P(){
-
-if(!requireLogin())return;
-
-window.location.href="./wallet.html";
-
-}
-
-function openMessages(){
-
-if(!requireLogin())return;
-
-window.location.href="./message.html";
-
-}
-
-function openProfile(){
-
-if(!requireLogin())return;
-
-window.location.href="./profile.html";
-
-}
-
-function openUserProfile(userId){
-
-if(!requireLogin())return;
-
-window.location.href=
-"./profile.html?id="+
-encodeURIComponent(userId);
-
-}
-
-function openP2POffer(offerId){
-
-if(!requireLogin())return;
-
-window.location.href=
-"./p2p-order.html?offer="+
-encodeURIComponent(offerId);
-
-}
-
-/* =====================================================
-LOGOUT
-===================================================== */
+/* ==============================
+   LOGOUT
+============================== */
 
 async function logout(){
 
-try{
+  try{
 
-const {
-error
-} =
-await supabaseClient.auth.signOut();
+    await supabaseClient.auth.signOut();
 
-if(error){
+  }catch(error){
 
-alert(
-"Logout failed: "+
-error.message
-);
+    console.error(error);
 
-return;
+  }
+
+  location.href = "login.html";
 
 }
 
-currentSession=null;
 
-redirectToLogin();
+/* ==============================
+   MARKET
+============================== */
 
-}catch(error){
+function openMarket(){
 
-console.error(error);
-
-redirectToLogin();
-
-}
+  location.href = "live.html";
 
 }
 
-/* =====================================================
-P2P OFFERS
-===================================================== */
 
-async function loadAvailableOffers(){
+async function loadRate(){
 
-const container =
-document.getElementById(
-"p2pOffersContainer"
-);
+  const value =
+    document.getElementById("rateValue");
 
-try{
+  const updated =
+    document.getElementById("rateUpdated");
 
-let result =
-await supabaseClient
-.from("p2p_offers")
-.select("*")
-.limit(50);
+  try{
 
-if(result.error){
+    const {
+      data,
+      error
+    } =
+    await supabaseClient
+      .from("market_rates")
+      .select("*")
+      .order("created_at",{ascending:false})
+      .limit(1)
+      .maybeSingle();
 
-result =
-await supabaseClient
-.from("offers")
-.select("*")
-.limit(50);
+    if(error){
+      throw error;
+    }
 
-}
+    if(data){
 
-if(result.error){
+      const rate =
+        data.rate ??
+        data.usdt_to_diamond ??
+        data.value;
 
-renderNoOffers();
+      if(rate !== null && rate !== undefined){
 
-return;
+        value.textContent =
+          Number(rate).toLocaleString();
 
-}
+      }else{
 
-const offers =
-(result.data||[])
-.filter(isOfferAvailable);
+        value.textContent =
+          "Loading...";
 
-if(!offers.length){
+      }
 
-renderNoOffers();
+      updated.textContent =
+        data.created_at
+          ? new Date(data.created_at)
+              .toLocaleString()
+          : "Updating";
 
-return;
+    }else{
 
-}
+      value.textContent =
+        "Loading...";
 
-await renderAvailableOffers(offers);
+    }
 
-}catch(error){
+  }catch(error){
 
-console.error(error);
+    console.error("Rate error:",error);
 
-renderNoOffers();
+    value.textContent =
+      "Loading...";
 
-}
+    updated.textContent =
+      "Updating";
 
-}
-
-function isOfferAvailable(offer){
-
-if(!offer)return false;
-
-const status =
-String(
-offer.status??""
-)
-.toLowerCase()
-.trim();
-
-if([
-"closed",
-"cancelled",
-"canceled",
-"completed",
-"inactive",
-"disabled",
-"sold"
-].includes(status)){
-
-return false;
+  }
 
 }
 
-if(
-offer.is_active===false ||
-offer.active===false
-){
 
-return false;
+/* ==============================
+   OFFERS
+============================== */
 
-}
+async function loadOffers(){
 
-const amountValue =
-getFirstValue(
-offer,
-[
-"available_amount",
-"available",
-"remaining_amount",
-"amount"
-]
-);
+  const container =
+    document.getElementById("offers");
 
-if(
-amountValue!==null &&
-amountValue!==""
-){
+  container.innerHTML =
+    '<div class="empty">🔄<br>Loading available offers...</div>';
 
-const amount=Number(amountValue);
+  try{
 
-if(
-!Number.isNaN(amount) &&
-amount<=0
-){
+    const {
+      data,
+      error
+    } =
+    await supabaseClient
+      .from("p2p_ads")
+      .select("*")
+      .eq("status","active")
+      .order("created_at",{ascending:false})
+      .limit(50);
 
-return false;
+    if(error){
+      throw error;
+    }
 
-}
+    if(!data || !data.length){
 
-}
+      container.innerHTML =
+        '<div class="empty">No available offers.</div>';
 
-return true;
+      return;
 
-}
+    }
 
-async function renderAvailableOffers(offers){
+    container.innerHTML = "";
 
-const container =
-document.getElementById(
-"p2pOffersContainer"
-);
+    data.forEach(function(ad){
 
-const userIds=[
-...new Set(
-offers
-.map(
-offer =>
-offer.user_id||
-offer.seller_id||
-offer.owner_id||
-offer.created_by
-)
-.filter(Boolean)
-)
-];
+      const div =
+        document.createElement("div");
 
-let profiles=[];
+      div.className = "offer";
 
-if(userIds.length){
+      const trade =
+        String(ad.trade_type || "")
+          .toLowerCase();
 
-const result =
-await supabaseClient
-.from("profiles")
-.select(
-"id,username,avatar_url"
-)
-.in(
-"id",
-userIds
-);
+      div.innerHTML = `
 
-if(!result.error){
+        <div class="offer-head">
 
-profiles=result.data||[];
+          <strong>
+            ${escapeHTML(ad.username || ad.user_name || "User")}
+          </strong>
 
-}
+          <span class="badge ${trade === "buy" ? "buy":"sell"}">
+            ${escapeHTML(ad.trade_type || "")}
+          </span>
 
-}
+        </div>
 
-const profileMap={};
+        <p>
+          Asset:
+          <strong>
+            ${ad.asset === "diamond" ? "💎 Diamond" : escapeHTML(ad.asset || "USDT")}
+          </strong>
+        </p>
 
-profiles.forEach(
-profile=>{
-profileMap[profile.id]=profile;
-}
-);
+        <p>
+          Rate:
+          <strong>
+            ${formatNumber(ad.rate)}
+          </strong>
+        </p>
 
-const sorted =
-[...offers].sort(
-(a,b)=>{
+        <p>
+          Available:
+          ${formatNumber(ad.available_amount)}
+        </p>
 
-const aPinned =
-Boolean(
-a.is_pinned||
-a.pinned
-);
+        <p>
+          Min:
+          ${formatNumber(ad.minimum_amount)}
+          |
+          Max:
+          ${formatNumber(ad.maximum_amount)}
+        </p>
 
-const bPinned =
-Boolean(
-b.is_pinned||
-b.pinned
-);
+        <p>
+          Payment:
+          ${escapeHTML(ad.payment_method || "Not specified")}
+        </p>
 
-return Number(bPinned)-
-Number(aPinned);
+      `;
 
-}
-);
+      container.appendChild(div);
 
-container.innerHTML="";
+    });
 
-sorted
-.slice(
-0,
-AVAILABLE_OFFERS_LIMIT
-)
-.forEach(
-offer=>{
+  }catch(error){
 
-container.appendChild(
-createOfferCard(
-offer,
-profileMap
-)
-);
+    console.error("Offers:",error);
 
-}
-);
+    container.innerHTML =
+      '<div class="empty">Unable to load offers.</div>';
+
+  }
 
 }
 
-function createOfferCard(
-offer,
-profileMap
-){
 
-const card =
-document.createElement("div");
+/* ==============================
+   POSTS
+============================== */
 
-card.className="p2p-card";
+async function loadPosts(){
 
-const userId =
-offer.user_id||
-offer.seller_id||
-offer.owner_id||
-offer.created_by||
-"";
+  postsPage = 0;
 
-const profile =
-profileMap[userId]||{};
-
-const username =
-profile.username||
-offer.username||
-offer.seller_username||
-"Available trader";
-
-const avatarUrl =
-profile.avatar_url||
-offer.avatar_url||
-"";
-
-const initial =
-username.charAt(0).toUpperCase()||
-"U";
-
-const typeRaw =
-getFirstValue(
-offer,
-[
-"type",
-"trade_type",
-"side",
-"offer_type"
-]
-);
-
-const type =
-String(
-typeRaw||"buy"
-).toLowerCase();
-
-const rate =
-getFirstValue(
-offer,
-[
-"rate",
-"price",
-"exchange_rate",
-"price_per_usdt",
-"price_per_diamond"
-]
-);
-
-const amount =
-getFirstValue(
-offer,
-[
-"available_amount",
-"available",
-"remaining_amount",
-"amount"
-]
-);
-
-const min =
-getFirstValue(
-offer,
-[
-"min_amount",
-"minimum_amount",
-"min"
-]
-);
-
-const max =
-getFirstValue(
-offer,
-[
-"max_amount",
-"maximum_amount",
-"max"
-]
-);
-
-const normalizedType =
-type.includes("sell")
-?
-"sell"
-:
-"buy";
-
-const label =
-normalizedType==="sell"
-?
-"SELL USDT / 💎"
-:
-"BUY USDT / 💎";
-
-const avatarHTML =
-avatarUrl
-?
-`
-<div class="avatar">
-<img
-src="${escapeHtml(avatarUrl)}"
-alt="Profile">
-</div>
-`
-:
-`
-<div class="avatar">
-${escapeHtml(initial)}
-</div>
-`;
-
-const pinned =
-Boolean(
-offer.is_pinned||
-offer.pinned
-);
-
-card.innerHTML=`
-
-${
-pinned
-?
-`
-<div class="pin-label">
-📌 Pinned
-</div>
-`
-:
-""
-}
-
-<div class="offer-type">
-${escapeHtml(label)}
-</div>
-
-<div class="p2p-card-header">
-
-<div class="seller">
-
-${avatarHTML}
-
-<div>
-
-<div class="username">
-${escapeHtml(username)}
-</div>
-
-<div class="online">
-● Available
-</div>
-
-</div>
-
-</div>
-
-${
-rate!==null &&
-rate!==""
-?
-`
-<div class="rate">
-
-<strong>
-${escapeHtml(formatNumber(rate))} 💎
-</strong>
-
-<small>
-USDT / 💎
-</small>
-
-</div>
-`
-:
-""
-}
-
-</div>
-
-<div class="trade-info">
-
-${
-amount!==null &&
-amount!==""
-?
-`
-<span>
-Available:
-<strong>
-${escapeHtml(formatNumber(amount))} 💎
-</strong>
-</span>
-`
-:
-`
-<span>
-Available offer
-</span>
-`
-}
-
-${
-min!==null &&
-min!==""
-?
-`
-<span>
-Min:
-${escapeHtml(formatNumber(min))} 💎
-</span>
-`
-:
-""
-}
-
-${
-max!==null &&
-max!==""
-?
-`
-<span>
-Max:
-${escapeHtml(formatNumber(max))} 💎
-</span>
-`
-:
-""
-}
-
-</div>
-
-<button
-class="buy-btn"
-onclick="
-openP2POffer(
-'${escapeJs(offer.id)}'
-);
-">
-
-${
-normalizedType==="sell"
-?
-"Buy 💎"
-:
-"View Offer"
-}
-
-</button>
-
-`;
-
-return card;
+  await fetchPosts(false);
 
 }
 
-function renderNoOffers(){
-
-document.getElementById(
-"p2pOffersContainer"
-).innerHTML=`
-
-<div class="no-offers">
-
-<div class="no-offers-icon">
-🔄
-</div>
-
-<strong>
-No available offers yet.
-</strong>
-
-<small>
-Available P2P offers will appear here
-when traders create them.
-</small>
-
-</div>
-
-`;
-
-}
-
-/* =====================================================
-POSTS
-===================================================== */
-
-async function loadPosts(shuffle=false){
-
-if(!requireLogin())return;
-
-const feed =
-document.getElementById(
-"postsFeed"
-);
-
-feed.innerHTML=`
-
-<div class="loading-posts">
-Loading public posts...
-</div>
-
-`;
-
-const {
-data:posts,
-error
-} =
-await supabaseClient
-.from("posts")
-.select("*")
-.or(
-"visibility.eq.public,visibility.is.null"
-)
-.order(
-"created_at",
-{
-ascending:false
-}
-)
-.limit(100);
-
-if(error){
-
-console.error(
-"Posts:",
-error
-);
-
-feed.innerHTML=`
-
-<div class="no-posts">
-
-Could not load posts.
-
-<br>
-
-<small>
-${escapeHtml(error.message)}
-</small>
-
-</div>
-
-`;
-
-return;
-
-}
-
-allPosts=posts||[];
-
-if(shuffle){
-
-allPosts.sort(
-()=>Math.random()-.5
-);
-
-}
-
-displayedPostCount=
-INITIAL_POST_LIMIT;
-
-await renderPosts();
-
-}
 
 async function loadMorePosts(){
 
-if(
-displayedPostCount>=
-allPosts.length
-){
+  postsPage++;
 
-return;
+  await fetchPosts(true);
 
 }
 
-displayedPostCount+=
-INITIAL_POST_LIMIT;
 
-await renderPosts();
+async function fetchPosts(append){
 
-}
-
-async function renderPosts(){
-
-if(!requireLogin())return;
-
-const feed =
-document.getElementById(
-"postsFeed"
-);
-
-const visiblePosts =
-allPosts.slice(
-0,
-displayedPostCount
-);
-
-if(!visiblePosts.length){
-
-feed.innerHTML=`
-
-<div class="no-posts">
-No public posts yet.
-</div>
-
-`;
-
-document.getElementById(
-"loadMoreBtn"
-).style.display="none";
-
-return;
-
-}
-
-const postIds =
-visiblePosts.map(
-p=>p.id
-);
-
-const userIds=[
-...new Set(
-visiblePosts
-.map(
-p=>p.user_id
-)
-.filter(Boolean)
-)
-];
-
-const profileMap={};
-
-if(userIds.length){
-
-const {
-data
-} =
-await supabaseClient
-.from("profiles")
-.select(
-"id,username,avatar_url"
-)
-.in(
-"id",
-userIds
-);
-
-(data||[]).forEach(
-profile=>{
-profileMap[
-profile.id
-]=profile;
-}
-);
-
-}
-
-let likes=[];
-
-if(postIds.length){
-
-const {
-data
-} =
-await supabaseClient
-.from("post_likes")
-.select(
-"post_id,user_id"
-)
-.in(
-"post_id",
-postIds
-);
-
-likes=data||[];
-
-}
-
-const likeCount={};
-
-likes.forEach(
-like=>{
-
-likeCount[
-like.post_id
-]=
-(
-likeCount[
-like.post_id
-]||0
-)+1;
-
-}
-);
-
-const myLikes =
-new Set(
-likes
-.filter(
-like =>
-like.user_id===
-currentSession.user.id
-)
-.map(
-like =>
-like.post_id
-)
-);
-
-let comments=[];
-
-if(postIds.length){
-
-const {
-data
-} =
-await supabaseClient
-.from("post_comments")
-.select(
-"id,post_id,user_id,comment,created_at"
-)
-.in(
-"post_id",
-postIds
-)
-.order(
-"created_at",
-{
-ascending:true
-}
-);
-
-comments=data||[];
-
-}
-
-const commentUserIds=[
-...new Set(
-comments
-.map(
-c=>c.user_id
-)
-.filter(Boolean)
-)
-];
-
-if(commentUserIds.length){
-
-const {
-data
-} =
-await supabaseClient
-.from("profiles")
-.select(
-"id,username,avatar_url"
-)
-.in(
-"id",
-commentUserIds
-);
-
-(data||[]).forEach(
-profile=>{
-profileMap[
-profile.id
-]=profile;
-}
-);
-
-}
-
-feed.innerHTML="";
-
-visiblePosts.forEach(
-post=>{
-
-const profile =
-profileMap[
-post.user_id
-]||{};
-
-const username =
-profile.username||
-"User";
-
-const avatar =
-profile.avatar_url||
-"";
-
-const initial =
-username.charAt(0).toUpperCase()||
-"U";
-
-const postComments =
-comments.filter(
-c =>
-String(c.post_id)===
-String(post.id)
-);
-
-const isOwner =
-currentSession.user.id===
-post.user_id;
-
-const card =
-document.createElement(
-"article"
-);
-
-card.className="post-card";
-
-const avatarHTML =
-avatar
-?
-`
-<div class="post-avatar">
-
-<img
-src="${escapeHtml(avatar)}"
-alt="Profile">
-
-</div>
-`
-:
-`
-<div class="post-avatar">
-${escapeHtml(initial)}
-</div>
-`;
-
-const mediaHTML =
-renderPostMedia(post);
-
-const isPinned =
-Boolean(
-post.is_pinned||
-post.pinned
-);
-
-card.innerHTML=`
-
-${
-isPinned
-?
-`
-<div class="post-pin">
-📌 Pinned
-</div>
-`
-:
-""
-}
-
-<div
-class="post-header"
-onclick="
-openUserProfile(
-'${escapeJs(post.user_id)}'
-);
-">
-
-${avatarHTML}
-
-<div class="post-user-info">
-
-<div class="post-name">
-${escapeHtml(username)}
-</div>
-
-<div class="post-handle">
-@${escapeHtml(username)}
-</div>
-
-</div>
-
-<div class="post-time">
-${escapeHtml(
-formatPostTime(
-post.created_at
-)
-)}
-</div>
-
-${
-isOwner
-?
-`
-<button
-class="post-menu"
-onclick="
-event.stopPropagation();
-deletePost(
-'${escapeJs(post.id)}'
-);
-">
-🗑️
-</button>
-`
-:
-""
-}
-
-</div>
-
-<div class="post-content">
-${escapeHtml(post.content||"")}
-</div>
-
-${mediaHTML}
-
-<div class="post-actions">
-
-<button
-class="post-action ${
-myLikes.has(post.id)
-?
-"liked"
-:
-""
-}"
-onclick="
-event.stopPropagation();
-likePost(
-'${escapeJs(post.id)}'
-);
-">
-
-${
-myLikes.has(post.id)
-?
-"♥ Liked"
-:
-"♡ Like"
-}
-
-<span>
-${likeCount[post.id]||0}
-</span>
-
-</button>
-
-<button
-class="post-action"
-onclick="
-event.stopPropagation();
-toggleComments(
-'${escapeJs(post.id)}'
-);
-">
+  const container =
+    document.getElementById("posts");
 
-💬 Comments
+  if(!append){
 
-<span>
-${postComments.length}
-</span>
+    container.innerHTML =
+      '<div class="empty">Loading public posts...</div>';
 
-</button>
-
-<button
-class="post-action"
-onclick="
-event.stopPropagation();
-sharePost(
-'${escapeJs(post.id)}'
-);
-">
-
-↗ Share
-
-</button>
-
-</div>
-
-<div
-id="comments-${escapeHtml(post.id)}"
-class="comments-box"
-style="
-display:${
-commentsOpen[post.id]
-?
-"block"
-:
-"none"
-};
-">
-
-${renderComments(
-post.id,
-postComments,
-profileMap
-)}
-
-</div>
-
-`;
-
-feed.appendChild(card);
-
-}
-);
-
-document.getElementById(
-"loadMoreBtn"
-).style.display =
-displayedPostCount<
-allPosts.length
-?
-"block"
-:
-"none";
-
-}
-
-/* =====================================================
-POST MEDIA
-===================================================== */
-
-function renderPostMedia(post){
-
-const mediaUrl =
-post.media_url||
-post.image_url||
-post.video_url||
-"";
-
-if(!mediaUrl)return "";
-
-const type =
-String(
-post.media_type||
-post.post_type||
-""
-).toLowerCase();
-
-if(
-type==="video"||
-post.video_url
-){
-
-return `
-
-<div class="post-media">
-
-<video
-src="${escapeHtml(mediaUrl)}"
-controls
-playsinline
-preload="metadata">
-</video>
-
-</div>
-
-<div class="post-type-label">
-🎥 Video
-</div>
-
-`;
-
-}
-
-return `
-
-<div class="post-media">
-
-<img
-src="${escapeHtml(mediaUrl)}"
-alt="Post image"
-loading="lazy">
-
-</div>
-
-<div class="post-type-label">
-🖼️ Picture
-</div>
-
-`;
-
-}
-
-/* =====================================================
-LIKE
-===================================================== */
-
-async function likePost(postId){
-
-if(!requireLogin())return;
-
-const userId =
-currentSession.user.id;
-
-const {
-data:existing,
-error:checkError
-} =
-await supabaseClient
-.from("post_likes")
-.select("post_id")
-.eq(
-"post_id",
-postId
-)
-.eq(
-"user_id",
-userId
-)
-.maybeSingle();
-
-if(checkError){
-
-alert(
-"Could not check like."
-);
-
-return;
-
-}
-
-if(existing){
-
-const {
-error
-} =
-await supabaseClient
-.from("post_likes")
-.delete()
-.eq(
-"post_id",
-postId
-)
-.eq(
-"user_id",
-userId
-);
-
-if(error){
-
-alert(error.message);
-
-return;
-
-}
+  }
 
-}else{
+  try{
 
-const {
-error
-} =
-await supabaseClient
-.from("post_likes")
-.insert({
-post_id:postId,
-user_id:userId
-});
+    const from =
+      postsPage * POSTS_PER_PAGE;
 
-if(error){
+    const to =
+      from + POSTS_PER_PAGE - 1;
 
-alert(error.message);
+    const {
+      data,
+      error
+    } =
+    await supabaseClient
+      .from("posts")
+      .select("*")
+      .eq("visibility","public")
+      .order("created_at",{ascending:false})
+      .range(from,to);
 
-return;
+    if(error){
+      throw error;
+    }
 
-}
+    if(!append){
+      container.innerHTML = "";
+    }
 
-}
+    if(!data || !data.length){
 
-await renderPosts();
+      if(!append){
 
-}
+        container.innerHTML =
+          '<div class="empty">No public posts yet.</div>';
 
-/* =====================================================
-COMMENTS
-===================================================== */
+      }
 
-function toggleComments(postId){
+      document.getElementById("loadMoreBtn")
+        .style.display = "none";
 
-commentsOpen[postId]=
-!commentsOpen[postId];
+      return;
 
-const box =
-document.getElementById(
-"comments-"+postId
-);
+    }
 
-if(box){
+    data.forEach(function(post){
 
-box.style.display =
-commentsOpen[postId]
-?
-"block"
-:
-"none";
+      const div =
+        document.createElement("div");
 
-}
+      div.className =
+        "post";
 
-if(commentsOpen[postId]){
+      div.innerHTML = `
 
-refreshSinglePostComments(
-postId
-);
+        <div class="post-head">
 
-}
+          <strong>
+            ${escapeHTML(
+              post.username ||
+              post.user_name ||
+              "User"
+            )}
+          </strong>
 
-}
+          <small>
+            ${formatDate(post.created_at)}
+          </small>
 
-async function refreshSinglePostComments(postId){
-
-const box =
-document.getElementById(
-"comments-"+postId
-);
-
-if(!box)return;
-
-const {
-data,
-error
-} =
-await supabaseClient
-.from("post_comments")
-.select(
-"id,post_id,user_id,comment,created_at"
-)
-.eq(
-"post_id",
-postId
-)
-.order(
-"created_at",
-{
-ascending:true
-}
-);
+        </div>
 
-if(error){
+        <p>
+          ${escapeHTML(post.content || "")}
+        </p>
 
-console.error(error);
+        ${
+          post.media_url
+          ?
+          `<div>
+             ${
+               post.post_type === "video"
+               ?
+               `<video
+                 src="${escapeAttr(post.media_url)}"
+                 controls
+                 style="width:100%;border-radius:10px">
+                </video>`
+               :
+               `<img
+                 src="${escapeAttr(post.media_url)}"
+                 style="width:100%;border-radius:10px"
+                 alt="Post image">`
+             }
+           </div>`
+          :
+          ""
+        }
 
-return;
+      `;
 
-}
+      container.appendChild(div);
 
-const comments=data||[];
-
-const userIds=[
-...new Set(
-comments
-.map(
-c=>c.user_id
-)
-.filter(Boolean)
-)
-];
-
-const profileMap={};
-
-if(userIds.length){
-
-const {
-data:profiles
-} =
-await supabaseClient
-.from("profiles")
-.select(
-"id,username,avatar_url"
-)
-.in(
-"id",
-userIds
-);
-
-(profiles||[]).forEach(
-profile=>{
-profileMap[
-profile.id
-]=profile;
-}
-);
+    });
 
-}
+    document.getElementById("loadMoreBtn")
+      .style.display =
+        data.length === POSTS_PER_PAGE
+          ? "block"
+          : "none";
 
-box.innerHTML =
-renderComments(
-postId,
-comments,
-profileMap
-);
+  }catch(error){
 
-}
+    console.error("Posts:",error);
 
-function renderComments(
-postId,
-comments,
-profileMap
-){
-
-let html="";
-
-comments.forEach(
-comment=>{
-
-const profile =
-profileMap[
-comment.user_id
-]||{};
-
-const username =
-profile.username||
-"User";
-
-const avatar =
-profile.avatar_url||
-"";
-
-const initial =
-username.charAt(0).toUpperCase()||
-"U";
-
-const isOwner =
-currentSession &&
-currentSession.user.id===
-comment.user_id;
-
-const avatarHTML =
-avatar
-?
-`
-<div class="comment-avatar">
-
-<img
-src="${escapeHtml(avatar)}"
-alt="Profile">
-
-</div>
-`
-:
-`
-<div class="comment-avatar">
-${escapeHtml(initial)}
-</div>
-`;
-
-html+=`
-
-<div class="comment">
-
-${avatarHTML}
-
-<div class="comment-body">
-
-<div class="comment-name">
-${escapeHtml(username)}
-</div>
-
-<div class="comment-text">
-${escapeHtml(comment.comment||"")}
-</div>
-
-${
-isOwner
-?
-`
-<button
-class="comment-delete"
-onclick="
-deleteComment(
-'${escapeJs(comment.id)}',
-'${escapeJs(postId)}'
-);
-">
-Delete
-</button>
-`
-:
-""
-}
+    if(!append){
 
-</div>
+      container.innerHTML =
+        '<div class="empty">Unable to load public posts.</div>';
 
-</div>
+    }
 
-`;
+  }
 
 }
-);
-
-html+=`
 
-<div class="comment-input-row">
 
-<input
-id="comment-input-${escapeHtml(postId)}"
-class="comment-input"
-maxlength="1000"
-placeholder="Write a comment...">
+/* ==============================
+   CREATE POST
+============================== */
 
-<button
-class="comment-send"
-onclick="
-addComment(
-'${escapeJs(postId)}'
-);
-">
-Send
-</button>
+function updatePostFields(){
 
-</div>
+  const type =
+    document.getElementById("postType").value;
 
-`;
+  const field =
+    document.getElementById("mediaField");
 
-return html;
+  field.style.display =
+    type === "text"
+      ? "none"
+      : "block";
 
 }
-
-async function addComment(postId){
-
-if(!requireLogin())return;
-
-const input =
-document.getElementById(
-"comment-input-"+postId
-);
 
-if(!input)return;
 
-const text =
-input.value.trim();
+async function publishPost(){
 
-if(!text)return;
-
-const {
-error
-} =
-await supabaseClient
-.from("post_comments")
-.insert({
-post_id:postId,
-user_id:currentSession.user.id,
-comment:text
-});
-
-if(error){
-
-alert(
-"Could not add comment: "+
-error.message
-);
-
-return;
-
-}
+  if(!currentSession){
 
-input.value="";
+    alert("Please login first.");
 
-await refreshSinglePostComments(
-postId
-);
+    return;
 
-await renderPosts();
+  }
 
-}
+  const visibility =
+    document.getElementById("postVisibility").value;
 
-async function deleteComment(
-commentId,
-postId
-){
-
-if(!requireLogin())return;
-
-const {
-data:comment,
-error:loadError
-} =
-await supabaseClient
-.from("post_comments")
-.select("user_id")
-.eq(
-"id",
-commentId
-)
-.maybeSingle();
-
-if(
-loadError||
-!comment
-){
-
-alert(
-"Comment not found."
-);
-
-return;
+  const postType =
+    document.getElementById("postType").value;
 
-}
+  const content =
+    document.getElementById("postContent").value.trim();
 
-if(
-comment.user_id!==
-currentSession.user.id
-){
+  const mediaUrl =
+    document.getElementById("postMediaUrl").value.trim();
 
-alert(
-"You can only delete your own comment."
-);
+  if(!content && !mediaUrl){
 
-return;
+    alert("Enter post content.");
 
-}
+    return;
 
-if(
-!confirm(
-"Delete this comment?"
-)
-){
+  }
 
-return;
+  try{
 
-}
+    const {
+      error
+    } =
+    await supabaseClient
+      .from("posts")
+      .insert({
 
-const {
-error
-} =
-await supabaseClient
-.from("post_comments")
-.delete()
-.eq(
-"id",
-commentId
-)
-.eq(
-"user_id",
-currentSession.user.id
-);
-
-if(error){
-
-alert(error.message);
-
-return;
+        user_id:
+          currentSession.user.id,
 
-}
+        visibility:
+          visibility,
 
-await refreshSinglePostComments(
-postId
-);
+        post_type:
+          postType,
 
-await renderPosts();
+        content:
+          content,
 
-}
+        media_url:
+          mediaUrl || null
 
-/* =====================================================
-CREATE POST UI
-===================================================== */
+      });
 
-function openCreatePost(){
+    if(error){
+      throw error;
+    }
 
-if(!requireLogin())return;
+    alert("Post published.");
 
-document.getElementById(
-"createPostModal"
-).style.display="flex";
+    document.getElementById("postContent").value = "";
+    document.getElementById("postMediaUrl").value = "";
 
-document.getElementById(
-"postContentInput"
-).focus();
+    closeModal("postModal");
 
-document.getElementById(
-"mediaType"
-).value="text";
+    await loadPosts();
 
-updateMediaControls();
+  }catch(error){
 
-}
+    console.error(error);
 
-function closeCreatePost(){
+    alert(
+      "Post could not be published."
+    );
 
-document.getElementById(
-"createPostModal"
-).style.display="none";
+  }
 
 }
-
-function updateMediaControls(){
-
-const type =
-document.getElementById(
-"mediaType"
-).value;
-
-const controls =
-document.getElementById(
-"mediaControls"
-);
-
-const notice =
-document.getElementById(
-"promotionNotice"
-);
 
-controls.innerHTML="";
-notice.innerHTML="";
 
-if(type==="text"){
+/* ==============================
+   PUBLISH AD
+============================== */
 
-notice.innerHTML=`
+async function publishAd(){
 
-<div class="info-box">
+  if(!currentSession){
 
-⚪ Text posts are available.
+    alert("Please login first.");
 
-</div>
+    return;
 
-`;
+  }
 
-return;
+  const tradeType =
+    document.getElementById("adTradeType").value;
 
-}
-
-if(type==="image"){
-
-if(!canPostImage()){
+  const asset =
+    document.getElementById("adAsset").value;
 
-controls.innerHTML=`
+  const rate =
+    Number(document.getElementById("adRate").value);
 
-<div class="locked-feature">
+  const available =
+    Number(document.getElementById("adAvailable").value);
 
-🔒
+  const minimum =
+    Number(document.getElementById("adMinimum").value);
 
-<strong>
-Picture posts require Premium.
-</strong>
+  const maximum =
+    Number(document.getElementById("adMaximum").value);
 
-<br><br>
+  const payment =
+    document.getElementById("adPaymentMethod")
+      .value.trim();
 
-Your account does not currently have
-permission to publish picture posts.
+  if(
+    !rate ||
+    !available ||
+    !minimum ||
+    !maximum ||
+    !payment
+  ){
 
-</div>
+    alert("Complete all ad fields.");
 
-`;
+    return;
 
-return;
+  }
 
-}
+  if(minimum > maximum){
 
-controls.innerHTML=`
+    alert(
+      "Minimum amount cannot be greater than maximum amount."
+    );
 
-<label class="media-label">
-Picture URL
-</label>
+    return;
 
-<input
-id="mediaUrlInput"
-class="media-input"
-type="url"
-placeholder="https://example.com/image.jpg"
-oninput="previewMedia()">
+  }
 
-<div class="media-note">
-Use a publicly accessible image URL or connect
-this field to your Supabase Storage upload system.
-</div>
+  try{
 
-<div
-id="mediaPreview"
-class="media-preview">
-</div>
+    const {
+      error
+    } =
+    await supabaseClient
+      .from("p2p_ads")
+      .insert({
 
-`;
+        user_id:
+          currentSession.user.id,
 
-notice.innerHTML=`
+        trade_type:
+          tradeType,
 
-<div class="info-box">
+        asset:
+          asset,
 
-🖼️ Picture post enabled for your account.
+        rate:
+          rate,
 
-</div>
+        available_amount:
+          available,
 
-`;
+        minimum_amount:
+          minimum,
 
-return;
-
-}
+        maximum_amount:
+          maximum,
 
-if(type==="video"){
+        payment_method:
+          payment,
 
-if(!canPostVideo()){
+        status:
+          "pending"
 
-controls.innerHTML=`
+      });
 
-<div class="locked-feature">
+    if(error){
+      throw error;
+    }
 
-🔒
+    alert(
+      "Ad submitted for secure validation."
+    );
 
-<strong>
-Video posts require Premium+.
-</strong>
+    closeModal("adModal");
 
-<br><br>
+    await loadOffers();
 
-Your account does not currently have
-permission to publish video posts.
+  }catch(error){
 
-</div>
+    console.error(error);
 
-`;
+    alert(
+      "Ad could not be submitted."
+    );
 
-return;
+  }
 
 }
-
-controls.innerHTML=`
-
-<label class="media-label">
-Video URL
-</label>
-
-<input
-id="mediaUrlInput"
-class="media-input"
-type="url"
-placeholder="https://example.com/video.mp4"
-oninput="previewMedia()">
-
-<div class="media-note">
-Use a publicly accessible video URL or connect
-this field to your Supabase Storage upload system.
-</div>
-
-<div
-id="mediaPreview"
-class="media-preview">
-</div>
-
-`;
 
-notice.innerHTML=`
 
-<div class="info-box">
+/* ==============================
+   DIAMOND TRANSFER
+============================== */
 
-🎥 Video post enabled for your account.
+async function transferDiamonds(){
 
-</div>
+  if(!currentSession){
 
-`;
+    alert("Please login first.");
 
-}
-
-}
+    return;
 
-function previewMedia(){
+  }
 
-const type =
-document.getElementById(
-"mediaType"
-).value;
+  const recipient =
+    document.getElementById("diamondRecipient")
+      .value.trim();
 
-const input =
-document.getElementById(
-"mediaUrlInput"
-);
+  const amount =
+    Number(
+      document.getElementById("diamondAmount")
+        .value
+    );
 
-const preview =
-document.getElementById(
-"mediaPreview"
-);
+  if(!recipient || !amount || amount <= 0){
 
-if(!input||!preview)return;
+    alert(
+      "Enter a valid recipient and amount."
+    );
 
-const url =
-input.value.trim();
+    return;
 
-if(!url){
+  }
 
-preview.innerHTML="";
+  try{
 
-return;
-
-}
+    const {
+      data,
+      error
+    } =
+    await supabaseClient.rpc(
+      "transfer_diamonds",
+      {
+        p_recipient:
+          recipient,
 
-if(type==="image"){
+        p_amount:
+          amount
+      }
+    );
 
-preview.innerHTML=`
+    if(error){
+      throw error;
+    }
 
-<img
-src="${escapeHtml(url)}"
-alt="Preview">
+    alert(
+      "Diamond transfer completed."
+    );
 
-`;
+    document.getElementById("diamondRecipient")
+      .value = "";
 
-}
+    document.getElementById("diamondAmount")
+      .value = "";
 
-if(type==="video"){
+    closeModal("diamondModal");
 
-preview.innerHTML=`
+  }catch(error){
 
-<video
-src="${escapeHtml(url)}"
-controls
-playsinline>
-</video>
+    console.error(error);
 
-`;
+    alert(
+      error.message ||
+      "Diamond transfer failed."
+    );
 
-}
+  }
 
 }
-
-/* =====================================================
-CREATE POST
-===================================================== */
-
-async function createPost(){
-
-if(!requireLogin())return;
-
-const content =
-document.getElementById(
-"postContentInput"
-).value.trim();
 
-const visibility =
-document.getElementById(
-"postVisibility"
-).value;
 
-const mediaType =
-document.getElementById(
-"mediaType"
-).value;
+/* ==============================
+   VERIFICATION
+============================== */
 
-if(!content){
+async function loadVerification(){
 
-alert(
-"Write something first."
-);
+  if(!currentSession){
+    return;
+  }
 
-return;
+  try{
 
-}
-
-if(
-mediaType==="image" &&
-!canPostImage()
-){
+    const {
+      data,
+      error
+    } =
+    await supabaseClient
+      .from("identity_verifications")
+      .select("status")
+      .eq(
+        "user_id",
+        currentSession.user.id
+      )
+      .maybeSingle();
 
-alert(
-"Picture posts require Premium."
-);
+    if(error){
+      throw error;
+    }
 
-return;
+    document.getElementById(
+      "verificationStatus"
+    ).textContent =
+      data?.status ||
+      "Not submitted";
 
-}
+  }catch(error){
 
-if(
-mediaType==="video" &&
-!canPostVideo()
-){
+    console.error(
+      "Verification:",
+      error
+    );
 
-alert(
-"Video posts require Premium+."
-);
+  }
 
-return;
-
 }
-
-let mediaUrl="";
 
-if(
-mediaType==="image"||
-mediaType==="video"
-){
 
-const input =
-document.getElementById(
-"mediaUrlInput"
-);
-
-mediaUrl =
-input?.value.trim()||
-"";
-
-if(!mediaUrl){
-
-alert(
-"Add a media URL first."
-);
-
-return;
-
-}
+async function submitVerification(){
 
-}
+  if(!currentSession){
 
-const button =
-document.getElementById(
-"publishPostBtn"
-);
+    alert("Please login first.");
 
-button.disabled=true;
-button.textContent="Publishing...";
+    return;
 
-const payload={
+  }
 
-user_id:
-currentSession.user.id,
+  const type =
+    document.querySelector(
+      'input[name="identityType"]:checked'
+    )?.value;
 
-content:
-content,
+  const number =
+    document.getElementById("identityNumber")
+      .value.trim();
 
-visibility:
-visibility
+  const name =
+    document.getElementById("identityName")
+      .value.trim();
 
-};
+  if(!type || !number || !name){
 
-if(mediaType!=="text"){
+    alert(
+      "Complete all identity fields."
+    );
 
-payload.media_url=
-mediaUrl;
+    return;
 
-payload.media_type=
-mediaType;
+  }
 
-}
+  try{
 
-const {
-error
-} =
-await supabaseClient
-.from("posts")
-.insert(payload);
+    const {
+      error
+    } =
+    await supabaseClient
+      .from("identity_verifications")
+      .upsert({
 
-button.disabled=false;
-button.textContent="Publish Post";
+        user_id:
+          currentSession.user.id,
 
-if(error){
+        document_type:
+          type,
 
-console.error(error);
+        document_number:
+          number,
 
-alert(
-"Could not publish post: "+
-error.message
-);
+        full_name:
+          name,
 
-return;
+        status:
+          "pending"
 
-}
+      },{
+        onConflict:"user_id"
+      });
 
-document.getElementById(
-"postContentInput"
-).value="";
+    if(error){
+      throw error;
+    }
 
-document.getElementById(
-"postVisibility"
-).value="public";
+    alert(
+      "Submitted for admin review."
+    );
 
-document.getElementById(
-"mediaType"
-).value="text";
+    await loadVerification();
 
-closeCreatePost();
+  }catch(error){
 
-await loadPosts(false);
+    console.error(error);
 
-}
+    alert(
+      "Verification submission failed."
+    );
 
-/* =====================================================
-DELETE POST
-===================================================== */
-
-async function deletePost(postId){
-
-if(!requireLogin())return;
-
-const {
-data:post,
-error:loadError
-} =
-await supabaseClient
-.from("posts")
-.select("user_id")
-.eq(
-"id",
-postId
-)
-.maybeSingle();
-
-if(
-loadError||
-!post
-){
-
-alert(
-"Post not found."
-);
-
-return;
+  }
 
 }
-
-if(
-post.user_id!==
-currentSession.user.id
-){
 
-alert(
-"You can only delete your own post."
-);
 
-return;
+/* ==============================
+   REFERRAL
+============================== */
 
-}
+async function loadReferral(){
 
-if(
-!confirm(
-"Delete this post?"
-)
-)return;
-
-const {
-error
-} =
-await supabaseClient
-.from("posts")
-.delete()
-.eq(
-"id",
-postId
-)
-.eq(
-"user_id",
-currentSession.user.id
-);
-
-if(error){
-
-alert(error.message);
-
-return;
+  if(!currentSession){
+    return;
+  }
 
-}
+  const link =
+    location.origin +
+    location.pathname.replace(
+      "index.html",
+      ""
+    ) +
+    "signup.html?ref=" +
+    encodeURIComponent(
+      currentSession.user.id
+    );
 
-await loadPosts(false);
+  document.getElementById(
+    "referralLink"
+  ).value = link;
 
 }
-
-/* =====================================================
-SHARE
-===================================================== */
-
-async function sharePost(postId){
-
-if(!requireLogin())return;
-
-const shareUrl =
-window.location.origin+
-window.location.pathname+
-"?post="+
-encodeURIComponent(postId);
 
-if(navigator.share){
 
-try{
+async function copyReferralLink(){
 
-await navigator.share({
+  const input =
+    document.getElementById(
+      "referralLink"
+    );
 
-title:
-"P2P Social",
+  try{
 
-text:
-"Check out this post on P2P Social",
+    await navigator.clipboard.writeText(
+      input.value
+    );
 
-url:
-shareUrl
+    alert("Copied.");
 
-});
+  }catch(error){
 
-}catch(error){
+    input.select();
 
-if(
-error.name!=="AbortError"
-){
+    document.execCommand("copy");
 
-console.log(error);
+    alert("Copied.");
 
-}
-
-}
-
-return;
-
-}
+  }
 
-try{
-
-await navigator.clipboard.writeText(
-shareUrl
-);
-
-alert(
-"Post link copied."
-);
-
-}catch(error){
-
-prompt(
-"Copy this post link:",
-shareUrl
-);
-
 }
 
-}
 
-/* =====================================================
-NOTIFICATIONS
-===================================================== */
+/* ==============================
+   NOTIFICATIONS
+============================== */
 
 async function loadNotifications(){
 
-if(!currentSession){
+  if(!currentSession){
+    return;
+  }
 
-resetNotifications();
+  const container =
+    document.getElementById(
+      "notificationList"
+    );
 
-return;
+  try{
 
-}
+    const {
+      data,
+      error
+    } =
+    await supabaseClient
+      .from("notifications")
+      .select("*")
+      .eq(
+        "user_id",
+        currentSession.user.id
+      )
+      .order("created_at",{ascending:false})
+      .limit(50);
 
-const {
-data,
-error
-} =
-await supabaseClient
-.from("notifications")
-.select(
-"id,user_id,type,title,body,link,is_read,created_at"
-)
-.eq(
-"user_id",
-currentSession.user.id
-)
-.order(
-"created_at",
-{
-ascending:false
-}
-)
-.limit(50);
+    if(error){
+      throw error;
+    }
 
-if(error){
+    container.innerHTML = "";
 
-console.log(
-"Notifications:",
-error.message
-);
+    if(!data || !data.length){
 
-return;
+      container.innerHTML =
+        '<div class="empty">No notifications.</div>';
 
-}
+      updateNotificationCount(0);
 
-renderNotifications(
-data||[]
-);
+      return;
 
-}
+    }
 
-function renderNotifications(
-notifications
-){
+    let unread = 0;
 
-const list =
-document.getElementById(
-"notificationList"
-);
+    data.forEach(function(item){
 
-const badge =
-document.getElementById(
-"notificationBadge"
-);
+      if(!item.is_read){
+        unread++;
+      }
 
-if(!notifications.length){
+      const div =
+        document.createElement("div");
 
-list.innerHTML=`
+      div.className =
+        "notification " +
+        (!item.is_read ? "unread" : "");
 
-<div class="no-notifications">
-🔔 No notifications yet.
-</div>
+      div.innerHTML = `
 
-`;
+        <div>
+          ${escapeHTML(
+            item.title ||
+            "Notification"
+          )}
+        </div>
 
-badge.style.display="none";
+        <div style="font-weight:normal;margin-top:4px">
+          ${escapeHTML(
+            item.message ||
+            ""
+          )}
+        </div>
 
-return;
+        <small>
+          ${formatDate(item.created_at)}
+        </small>
 
-}
+      `;
 
-const unread =
-notifications.filter(
-n=>!n.is_read
-).length;
+      container.appendChild(div);
 
-if(unread){
+    });
 
-badge.textContent =
-unread>99
-?
-"99+"
-:
-unread;
+    updateNotificationCount(unread);
 
-badge.style.display="flex";
+  }catch(error){
 
-}else{
+    console.error(
+      "Notifications:",
+      error
+    );
 
-badge.style.display="none";
+    container.innerHTML =
+      '<div class="empty">Unable to load notifications.</div>';
 
-}
-
-list.innerHTML="";
-
-notifications.forEach(
-notification=>{
-
-const item =
-document.createElement(
-"div"
-);
-
-item.className =
-"notification-item"+
-(
-notification.is_read
-?
-""
-:
-" unread"
-);
-
-item.innerHTML=`
-
-<div class="notification-icon">
-
-${notificationIcon(
-notification.type
-)}
-
-</div>
-
-<div class="notification-content">
-
-<div class="notification-title">
-
-${escapeHtml(
-notification.title||
-"Notification"
-)}
-
-</div>
-
-<div class="notification-body">
-
-${escapeHtml(
-notification.body||
-""
-)}
-
-</div>
-
-<div class="notification-time">
-
-${escapeHtml(
-formatPostTime(
-notification.created_at
-)
-)}
-
-</div>
-
-</div>
-
-`;
-
-item.addEventListener(
-"click",
-async()=>{
-
-if(
-!notification.is_read
-){
-
-await markNotificationRead(
-notification.id
-);
+  }
 
 }
 
-if(
-notification.link
-){
 
-window.location.href=
-notification.link;
+function updateNotificationCount(count){
 
-}else{
-
-openMessages();
+  document.getElementById(
+    "notificationCount"
+  ).textContent = count;
 
 }
 
-}
-);
-
-list.appendChild(item);
-
-}
-);
-
-}
-
-function notificationIcon(type){
-
-switch(type){
-
-case "message":
-return "💬";
-
-case "like":
-return "❤️";
-
-case "comment":
-return "💬";
-
-case "follow":
-return "👤";
-
-case "wallet":
-return "💎";
-
-case "deposit":
-return "💎";
-
-case "withdraw":
-return "💎";
-
-case "transfer":
-return "💎";
-
-case "trade":
-return "🔄";
-
-case "premium":
-return "⭐";
-
-case "live":
-return "🔴";
-
-case "verification":
-return "🪪";
-
-case "security":
-return "🔐";
-
-default:
-return "🔔";
-
-}
-
-}
-
-async function markNotificationRead(id){
-
-if(!currentSession)return;
-
-await supabaseClient
-.from("notifications")
-.update({
-is_read:true
-})
-.eq(
-"id",
-id
-)
-.eq(
-"user_id",
-currentSession.user.id
-);
-
-await loadNotifications();
-
-}
 
 async function markAllNotificationsRead(){
 
-if(!currentSession)return;
+  if(!currentSession){
+    return;
+  }
 
-const {
-error
-} =
-await supabaseClient
-.from("notifications")
-.update({
-is_read:true
-})
-.eq(
-"user_id",
-currentSession.user.id
-)
-.eq(
-"is_read",
-false
-);
+  try{
 
-if(error){
+    const {
+      error
+    } =
+    await supabaseClient
+      .from("notifications")
+      .update({
+        is_read:true
+      })
+      .eq(
+        "user_id",
+        currentSession.user.id
+      )
+      .eq(
+        "is_read",
+        false
+      );
 
-alert(
-"Could not mark notifications as read."
-);
+    if(error){
+      throw error;
+    }
 
-return;
+    await loadNotifications();
 
-}
+  }catch(error){
 
-await loadNotifications();
+    console.error(error);
 
-}
-
-function resetNotifications(){
-
-document.getElementById(
-"notificationBadge"
-).style.display="none";
-
-document.getElementById(
-"notificationList"
-).innerHTML=`
-
-<div class="no-notifications">
-Login to see notifications.
-</div>
-
-`;
+  }
 
 }
 
-function toggleNotificationPanel(
-event
-){
 
-if(event){
+/* ==============================
+   2FA
+============================== */
 
-event.stopPropagation();
+async function enable2FA(){
 
-}
+  try{
 
-if(!requireLogin())return;
+    alert(
+      "2FA setup must be completed through the secure authentication backend."
+    );
 
-const panel =
-document.getElementById(
-"notificationPanel"
-);
+  }catch(error){
 
-panel.classList.toggle("open");
+    console.error(error);
 
-if(
-panel.classList.contains("open")
-){
-
-loadNotifications();
+  }
 
 }
 
-}
 
-document.addEventListener(
-"click",
-event=>{
+/* ==============================
+   HELPERS
+============================== */
 
-const panel =
-document.getElementById(
-"notificationPanel"
-);
+function escapeHTML(value){
 
-const button =
-document.getElementById(
-"notificationButton"
-);
+  if(value === null ||
+     value === undefined){
 
-if(
-panel &&
-!panel.contains(event.target) &&
-button &&
-!button.contains(event.target)
-){
+    return "";
 
-panel.classList.remove(
-"open"
-);
+  }
+
+  return String(value)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
 
 }
 
-}
-);
 
-function subscribeToNotifications(){
+function escapeAttr(value){
 
-if(!currentSession)return;
-
-if(notificationChannel){
-
-supabaseClient.removeChannel(
-notificationChannel
-);
+  return escapeHTML(value);
 
 }
 
-const userId =
-currentSession.user.id;
-
-notificationChannel =
-supabaseClient
-.channel(
-"notifications-"+userId
-)
-.on(
-"postgres_changes",
-{
-event:"INSERT",
-schema:"public",
-table:"notifications",
-filter:
-"user_id=eq."+userId
-},
-payload=>{
-
-loadNotifications();
-
-if(!document.hidden){
-
-showNewNotificationPopup(
-payload.new
-);
-
-}
-
-}
-)
-.subscribe();
-
-}
-
-function showNewNotificationPopup(
-notification
-){
-
-if(
-"Notification" in window &&
-Notification.permission==="granted"
-){
-
-try{
-
-new Notification(
-notification.title||
-"New notification",
-{
-body:
-notification.body||
-""
-}
-);
-
-}catch(error){
-
-console.log(error);
-
-}
-
-}
-
-}
-
-/* =====================================================
-HELPERS
-===================================================== */
-
-function getFirstValue(
-object,
-keys
-){
-
-if(!object)return null;
-
-for(
-const key of keys
-){
-
-if(
-Object.prototype.hasOwnProperty.call(
-object,
-key
-)
-){
-
-if(
-object[key]!==null &&
-object[key]!==undefined &&
-object[key]!==""
-){
-
-return object[key];
-
-}
-
-}
-
-}
-
-return null;
-
-}
 
 function formatNumber(value){
 
-const number=
-Number(value);
+  if(
+    value === null ||
+    value === undefined ||
+    value === ""
+  ){
 
-if(
-Number.isNaN(number)
-){
+    return "0";
 
-return String(value);
+  }
 
-}
+  const number =
+    Number(value);
 
-return number.toLocaleString(
-undefined,
-{
-maximumFractionDigits:8
-}
-);
+  if(Number.isNaN(number)){
+    return escapeHTML(value);
+  }
 
-}
-
-function formatStatus(value){
-
-return String(value||"")
-.replace(/_/g," ")
-.replace(/\b\w/g,
-letter=>letter.toUpperCase());
+  return number.toLocaleString(
+    undefined,
+    {
+      maximumFractionDigits:8
+    }
+  );
 
 }
 
-function formatPostTime(date){
 
-if(!date)return "";
+function formatDate(value){
 
-const d =
-new Date(date);
+  if(!value){
+    return "";
+  }
 
-if(
-Number.isNaN(
-d.getTime()
-)
-){
+  try{
 
-return "";
+    return new Date(value)
+      .toLocaleString();
 
-}
+  }catch(error){
 
-const now =
-new Date();
+    return "";
 
-const diff =
-Math.floor(
-(now-d)/1000
-);
-
-if(diff<60){
-
-return "just now";
+  }
 
 }
 
-if(diff<3600){
 
-return Math.floor(
-diff/60
-)+"m ago";
+/* ==============================
+   REALTIME
+============================== */
+
+function startRealtime(){
+
+  if(!currentSession){
+    return;
+  }
+
+  supabaseClient
+    .channel("p2p-social-home")
+    .on(
+      "postgres_changes",
+      {
+        event:"*",
+        schema:"public",
+        table:"p2p_ads"
+      },
+      function(){
+
+        loadOffers();
+
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event:"*",
+        schema:"public",
+        table:"posts"
+      },
+      function(){
+
+        loadPosts();
+
+      }
+    )
+    .on(
+      "postgres_changes",
+      {
+        event:"*",
+        schema:"public",
+        table:"notifications",
+        filter:
+          "user_id=eq." +
+          currentSession.user.id
+      },
+      function(){
+
+        loadNotifications();
+
+      }
+    )
+    .subscribe();
 
 }
 
-if(diff<86400){
 
-return Math.floor(
-diff/3600
-)+"h ago";
-
-}
-
-if(diff<604800){
-
-return Math.floor(
-diff/86400
-)+"d ago";
-
-}
-
-return d.toLocaleDateString();
-
-}
-
-function escapeHtml(value){
-
-return String(
-value??""
-)
-.replace(/&/g,"&amp;")
-.replace(/</g,"&lt;")
-.replace(/>/g,"&gt;")
-.replace(/"/g,"&quot;")
-.replace(/'/g,"&#039;");
-
-}
-
-function escapeJs(value){
-
-return String(
-value??""
-)
-.replace(/\\/g,"\\\\")
-.replace(/'/g,"\\'")
-.replace(/"/g,'\\"')
-.replace(/\n/g,"\\n")
-.replace(/\r/g,"\\r");
-
-}
-
-/* =====================================================
-MODAL CLOSE
-===================================================== */
+/* ==============================
+   INITIALIZE
+============================== */
 
 document.addEventListener(
-"click",
-event=>{
+  "DOMContentLoaded",
+  async function(){
 
-const modalIds=[
+    await checkAuth();
 
-"verifyModal",
-"referralModal",
-"createAdModal",
-"transferModal",
-"supportModal",
-"twoFAModal",
-"createPostModal"
+    startRealtime();
 
-];
-
-modalIds.forEach(
-id=>{
-
-const modal =
-document.getElementById(id);
-
-if(
-modal &&
-event.target===modal
-){
-
-modal.style.display="none";
-
-}
-
-}
+  }
 );
-
-}
-);
-
-/* =====================================================
-ESC
-===================================================== */
-
-document.addEventListener(
-"keydown",
-event=>{
-
-if(
-event.key!=="Escape"
-)return;
-
-const modalIds=[
-
-"verifyModal",
-"referralModal",
-"createAdModal",
-"transferModal",
-"supportModal",
-"twoFAModal",
-"createPostModal"
-
-];
-
-modalIds.forEach(
-id=>{
-
-const modal =
-document.getElementById(id);
-
-if(modal){
-
-modal.style.display="none";
-
-}
-
-}
-);
-
-}
-);
-
-/* =====================================================
-START
-===================================================== */
-
-startApp();
 
 </script>
 

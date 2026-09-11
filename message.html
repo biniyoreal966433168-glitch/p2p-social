@@ -546,6 +546,7 @@ CHAT SCREEN
 .chat-header-info{
   flex:1;
   min-width:0;
+  cursor:pointer;
 }
 
 .chat-header-name{
@@ -1025,10 +1026,6 @@ FILE INPUT
 
 <body>
 
-<!-- =========================
-HEADER
-========================= -->
-
 <header>
 
   <div class="top">
@@ -1098,10 +1095,6 @@ HEADER
 
 </header>
 
-<!-- =========================
-NOTIFICATIONS
-========================= -->
-
 <div
   id="notificationPanel"
   class="notification-panel">
@@ -1121,10 +1114,6 @@ NOTIFICATIONS
   <div id="notificationList"></div>
 
 </div>
-
-<!-- =========================
-MESSAGE PAGE
-========================= -->
 
 <main class="messages-page">
 
@@ -1203,10 +1192,6 @@ MESSAGE PAGE
 
 </main>
 
-<!-- =========================
-CHAT SCREEN
-========================= -->
-
 <div
   id="chatScreen"
   class="chat-screen">
@@ -1225,7 +1210,9 @@ CHAT SCREEN
       src="images/profile.png"
       alt="Profile">
 
-    <div class="chat-header-info">
+    <div
+      id="chatHeaderInfo"
+      class="chat-header-info">
 
       <div
         id="chatName"
@@ -1252,8 +1239,6 @@ CHAT SCREEN
     class="messages-container">
   </div>
 
-  <!-- EDIT BAR -->
-
   <div
     id="editBar"
     class="edit-bar">
@@ -1269,8 +1254,6 @@ CHAT SCREEN
     </button>
 
   </div>
-
-  <!-- PHOTO PREVIEW -->
 
   <div
     id="mediaPreview"
@@ -1305,8 +1288,6 @@ CHAT SCREEN
 
   </div>
 
-  <!-- RECORDING BAR -->
-
   <div
     id="recordingBar"
     class="recording-bar">
@@ -1326,8 +1307,6 @@ CHAT SCREEN
     </button>
 
   </div>
-
-  <!-- INPUT -->
 
   <div class="message-input-area">
 
@@ -1370,16 +1349,10 @@ CHAT SCREEN
 
 </div>
 
-<!-- HIDDEN PHOTO PICKER -->
-
 <input
   id="photoInput"
   type="file"
   accept="image/*">
-
-<!-- =========================
-BOTTOM NAV
-========================= -->
 
 <nav class="bottom-nav">
 
@@ -1471,6 +1444,8 @@ VARIABLES
 ===================================================== */
 
 let currentUser = null;
+let currentUserProfile = null;
+
 let currentConversation = null;
 let currentOtherUser = null;
 
@@ -1594,6 +1569,8 @@ async function startApp(){
   currentUser =
     data.session.user;
 
+  await loadCurrentUserProfile();
+
   await updateAuthUI();
 
   await loadConversations();
@@ -1605,6 +1582,68 @@ async function startApp(){
   subscribeGlobalRealtime();
 
   subscribeNotificationRealtime();
+
+  openUsernameConversationFromUrl();
+}
+
+/* =====================================================
+LOAD CURRENT USER PROFILE
+===================================================== */
+
+async function loadCurrentUserProfile(){
+
+  if(!currentUser){
+    return null;
+  }
+
+  const {
+    data,
+    error
+  } =
+  await supabaseClient
+    .from("profiles")
+    .select(
+      "id,username,avatar_url"
+    )
+    .eq(
+      "id",
+      currentUser.id
+    )
+    .maybeSingle();
+
+  if(error){
+
+    console.error(
+      "Profile load error:",
+      error
+    );
+
+    currentUserProfile =
+      {
+        id:currentUser.id,
+        username:
+          currentUser.user_metadata?.username ||
+          currentUser.email?.split("@")[0] ||
+          "User",
+        avatar_url:
+          DEFAULT_AVATAR
+      };
+
+    return currentUserProfile;
+  }
+
+  currentUserProfile =
+    data || {
+      id:currentUser.id,
+      username:
+        currentUser.user_metadata?.username ||
+        currentUser.email?.split("@")[0] ||
+        "User",
+      avatar_url:
+        DEFAULT_AVATAR
+    };
+
+  return currentUserProfile;
 }
 
 /* =====================================================
@@ -1630,33 +1669,15 @@ async function updateAuthUI(){
   ).style.display = "block";
 
   let username =
+    currentUserProfile?.username ||
     currentUser.user_metadata?.username ||
     currentUser.email?.split("@")[0] ||
     "User";
 
-  const {
-    data:profile
-  } =
-  await supabaseClient
-    .from("profiles")
-    .select("username")
-    .eq(
-      "id",
-      currentUser.id
-    )
-    .maybeSingle();
-
-  if(profile?.username){
-
-    username =
-      profile.username;
-
-  }
-
   document.getElementById(
     "usernameDisplay"
   ).textContent =
-    username;
+    "@" + username;
 }
 
 /* =====================================================
@@ -1779,8 +1800,10 @@ async function createConversationItem(
     )
     .maybeSingle();
 
-  const name =
-    profile?.username ||
+  const username =
+    normalizeUsername(
+      profile?.username
+    ) ||
     "User";
 
   const avatar =
@@ -1885,6 +1908,9 @@ async function createConversationItem(
   item.dataset.unread =
     String(unread);
 
+  item.dataset.username =
+    username;
+
   if(unread > 0){
 
     item.classList.add(
@@ -1904,7 +1930,7 @@ async function createConversationItem(
       <div class="chat-top">
 
         <span class="chat-name">
-          ${escapeHTML(name)}
+          @${escapeHTML(username)}
         </span>
 
       </div>
@@ -2004,6 +2030,16 @@ function searchUsers(){
           return;
         }
 
+        /*
+          Username is the permanent public identity.
+          Search is performed against profiles.username.
+          UUID is used only internally after a profile
+          has been securely resolved.
+        */
+
+        const cleanQuery =
+          query.replace(/^@/,"");
+
         const {
           data,
           error
@@ -2016,7 +2052,7 @@ function searchUsers(){
           .ilike(
             "username",
             "%" +
-            query +
+            cleanQuery +
             "%"
           )
           .neq(
@@ -2026,6 +2062,11 @@ function searchUsers(){
           .limit(10);
 
         if(error){
+
+          console.error(
+            "Username search error:",
+            error
+          );
 
           results.innerHTML =
             `<div class="loading">
@@ -2056,6 +2097,12 @@ function searchUsers(){
           data.forEach(
             profile => {
 
+              const username =
+                normalizeUsername(
+                  profile.username
+                ) ||
+                "User";
+
               const user =
                 document.createElement(
                   "div"
@@ -2078,12 +2125,7 @@ function searchUsers(){
                 <div class="search-info">
 
                   <div class="search-name">
-                    ${
-                      escapeHTML(
-                        profile.username ||
-                        "User"
-                      )
-                    }
+                    @${escapeHTML(username)}
                   </div>
 
                   <div class="search-id">
@@ -2136,6 +2178,20 @@ async function startConversation(
     !currentUser ||
     !profile?.id
   ){
+    return;
+  }
+
+  const username =
+    normalizeUsername(
+      profile.username
+    );
+
+  if(!username){
+
+    showToast(
+      "This user has no username"
+    );
+
     return;
   }
 
@@ -2223,7 +2279,13 @@ async function startConversation(
 
   await openConversation(
     conversation,
-    profile
+    {
+      id:profile.id,
+      username:username,
+      avatar_url:
+        profile.avatar_url ||
+        DEFAULT_AVATAR
+    }
   );
 }
 
@@ -2236,23 +2298,40 @@ async function openConversation(
   profile
 ){
 
+  if(!conversation){
+    return;
+  }
+
+  const username =
+    normalizeUsername(
+      profile?.username
+    ) ||
+    "User";
+
   currentConversation =
     conversation;
 
   currentOtherUser =
-    profile;
+    {
+      ...profile,
+      username:username
+    };
 
   document.getElementById(
     "chatName"
   ).textContent =
-    profile.username ||
-    "User";
+    "@" + username;
 
   document.getElementById(
     "chatAvatar"
   ).src =
-    profile.avatar_url ||
+    profile?.avatar_url ||
     DEFAULT_AVATAR;
+
+  document.getElementById(
+    "chatHeaderInfo"
+  ).dataset.username =
+    username;
 
   document.getElementById(
     "chatScreen"
@@ -2280,6 +2359,112 @@ async function openConversation(
 
     },
     100
+  );
+}
+
+/* =====================================================
+OPEN USER PROFILE BY USERNAME
+===================================================== */
+
+function openUserProfileByUsername(
+  username
+){
+
+  const clean =
+    normalizeUsername(
+      username
+    );
+
+  if(!clean){
+    return;
+  }
+
+  window.location.href =
+    "profile.html?username=" +
+    encodeURIComponent(clean);
+}
+
+/* =====================================================
+OPEN USERNAME FROM URL
+===================================================== */
+
+async function openUsernameConversationFromUrl(){
+
+  if(!currentUser){
+    return;
+  }
+
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+
+  const requestedUsername =
+    params.get("username");
+
+  if(!requestedUsername){
+    return;
+  }
+
+  const username =
+    normalizeUsername(
+      requestedUsername
+    );
+
+  if(!username){
+    return;
+  }
+
+  const {
+    data:profile,
+    error
+  } =
+  await supabaseClient
+    .from("profiles")
+    .select(
+      "id,username,avatar_url"
+    )
+    .eq(
+      "username",
+      username
+    )
+    .maybeSingle();
+
+  if(error){
+
+    console.error(
+      "Username profile lookup error:",
+      error
+    );
+
+    return;
+  }
+
+  if(!profile){
+
+    showToast(
+      "User not found"
+    );
+
+    return;
+  }
+
+  if(
+    profile.id ===
+    currentUser.id
+  ){
+
+    return;
+  }
+
+  await startConversation(
+    profile
+  );
+
+  window.history.replaceState(
+    {},
+    document.title,
+    "message.html"
   );
 }
 
@@ -4213,6 +4398,11 @@ async function renderNotification(
       data;
   }
 
+  const username =
+    normalizeUsername(
+      profile?.username
+    );
+
   const item =
     document.createElement(
       "div"
@@ -4242,10 +4432,10 @@ async function renderNotification(
       <div class="notification-text">
 
         ${
-          profile?.username
-            ? "<strong>" +
+          username
+            ? "<strong>@" +
               escapeHTML(
-                profile.username
+                username
               ) +
               "</strong> "
             : ""
@@ -4980,6 +5170,38 @@ function randomString(
 }
 
 /* =====================================================
+USERNAME HELPERS
+===================================================== */
+
+function normalizeUsername(
+  value
+){
+
+  if(value == null){
+    return "";
+  }
+
+  return String(value)
+    .trim()
+    .replace(/^@+/,"");
+}
+
+function usernameUrl(
+  username
+){
+
+  const clean =
+    normalizeUsername(
+      username
+    );
+
+  return (
+    "profile.html?username=" +
+    encodeURIComponent(clean)
+  );
+}
+
+/* =====================================================
 ESCAPE HTML
 ===================================================== */
 
@@ -5179,6 +5401,29 @@ document
 
 document
   .getElementById(
+    "chatHeaderInfo"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      const username =
+        document.getElementById(
+          "chatHeaderInfo"
+        ).dataset.username;
+
+      if(username){
+
+        openUserProfileByUsername(
+          username
+        );
+
+      }
+    }
+  );
+
+document
+  .getElementById(
     "sendMessageButton"
   )
   .addEventListener(
@@ -5357,6 +5602,9 @@ supabaseClient.auth.onAuthStateChange(
       currentUser =
         null;
 
+      currentUserProfile =
+        null;
+
       window.location.replace(
         "login.html"
       );
@@ -5381,6 +5629,8 @@ document.addEventListener(
       !document.hidden &&
       currentUser
     ){
+
+      await loadCurrentUserProfile();
 
       await updateUnreadCount();
 

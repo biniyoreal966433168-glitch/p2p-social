@@ -703,12 +703,12 @@ header{
     Home
   </a>
 
-  <a href="live.html" class="active">
+  <a href="live.html">
     <span class="nav-icon">🟢</span>
     Buy
   </a>
 
-  <a href="wallet.html">
+  <a href="wallet.html" class="active">
     <span class="nav-icon">🔴</span>
     Sell
   </a>
@@ -743,6 +743,7 @@ const PLATFORM_FEE_RATE = 0.01;
 
 let currentSession = null;
 let currentUser = null;
+let currentUsername = null;
 
 let availableOrders = [];
 let selectedOffer = null;
@@ -752,6 +753,8 @@ let offersExpanded = false;
 let realtimeChannel = null;
 let toastTimer = null;
 let isLoading = false;
+
+const usernameCache = new Map();
 
 document.addEventListener(
   "DOMContentLoaded",
@@ -793,6 +796,8 @@ async function startApp(){
     currentUser =
       currentSession.user;
 
+    await loadCurrentUsername();
+
     updateFeeRateText();
 
     await loadSellOrders();
@@ -833,6 +838,13 @@ supabaseClient.auth.onAuthStateChange(
     currentUser =
       session?.user || null;
 
+    if(!currentUser){
+
+      currentUsername =
+        null;
+
+    }
+
     if(event === "SIGNED_OUT"){
 
       if(realtimeChannel){
@@ -852,6 +864,137 @@ supabaseClient.auth.onAuthStateChange(
 
   }
 );
+
+async function loadCurrentUsername(){
+
+  if(!currentUser)return;
+
+  try{
+
+    const {
+      data,
+      error
+    } =
+    await supabaseClient
+      .from("profiles")
+      .select("username")
+      .eq(
+        "id",
+        currentUser.id
+      )
+      .maybeSingle();
+
+    if(error){
+
+      throw error;
+
+    }
+
+    currentUsername =
+      data?.username ||
+      currentUser.user_metadata?.username ||
+      null;
+
+    if(currentUsername){
+
+      usernameCache.set(
+        String(currentUser.id),
+        currentUsername
+      );
+
+    }
+
+  }catch(error){
+
+    console.error(
+      "CURRENT USERNAME ERROR:",
+      error
+    );
+
+    currentUsername =
+      currentUser.user_metadata?.username ||
+      null;
+
+  }
+
+}
+
+async function loadOrderUsernames(){
+
+  const ids =
+    [
+      ...new Set(
+        availableOrders
+          .map(
+            order =>
+              order.user_id
+          )
+          .filter(Boolean)
+          .map(
+            id =>
+              String(id)
+          )
+      )
+    ];
+
+  const missing =
+    ids.filter(
+      id =>
+        !usernameCache.has(id)
+    );
+
+  if(!missing.length)return;
+
+  try{
+
+    const {
+      data,
+      error
+    } =
+    await supabaseClient
+      .from("profiles")
+      .select(
+        "id,username"
+      )
+      .in(
+        "id",
+        missing
+      );
+
+    if(error){
+
+      throw error;
+
+    }
+
+    (data || []).forEach(
+      profile => {
+
+        if(
+          profile.id &&
+          profile.username
+        ){
+
+          usernameCache.set(
+            String(profile.id),
+            profile.username
+          );
+
+        }
+
+      }
+    );
+
+  }catch(error){
+
+    console.error(
+      "ORDER USERNAME ERROR:",
+      error
+    );
+
+  }
+
+}
 
 async function loadSellOrders(){
 
@@ -935,6 +1078,8 @@ async function loadSellOrders(){
 
     availableOrders =
       data || [];
+
+    await loadOrderUsernames();
 
     const count =
       document.getElementById(
@@ -1020,6 +1165,14 @@ function renderSellOrders(){
           order.status
         );
 
+      const username =
+        usernameCache.get(
+          String(
+            order.user_id
+          )
+        ) ||
+        "Seller";
+
       const card =
         document.createElement(
           "div"
@@ -1037,7 +1190,9 @@ function renderSellOrders(){
             <div>
 
               <div class="offer-user">
-                🔴 P2P Seller
+                🔴 ${escapeHtml(
+                  username
+                )}
               </div>
 
               <div class="offer-meta">
@@ -1074,12 +1229,14 @@ function renderSellOrders(){
                 Selling price
               </div>
 
-              <div class="offer-price"
+              <div
+                class="offer-price"
                 style="text-align:left;margin-top:3px;">
 
                 ${money(
                   order.price
                 )}
+
                 ${escapeHtml(
                   parts.quote ||
                   "USDT"
@@ -1102,6 +1259,7 @@ function renderSellOrders(){
           <div class="offer-amount">
 
             Wants to sell:
+
             <strong>
               ${escapeHtml(
                 formatAmount(order)
@@ -1120,13 +1278,16 @@ function renderSellOrders(){
                   color:#596579;
                   font-size:13px;
                 ">
+
                 💳 Payment:
+
                 <strong>
                   ${escapeHtml(
                     order.payment_method ||
                     order.payment
                   )}
                 </strong>
+
               </div>
             `
             : ""
@@ -1145,7 +1306,9 @@ function renderSellOrders(){
 
       `;
 
-      container.appendChild(card);
+      container.appendChild(
+        card
+      );
 
     }
   );
@@ -1252,6 +1415,14 @@ function openTrade(orderId){
       selectedOffer.trading_pair
     );
 
+  const sellerUsername =
+    usernameCache.get(
+      String(
+        selectedOffer.user_id
+      )
+    ) ||
+    "Seller";
+
   document.getElementById(
     "tradeSummary"
   ).innerHTML = `
@@ -1259,6 +1430,11 @@ function openTrade(orderId){
     <div
       class="details"
       style="margin-bottom:12px;">
+
+      ${detail(
+        "Seller",
+        sellerUsername
+      )}
 
       ${detail(
         "Pair",

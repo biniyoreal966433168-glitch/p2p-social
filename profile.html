@@ -259,7 +259,7 @@ header{padding:12px}
 <div class="wallet-balances">
 <div class="balance-box">
 <div class="balance-title">USDT</div>
-<div id="usdtBalance" class="balance-value">0.00 USDT</div>
+<div id="usdtBalance" class="balance-value">Loading...</div>
 </div>
 </div>
 
@@ -519,18 +519,19 @@ if(permanentUsername){
 return permanentUsername;
 }
 
-if(currentProfile && currentProfile.username){
+if(currentProfile&&currentProfile.username){
 return String(currentProfile.username).trim();
 }
 
-if(currentSession && currentSession.user){
+if(currentSession&&currentSession.user){
 return String(
-currentSession.user.user_metadata?.username ||
+currentSession.user.user_metadata?.username||
 ""
 ).trim();
 }
 
-return "";
+return"";
+
 }
 
 function requirePermanentUsername(){
@@ -544,9 +545,11 @@ alert(
 );
 
 return false;
+
 }
 
 return true;
+
 }
 
 function getUsernameIdentity(){
@@ -563,16 +566,20 @@ async function startApp(){
 const {data,error}=await supabaseClient.auth.getSession();
 
 if(error){
+
 console.error(error);
 showLogin();
 return;
+
 }
 
 currentSession=data.session;
 
 if(!currentSession){
+
 showLogin();
 return;
+
 }
 
 await loadProfile();
@@ -582,8 +589,10 @@ await loadMyOrders();
 }
 
 function showLogin(){
+
 alert("Please login first.");
 window.location.href="login.html";
+
 }
 
 function getVerificationStatus(){
@@ -610,6 +619,7 @@ currentProfile.verification_status==="verified"
 );
 
 return emailConfirmed||profileVerified;
+
 }
 
 function updateVerificationUI(){
@@ -634,6 +644,23 @@ badge.className="verification-badge unverified";
 
 }
 
+/*
+USDT ACCOUNT RULE:
+
+The username identifies the USDT account.
+
+The authenticated user ID remains the security identity.
+The balance is read from that user's profiles row.
+
+Lookup order:
+1. profiles.id = auth.uid()
+2. profiles.user_id = auth.uid()
+3. profiles.username = permanent username
+
+This allows the real Eccboss balance to be found even when
+the profile row uses user_id instead of id for the auth identity.
+*/
+
 async function loadProfile(){
 
 if(!currentSession){
@@ -642,21 +669,88 @@ return;
 
 const user=currentSession.user;
 
-const {data:profile,error}=await supabaseClient
+let profile=null;
+let profileError=null;
+
+/* Primary profile lookup */
+const primary=await supabaseClient
 .from("profiles")
 .select("*")
 .eq("id",user.id)
 .maybeSingle();
 
-if(error){
-console.error("Profile error:",error);
+profile=primary.data;
+profileError=primary.error;
+
+/* Fallback profile lookup */
+if(!profile){
+
+const fallback=await supabaseClient
+.from("profiles")
+.select("*")
+.eq("user_id",user.id)
+.maybeSingle();
+
+if(fallback.data){
+profile=fallback.data;
+profileError=null;
+}else if(fallback.error){
+console.error(
+"Profile user_id lookup:",
+fallback.error
+);
+}
+
+}
+
+/*
+If the auth-linked lookup did not find the row,
+use the permanent username from auth metadata.
+This keeps the balance associated with the username.
+*/
+const metadataUsername=String(
+user.user_metadata?.username||
+""
+).trim();
+
+if(!profile&&metadataUsername){
+
+const usernameLookup=await supabaseClient
+.from("profiles")
+.select("*")
+.ilike("username",metadataUsername)
+.maybeSingle();
+
+if(usernameLookup.data){
+
+profile=usernameLookup.data;
+profileError=null;
+
+}else if(usernameLookup.error){
+
+console.error(
+"Profile username lookup:",
+usernameLookup.error
+);
+
+}
+
+}
+
+if(profileError){
+
+console.error(
+"Profile error:",
+profileError
+);
+
 }
 
 currentProfile=profile||{};
 
 const username=
 currentProfile.username||
-user.user_metadata?.username||
+metadataUsername||
 "";
 
 if(!username){
@@ -669,7 +763,8 @@ document.getElementById("profileId").textContent=
 
 }else{
 
-permanentUsername=String(username).trim();
+permanentUsername=
+String(username).trim();
 
 document.getElementById("profileName").textContent=
 permanentUsername;
@@ -679,6 +774,20 @@ document.getElementById("profileId").textContent=
 
 }
 
+/*
+USDT balance belongs to the username account.
+
+Prefer usdt_balance as the main balance.
+available_usdt is used only when the main balance
+does not exist.
+*/
+const usdt=getNumberFromProfile([
+"usdt_balance",
+"available_usdt"
+]);
+
+renderUSDTBalance(usdt);
+
 const bio=currentProfile.bio||"No bio yet.";
 
 document.getElementById("profileBio").textContent=bio;
@@ -687,22 +796,21 @@ await loadUserNumber(user.id);
 
 const avatar=currentProfile.avatar_url||"";
 
-setProfilePhoto(avatar,username||"U");
+setProfilePhoto(
+avatar,
+username||"U"
+);
 
 updateVerificationUI();
 
-const usdt=getNumberFromProfile([
-"usdt_balance",
-"available_usdt",
-"usdt"
-]);
-
-renderUSDTBalance(usdt);
-
-const usernameField=document.getElementById("permanentUsername");
+const usernameField=
+document.getElementById("permanentUsername");
 
 if(usernameField){
-usernameField.textContent=permanentUsername||"--";
+
+usernameField.textContent=
+permanentUsername||"--";
+
 }
 
 document.getElementById("editBio").value=
@@ -717,23 +825,32 @@ await loadTradeStats();
 
 function renderUSDTBalance(value){
 
-const element=document.getElementById("usdtBalance");
+const element=
+document.getElementById("usdtBalance");
 
 if(!element){
 return;
 }
 
 if(!balanceVisible){
+
 element.textContent="•••••• USDT";
 return;
+
 }
 
+const balance=Number(value);
+
 element.textContent=
-Number(value||0).toLocaleString(
+(
+Number.isFinite(balance)?
+balance:
+0
+).toLocaleString(
 undefined,
 {
 minimumFractionDigits:2,
-maximumFractionDigits:2
+maximumFractionDigits:8
 }
 )+" USDT";
 
@@ -745,16 +862,19 @@ balanceVisible=!balanceVisible;
 
 const value=getNumberFromProfile([
 "usdt_balance",
-"available_usdt",
-"usdt"
+"available_usdt"
 ]);
 
 renderUSDTBalance(value);
 
-const button=document.getElementById("balanceToggleButton");
+const button=
+document.getElementById("balanceToggleButton");
 
 if(button){
-button.textContent=balanceVisible?"👁️":"🙈";
+
+button.textContent=
+balanceVisible?"👁️":"🙈";
+
 }
 
 }
@@ -772,7 +892,9 @@ currentProfile[field]!==undefined&&
 currentProfile[field]!==null
 ){
 
-const value=Number(currentProfile[field]);
+const value=Number(
+currentProfile[field]
+);
 
 if(Number.isFinite(value)){
 return value;
@@ -799,7 +921,8 @@ document.getElementById("profileId").textContent=
 
 function setProfilePhoto(avatar,username){
 
-const oldBox=document.getElementById("profilePhotoBox");
+const oldBox=
+document.getElementById("profilePhotoBox");
 
 if(!oldBox){
 return;
@@ -819,7 +942,9 @@ oldBox.replaceWith(img);
 }else{
 
 oldBox.textContent=
-String(username||"U").charAt(0).toUpperCase();
+String(username||"U")
+.charAt(0)
+.toUpperCase();
 
 oldBox.className="profile-photo";
 
@@ -855,11 +980,14 @@ return;
 
 const userId=currentSession.user.id;
 
-const extension=file.name.split(".").pop().toLowerCase();
+const extension=
+file.name.split(".").pop().toLowerCase();
 
-const filePath=userId+"/profile."+extension;
+const filePath=
+userId+"/profile."+extension;
 
-const {error:uploadError}=await supabaseClient
+const {error:uploadError}=
+await supabaseClient
 .storage
 .from("avatars")
 .upload(
@@ -884,19 +1012,39 @@ return;
 
 }
 
-const {data}=supabaseClient
+const {data}=
+supabaseClient
 .storage
 .from("avatars")
 .getPublicUrl(filePath);
 
-const avatarUrl=data.publicUrl+"?t="+Date.now();
+const avatarUrl=
+data.publicUrl+"?t="+Date.now();
 
-const {error:updateError}=await supabaseClient
+let updateQuery=
+supabaseClient
 .from("profiles")
 .update({
 avatar_url:avatarUrl
 })
 .eq("id",userId);
+
+let {error:updateError}=
+await updateQuery;
+
+if(updateError){
+
+const fallbackUpdate=
+await supabaseClient
+.from("profiles")
+.update({
+avatar_url:avatarUrl
+})
+.eq("user_id",userId);
+
+updateError=fallbackUpdate.error;
+
+}
 
 if(updateError){
 
@@ -936,8 +1084,11 @@ function updateLockUI(){
 
 const locked=isProfileLocked();
 
-const button=document.getElementById("lockButton");
-const status=document.getElementById("lockStatus");
+const button=
+document.getElementById("lockButton");
+
+const status=
+document.getElementById("lockStatus");
 
 if(locked){
 
@@ -972,12 +1123,26 @@ if(!confirmed){
 return;
 }
 
-const {error}=await supabaseClient
+let {error}=await supabaseClient
 .from("profiles")
 .update({
 profile_locked:newValue
 })
 .eq("id",currentSession.user.id);
+
+if(error){
+
+const fallback=
+await supabaseClient
+.from("profiles")
+.update({
+profile_locked:newValue
+})
+.eq("user_id",currentSession.user.id);
+
+error=fallback.error;
+
+}
 
 if(error){
 
@@ -1015,7 +1180,10 @@ document.getElementById("editModal").classList.add("show");
 }
 
 function closeEditProfile(){
-document.getElementById("editModal").classList.remove("show");
+
+document.getElementById("editModal")
+.classList.remove("show");
+
 }
 
 async function saveProfile(){
@@ -1028,18 +1196,36 @@ if(!requirePermanentUsername()){
 return;
 }
 
-const bio=document.getElementById("editBio").value.trim();
+const bio=
+document.getElementById("editBio")
+.value
+.trim();
 
-const button=document.getElementById("saveProfileButton");
+const button=
+document.getElementById("saveProfileButton");
 
 button.disabled=true;
 
-const {error}=await supabaseClient
+let {error}=await supabaseClient
 .from("profiles")
 .update({
 bio:bio
 })
 .eq("id",currentSession.user.id);
+
+if(error){
+
+const fallback=
+await supabaseClient
+.from("profiles")
+.update({
+bio:bio
+})
+.eq("user_id",currentSession.user.id);
+
+error=fallback.error;
+
+}
 
 button.disabled=false;
 
@@ -1064,11 +1250,17 @@ await loadPosts();
 }
 
 function openSettings(){
-document.getElementById("settingsModal").classList.add("show");
+
+document.getElementById("settingsModal")
+.classList.add("show");
+
 }
 
 function closeSettings(){
-document.getElementById("settingsModal").classList.remove("show");
+
+document.getElementById("settingsModal")
+.classList.remove("show");
+
 }
 
 async function loadStats(){
@@ -1079,14 +1271,17 @@ return;
 
 const userId=currentSession.user.id;
 
-const {count:postCount}=await supabaseClient
+const {count:postCount}=
+await supabaseClient
 .from("posts")
 .select("id",{count:"exact",head:true})
 .eq("user_id",userId);
 
-document.getElementById("postCount").textContent=postCount||0;
+document.getElementById("postCount").textContent=
+postCount||0;
 
-const {data:userPosts}=await supabaseClient
+const {data:userPosts}=
+await supabaseClient
 .from("posts")
 .select("id")
 .eq("user_id",userId);
@@ -1095,30 +1290,44 @@ let totalLikes=0;
 
 if(userPosts&&userPosts.length){
 
-const postIds=userPosts.map(post=>post.id);
+const postIds=
+userPosts.map(post=>post.id);
 
-const {count}=await supabaseClient
+const {count}=
+await supabaseClient
 .from("post_likes")
-.select("post_id",{count:"exact",head:true})
+.select(
+"post_id",
+{count:"exact",head:true}
+)
 .in("post_id",postIds);
 
 totalLikes=count||0;
 
 }
 
-document.getElementById("likeCount").textContent=totalLikes;
+document.getElementById("likeCount").textContent=
+totalLikes;
 
-const {count:followers,error:followersError}=await supabaseClient
+const {count:followers,error:followersError}=
+await supabaseClient
 .from("followers")
-.select("follower_id",{count:"exact",head:true})
+.select(
+"follower_id",
+{count:"exact",head:true}
+)
 .eq("following_id",userId);
 
 document.getElementById("followersCount").textContent=
 followersError?"0":followers||0;
 
-const {count:following,error:followingError}=await supabaseClient
+const {count:following,error:followingError}=
+await supabaseClient
 .from("followers")
-.select("following_id",{count:"exact",head:true})
+.select(
+"following_id",
+{count:"exact",head:true}
+)
 .eq("follower_id",userId);
 
 document.getElementById("followingCount").textContent=
@@ -1136,15 +1345,18 @@ const userId=currentSession.user.id;
 
 const now=new Date();
 
-const thirtyDaysAgo=new Date(
-now.getTime()-30*24*60*60*1000
+const thirtyDaysAgo=
+new Date(
+now.getTime()-
+30*24*60*60*1000
 ).toISOString();
 
 let totalTrades=0;
 let recentTrades=[];
 let completedRecent=0;
 
-const {data:trades,error:tradeError}=await supabaseClient
+const {data:trades,error:tradeError}=
+await supabaseClient
 .from("p2p_trades")
 .select("*")
 .or(
@@ -1156,28 +1368,32 @@ if(!tradeError&&trades){
 
 totalTrades=trades.length;
 
-recentTrades=trades.filter(
+recentTrades=
+trades.filter(
 trade=>
 new Date(
 trade.created_at||
 trade.completed_at||
 trade.updated_at||
 0
-).getTime()>=new Date(thirtyDaysAgo).getTime()
+).getTime()>=
+new Date(thirtyDaysAgo).getTime()
 );
 
 }
 
 if(tradeError||totalTrades===0){
 
-const {data:orders}=await supabaseClient
+const {data:orders}=
+await supabaseClient
 .from("p2p_orders")
 .select("*")
 .eq("user_id",userId);
 
 if(orders){
 
-const completedOrders=orders.filter(
+const completedOrders=
+orders.filter(
 order=>isCompletedStatus(order.status)
 );
 
@@ -1186,21 +1402,24 @@ totalTrades,
 completedOrders.length
 );
 
-recentTrades=completedOrders.filter(
+recentTrades=
+completedOrders.filter(
 order=>
 new Date(
 order.completed_at||
 order.updated_at||
 order.created_at||
 0
-).getTime()>=new Date(thirtyDaysAgo).getTime()
+).getTime()>=
+new Date(thirtyDaysAgo).getTime()
 );
 
 }
 
 }
 
-completedRecent=recentTrades.filter(
+completedRecent=
+recentTrades.filter(
 trade=>
 isCompletedStatus(
 trade.status||
@@ -1209,10 +1428,13 @@ trade.order_status
 )
 ).length;
 
-const recentTotal=recentTrades.length;
+const recentTotal=
+recentTrades.length;
 
-const completedRate=recentTotal>0?
-(completedRecent/recentTotal)*100:0;
+const completedRate=
+recentTotal>0?
+(completedRecent/recentTotal)*100:
+0;
 
 document.getElementById("completedRate").textContent=
 completedRate.toLocaleString(
@@ -1223,15 +1445,23 @@ maximumFractionDigits:2
 }
 )+"%";
 
-document.getElementById("thirtyDayTrade").textContent=recentTotal;
-document.getElementById("totalTrade").textContent=totalTrades;
-document.getElementById("usernameAge").textContent="Permanent";
+document.getElementById("thirtyDayTrade").textContent=
+recentTotal;
+
+document.getElementById("totalTrade").textContent=
+totalTrades;
+
+document.getElementById("usernameAge").textContent=
+"Permanent";
 
 }
 
 function isCompletedStatus(status){
 
-const value=String(status||"").toLowerCase().trim();
+const value=
+String(status||"")
+.toLowerCase()
+.trim();
 
 return[
 "completed",
@@ -1248,21 +1478,26 @@ return[
 
 function openDeposit(){
 
-const balance=getNumberFromProfile([
+const balance=
+getNumberFromProfile([
 "usdt_balance",
-"available_usdt",
-"usdt"
+"available_usdt"
 ]);
 
-document.getElementById("depositBalance").textContent=
+document.getElementById("depositBalance")
+.textContent=
 formatNumber(balance)+" USDT";
 
-document.getElementById("depositModal").classList.add("show");
+document.getElementById("depositModal")
+.classList.add("show");
 
 }
 
 function closeDeposit(){
-document.getElementById("depositModal").classList.remove("show");
+
+document.getElementById("depositModal")
+.classList.remove("show");
+
 }
 
 async function submitDeposit(){
@@ -1276,13 +1511,19 @@ if(!requirePermanentUsername()){
 return;
 }
 
-const amount=Number(
-document.getElementById("depositAmount").value
+const amount=
+Number(
+document.getElementById("depositAmount")
+.value
 );
 
-const network=document.getElementById("depositNetwork").value;
+const network=
+document.getElementById("depositNetwork")
+.value;
 
-const txHash=document.getElementById("depositTxHash").value.trim();
+const txHash=
+document.getElementById("depositTxHash")
+.value.trim();
 
 if(!Number.isFinite(amount)||amount<=0){
 
@@ -1298,12 +1539,14 @@ return;
 
 }
 
-const button=document.getElementById("depositSubmitButton");
+const button=
+document.getElementById("depositSubmitButton");
 
 button.disabled=true;
 button.textContent="Submitting...";
 
-const {error}=await supabaseClient
+const {error}=
+await supabaseClient
 .from("usdt_ledger")
 .insert({
 user_id:currentSession.user.id,
@@ -1336,27 +1579,34 @@ document.getElementById("depositTxHash").value="";
 
 closeDeposit();
 
-alert("Deposit request submitted successfully.");
+alert(
+"Deposit request submitted successfully."
+);
 
 }
 
 function openWithdraw(){
 
-const balance=getNumberFromProfile([
+const balance=
+getNumberFromProfile([
 "usdt_balance",
-"available_usdt",
-"usdt"
+"available_usdt"
 ]);
 
-document.getElementById("withdrawBalance").textContent=
+document.getElementById("withdrawBalance")
+.textContent=
 formatNumber(balance)+" USDT";
 
-document.getElementById("withdrawModal").classList.add("show");
+document.getElementById("withdrawModal")
+.classList.add("show");
 
 }
 
 function closeWithdraw(){
-document.getElementById("withdrawModal").classList.remove("show");
+
+document.getElementById("withdrawModal")
+.classList.remove("show");
+
 }
 
 async function submitWithdrawal(){
@@ -1370,23 +1620,33 @@ if(!requirePermanentUsername()){
 return;
 }
 
-const amount=Number(
-document.getElementById("withdrawAmount").value
+const amount=
+Number(
+document.getElementById("withdrawAmount")
+.value
 );
 
-const address=document.getElementById("withdrawAddress").value.trim();
+const address=
+document.getElementById("withdrawAddress")
+.value
+.trim();
 
-const network=document.getElementById("withdrawNetwork").value;
+const network=
+document.getElementById("withdrawNetwork")
+.value;
 
-const available=getNumberFromProfile([
+const available=
+getNumberFromProfile([
 "usdt_balance",
-"available_usdt",
-"usdt"
+"available_usdt"
 ]);
 
 if(!Number.isFinite(amount)||amount<=0){
 
-alert("Please enter a valid withdrawal amount.");
+alert(
+"Please enter a valid withdrawal amount."
+);
+
 return;
 
 }
@@ -1400,30 +1660,46 @@ return;
 
 if(!address){
 
-alert("Please enter a withdrawal address.");
+alert(
+"Please enter a withdrawal address."
+);
+
 return;
 
 }
 
-if(network==="TRC20"&&!address.startsWith("T")){
+if(
+network==="TRC20"&&
+!address.startsWith("T")
+){
 
-alert("Please enter a valid TRON TRC-20 address.");
+alert(
+"Please enter a valid TRON TRC-20 address."
+);
+
 return;
 
 }
 
-const confirmed=confirm("Submit this withdrawal request?");
+const confirmed=
+confirm(
+"Submit this withdrawal request?"
+);
 
 if(!confirmed){
 return;
 }
 
-const button=document.getElementById("withdrawSubmitButton");
+const button=
+document.getElementById(
+"withdrawSubmitButton"
+);
 
 button.disabled=true;
 button.textContent="Submitting...";
 
-const {error}=await supabaseClient
+const {error}=
+await supabaseClient
 .from("usdt_ledger")
 .insert({
 user_id:currentSession.user.id,
@@ -1456,7 +1732,9 @@ document.getElementById("withdrawAddress").value="";
 
 closeWithdraw();
 
-alert("Withdrawal request submitted successfully.");
+alert(
+"Withdrawal request submitted successfully."
+);
 
 }
 
@@ -1466,31 +1744,54 @@ if(!requirePermanentUsername()){
 return;
 }
 
-orderType=type==="sell"?"sell":"buy";
+orderType=
+type==="sell"?
+"sell":
+"buy";
 
-const modal=document.getElementById("orderModal");
-const title=document.getElementById("orderModalTitle");
-const typeBadge=document.getElementById("orderModalType");
-const submitButton=document.getElementById("submitOrderButton");
+const modal=
+document.getElementById("orderModal");
 
-document.getElementById("orderUsername").textContent=
+const title=
+document.getElementById("orderModalTitle");
+
+const typeBadge=
+document.getElementById("orderModalType");
+
+const submitButton=
+document.getElementById("submitOrderButton");
+
+document.getElementById("orderUsername")
+.textContent=
 "@"+getPermanentUsername();
 
 if(orderType==="sell"){
 
 title.textContent="🔴 Create Sell Order";
+
 typeBadge.textContent="SELL";
-typeBadge.className="order-modal-type sell";
-submitButton.textContent="Create Sell Order";
-submitButton.className="order-submit sell-submit";
+typeBadge.className=
+"order-modal-type sell";
+
+submitButton.textContent=
+"Create Sell Order";
+
+submitButton.className=
+"order-submit sell-submit";
 
 }else{
 
 title.textContent="🟢 Create Buy Order";
+
 typeBadge.textContent="BUY";
-typeBadge.className="order-modal-type buy";
-submitButton.textContent="Create Buy Order";
-submitButton.className="order-submit";
+typeBadge.className=
+"order-modal-type buy";
+
+submitButton.textContent=
+"Create Buy Order";
+
+submitButton.className=
+"order-submit";
 
 }
 
@@ -1502,12 +1803,17 @@ modal.classList.add("show");
 }
 
 function closeOrderModal(){
-document.getElementById("orderModal").classList.remove("show");
+
+document.getElementById("orderModal")
+.classList.remove("show");
+
 }
 
 function getPairParts(pair){
 
-const parts=String(pair||"").split("_");
+const parts=
+String(pair||"")
+.split("_");
 
 return{
 base:parts[0]||"USDT",
@@ -1518,11 +1824,16 @@ quote:parts[1]||"USD"
 
 function updateOrderCurrency(){
 
-const pair=document.getElementById("orderPair").value;
+const pair=
+document.getElementById("orderPair")
+.value;
 
-const {quote}=getPairParts(pair);
+const {quote}=
+getPairParts(pair);
 
-document.getElementById("orderPriceCurrency").textContent=quote;
+document.getElementById(
+"orderPriceCurrency"
+).textContent=quote;
 
 }
 
@@ -1530,8 +1841,13 @@ function calculatePlatformFee(value){
 
 const number=Number(value);
 
-if(!Number.isFinite(number)||number<=0){
+if(
+!Number.isFinite(number)||
+number<=0
+){
+
 return 0;
+
 }
 
 return number*PLATFORM_FEE_RATE;
@@ -1542,11 +1858,17 @@ function calculateTotalWithFee(value){
 
 const number=Number(value);
 
-if(!Number.isFinite(number)||number<=0){
+if(
+!Number.isFinite(number)||
+number<=0
+){
+
 return 0;
+
 }
 
-return number+calculatePlatformFee(number);
+return number+
+calculatePlatformFee(number);
 
 }
 
@@ -1561,7 +1883,9 @@ if(
 a<=0||
 p<=0
 ){
+
 return 0;
+
 }
 
 return a*p;
@@ -1570,23 +1894,44 @@ return a*p;
 
 function updateFeePreview(){
 
-const amount=Number(
-document.getElementById("orderAmount").value
+const amount=
+Number(
+document.getElementById("orderAmount")
+.value
 );
 
-const price=Number(
-document.getElementById("orderPrice").value
+const price=
+Number(
+document.getElementById("orderPrice")
+.value
 );
 
-const pair=document.getElementById("orderPair").value;
+const pair=
+document.getElementById("orderPair")
+.value;
 
-const {quote}=getPairParts(pair);
+const {quote}=
+getPairParts(pair);
 
-const tradeValue=calculatePairValue(amount,price);
-const fee=calculatePlatformFee(tradeValue);
-const total=calculateTotalWithFee(tradeValue);
+const tradeValue=
+calculatePairValue(
+amount,
+price
+);
 
-document.getElementById("orderTradeValue").textContent=
+const fee=
+calculatePlatformFee(
+tradeValue
+);
+
+const total=
+calculateTotalWithFee(
+tradeValue
+);
+
+document.getElementById(
+"orderTradeValue"
+).textContent=
 tradeValue.toLocaleString(
 undefined,
 {
@@ -1595,7 +1940,9 @@ maximumFractionDigits:2
 }
 )+" "+quote;
 
-document.getElementById("orderFee").textContent=
+document.getElementById(
+"orderFee"
+).textContent=
 fee.toLocaleString(
 undefined,
 {
@@ -1604,7 +1951,9 @@ maximumFractionDigits:2
 }
 )+" "+quote;
 
-document.getElementById("orderTotal").textContent=
+document.getElementById(
+"orderTotal"
+).textContent=
 total.toLocaleString(
 undefined,
 {
@@ -1626,55 +1975,85 @@ if(!requirePermanentUsername()){
 return;
 }
 
-const username=getPermanentUsername();
+const username=
+getPermanentUsername();
 
-const pair=document.getElementById("orderPair").value;
+const pair=
+document.getElementById("orderPair")
+.value;
 
-const amount=Number(
-document.getElementById("orderAmount").value
+const amount=
+Number(
+document.getElementById("orderAmount")
+.value
 );
 
-const price=Number(
-document.getElementById("orderPrice").value
+const price=
+Number(
+document.getElementById("orderPrice")
+.value
 );
 
-const payment=document.getElementById("orderPayment").value;
+const payment=
+document.getElementById("orderPayment")
+.value;
 
 if(!pair){
 
-alert("Please select a trading pair.");
+alert(
+"Please select a trading pair."
+);
+
 return;
 
 }
 
-if(!Number.isFinite(amount)||amount<=0){
+if(
+!Number.isFinite(amount)||
+amount<=0
+){
 
-alert("Please enter a valid USDT amount.");
+alert(
+"Please enter a valid USDT amount."
+);
+
 return;
 
 }
 
-if(!Number.isFinite(price)||price<=0){
+if(
+!Number.isFinite(price)||
+price<=0
+){
 
-alert("Please enter a valid price.");
+alert(
+"Please enter a valid price."
+);
+
 return;
 
 }
 
 if(!payment){
 
-alert("Please select a payment method.");
+alert(
+"Please select a payment method."
+);
+
 return;
 
 }
 
-const button=document.getElementById("submitOrderButton");
+const button=
+document.getElementById(
+"submitOrderButton"
+);
 
 button.disabled=true;
 button.textContent="Creating...";
 
-const {data,error}=await supabaseClient
-.rpc(
+const {data,error}=
+await supabaseClient.rpc(
 "create_p2p_order",
 {
 p_order_type:orderType,
@@ -1689,13 +2068,16 @@ p_username:username
 button.disabled=false;
 
 button.textContent=
-orderType==="sell"
-?"Create Sell Order"
-:"Create Buy Order";
+orderType==="sell"?
+"Create Sell Order":
+"Create Buy Order";
 
 if(error){
 
-console.error("Create order error:",error);
+console.error(
+"Create order error:",
+error
+);
 
 alert(
 "Could not create order:\n\n"+
@@ -1706,14 +2088,25 @@ return;
 
 }
 
-document.getElementById("orderAmount").value="";
-document.getElementById("orderPrice").value="";
-document.getElementById("orderPayment").value="";
+document.getElementById(
+"orderAmount"
+).value="";
+
+document.getElementById(
+"orderPrice"
+).value="";
+
+document.getElementById(
+"orderPayment"
+).value="";
 
 updateFeePreview();
+
 closeOrderModal();
 
-alert("Order created successfully.");
+alert(
+"Order created successfully."
+);
 
 await loadMyOrders();
 await loadProfile();
@@ -1726,20 +2119,28 @@ if(!currentSession){
 return;
 }
 
-const container=document.getElementById("myOrders");
+const container=
+document.getElementById("myOrders");
 
 container.innerHTML=
 `<div class="order-empty">Loading orders...</div>`;
 
-const {data:orders,error}=await supabaseClient
+const {data:orders,error}=
+await supabaseClient
 .from("p2p_orders")
 .select("*")
 .eq("user_id",currentSession.user.id)
-.order("created_at",{ascending:false});
+.order(
+"created_at",
+{ascending:false}
+);
 
 if(error){
 
-console.error("Orders error:",error);
+console.error(
+"Orders error:",
+error
+);
 
 container.innerHTML=
 `
@@ -1772,24 +2173,41 @@ renderOrderCard(order,container);
 
 function renderOrderCard(order,container){
 
-const type=String(
+const type=
+String(
 order.order_type||
 order.type||
 "buy"
 ).toLowerCase();
 
-const pair=order.pair||"USDT_USD";
+const pair=
+order.pair||
+"USDT_USD";
 
-const {base,quote}=getPairParts(pair);
+const {base,quote}=
+getPairParts(pair);
 
-const amount=Number(order.amount||0);
-const price=Number(order.price||0);
-const tradeValue=calculatePairValue(amount,price);
+const amount=
+Number(order.amount||0);
 
-const status=String(order.status||"open").toLowerCase();
+const price=
+Number(order.price||0);
+
+const tradeValue=
+calculatePairValue(
+amount,
+price
+);
+
+const status=
+String(
+order.status||
+"open"
+).toLowerCase();
 
 const statusText=
-status.charAt(0).toUpperCase()+status.slice(1);
+status.charAt(0).toUpperCase()+
+status.slice(1);
 
 const payment=
 order.payment_method||
@@ -1802,12 +2220,15 @@ getPermanentUsername();
 
 const created=
 order.created_at?
-formatTime(order.created_at):"";
+formatTime(order.created_at):
+"";
 
-const card=document.createElement("div");
+const card=
+document.createElement("div");
 
 card.className=
-"order-card "+(type==="sell"?"sell":"");
+"order-card "+
+(type==="sell"?"sell":"");
 
 const canCancel=[
 "open",
@@ -1833,7 +2254,9 @@ ${escapeHtml(statusText)}
 
 <div class="order-detail">
 <div class="order-detail-label">Username</div>
-<div class="order-detail-value">@${escapeHtml(username)}</div>
+<div class="order-detail-value">
+@${escapeHtml(username)}
+</div>
 </div>
 
 <div class="order-detail">
@@ -1904,14 +2327,15 @@ if(!currentSession){
 return;
 }
 
-const confirmed=confirm("Cancel this order?");
+const confirmed=
+confirm("Cancel this order?");
 
 if(!confirmed){
 return;
 }
 
-const {error}=await supabaseClient
-.rpc(
+const {error}=
+await supabaseClient.rpc(
 "cancel_p2p_order",
 {
 p_order_id:orderId
@@ -1920,7 +2344,10 @@ p_order_id:orderId
 
 if(error){
 
-console.error("Cancel order error:",error);
+console.error(
+"Cancel order error:",
+error
+);
 
 alert(
 "Could not cancel order:\n\n"+
@@ -1946,11 +2373,15 @@ if(!requirePermanentUsername()){
 return;
 }
 
-const textarea=document.getElementById("postContent");
+const textarea=
+document.getElementById("postContent");
 
-const visibility=document.getElementById("postVisibility").value;
+const visibility=
+document.getElementById("postVisibility")
+.value;
 
-const content=textarea.value.trim();
+const content=
+textarea.value.trim();
 
 if(!content){
 
@@ -1959,11 +2390,15 @@ return;
 
 }
 
-const button=document.getElementById("createPostButton");
+const button=
+document.getElementById(
+"createPostButton"
+);
 
 button.disabled=true;
 
-const {error}=await supabaseClient
+const {error}=
+await supabaseClient
 .from("posts")
 .insert({
 user_id:currentSession.user.id,
@@ -2000,12 +2435,14 @@ if(!currentSession){
 return;
 }
 
-const feed=document.getElementById("postsFeed");
+const feed=
+document.getElementById("postsFeed");
 
 feed.innerHTML=
 `<div class="empty">Loading posts...</div>`;
 
-const {data:posts,error}=await supabaseClient
+const {data:posts,error}=
+await supabaseClient
 .from("posts")
 .select(`
 id,
@@ -2016,7 +2453,10 @@ visibility,
 created_at
 `)
 .eq("user_id",currentSession.user.id)
-.order("created_at",{ascending:false});
+.order(
+"created_at",
+{ascending:false}
+);
 
 if(error){
 
@@ -2043,16 +2483,24 @@ return;
 
 }
 
-const postIds=posts.map(post=>post.id);
+const postIds=
+posts.map(post=>post.id);
 
 await loadPostProfiles(posts);
 
-const likes=await loadLikes(postIds);
-const comments=await loadComments(postIds);
+const likes=
+await loadLikes(postIds);
+
+const comments=
+await loadComments(postIds);
 
 allComments=comments;
 
-renderPosts(posts,likes,comments);
+renderPosts(
+posts,
+likes,
+comments
+);
 
 }
 
@@ -2070,9 +2518,12 @@ if(!ids.length){
 return;
 }
 
-const {data,error}=await supabaseClient
+const {data,error}=
+await supabaseClient
 .from("profiles")
-.select("id,username,avatar_url")
+.select(
+"id,username,avatar_url"
+)
 .in("id",ids);
 
 if(error){
@@ -2082,27 +2533,34 @@ return;
 
 }
 
-(data||[]).forEach(profile=>{
+(data||[]).forEach(
+profile=>{
 allProfiles[profile.id]=profile;
-});
+}
+);
 
 }
 
 async function loadLikes(postIds){
 
 if(!postIds.length){
-return [];
+return[];
 }
 
-const {data,error}=await supabaseClient
+const {data,error}=
+await supabaseClient
 .from("post_likes")
 .select("post_id,user_id")
 .in("post_id",postIds);
 
 if(error){
 
-console.error("Likes error:",error);
-return [];
+console.error(
+"Likes error:",
+error
+);
+
+return[];
 
 }
 
@@ -2113,41 +2571,60 @@ return data||[];
 async function loadComments(postIds){
 
 if(!postIds.length){
-return [];
+return[];
 }
 
-const {data,error}=await supabaseClient
+const {data,error}=
+await supabaseClient
 .from("post_comments")
-.select("id,post_id,user_id,comment,created_at")
+.select(
+"id,post_id,user_id,comment,created_at"
+)
 .in("post_id",postIds)
-.order("created_at",{ascending:true});
+.order(
+"created_at",
+{ascending:true}
+);
 
 if(error){
 
-console.error("Comments error:",error);
-return [];
+console.error(
+"Comments error:",
+error
+);
+
+return[];
 
 }
 
 const commentUserIds=[
 ...new Set(
-(data||[]).map(comment=>comment.user_id)
+(data||[]).map(
+comment=>comment.user_id
+)
 )
 ];
 
 if(commentUserIds.length){
 
-const {data:commentProfiles,error:profileError}=
+const {
+data:commentProfiles,
+error:profileError
+}=
 await supabaseClient
 .from("profiles")
-.select("id,username,avatar_url")
+.select(
+"id,username,avatar_url"
+)
 .in("id",commentUserIds);
 
 if(!profileError){
 
-(commentProfiles||[]).forEach(profile=>{
+(commentProfiles||[]).forEach(
+profile=>{
 allProfiles[profile.id]=profile;
-});
+}
+);
 
 }
 
@@ -2157,39 +2634,58 @@ return data||[];
 
 }
 
-function renderPosts(posts,likes,comments){
+function renderPosts(
+posts,
+likes,
+comments
+){
 
-const feed=document.getElementById("postsFeed");
+const feed=
+document.getElementById(
+"postsFeed"
+);
 
 feed.innerHTML="";
 
 posts.forEach(post=>{
 
-const profile=allProfiles[post.user_id]||{};
+const profile=
+allProfiles[post.user_id]||{};
 
 const username=
 post.username||
 profile.username||
 "User";
 
-const avatar=profile.avatar_url||"";
+const avatar=
+profile.avatar_url||"";
 
 const initial=
 username.charAt(0).toUpperCase();
 
-const postLikes=likes.filter(
-like=>String(like.post_id)===String(post.id)
+const postLikes=
+likes.filter(
+like=>
+String(like.post_id)===
+String(post.id)
 );
 
-const liked=postLikes.some(
-like=>like.user_id===currentSession.user.id
+const liked=
+postLikes.some(
+like=>
+like.user_id===
+currentSession.user.id
 );
 
-const postComments=comments.filter(
-comment=>String(comment.post_id)===String(post.id)
+const postComments=
+comments.filter(
+comment=>
+String(comment.post_id)===
+String(post.id)
 );
 
-const card=document.createElement("article");
+const card=
+document.createElement("article");
 
 card.className="post-card";
 
@@ -2224,7 +2720,9 @@ post.visibility==="private"
 
 ·
 
-${escapeHtml(formatTime(post.created_at))}
+${escapeHtml(
+formatTime(post.created_at)
+)}
 
 </div>
 
@@ -2333,16 +2831,24 @@ No comments yet.
 
 }
 
-return comments.map(comment=>{
+return comments.map(
+comment=>{
 
-const profile=allProfiles[comment.user_id]||{};
+const profile=
+allProfiles[comment.user_id]||{};
 
-const username=profile.username||"User";
-const avatar=profile.avatar_url||"";
-const initial=username.charAt(0).toUpperCase();
+const username=
+profile.username||"User";
+
+const avatar=
+profile.avatar_url||"";
+
+const initial=
+username.charAt(0).toUpperCase();
 
 const isOwner=
-comment.user_id===currentSession.user.id;
+comment.user_id===
+currentSession.user.id;
 
 return`
 
@@ -2392,14 +2898,22 @@ ${escapeHtml(comment.comment||"")}
 
 function toggleComments(postId){
 
-const box=document.getElementById("comments-"+postId);
-const button=document.getElementById("view-comments-"+postId);
+const box=
+document.getElementById(
+"comments-"+postId
+);
+
+const button=
+document.getElementById(
+"view-comments-"+postId
+);
 
 if(!box||!button){
 return;
 }
 
-const hidden=box.classList.toggle("hidden");
+const hidden=
+box.classList.toggle("hidden");
 
 button.textContent=
 hidden
@@ -2414,9 +2928,11 @@ if(!currentSession){
 return;
 }
 
-const userId=currentSession.user.id;
+const userId=
+currentSession.user.id;
 
-const {data:existing,error:checkError}=await supabaseClient
+const {data:existing,error:checkError}=
+await supabaseClient
 .from("post_likes")
 .select("post_id")
 .eq("post_id",postId)
@@ -2438,7 +2954,8 @@ return;
 
 if(existing){
 
-const {error}=await supabaseClient
+const {error}=
+await supabaseClient
 .from("post_likes")
 .delete()
 .eq("post_id",postId)
@@ -2457,7 +2974,8 @@ return;
 
 }else{
 
-const {error}=await supabaseClient
+const {error}=
+await supabaseClient
 .from("post_likes")
 .insert({
 post_id:postId,
@@ -2493,7 +3011,8 @@ if(!requirePermanentUsername()){
 return;
 }
 
-const input=document.getElementById(
+const input=
+document.getElementById(
 "comment-input-"+postId
 );
 
@@ -2501,7 +3020,8 @@ if(!input){
 return;
 }
 
-const comment=input.value.trim();
+const comment=
+input.value.trim();
 
 if(!comment){
 return;
@@ -2514,7 +3034,8 @@ return;
 
 }
 
-const {error}=await supabaseClient
+const {error}=
+await supabaseClient
 .from("post_comments")
 .insert({
 post_id:postId,
@@ -2525,7 +3046,10 @@ comment:comment
 
 if(error){
 
-console.error("Comment failed:",error);
+console.error(
+"Comment failed:",
+error
+);
 
 alert(
 "Comment failed:\n\n"+
@@ -2544,17 +3068,22 @@ await loadPosts();
 
 async function deleteComment(commentId){
 
-const confirmed=confirm("Delete your comment?");
+const confirmed=
+confirm("Delete your comment?");
 
 if(!confirmed){
 return;
 }
 
-const {error}=await supabaseClient
+const {error}=
+await supabaseClient
 .from("post_comments")
 .delete()
 .eq("id",commentId)
-.eq("user_id",currentSession.user.id);
+.eq(
+"user_id",
+currentSession.user.id
+);
 
 if(error){
 
@@ -2575,17 +3104,22 @@ await loadPosts();
 
 async function deletePost(postId){
 
-const confirmed=confirm("Delete this post?");
+const confirmed=
+confirm("Delete this post?");
 
 if(!confirmed){
 return;
 }
 
-const {error}=await supabaseClient
+const {error}=
+await supabaseClient
 .from("posts")
 .delete()
 .eq("id",postId)
-.eq("user_id",currentSession.user.id);
+.eq(
+"user_id",
+currentSession.user.id
+);
 
 if(error){
 
@@ -2607,7 +3141,8 @@ await loadStats();
 
 async function sharePost(postId){
 
-const username=getPermanentUsername();
+const username=
+getPermanentUsername();
 
 const url=
 window.location.origin+
@@ -2652,12 +3187,15 @@ alert(url);
 }
 
 function openWallet(){
+
 window.location.href="wallet.html";
+
 }
 
 function openBuy(){
 
-const username=getPermanentUsername();
+const username=
+getPermanentUsername();
 
 window.location.href=
 "live.html?username="+
@@ -2668,7 +3206,8 @@ encodeURIComponent(username)+
 
 function openSell(){
 
-const username=getPermanentUsername();
+const username=
+getPermanentUsername();
 
 window.location.href=
 "wallet.html?username="+
@@ -2679,7 +3218,8 @@ encodeURIComponent(username)+
 
 function openMessages(){
 
-const username=getPermanentUsername();
+const username=
+getPermanentUsername();
 
 window.location.href=
 "message.html?username="+
@@ -2688,12 +3228,15 @@ encodeURIComponent(username);
 }
 
 function openLive(){
+
 window.location.href="live.html";
+
 }
 
 function goHome(){
 
-const username=getPermanentUsername();
+const username=
+getPermanentUsername();
 
 window.location.href=
 "index.html?username="+
@@ -2703,13 +3246,15 @@ encodeURIComponent(username);
 
 async function logout(){
 
-const confirmed=confirm("Do you want to log out?");
+const confirmed=
+confirm("Do you want to log out?");
 
 if(!confirmed){
 return;
 }
 
-const {error}=await supabaseClient.auth.signOut();
+const {error}=
+await supabaseClient.auth.signOut();
 
 if(error){
 
@@ -2728,7 +3273,8 @@ window.location.href="login.html";
 
 function formatNumber(value){
 
-const number=Number(value||0);
+const number=
+Number(value||0);
 
 if(!Number.isFinite(number)){
 return"0.00";
@@ -2746,15 +3292,18 @@ maximumFractionDigits:8
 
 function formatTime(dateString){
 
-const date=new Date(dateString);
+const date=
+new Date(dateString);
 
 if(isNaN(date.getTime())){
 return"";
 }
 
-const now=new Date();
+const now=
+new Date();
 
-const seconds=Math.floor(
+const seconds=
+Math.floor(
 (now-date)/1000
 );
 
@@ -2762,19 +3311,22 @@ if(seconds<60){
 return"now";
 }
 
-const minutes=Math.floor(seconds/60);
+const minutes=
+Math.floor(seconds/60);
 
 if(minutes<60){
 return minutes+"m";
 }
 
-const hours=Math.floor(minutes/60);
+const hours=
+Math.floor(minutes/60);
 
 if(hours<24){
 return hours+"h";
 }
 
-const days=Math.floor(hours/24);
+const days=
+Math.floor(hours/24);
 
 if(days<7){
 return days+"d";
@@ -2786,10 +3338,13 @@ return date.toLocaleDateString();
 
 function escapeHtml(text){
 
-const div=document.createElement("div");
+const div=
+document.createElement("div");
 
 div.textContent=
-text==null?"":String(text);
+text==null?
+"":
+String(text);
 
 return div.innerHTML;
 
@@ -2797,7 +3352,11 @@ return div.innerHTML;
 
 function escapeJs(text){
 
-return String(text==null?"":text)
+return String(
+text==null?
+"":
+text
+)
 .replace(/\\/g,"\\\\")
 .replace(/'/g,"\\'")
 .replace(/"/g,'\\"')
@@ -2813,7 +3372,9 @@ currentSession=session;
 
 if(!session){
 
-window.location.href="login.html";
+window.location.href=
+"login.html";
+
 return;
 
 }

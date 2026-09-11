@@ -511,10 +511,6 @@ let balanceVisible=true;
 
 const PLATFORM_FEE_RATE=0.01;
 
-/* =====================================================
-   PERMANENT USERNAME IDENTITY
-===================================================== */
-
 let permanentUsername="";
 
 function getPermanentUsername(){
@@ -554,28 +550,13 @@ return true;
 }
 
 function getUsernameIdentity(){
-
 return getPermanentUsername();
-
 }
-
-/*
-USDT is read from the authenticated user's profile account.
-The username is the permanent identity attached to that account.
-No username change is allowed from this page.
-*/
 
 function usernameEquals(a,b){
-
 return String(a||"").trim().toLowerCase()===
 String(b||"").trim().toLowerCase();
-
 }
-
-
-/* =====================================================
-   START
-===================================================== */
 
 async function startApp(){
 
@@ -600,22 +581,10 @@ await loadMyOrders();
 
 }
 
-
-/* =====================================================
-   LOGIN
-===================================================== */
-
 function showLogin(){
-
 alert("Please login first.");
 window.location.href="login.html";
-
 }
-
-
-/* =====================================================
-   VERIFIED STATUS
-===================================================== */
 
 function getVerificationStatus(){
 
@@ -641,9 +610,7 @@ currentProfile.verification_status==="verified"
 );
 
 return emailConfirmed||profileVerified;
-
 }
-
 
 function updateVerificationUI(){
 
@@ -666,11 +633,6 @@ badge.className="verification-badge unverified";
 }
 
 }
-
-
-/* =====================================================
-   LOAD PROFILE
-===================================================== */
 
 async function loadProfile(){
 
@@ -729,8 +691,6 @@ setProfilePhoto(avatar,username||"U");
 
 updateVerificationUI();
 
-/* USDT belongs to authenticated username/account */
-
 const usdt=getNumberFromProfile([
 "usdt_balance",
 "available_usdt",
@@ -738,8 +698,6 @@ const usdt=getNumberFromProfile([
 ]);
 
 renderUSDTBalance(usdt);
-
-/* Permanent username is read-only */
 
 const usernameField=document.getElementById("permanentUsername");
 
@@ -756,11 +714,6 @@ await loadStats();
 await loadTradeStats();
 
 }
-
-
-/* =====================================================
-   BALANCE
-===================================================== */
 
 function renderUSDTBalance(value){
 
@@ -786,7 +739,6 @@ maximumFractionDigits:2
 
 }
 
-
 function toggleBalanceVisibility(){
 
 balanceVisible=!balanceVisible;
@@ -806,7 +758,6 @@ button.textContent=balanceVisible?"👁️":"🙈";
 }
 
 }
-
 
 function getNumberFromProfile(fields){
 
@@ -835,11 +786,6 @@ return 0;
 
 }
 
-
-/* =====================================================
-   USERNAME DISPLAY
-===================================================== */
-
 async function loadUserNumber(userId){
 
 if(!requirePermanentUsername()){
@@ -850,11 +796,6 @@ document.getElementById("profileId").textContent=
 "Username: @"+getPermanentUsername();
 
 }
-
-
- /* =====================================================
-    PROFILE PHOTO
- ===================================================== */
 
 function setProfilePhoto(avatar,username){
 
@@ -885,11 +826,6 @@ oldBox.className="profile-photo";
 }
 
 }
-
-
-/* =====================================================
-   CHANGE PHOTO
-===================================================== */
 
 async function changeProfilePhoto(event){
 
@@ -984,11 +920,6 @@ event.target.value="";
 
 }
 
-
-/* =====================================================
-   PROFILE LOCK
-===================================================== */
-
 function isProfileLocked(){
 
 return Boolean(
@@ -1000,7 +931,6 @@ currentProfile.locked===true
 );
 
 }
-
 
 function updateLockUI(){
 
@@ -1022,7 +952,6 @@ status.textContent="🔓 Public profile";
 }
 
 }
-
 
 async function toggleProfileLock(){
 
@@ -1072,11 +1001,6 @@ await loadPosts();
 
 }
 
-
-/* =====================================================
-   EDIT PROFILE
-===================================================== */
-
 function openEditProfile(){
 
 if(!requirePermanentUsername()){
@@ -1090,19 +1014,9 @@ document.getElementById("editModal").classList.add("show");
 
 }
 
-
 function closeEditProfile(){
-
 document.getElementById("editModal").classList.remove("show");
-
 }
-
-
-/*
-Username is intentionally NEVER included in the update.
-It is a permanent identity.
-Only editable profile information is saved.
-*/
 
 async function saveProfile(){
 
@@ -1149,11 +1063,6 @@ await loadPosts();
 
 }
 
-
-/* =====================================================
-   SETTINGS
-===================================================== */
-
 function openSettings(){
 document.getElementById("settingsModal").classList.add("show");
 }
@@ -1161,11 +1070,6 @@ document.getElementById("settingsModal").classList.add("show");
 function closeSettings(){
 document.getElementById("settingsModal").classList.remove("show");
 }
-
-
-/* =====================================================
-   STATS
-===================================================== */
 
 async function loadStats(){
 
@@ -1221,11 +1125,6 @@ document.getElementById("followingCount").textContent=
 followingError?"0":following||0;
 
 }
-
-
-/* =====================================================
-   TRADE STATISTICS
-===================================================== */
 
 async function loadTradeStats(){
 
@@ -1330,7 +1229,6 @@ document.getElementById("usernameAge").textContent="Permanent";
 
 }
 
-
 function isCompletedStatus(status){
 
 const value=String(status||"").toLowerCase().trim();
@@ -1348,11 +1246,6 @@ return[
 
 }
 
-
-/* =====================================================
-   DEPOSIT
-===================================================== */
-
 function openDeposit(){
 
 const balance=getNumberFromProfile([
@@ -1368,11 +1261,9 @@ document.getElementById("depositModal").classList.add("show");
 
 }
 
-
 function closeDeposit(){
 document.getElementById("depositModal").classList.remove("show");
 }
-
 
 async function submitDeposit(){
 
@@ -1412,8 +1303,6 @@ const button=document.getElementById("depositSubmitButton");
 button.disabled=true;
 button.textContent="Submitting...";
 
-let success=false;
-
 const {error}=await supabaseClient
 .from("usdt_ledger")
 .insert({
@@ -1426,20 +1315,16 @@ network:network,
 tx_hash:txHash
 });
 
-if(!error){
-success=true;
-}
-
 button.disabled=false;
 button.textContent="Submit Deposit";
 
-if(!success){
+if(error){
 
 console.error("Deposit:",error);
 
 alert(
 "Could not submit deposit.\n\n"+
-(error?.message||"Please check the USDT ledger configuration.")
+error.message
 );
 
 return;
@@ -1454,11 +1339,6 @@ closeDeposit();
 alert("Deposit request submitted successfully.");
 
 }
-
-
-/* =====================================================
-   WITHDRAWAL
-===================================================== */
 
 function openWithdraw(){
 
@@ -1475,11 +1355,9 @@ document.getElementById("withdrawModal").classList.add("show");
 
 }
 
-
 function closeWithdraw(){
 document.getElementById("withdrawModal").classList.remove("show");
 }
-
 
 async function submitWithdrawal(){
 
@@ -1565,7 +1443,7 @@ if(error){
 console.error("Withdrawal:",error);
 
 alert(
-"Could not submit withdrawal.\n\n"+
+"Could not submit withdrawal:\n\n"+
 error.message
 );
 
@@ -1581,11 +1459,6 @@ closeWithdraw();
 alert("Withdrawal request submitted successfully.");
 
 }
-
-
-/* =====================================================
-   OPEN ORDER MODAL
-===================================================== */
 
 function openOrderModal(type){
 
@@ -1628,15 +1501,9 @@ modal.classList.add("show");
 
 }
 
-
 function closeOrderModal(){
 document.getElementById("orderModal").classList.remove("show");
 }
-
-
-/* =====================================================
-   PAIR
-===================================================== */
 
 function getPairParts(pair){
 
@@ -1649,7 +1516,6 @@ quote:parts[1]||"USD"
 
 }
 
-
 function updateOrderCurrency(){
 
 const pair=document.getElementById("orderPair").value;
@@ -1660,11 +1526,6 @@ document.getElementById("orderPriceCurrency").textContent=quote;
 
 }
 
-
-/* =====================================================
-   FEE
-===================================================== */
-
 function calculatePlatformFee(value){
 
 const number=Number(value);
@@ -1673,10 +1534,9 @@ if(!Number.isFinite(number)||number<=0){
 return 0;
 }
 
-return number*0.01;
+return number*PLATFORM_FEE_RATE;
 
 }
-
 
 function calculateTotalWithFee(value){
 
@@ -1689,7 +1549,6 @@ return 0;
 return number+calculatePlatformFee(number);
 
 }
-
 
 function calculatePairValue(amount,price){
 
@@ -1708,7 +1567,6 @@ return 0;
 return a*p;
 
 }
-
 
 function updateFeePreview(){
 
@@ -1756,11 +1614,6 @@ maximumFractionDigits:2
 )+" "+quote;
 
 }
-
-
-/* =====================================================
-   CREATE P2P ORDER
-===================================================== */
 
 async function createOrder(){
 
@@ -1820,12 +1673,6 @@ const button=document.getElementById("submitOrderButton");
 button.disabled=true;
 button.textContent="Creating...";
 
-/*
-The RPC receives the permanent username together with the authenticated
-user ID. The database function should derive/verify the user from auth.uid()
-and reject any username that does not belong to that account.
-*/
-
 const {data,error}=await supabaseClient
 .rpc(
 "create_p2p_order",
@@ -1872,11 +1719,6 @@ await loadMyOrders();
 await loadProfile();
 
 }
-
-
-/* =====================================================
-   LOAD MY ORDERS
-===================================================== */
 
 async function loadMyOrders(){
 
@@ -1927,11 +1769,6 @@ renderOrderCard(order,container);
 });
 
 }
-
-
-/* =====================================================
-   RENDER ORDER
-===================================================== */
 
 function renderOrderCard(order,container){
 
@@ -2061,11 +1898,6 @@ container.appendChild(card);
 
 }
 
-
-/* =====================================================
-   CANCEL ORDER
-===================================================== */
-
 async function cancelOrder(orderId){
 
 if(!currentSession){
@@ -2103,11 +1935,6 @@ await loadMyOrders();
 await loadProfile();
 
 }
-
-
-/* =====================================================
-   CREATE POST
-===================================================== */
 
 async function createPost(){
 
@@ -2166,11 +1993,6 @@ await loadPosts();
 await loadStats();
 
 }
-
-
-/* =====================================================
-   LOAD POSTS
-===================================================== */
 
 async function loadPosts(){
 
@@ -2234,11 +2056,6 @@ renderPosts(posts,likes,comments);
 
 }
 
-
-/* =====================================================
-   POST PROFILES
-===================================================== */
-
 async function loadPostProfiles(posts){
 
 const ids=[
@@ -2271,11 +2088,6 @@ allProfiles[profile.id]=profile;
 
 }
 
-
-/* =====================================================
-   LIKES
-===================================================== */
-
 async function loadLikes(postIds){
 
 if(!postIds.length){
@@ -2297,11 +2109,6 @@ return [];
 return data||[];
 
 }
-
-
-/* =====================================================
-   COMMENTS
-===================================================== */
 
 async function loadComments(postIds){
 
@@ -2349,11 +2156,6 @@ allProfiles[profile.id]=profile;
 return data||[];
 
 }
-
-
-/* =====================================================
-   RENDER POSTS
-===================================================== */
 
 function renderPosts(posts,likes,comments){
 
@@ -2519,11 +2321,6 @@ feed.appendChild(card);
 
 }
 
-
-/* =====================================================
-   COMMENTS
-===================================================== */
-
 function renderComments(comments){
 
 if(!comments.length){
@@ -2593,11 +2390,6 @@ ${escapeHtml(comment.comment||"")}
 
 }
 
-
-/* =====================================================
-   COMMENTS MAXIMIZE / MINIMIZE
-===================================================== */
-
 function toggleComments(postId){
 
 const box=document.getElementById("comments-"+postId);
@@ -2615,11 +2407,6 @@ hidden
 :"🔽 Hide comments";
 
 }
-
-
-/* =====================================================
-   LIKE
-===================================================== */
 
 async function likePost(postId){
 
@@ -2696,11 +2483,6 @@ await loadStats();
 
 }
 
-
-/* =====================================================
-   SEND COMMENT
-===================================================== */
-
 async function sendComment(postId){
 
 if(!currentSession){
@@ -2760,11 +2542,6 @@ await loadPosts();
 
 }
 
-
-/* =====================================================
-   DELETE COMMENT
-===================================================== */
-
 async function deleteComment(commentId){
 
 const confirmed=confirm("Delete your comment?");
@@ -2795,11 +2572,6 @@ return;
 await loadPosts();
 
 }
-
-
-/* =====================================================
-   DELETE POST
-===================================================== */
 
 async function deletePost(postId){
 
@@ -2832,11 +2604,6 @@ await loadPosts();
 await loadStats();
 
 }
-
-
-/* =====================================================
-   SHARE
-===================================================== */
 
 async function sharePost(postId){
 
@@ -2884,23 +2651,9 @@ alert(url);
 
 }
 
-
-/* =====================================================
-   USERNAME NAVIGATION
-===================================================== */
-
 function openWallet(){
-
 window.location.href="wallet.html";
-
 }
-
-
-/*
-Buy and Sell pages receive the permanent username so the
-next page can identify the account by username while the
-authenticated Supabase user remains the security authority.
-*/
 
 function openBuy(){
 
@@ -2913,7 +2666,6 @@ encodeURIComponent(username)+
 
 }
 
-
 function openSell(){
 
 const username=getPermanentUsername();
@@ -2925,7 +2677,6 @@ encodeURIComponent(username)+
 
 }
 
-
 function openMessages(){
 
 const username=getPermanentUsername();
@@ -2936,13 +2687,9 @@ encodeURIComponent(username);
 
 }
 
-
 function openLive(){
-
 window.location.href="live.html";
-
 }
-
 
 function goHome(){
 
@@ -2953,11 +2700,6 @@ window.location.href=
 encodeURIComponent(username);
 
 }
-
-
-/* =====================================================
-   LOGOUT
-===================================================== */
 
 async function logout(){
 
@@ -2984,11 +2726,6 @@ window.location.href="login.html";
 
 }
 
-
-/* =====================================================
-   FORMAT NUMBER
-===================================================== */
-
 function formatNumber(value){
 
 const number=Number(value||0);
@@ -3006,11 +2743,6 @@ maximumFractionDigits:8
 );
 
 }
-
-
-/* =====================================================
-   FORMAT TIME
-===================================================== */
 
 function formatTime(dateString){
 
@@ -3052,11 +2784,6 @@ return date.toLocaleDateString();
 
 }
 
-
-/* =====================================================
-   ESCAPE HTML
-===================================================== */
-
 function escapeHtml(text){
 
 const div=document.createElement("div");
@@ -3067,11 +2794,6 @@ text==null?"":String(text);
 return div.innerHTML;
 
 }
-
-
-/* =====================================================
-   ESCAPE JS
-===================================================== */
 
 function escapeJs(text){
 
@@ -3084,11 +2806,6 @@ return String(text==null?"":text)
 
 }
 
-
-/* =====================================================
-   AUTH LISTENER
-===================================================== */
-
 supabaseClient.auth.onAuthStateChange(
 function(event,session){
 
@@ -3100,12 +2817,6 @@ window.location.href="login.html";
 return;
 
 }
-
-/*
-Do not replace permanentUsername from auth metadata after
-the profile has loaded. The profiles.username value is the
-canonical permanent identity.
-*/
 
 if(
 !permanentUsername&&
@@ -3121,11 +2832,6 @@ session.user.user_metadata.username
 
 }
 );
-
-
-/* =====================================================
-   RUN
-===================================================== */
 
 startApp();
 

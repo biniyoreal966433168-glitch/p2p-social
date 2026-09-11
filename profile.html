@@ -504,6 +504,7 @@ SUPABASE_PUBLISHABLE_KEY
 
 let currentSession=null;
 let currentProfile=null;
+let currentUSDTBalance=0;
 let allProfiles={};
 let allComments=[];
 let orderType="buy";
@@ -586,6 +587,8 @@ await loadProfile();
 await loadPosts();
 await loadMyOrders();
 
+setupUSDTBalanceRealtime();
+
 }
 
 function showLogin(){
@@ -644,22 +647,86 @@ badge.className="verification-badge unverified";
 
 }
 
-/*
-USDT ACCOUNT RULE:
+async function loadUSDTBalance(){
 
-The username identifies the USDT account.
+if(!currentSession){
+return 0;
+}
 
-The authenticated user ID remains the security identity.
-The balance is read from that user's profiles row.
+const userId=currentSession.user.id;
 
-Lookup order:
-1. profiles.id = auth.uid()
-2. profiles.user_id = auth.uid()
-3. profiles.username = permanent username
+const {data,error}=await supabaseClient
+.from("usdt_balances")
+.select("user_id,usdt_balance")
+.eq("user_id",userId)
+.maybeSingle();
 
-This allows the real Eccboss balance to be found even when
-the profile row uses user_id instead of id for the auth identity.
-*/
+if(error){
+
+console.error(
+"USDT balance error:",
+error
+);
+
+currentUSDTBalance=0;
+renderUSDTBalance(0);
+return 0;
+
+}
+
+const balance=Number(
+data?.usdt_balance
+);
+
+currentUSDTBalance=
+Number.isFinite(balance)?
+balance:
+0;
+
+renderUSDTBalance(currentUSDTBalance);
+
+return currentUSDTBalance;
+
+}
+
+function setupUSDTBalanceRealtime(){
+
+if(!currentSession){
+return;
+}
+
+supabaseClient
+.channel(
+"usdt-balance-"+currentSession.user.id
+)
+.on(
+"postgres_changes",
+{
+event:"*",
+schema:"public",
+table:"usdt_balances",
+filter:
+"user_id=eq."+
+currentSession.user.id
+},
+function(payload){
+
+const value=Number(
+payload.new?.usdt_balance
+);
+
+currentUSDTBalance=
+Number.isFinite(value)?
+value:
+0;
+
+renderUSDTBalance(currentUSDTBalance);
+
+}
+)
+.subscribe();
+
+}
 
 async function loadProfile(){
 
@@ -672,7 +739,6 @@ const user=currentSession.user;
 let profile=null;
 let profileError=null;
 
-/* Primary profile lookup */
 const primary=await supabaseClient
 .from("profiles")
 .select("*")
@@ -682,7 +748,6 @@ const primary=await supabaseClient
 profile=primary.data;
 profileError=primary.error;
 
-/* Fallback profile lookup */
 if(!profile){
 
 const fallback=await supabaseClient
@@ -703,11 +768,6 @@ fallback.error
 
 }
 
-/*
-If the auth-linked lookup did not find the row,
-use the permanent username from auth metadata.
-This keeps the balance associated with the username.
-*/
 const metadataUsername=String(
 user.user_metadata?.username||
 ""
@@ -774,19 +834,7 @@ document.getElementById("profileId").textContent=
 
 }
 
-/*
-USDT balance belongs to the username account.
-
-Prefer usdt_balance as the main balance.
-available_usdt is used only when the main balance
-does not exist.
-*/
-const usdt=getNumberFromProfile([
-"usdt_balance",
-"available_usdt"
-]);
-
-renderUSDTBalance(usdt);
+await loadUSDTBalance();
 
 const bio=currentProfile.bio||"No bio yet.";
 
@@ -860,12 +908,7 @@ function toggleBalanceVisibility(){
 
 balanceVisible=!balanceVisible;
 
-const value=getNumberFromProfile([
-"usdt_balance",
-"available_usdt"
-]);
-
-renderUSDTBalance(value);
+renderUSDTBalance(currentUSDTBalance);
 
 const button=
 document.getElementById("balanceToggleButton");
@@ -880,6 +923,14 @@ balanceVisible?"👁️":"🙈";
 }
 
 function getNumberFromProfile(fields){
+
+if(fields.includes("usdt_balance")){
+
+return Number.isFinite(Number(currentUSDTBalance))?
+Number(currentUSDTBalance):
+0;
+
+}
 
 if(!currentProfile){
 return 0;
@@ -1479,10 +1530,7 @@ return[
 function openDeposit(){
 
 const balance=
-getNumberFromProfile([
-"usdt_balance",
-"available_usdt"
-]);
+getNumberFromProfile(["usdt_balance"]);
 
 document.getElementById("depositBalance")
 .textContent=
@@ -1588,10 +1636,7 @@ alert(
 function openWithdraw(){
 
 const balance=
-getNumberFromProfile([
-"usdt_balance",
-"available_usdt"
-]);
+getNumberFromProfile(["usdt_balance"]);
 
 document.getElementById("withdrawBalance")
 .textContent=
@@ -1636,10 +1681,7 @@ document.getElementById("withdrawNetwork")
 .value;
 
 const available=
-getNumberFromProfile([
-"usdt_balance",
-"available_usdt"
-]);
+getNumberFromProfile(["usdt_balance"]);
 
 if(!Number.isFinite(amount)||amount<=0){
 

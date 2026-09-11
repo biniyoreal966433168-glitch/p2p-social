@@ -210,6 +210,23 @@ header{
   word-break:break-word;
 }
 
+.verification-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+  font-weight:bold;
+  padding:3px 7px;
+  border-radius:8px;
+  background:#e8f8f3;
+  color:#087f73;
+}
+
+.verification-badge.unverified{
+  background:#f1f4f8;
+  color:#7a8494;
+}
+
 .profile-id{
   margin-top:5px;
   color:#7a8494;
@@ -291,6 +308,36 @@ header{
 }
 
 /* =========================
+   TRADING STATS
+========================= */
+
+.trading-stats{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:14px;
+}
+
+.trading-stat{
+  background:#f5f7fb;
+  border-radius:12px;
+  padding:12px;
+  text-align:center;
+}
+
+.trading-stat strong{
+  display:block;
+  font-size:17px;
+}
+
+.trading-stat span{
+  display:block;
+  color:#7a8494;
+  font-size:11px;
+  margin-top:5px;
+}
+
+/* =========================
    WALLET
 ========================= */
 
@@ -322,6 +369,23 @@ header{
   font-size:13px;
 }
 
+.wallet-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.balance-toggle{
+  border:none;
+  background:rgba(255,255,255,.1);
+  color:white;
+  width:36px;
+  height:32px;
+  border-radius:9px;
+  font-size:17px;
+}
+
 .wallet-balances{
   display:grid;
   grid-template-columns:1fr;
@@ -348,15 +412,27 @@ header{
   word-break:break-word;
 }
 
-.wallet-button{
+.wallet-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
   margin-top:15px;
-  width:100%;
+}
+
+.wallet-action{
   border:none;
-  background:#16a085;
   color:white;
   padding:11px;
   border-radius:10px;
   font-weight:bold;
+}
+
+.deposit-btn{
+  background:#16a085;
+}
+
+.withdraw-btn{
+  background:#c0392b;
 }
 
 /* =========================
@@ -841,6 +917,27 @@ header{
 }
 
 /* =========================
+   DEPOSIT / WITHDRAW MODAL
+========================= */
+
+.money-modal-info{
+  background:#f5f7fb;
+  border-radius:11px;
+  padding:12px;
+  margin-bottom:12px;
+  font-size:12px;
+  color:#596579;
+  line-height:1.5;
+}
+
+.money-balance{
+  font-size:14px;
+  font-weight:bold;
+  color:#172033;
+  margin-top:4px;
+}
+
+/* =========================
    ORDER MODAL
 ========================= */
 
@@ -1112,6 +1209,12 @@ button:disabled{
           Loading...
         </div>
 
+        <div
+          id="verificationBadge"
+          class="verification-badge unverified">
+          Unverified
+        </div>
+
       </div>
 
       <div id="profileId" class="profile-id">
@@ -1154,6 +1257,30 @@ button:disabled{
 
   </div>
 
+  <div class="trading-stats">
+
+    <div class="trading-stat">
+      <strong id="completedRate">0%</strong>
+      <span>30 Day Completed Rate</span>
+    </div>
+
+    <div class="trading-stat">
+      <strong id="thirtyDayTrade">0</strong>
+      <span>30 Day Trade</span>
+    </div>
+
+    <div class="trading-stat">
+      <strong id="totalTrade">0</strong>
+      <span>Total Trade</span>
+    </div>
+
+    <div class="trading-stat">
+      <strong id="usernameAge">--</strong>
+      <span>Username</span>
+    </div>
+
+  </div>
+
   <div class="profile-buttons">
 
     <button
@@ -1191,8 +1318,19 @@ button:disabled{
 
   <div class="wallet">
 
-    <div class="wallet-label">
-      USDT Balance
+    <div class="wallet-header">
+
+      <div class="wallet-label">
+        USDT Balance
+      </div>
+
+      <button
+        id="balanceToggleButton"
+        class="balance-toggle"
+        onclick="toggleBalanceVisibility()">
+        👁️
+      </button>
+
     </div>
 
     <div class="wallet-balances">
@@ -1213,11 +1351,21 @@ button:disabled{
 
     </div>
 
-    <button
-      class="wallet-button"
-      onclick="openWallet()">
-      Open Wallet
-    </button>
+    <div class="wallet-actions">
+
+      <button
+        class="wallet-action deposit-btn"
+        onclick="openDeposit()">
+        ⬇️ Deposit
+      </button>
+
+      <button
+        class="wallet-action withdraw-btn"
+        onclick="openWithdraw()">
+        ⬆️ Withdrawal
+      </button>
+
+    </div>
 
   </div>
 
@@ -1230,6 +1378,7 @@ button:disabled{
 <section class="order-section">
 
   <div class="section-title">
+
     <h2>🔄 P2P Orders</h2>
 
     <button
@@ -1380,12 +1529,156 @@ button:disabled{
 </section>
 
 <!-- =========================
+     DEPOSIT MODAL
+========================= -->
+
+<div id="depositModal" class="modal">
+
+  <div class="modal-box">
+
+    <h3>⬇️ Deposit USDT</h3>
+
+    <div class="money-modal-info">
+      Current USDT Balance
+      <div
+        id="depositBalance"
+        class="money-balance">
+        0.00 USDT
+      </div>
+    </div>
+
+    <label class="form-label">
+      Network
+    </label>
+
+    <select id="depositNetwork">
+
+      <option value="TRC20">
+        TRON TRC-20
+      </option>
+
+    </select>
+
+    <label class="form-label">
+      Amount (USDT)
+    </label>
+
+    <input
+      id="depositAmount"
+      type="number"
+      min="0"
+      step="any"
+      placeholder="Enter USDT amount">
+
+    <label class="form-label">
+      Transaction Hash
+    </label>
+
+    <input
+      id="depositTxHash"
+      type="text"
+      maxlength="200"
+      placeholder="Enter transaction hash">
+
+    <div class="modal-buttons">
+
+      <button
+        class="cancel-btn"
+        onclick="closeDeposit()">
+        Cancel
+      </button>
+
+      <button
+        id="depositSubmitButton"
+        class="save-btn"
+        onclick="submitDeposit()">
+        Submit Deposit
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- =========================
+     WITHDRAW MODAL
+========================= -->
+
+<div id="withdrawModal" class="modal">
+
+  <div class="modal-box">
+
+    <h3>⬆️ Withdrawal USDT</h3>
+
+    <div class="money-modal-info">
+      Available USDT Balance
+      <div
+        id="withdrawBalance"
+        class="money-balance">
+        0.00 USDT
+      </div>
+    </div>
+
+    <label class="form-label">
+      Network
+    </label>
+
+    <select id="withdrawNetwork">
+
+      <option value="TRC20">
+        TRON TRC-20
+      </option>
+
+    </select>
+
+    <label class="form-label">
+      Withdrawal Address
+    </label>
+
+    <input
+      id="withdrawAddress"
+      type="text"
+      maxlength="150"
+      placeholder="Enter TRON address">
+
+    <label class="form-label">
+      Amount (USDT)
+    </label>
+
+    <input
+      id="withdrawAmount"
+      type="number"
+      min="0"
+      step="any"
+      placeholder="Enter USDT amount">
+
+    <div class="modal-buttons">
+
+      <button
+        class="cancel-btn"
+        onclick="closeWithdraw()">
+        Cancel
+      </button>
+
+      <button
+        id="withdrawSubmitButton"
+        class="save-btn"
+        onclick="submitWithdrawal()">
+        Submit Withdrawal
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- =========================
      CREATE ORDER MODAL
 ========================= -->
 
-<div
-  id="orderModal"
-  class="modal">
+<div id="orderModal" class="modal">
 
   <div class="modal-box">
 
@@ -1528,9 +1821,7 @@ button:disabled{
      EDIT PROFILE MODAL
 ========================= -->
 
-<div
-  id="editModal"
-  class="modal">
+<div id="editModal" class="modal">
 
   <div class="modal-box">
 
@@ -1571,9 +1862,7 @@ button:disabled{
      SETTINGS MODAL
 ========================= -->
 
-<div
-  id="settingsModal"
-  class="modal">
+<div id="settingsModal" class="modal">
 
   <div class="modal-box">
 
@@ -1607,8 +1896,14 @@ button:disabled{
 
       <button
         class="settings-item"
-        onclick="openWallet();">
-        💰 Wallet
+        onclick="openDeposit();closeSettings();">
+        ⬇️ Deposit
+      </button>
+
+      <button
+        class="settings-item"
+        onclick="openWithdraw();closeSettings();">
+        ⬆️ Withdrawal
       </button>
 
       <button
@@ -1721,6 +2016,8 @@ let orderType = "buy";
 
 const PLATFORM_FEE_RATE = 0.01;
 
+let balanceVisible = true;
+
 
 /* =====================================================
    START
@@ -1768,6 +2065,74 @@ function showLogin(){
 
   window.location.href =
     "login.html";
+
+}
+
+
+/* =====================================================
+   VERIFIED STATUS
+===================================================== */
+
+function getVerificationStatus(){
+
+  if(!currentSession){
+    return false;
+  }
+
+  const user =
+    currentSession.user;
+
+  const emailConfirmed =
+    Boolean(
+      user.email_confirmed_at ||
+      user.confirmed_at
+    );
+
+  const profileVerified =
+    Boolean(
+      currentProfile &&
+      (
+        currentProfile.verified === true ||
+        currentProfile.is_verified === true ||
+        currentProfile.user_verified === true ||
+        currentProfile.email_verified === true ||
+        currentProfile.verification_status === "verified"
+      )
+    );
+
+  return emailConfirmed || profileVerified;
+
+}
+
+
+function updateVerificationUI(){
+
+  const badge =
+    document.getElementById(
+      "verificationBadge"
+    );
+
+  if(!badge){
+    return;
+  }
+
+  if(getVerificationStatus()){
+
+    badge.textContent =
+      "✓ Verified";
+
+    badge.className =
+      "verification-badge";
+
+  }else{
+
+    badge.textContent =
+      "Unverified";
+
+    badge.className =
+      "verification-badge unverified";
+
+  }
 
 }
 
@@ -1837,9 +2202,10 @@ async function loadProfile(){
     username
   );
 
+  updateVerificationUI();
 
   /* =========================
-     USDT BALANCE ONLY
+     USDT BALANCE
   ========================= */
 
   const usdt =
@@ -1851,18 +2217,7 @@ async function loadProfile(){
       ]
     );
 
-  document.getElementById(
-    "usdtBalance"
-  ).textContent =
-    usdt.toLocaleString(
-      undefined,
-      {
-        minimumFractionDigits:2,
-        maximumFractionDigits:2
-      }
-    ) +
-    " USDT";
-
+  renderUSDTBalance(usdt);
 
   /* =========================
      EDIT FIELDS
@@ -1878,19 +2233,93 @@ async function loadProfile(){
   ).value =
     currentProfile.bio || "";
 
-
   /* =========================
      LOCK
   ========================= */
 
   updateLockUI();
 
-
   /* =========================
      STATS
   ========================= */
 
   await loadStats();
+
+  /* =========================
+     TRADE STATS
+  ========================= */
+
+  await loadTradeStats();
+
+}
+
+
+/* =====================================================
+   BALANCE DISPLAY
+===================================================== */
+
+function renderUSDTBalance(value){
+
+  const element =
+    document.getElementById(
+      "usdtBalance"
+    );
+
+  if(!element){
+    return;
+  }
+
+  if(!balanceVisible){
+
+    element.textContent =
+      "•••••• USDT";
+
+    return;
+
+  }
+
+  element.textContent =
+    Number(value || 0).toLocaleString(
+      undefined,
+      {
+        minimumFractionDigits:2,
+        maximumFractionDigits:2
+      }
+    ) +
+    " USDT";
+
+}
+
+
+function toggleBalanceVisibility(){
+
+  balanceVisible =
+    !balanceVisible;
+
+  const value =
+    getNumberFromProfile(
+      [
+        "usdt_balance",
+        "available_usdt",
+        "usdt"
+      ]
+    );
+
+  renderUSDTBalance(value);
+
+  const button =
+    document.getElementById(
+      "balanceToggleButton"
+    );
+
+  if(button){
+
+    button.textContent =
+      balanceVisible
+      ? "👁️"
+      : "🙈";
+
+  }
 
 }
 
@@ -2663,6 +3092,612 @@ async function loadStats(){
     followingError
     ? "0"
     : following || 0;
+
+}
+
+
+/* =====================================================
+   TRADE STATISTICS
+===================================================== */
+
+async function loadTradeStats(){
+
+  if(!currentSession){
+    return;
+  }
+
+  const userId =
+    currentSession.user.id;
+
+  const now =
+    new Date();
+
+  const thirtyDaysAgo =
+    new Date(
+      now.getTime() -
+      30 * 24 * 60 * 60 * 1000
+    ).toISOString();
+
+  let totalTrades = 0;
+  let recentTrades = [];
+  let completedRecent = 0;
+
+  /* =========================
+     P2P TRADES
+  ========================= */
+
+  const {
+    data:trades,
+    error:tradeError
+  } =
+  await supabaseClient
+    .from("p2p_trades")
+    .select("*")
+    .or(
+      "buyer_id.eq." +
+      userId +
+      ",seller_id.eq." +
+      userId
+    );
+
+  if(!tradeError && trades){
+
+    totalTrades =
+      trades.length;
+
+    recentTrades =
+      trades.filter(
+        trade =>
+          new Date(
+            trade.created_at ||
+            trade.completed_at ||
+            trade.updated_at ||
+            0
+          ).getTime() >=
+          new Date(
+            thirtyDaysAgo
+          ).getTime()
+      );
+
+  }
+
+  /* =========================
+     P2P ORDERS FALLBACK
+  ========================= */
+
+  if(
+    tradeError ||
+    totalTrades === 0
+  ){
+
+    const {
+      data:orders
+    } =
+    await supabaseClient
+      .from("p2p_orders")
+      .select("*")
+      .eq(
+        "user_id",
+        userId
+      );
+
+    if(orders){
+
+      const completedOrders =
+        orders.filter(
+          order =>
+            isCompletedStatus(
+              order.status
+            )
+        );
+
+      totalTrades =
+        Math.max(
+          totalTrades,
+          completedOrders.length
+        );
+
+      recentTrades =
+        completedOrders.filter(
+          order =>
+            new Date(
+              order.completed_at ||
+              order.updated_at ||
+              order.created_at ||
+              0
+            ).getTime() >=
+            new Date(
+              thirtyDaysAgo
+            ).getTime()
+        );
+
+    }
+
+  }
+
+  /* =========================
+     COMPLETED RECENT
+  ========================= */
+
+  completedRecent =
+    recentTrades.filter(
+      trade =>
+        isCompletedStatus(
+          trade.status ||
+          trade.trade_status ||
+          trade.order_status
+        )
+    ).length;
+
+  const recentTotal =
+    recentTrades.length;
+
+  const completedRate =
+    recentTotal > 0
+    ? (
+        completedRecent /
+        recentTotal
+      ) * 100
+    : 0;
+
+  document.getElementById(
+    "completedRate"
+  ).textContent =
+    completedRate.toLocaleString(
+      undefined,
+      {
+        minimumFractionDigits:0,
+        maximumFractionDigits:2
+      }
+    ) + "%";
+
+  document.getElementById(
+    "thirtyDayTrade"
+  ).textContent =
+    recentTotal;
+
+  document.getElementById(
+    "totalTrade"
+  ).textContent =
+    totalTrades;
+
+  document.getElementById(
+    "usernameAge"
+  ).textContent =
+    "Unchanged";
+
+}
+
+
+function isCompletedStatus(status){
+
+  const value =
+    String(
+      status || ""
+    ).toLowerCase()
+    .trim();
+
+  return [
+    "completed",
+    "complete",
+    "closed",
+    "success",
+    "successful",
+    "settled",
+    "done",
+    "finished"
+  ].includes(value);
+
+}
+
+
+/* =====================================================
+   DEPOSIT
+===================================================== */
+
+function openDeposit(){
+
+  const balance =
+    getNumberFromProfile(
+      [
+        "usdt_balance",
+        "available_usdt",
+        "usdt"
+      ]
+    );
+
+  document.getElementById(
+    "depositBalance"
+  ).textContent =
+    formatNumber(balance) +
+    " USDT";
+
+  document
+    .getElementById(
+      "depositModal"
+    )
+    .classList.add(
+      "show"
+    );
+
+}
+
+
+function closeDeposit(){
+
+  document
+    .getElementById(
+      "depositModal"
+    )
+    .classList.remove(
+      "show"
+    );
+
+}
+
+
+async function submitDeposit(){
+
+  if(!currentSession){
+    showLogin();
+    return;
+  }
+
+  const amount =
+    Number(
+      document.getElementById(
+        "depositAmount"
+      ).value
+    );
+
+  const network =
+    document.getElementById(
+      "depositNetwork"
+    ).value;
+
+  const txHash =
+    document.getElementById(
+      "depositTxHash"
+    ).value.trim();
+
+  if(
+    !Number.isFinite(amount) ||
+    amount <= 0
+  ){
+
+    alert(
+      "Please enter a valid deposit amount."
+    );
+
+    return;
+
+  }
+
+  if(!txHash){
+
+    alert(
+      "Please enter the transaction hash."
+    );
+
+    return;
+
+  }
+
+  const button =
+    document.getElementById(
+      "depositSubmitButton"
+    );
+
+  button.disabled =
+    true;
+
+  button.textContent =
+    "Submitting...";
+
+  let success = false;
+
+  const {
+    error
+  } =
+  await supabaseClient
+    .from("usdt_ledger")
+    .insert({
+      user_id:
+        currentSession.user.id,
+      amount:
+        amount,
+      type:
+        "deposit",
+      status:
+        "pending",
+      network:
+        network,
+      tx_hash:
+        txHash
+    });
+
+  if(!error){
+    success = true;
+  }
+
+  if(error){
+
+    console.error(
+      "Deposit:",
+      error
+    );
+
+    const {
+      error:fallbackError
+    } =
+    await supabaseClient
+      .from("etb_transactions")
+      .insert({
+        user_id:
+          currentSession.user.id,
+        amount:
+          amount,
+        type:
+          "deposit",
+        status:
+          "pending",
+        reference:
+          txHash
+      });
+
+    if(!fallbackError){
+      success = true;
+    }
+
+  }
+
+  button.disabled =
+    false;
+
+  button.textContent =
+    "Submit Deposit";
+
+  if(!success){
+
+    alert(
+      "Could not submit deposit.\n\n" +
+      (
+        error
+        ? error.message
+        : "Please check the deposit table structure."
+      )
+    );
+
+    return;
+
+  }
+
+  document.getElementById(
+    "depositAmount"
+  ).value = "";
+
+  document.getElementById(
+    "depositTxHash"
+  ).value = "";
+
+  closeDeposit();
+
+  alert(
+    "Deposit request submitted successfully."
+  );
+
+}
+
+
+/* =====================================================
+   WITHDRAWAL
+===================================================== */
+
+function openWithdraw(){
+
+  const balance =
+    getNumberFromProfile(
+      [
+        "usdt_balance",
+        "available_usdt",
+        "usdt"
+      ]
+    );
+
+  document.getElementById(
+    "withdrawBalance"
+  ).textContent =
+    formatNumber(balance) +
+    " USDT";
+
+  document
+    .getElementById(
+      "withdrawModal"
+    )
+    .classList.add(
+      "show"
+    );
+
+}
+
+
+function closeWithdraw(){
+
+  document
+    .getElementById(
+      "withdrawModal"
+    )
+    .classList.remove(
+      "show"
+    );
+
+}
+
+
+async function submitWithdrawal(){
+
+  if(!currentSession){
+    showLogin();
+    return;
+  }
+
+  const amount =
+    Number(
+      document.getElementById(
+        "withdrawAmount"
+      ).value
+    );
+
+  const address =
+    document.getElementById(
+      "withdrawAddress"
+    ).value.trim();
+
+  const network =
+    document.getElementById(
+      "withdrawNetwork"
+    ).value;
+
+  const available =
+    getNumberFromProfile(
+      [
+        "usdt_balance",
+        "available_usdt",
+        "usdt"
+      ]
+    );
+
+  if(
+    !Number.isFinite(amount) ||
+    amount <= 0
+  ){
+
+    alert(
+      "Please enter a valid withdrawal amount."
+    );
+
+    return;
+
+  }
+
+  if(amount > available){
+
+    alert(
+      "Insufficient USDT balance."
+    );
+
+    return;
+
+  }
+
+  if(!address){
+
+    alert(
+      "Please enter a withdrawal address."
+    );
+
+    return;
+
+  }
+
+  if(
+    network === "TRC20" &&
+    !address.startsWith("T")
+  ){
+
+    alert(
+      "Please enter a valid TRON TRC-20 address."
+    );
+
+    return;
+
+  }
+
+  const confirmed =
+    confirm(
+      "Submit this withdrawal request?"
+    );
+
+  if(!confirmed){
+    return;
+  }
+
+  const button =
+    document.getElementById(
+      "withdrawSubmitButton"
+    );
+
+  button.disabled =
+    true;
+
+  button.textContent =
+    "Submitting...";
+
+  let success = false;
+
+  const {
+    error
+  } =
+  await supabaseClient
+    .from("usdt_ledger")
+    .insert({
+      user_id:
+        currentSession.user.id,
+      amount:
+        -Math.abs(amount),
+      type:
+        "withdrawal",
+      status:
+        "pending",
+      network:
+        network,
+      withdrawal_address:
+        address
+    });
+
+  if(!error){
+    success = true;
+  }
+
+  if(error){
+
+    console.error(
+      "Withdrawal:",
+      error
+    );
+
+  }
+
+  button.disabled =
+    false;
+
+  button.textContent =
+    "Submit Withdrawal";
+
+  if(!success){
+
+    alert(
+      "Could not submit withdrawal.\n\n" +
+      error.message
+    );
+
+    return;
+
+  }
+
+  document.getElementById(
+    "withdrawAmount"
+  ).value = "";
+
+  document.getElementById(
+    "withdrawAddress"
+  ).value = "";
+
+  closeWithdraw();
+
+  alert(
+    "Withdrawal request submitted successfully."
+  );
 
 }
 

@@ -324,7 +324,7 @@ header{
 
 .wallet-balances{
   display:grid;
-  grid-template-columns:1fr 1fr;
+  grid-template-columns:1fr;
   gap:10px;
   margin-top:9px;
 }
@@ -407,6 +407,99 @@ header{
   padding:12px;
   border-radius:10px;
   font-weight:bold;
+}
+
+/* =========================
+   MY ORDERS
+========================= */
+
+.orders-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.order-card{
+  background:white;
+  border-radius:15px;
+  padding:14px;
+  box-shadow:0 3px 12px rgba(0,0,0,.06);
+  border-left:4px solid #087f73;
+}
+
+.order-card.sell{
+  border-left-color:#c0392b;
+}
+
+.order-card-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+
+.order-type{
+  font-size:14px;
+  font-weight:bold;
+}
+
+.order-status{
+  font-size:11px;
+  padding:5px 8px;
+  border-radius:8px;
+  background:#edf7f5;
+  color:#087f73;
+  font-weight:bold;
+}
+
+.order-status.sell-status{
+  background:#fdecec;
+  color:#c0392b;
+}
+
+.order-details{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:12px;
+}
+
+.order-detail{
+  background:#f5f7fb;
+  border-radius:9px;
+  padding:9px;
+}
+
+.order-detail-label{
+  color:#7a8494;
+  font-size:10px;
+}
+
+.order-detail-value{
+  margin-top:4px;
+  font-size:13px;
+  font-weight:bold;
+  word-break:break-word;
+}
+
+.cancel-order-btn{
+  width:100%;
+  border:none;
+  margin-top:10px;
+  padding:10px;
+  border-radius:9px;
+  background:#fdecec;
+  color:#c0392b;
+  font-weight:bold;
+}
+
+.order-empty{
+  background:white;
+  border-radius:15px;
+  padding:18px;
+  text-align:center;
+  color:#7b8492;
+  font-size:13px;
 }
 
 /* =========================
@@ -688,13 +781,15 @@ header{
 }
 
 .modal-box input,
-.modal-box textarea{
+.modal-box textarea,
+.modal-box select{
   width:100%;
   border:1px solid #dfe4eb;
   border-radius:10px;
   padding:11px;
   margin-bottom:10px;
   outline:none;
+  background:white;
 }
 
 .modal-box textarea{
@@ -743,6 +838,79 @@ header{
 
 .settings-item.logout{
   color:#e74c3c;
+}
+
+/* =========================
+   ORDER MODAL
+========================= */
+
+.order-modal-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.order-modal-type{
+  font-size:12px;
+  padding:5px 9px;
+  border-radius:8px;
+  font-weight:bold;
+}
+
+.order-modal-type.buy{
+  background:#e8f8f3;
+  color:#087f73;
+}
+
+.order-modal-type.sell{
+  background:#fdecec;
+  color:#c0392b;
+}
+
+.form-label{
+  display:block;
+  font-size:12px;
+  font-weight:bold;
+  color:#596579;
+  margin:3px 0 6px;
+}
+
+.fee-preview{
+  background:#f5f7fb;
+  border-radius:11px;
+  padding:12px;
+  margin-top:2px;
+  margin-bottom:10px;
+}
+
+.fee-row{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  font-size:12px;
+  margin-bottom:7px;
+}
+
+.fee-row:last-child{
+  margin-bottom:0;
+  padding-top:7px;
+  border-top:1px solid #dfe4eb;
+  font-weight:bold;
+}
+
+.order-submit{
+  width:100%;
+  border:none;
+  background:#087f73;
+  color:white;
+  padding:12px;
+  border-radius:10px;
+  font-weight:bold;
+}
+
+.order-submit.sell-submit{
+  background:#c0392b;
 }
 
 /* =========================
@@ -872,6 +1040,10 @@ button:disabled{
 
   .brand-text p{
     font-size:6px;
+  }
+
+  .order-details{
+    grid-template-columns:1fr;
   }
 }
 </style>
@@ -1008,7 +1180,7 @@ button:disabled{
 </div>
 
 <!-- =========================
-     WALLET
+     USDT WALLET BALANCE
 ========================= -->
 
 <section class="section">
@@ -1020,7 +1192,7 @@ button:disabled{
   <div class="wallet">
 
     <div class="wallet-label">
-      Wallet Balance
+      USDT Balance
     </div>
 
     <div class="wallet-balances">
@@ -1034,21 +1206,7 @@ button:disabled{
         <div
           id="usdtBalance"
           class="balance-value">
-          0.00
-        </div>
-
-      </div>
-
-      <div class="balance-box">
-
-        <div class="balance-title">
-          💎
-        </div>
-
-        <div
-          id="diamondBalance"
-          class="balance-value">
-          0 💎
+          0.00 USDT
         </div>
 
       </div>
@@ -1066,13 +1224,20 @@ button:disabled{
 </section>
 
 <!-- =========================
-     BUY / SELL / CREATE ORDER
+     CREATE ORDER
 ========================= -->
 
 <section class="order-section">
 
   <div class="section-title">
     <h2>🔄 P2P Orders</h2>
+
+    <button
+      class="view-comments"
+      onclick="loadMyOrders()">
+      Refresh
+    </button>
+
   </div>
 
   <div class="order-box">
@@ -1081,13 +1246,13 @@ button:disabled{
 
       <button
         class="order-button buy-button"
-        onclick="openBuy()">
+        onclick="openOrderModal('buy')">
         🟢 Buy
       </button>
 
       <button
         class="order-button sell-button"
-        onclick="openSell()">
+        onclick="openOrderModal('sell')">
         🔴 Sell
       </button>
 
@@ -1095,16 +1260,46 @@ button:disabled{
 
     <button
       class="create-order-button"
-      onclick="openBuy()">
+      onclick="openOrderModal('buy')">
       ➕ Create Buy Order
     </button>
 
     <button
       class="create-order-button"
       style="background:#c0392b;"
-      onclick="openSell()">
+      onclick="openOrderModal('sell')">
       ➕ Create Sell Order
     </button>
+
+  </div>
+
+</section>
+
+<!-- =========================
+     MY BUY / SELL ORDERS
+========================= -->
+
+<section class="section">
+
+  <div class="section-title">
+
+    <h2>📋 My Orders</h2>
+
+    <button
+      class="view-comments"
+      onclick="loadMyOrders()">
+      Refresh
+    </button>
+
+  </div>
+
+  <div
+    id="myOrders"
+    class="orders-list">
+
+    <div class="order-empty">
+      Loading orders...
+    </div>
 
   </div>
 
@@ -1185,6 +1380,151 @@ button:disabled{
 </section>
 
 <!-- =========================
+     CREATE ORDER MODAL
+========================= -->
+
+<div
+  id="orderModal"
+  class="modal">
+
+  <div class="modal-box">
+
+    <div class="order-modal-title">
+
+      <h3 id="orderModalTitle">
+        🟢 Create Buy Order
+      </h3>
+
+      <div
+        id="orderModalType"
+        class="order-modal-type buy">
+        BUY
+      </div>
+
+    </div>
+
+    <label class="form-label">
+      Trading Pair
+    </label>
+
+    <select
+      id="orderPair"
+      onchange="updateOrderCurrency();updateFeePreview();">
+
+      <option value="USDT_USD">USDT / USD</option>
+      <option value="USDT_EUR">USDT / EUR</option>
+      <option value="USDT_AED">USDT / AED</option>
+      <option value="USDT_GBP">USDT / GBP</option>
+      <option value="USDT_USDT">USDT / USDT</option>
+      <option value="USDT_ETB">USDT / ETB</option>
+      <option value="USDT_NGN">USDT / NGN</option>
+      <option value="USDT_KES">USDT / KES</option>
+      <option value="USDT_BRL">USDT / BRL</option>
+      <option value="USDT_ARS">USDT / ARS</option>
+      <option value="USDT_MXN">USDT / MXN</option>
+      <option value="USDT_TRY">USDT / TRY</option>
+      <option value="USDT_PHP">USDT / PHP</option>
+      <option value="USDT_AUD">USDT / AUD</option>
+      <option value="USDT_CAD">USDT / CAD</option>
+      <option value="USDT_CHF">USDT / CHF</option>
+      <option value="USDT_SGD">USDT / SGD</option>
+      <option value="USDT_HKD">USDT / HKD</option>
+      <option value="USDT_JPY">USDT / JPY</option>
+      <option value="USDT_KRY">USDT / KRY</option>
+      <option value="USDT_ZAR">USDT / ZAR</option>
+      <option value="USDT_INR">USDT / INR</option>
+
+    </select>
+
+    <label class="form-label">
+      Amount (USDT)
+    </label>
+
+    <input
+      id="orderAmount"
+      type="number"
+      min="0"
+      step="any"
+      placeholder="Enter USDT amount"
+      oninput="updateFeePreview()">
+
+    <label class="form-label">
+      Price (<span id="orderPriceCurrency">USD</span>)
+    </label>
+
+    <input
+      id="orderPrice"
+      type="number"
+      min="0"
+      step="any"
+      placeholder="Enter price"
+      oninput="updateFeePreview()">
+
+    <label class="form-label">
+      Payment Method
+    </label>
+
+    <select id="orderPayment">
+
+      <option value="">
+        Select payment method
+      </option>
+
+      <option value="Telebirr">
+        🟦 PayPal
+      </option>
+
+      <option value="CBE">
+        🟪 Payoneer
+      </option>
+
+      <option value="Bank">
+        🏦 Bank Transfer
+      </option>
+
+    </select>
+
+    <div class="fee-preview">
+
+      <div class="fee-row">
+        <span>Trade Value</span>
+        <span id="orderTradeValue">0.00</span>
+      </div>
+
+      <div class="fee-row">
+        <span>Platform Fee (1%)</span>
+        <span id="orderFee">0.00</span>
+      </div>
+
+      <div class="fee-row">
+        <span>Total</span>
+        <span id="orderTotal">0.00</span>
+      </div>
+
+    </div>
+
+    <div class="modal-buttons">
+
+      <button
+        class="cancel-btn"
+        onclick="closeOrderModal()">
+        Cancel
+      </button>
+
+      <button
+        id="submitOrderButton"
+        class="order-submit"
+        onclick="createOrder()">
+        Create Buy Order
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- =========================
      EDIT PROFILE MODAL
 ========================= -->
 
@@ -1255,13 +1595,13 @@ button:disabled{
 
       <button
         class="settings-item"
-        onclick="openBuy();">
+        onclick="openOrderModal('buy');closeSettings();">
         🟢 Buy
       </button>
 
       <button
         class="settings-item"
-        onclick="openSell();">
+        onclick="openOrderModal('sell');closeSettings();">
         🔴 Sell
       </button>
 
@@ -1322,16 +1662,16 @@ button:disabled{
 
   <div
     class="nav-item"
-    onclick="openLive()">
-    <span>🔴</span>
-    Live
+    onclick="openBuy()">
+    <span>🟢</span>
+    Buy
   </div>
 
   <div
     class="nav-item"
-    onclick="openWallet()">
-    <span>🔄</span>
-    P2P
+    onclick="openSell()">
+    <span>🔴</span>
+    Sell
   </div>
 
   <div
@@ -1377,6 +1717,10 @@ let currentProfile = null;
 let allProfiles = {};
 let allComments = [];
 
+let orderType = "buy";
+
+const PLATFORM_FEE_RATE = 0.01;
+
 
 /* =====================================================
    START
@@ -1409,6 +1753,7 @@ async function startApp(){
 
   await loadProfile();
   await loadPosts();
+  await loadMyOrders();
 
 }
 
@@ -1494,15 +1839,15 @@ async function loadProfile(){
 
 
   /* =========================
-     USDT BALANCE
+     USDT BALANCE ONLY
   ========================= */
 
   const usdt =
     getNumberFromProfile(
       [
         "usdt_balance",
-        "usdt",
-        "balance"
+        "available_usdt",
+        "usdt"
       ]
     );
 
@@ -1515,16 +1860,8 @@ async function loadProfile(){
         minimumFractionDigits:2,
         maximumFractionDigits:2
       }
-    );
-
-
-  /* =========================
-     REAL DIAMOND BALANCE
-  ========================= */
-
-  await loadDiamondBalance(
-    user.id
-  );
+    ) +
+    " USDT";
 
 
   /* =========================
@@ -1559,67 +1896,7 @@ async function loadProfile(){
 
 
 /* =====================================================
-   REAL DIAMOND BALANCE
-===================================================== */
-
-async function loadDiamondBalance(
-  userId
-){
-
-  const element =
-    document.getElementById(
-      "diamondBalance"
-    );
-
-  if(!element){
-    return;
-  }
-
-  element.textContent =
-    "Loading...";
-
-  const {
-    data,
-    error
-  } =
-  await supabaseClient
-    .from("diamond_balances")
-    .select("balance")
-    .eq(
-      "user_id",
-      userId
-    )
-    .maybeSingle();
-
-  if(error){
-
-    console.error(
-      "Diamond balance error:",
-      error
-    );
-
-    element.textContent =
-      "0 💎";
-
-    return;
-
-  }
-
-  const balance =
-    Number(
-      data?.balance || 0
-    );
-
-  element.textContent =
-    Math.floor(balance)
-      .toLocaleString() +
-    " 💎";
-
-}
-
-
-/* =====================================================
-   SAFE BALANCE READER
+   SAFE USDT BALANCE READER
 ===================================================== */
 
 function getNumberFromProfile(
@@ -2391,6 +2668,853 @@ async function loadStats(){
 
 
 /* =====================================================
+   OPEN ORDER MODAL
+===================================================== */
+
+function openOrderModal(type){
+
+  orderType =
+    type === "sell"
+    ? "sell"
+    : "buy";
+
+  const modal =
+    document.getElementById(
+      "orderModal"
+    );
+
+  const title =
+    document.getElementById(
+      "orderModalTitle"
+    );
+
+  const typeBadge =
+    document.getElementById(
+      "orderModalType"
+    );
+
+  const submitButton =
+    document.getElementById(
+      "submitOrderButton"
+    );
+
+  if(orderType === "sell"){
+
+    title.textContent =
+      "🔴 Create Sell Order";
+
+    typeBadge.textContent =
+      "SELL";
+
+    typeBadge.className =
+      "order-modal-type sell";
+
+    submitButton.textContent =
+      "Create Sell Order";
+
+    submitButton.className =
+      "order-submit sell-submit";
+
+  }else{
+
+    title.textContent =
+      "🟢 Create Buy Order";
+
+    typeBadge.textContent =
+      "BUY";
+
+    typeBadge.className =
+      "order-modal-type buy";
+
+    submitButton.textContent =
+      "Create Buy Order";
+
+    submitButton.className =
+      "order-submit";
+
+  }
+
+  updateOrderCurrency();
+  updateFeePreview();
+
+  modal.classList.add(
+    "show"
+  );
+
+}
+
+
+/* =====================================================
+   CLOSE ORDER MODAL
+===================================================== */
+
+function closeOrderModal(){
+
+  document
+    .getElementById(
+      "orderModal"
+    )
+    .classList.remove(
+      "show"
+    );
+
+}
+
+
+/* =====================================================
+   PAIR
+===================================================== */
+
+function getPairParts(
+  pair
+){
+
+  const parts =
+    String(pair || "")
+      .split("_");
+
+  return {
+    base:
+      parts[0] || "USDT",
+    quote:
+      parts[1] || "USD"
+  };
+
+}
+
+
+/* =====================================================
+   UPDATE ORDER CURRENCY
+===================================================== */
+
+function updateOrderCurrency(){
+
+  const pair =
+    document.getElementById(
+      "orderPair"
+    ).value;
+
+  const {
+    quote
+  } =
+  getPairParts(
+    pair
+  );
+
+  document.getElementById(
+    "orderPriceCurrency"
+  ).textContent =
+    quote;
+
+}
+
+
+/* =====================================================
+   FEE
+===================================================== */
+
+function calculatePlatformFee(
+  value
+){
+
+  const number =
+    Number(value);
+
+  if(
+    !Number.isFinite(number) ||
+    number <= 0
+  ){
+
+    return 0;
+
+  }
+
+  return number *
+    PLATFORM_FEE_RATE;
+
+}
+
+
+function calculateTotalWithFee(
+  value
+){
+
+  const number =
+    Number(value);
+
+  if(
+    !Number.isFinite(number) ||
+    number <= 0
+  ){
+
+    return 0;
+
+  }
+
+  return number +
+    calculatePlatformFee(
+      number
+    );
+
+}
+
+
+function calculatePairValue(
+  amount,
+  price
+){
+
+  const a =
+    Number(amount);
+
+  const p =
+    Number(price);
+
+  if(
+    !Number.isFinite(a) ||
+    !Number.isFinite(p) ||
+    a <= 0 ||
+    p <= 0
+  ){
+
+    return 0;
+
+  }
+
+  return a * p;
+
+}
+
+
+/* =====================================================
+   FEE PREVIEW
+===================================================== */
+
+function updateFeePreview(){
+
+  const amount =
+    Number(
+      document.getElementById(
+        "orderAmount"
+      ).value
+    );
+
+  const price =
+    Number(
+      document.getElementById(
+        "orderPrice"
+      ).value
+    );
+
+  const pair =
+    document.getElementById(
+      "orderPair"
+    ).value;
+
+  const {
+    quote
+  } =
+  getPairParts(
+    pair
+  );
+
+  const tradeValue =
+    calculatePairValue(
+      amount,
+      price
+    );
+
+  const fee =
+    calculatePlatformFee(
+      tradeValue
+    );
+
+  const total =
+    calculateTotalWithFee(
+      tradeValue
+    );
+
+  document.getElementById(
+    "orderTradeValue"
+  ).textContent =
+    tradeValue.toLocaleString(
+      undefined,
+      {
+        minimumFractionDigits:2,
+        maximumFractionDigits:2
+      }
+    ) +
+    " " +
+    quote;
+
+  document.getElementById(
+    "orderFee"
+  ).textContent =
+    fee.toLocaleString(
+      undefined,
+      {
+        minimumFractionDigits:2,
+        maximumFractionDigits:2
+      }
+    ) +
+    " " +
+    quote;
+
+  document.getElementById(
+    "orderTotal"
+  ).textContent =
+    total.toLocaleString(
+      undefined,
+      {
+        minimumFractionDigits:2,
+        maximumFractionDigits:2
+      }
+    ) +
+    " " +
+    quote;
+
+}
+
+
+/* =====================================================
+   CREATE ORDER
+===================================================== */
+
+async function createOrder(){
+
+  if(!currentSession){
+
+    showLogin();
+    return;
+
+  }
+
+  const pair =
+    document.getElementById(
+      "orderPair"
+    ).value;
+
+  const amount =
+    Number(
+      document.getElementById(
+        "orderAmount"
+      ).value
+    );
+
+  const price =
+    Number(
+      document.getElementById(
+        "orderPrice"
+      ).value
+    );
+
+  const payment =
+    document.getElementById(
+      "orderPayment"
+    ).value;
+
+  if(!pair){
+
+    alert(
+      "Please select a trading pair."
+    );
+
+    return;
+
+  }
+
+  if(
+    !Number.isFinite(amount) ||
+    amount <= 0
+  ){
+
+    alert(
+      "Please enter a valid USDT amount."
+    );
+
+    return;
+
+  }
+
+  if(
+    !Number.isFinite(price) ||
+    price <= 0
+  ){
+
+    alert(
+      "Please enter a valid price."
+    );
+
+    return;
+
+  }
+
+  if(!payment){
+
+    alert(
+      "Please select a payment method."
+    );
+
+    return;
+
+  }
+
+  const button =
+    document.getElementById(
+      "submitOrderButton"
+    );
+
+  button.disabled =
+    true;
+
+  button.textContent =
+    "Creating...";
+
+  const {
+    data,
+    error
+  } =
+  await supabaseClient
+    .rpc(
+      "create_p2p_order",
+      {
+        p_order_type:
+          orderType,
+
+        p_pair:
+          pair,
+
+        p_amount:
+          amount,
+
+        p_price:
+          price,
+
+        p_payment_method:
+          payment
+      }
+    );
+
+  button.disabled =
+    false;
+
+  if(orderType === "sell"){
+
+    button.textContent =
+      "Create Sell Order";
+
+  }else{
+
+    button.textContent =
+      "Create Buy Order";
+
+  }
+
+  if(error){
+
+    console.error(
+      "Create order error:",
+      error
+    );
+
+    alert(
+      "Could not create order:\n\n" +
+      error.message
+    );
+
+    return;
+
+  }
+
+  document.getElementById(
+    "orderAmount"
+  ).value =
+    "";
+
+  document.getElementById(
+    "orderPrice"
+  ).value =
+    "";
+
+  document.getElementById(
+    "orderPayment"
+  ).value =
+    "";
+
+  updateFeePreview();
+
+  closeOrderModal();
+
+  alert(
+    "Order created successfully."
+  );
+
+  await loadMyOrders();
+  await loadProfile();
+
+}
+
+
+/* =====================================================
+   LOAD MY ORDERS
+===================================================== */
+
+async function loadMyOrders(){
+
+  if(!currentSession){
+    return;
+  }
+
+  const container =
+    document.getElementById(
+      "myOrders"
+    );
+
+  container.innerHTML = `
+    <div class="order-empty">
+      Loading orders...
+    </div>
+  `;
+
+  const {
+    data:orders,
+    error
+  } =
+  await supabaseClient
+    .from("p2p_orders")
+    .select("*")
+    .eq(
+      "user_id",
+      currentSession.user.id
+    )
+    .order(
+      "created_at",
+      {
+        ascending:false
+      }
+    );
+
+  if(error){
+
+    console.error(
+      "Orders error:",
+      error
+    );
+
+    container.innerHTML = `
+      <div class="order-empty">
+        Could not load orders.<br><br>
+        <small>
+          ${escapeHtml(error.message)}
+        </small>
+      </div>
+    `;
+
+    return;
+
+  }
+
+  if(
+    !orders ||
+    orders.length === 0
+  ){
+
+    container.innerHTML = `
+      <div class="order-empty">
+        You have no Buy / Sell orders yet.
+      </div>
+    `;
+
+    return;
+
+  }
+
+  container.innerHTML =
+    "";
+
+  orders.forEach(
+    order => {
+
+      renderOrderCard(
+        order,
+        container
+      );
+
+    }
+  );
+
+}
+
+
+/* =====================================================
+   RENDER ORDER
+===================================================== */
+
+function renderOrderCard(
+  order,
+  container
+){
+
+  const type =
+    String(
+      order.order_type ||
+      order.type ||
+      "buy"
+    ).toLowerCase();
+
+  const pair =
+    order.pair ||
+    "USDT_USD";
+
+  const {
+    base,
+    quote
+  } =
+  getPairParts(
+    pair
+  );
+
+  const amount =
+    Number(
+      order.amount || 0
+    );
+
+  const price =
+    Number(
+      order.price || 0
+    );
+
+  const tradeValue =
+    calculatePairValue(
+      amount,
+      price
+    );
+
+  const status =
+    String(
+      order.status ||
+      "open"
+    ).toLowerCase();
+
+  const statusText =
+    status.charAt(0).toUpperCase() +
+    status.slice(1);
+
+  const payment =
+    order.payment_method ||
+    order.payment ||
+    "Not specified";
+
+  const created =
+    order.created_at
+    ? formatTime(order.created_at)
+    : "";
+
+  const card =
+    document.createElement(
+      "div"
+    );
+
+  card.className =
+    "order-card " +
+    (
+      type === "sell"
+      ? "sell"
+      : ""
+    );
+
+  const canCancel =
+    [
+      "open",
+      "active",
+      "pending"
+    ].includes(
+      status
+    );
+
+  card.innerHTML = `
+
+    <div class="order-card-top">
+
+      <div class="order-type">
+
+        ${
+          type === "sell"
+          ? "🔴 Sell USDT"
+          : "🟢 Buy USDT"
+        }
+
+      </div>
+
+      <div
+        class="
+          order-status
+          ${type === "sell" ? "sell-status" : ""}
+        ">
+
+        ${escapeHtml(statusText)}
+
+      </div>
+
+    </div>
+
+    <div class="order-details">
+
+      <div class="order-detail">
+
+        <div class="order-detail-label">
+          Pair
+        </div>
+
+        <div class="order-detail-value">
+          ${escapeHtml(base)} / ${escapeHtml(quote)}
+        </div>
+
+      </div>
+
+      <div class="order-detail">
+
+        <div class="order-detail-label">
+          Amount
+        </div>
+
+        <div class="order-detail-value">
+          ${formatNumber(amount)} USDT
+        </div>
+
+      </div>
+
+      <div class="order-detail">
+
+        <div class="order-detail-label">
+          Price
+        </div>
+
+        <div class="order-detail-value">
+          ${formatNumber(price)} ${escapeHtml(quote)}
+        </div>
+
+      </div>
+
+      <div class="order-detail">
+
+        <div class="order-detail-label">
+          Trade Value
+        </div>
+
+        <div class="order-detail-value">
+          ${formatNumber(tradeValue)} ${escapeHtml(quote)}
+        </div>
+
+      </div>
+
+      <div class="order-detail">
+
+        <div class="order-detail-label">
+          Payment
+        </div>
+
+        <div class="order-detail-value">
+          ${escapeHtml(payment)}
+        </div>
+
+      </div>
+
+      <div class="order-detail">
+
+        <div class="order-detail-label">
+          Created
+        </div>
+
+        <div class="order-detail-value">
+          ${escapeHtml(created)}
+        </div>
+
+      </div>
+
+    </div>
+
+    ${
+      canCancel
+      ?
+      `
+        <button
+          class="cancel-order-btn"
+          onclick="cancelOrder('${escapeJs(order.id)}')">
+
+          Cancel Order
+
+        </button>
+      `
+      :
+      ""
+    }
+
+  `;
+
+  container.appendChild(
+    card
+  );
+
+}
+
+
+/* =====================================================
+   CANCEL ORDER
+===================================================== */
+
+async function cancelOrder(
+  orderId
+){
+
+  if(!currentSession){
+    return;
+  }
+
+  const confirmed =
+    confirm(
+      "Cancel this order?"
+    );
+
+  if(!confirmed){
+    return;
+  }
+
+  const {
+    error
+  } =
+  await supabaseClient
+    .rpc(
+      "cancel_p2p_order",
+      {
+        p_order_id:
+          orderId
+      }
+    );
+
+  if(error){
+
+    console.error(
+      "Cancel order error:",
+      error
+    );
+
+    alert(
+      "Could not cancel order:\n\n" +
+      error.message
+    );
+
+    return;
+
+  }
+
+  await loadMyOrders();
+  await loadProfile();
+
+}
+
+
+/* =====================================================
    CREATE POST
 ===================================================== */
 
@@ -2635,7 +3759,7 @@ async function loadPostProfiles(
       allProfiles[
         profile.id
       ] =
-      profile;
+        profile;
 
     }
   );
@@ -2765,7 +3889,7 @@ async function loadComments(
             allProfiles[
               profile.id
             ] =
-            profile;
+              profile;
 
           }
         );
@@ -3603,6 +4727,32 @@ async function logout(){
 
 
 /* =====================================================
+   FORMAT NUMBER
+===================================================== */
+
+function formatNumber(
+  value
+){
+
+  const number =
+    Number(value || 0);
+
+  if(!Number.isFinite(number)){
+    return "0.00";
+  }
+
+  return number.toLocaleString(
+    undefined,
+    {
+      minimumFractionDigits:2,
+      maximumFractionDigits:8
+    }
+  );
+
+}
+
+
+/* =====================================================
    FORMAT TIME
 ===================================================== */
 
@@ -3702,7 +4852,9 @@ function escapeJs(
 ){
 
   return String(
-    text || ""
+    text == null
+    ? ""
+    : text
   )
   .replace(
     /\\/g,
@@ -3715,6 +4867,14 @@ function escapeJs(
   .replace(
     /"/g,
     '\\"'
+  )
+  .replace(
+    /\r/g,
+    "\\r"
+  )
+  .replace(
+    /\n/g,
+    "\\n"
   );
 
 }

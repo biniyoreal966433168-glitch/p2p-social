@@ -1,17 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Profile • P2P Social</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<style>
+<title>Profile • P2P Social</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
 body{background:#f5f7fb;color:#172033;padding-bottom:85px}
 button,input,textarea,select{font-family:inherit}
 button{cursor:pointer}
+
 header{background:linear-gradient(135deg,#075e54,#087f73);color:white;padding:14px 18px;border-radius:0 0 22px 22px}
 .header-row{display:flex;align-items:center;gap:12px}
 .back-btn{border:none;background:rgba(255,255,255,.15);color:white;width:40px;height:40px;border-radius:50%;font-size:25px;flex-shrink:0}
@@ -39,10 +35,12 @@ header{background:linear-gradient(135deg,#075e54,#087f73);color:white;padding:14
 .profile-id{margin-top:5px;color:#7a8494;font-size:12px}
 .profile-bio{margin-top:5px;color:#596579;font-size:13px;word-break:break-word}
 .lock-status{margin-top:7px;display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:8px;background:#f1f4f8;color:#596579;font-size:11px;font-weight:bold}
+
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:20px;border-top:1px solid #edf0f4;padding-top:16px}
 .stat{text-align:center}
 .stat strong{display:block;font-size:18px}
 .stat span{display:block;color:#7a8494;font-size:11px;margin-top:4px}
+
 .profile-buttons{display:flex;gap:8px;margin-top:17px}
 .profile-buttons button{flex:1;border:none;padding:11px;border-radius:10px;font-weight:bold}
 .edit-btn{background:#087f73;color:white}
@@ -70,6 +68,10 @@ header{background:linear-gradient(135deg,#075e54,#087f73);color:white;padding:14
 .wallet-action{border:none;color:white;padding:11px;border-radius:10px;font-weight:bold}
 .deposit-btn{background:#16a085}
 .withdraw-btn{background:#c0392b}
+.transfer-btn{background:#087f73}
+
+.transfer-info{background:#f5f7fb;border-radius:11px;padding:12px;margin-bottom:12px;font-size:12px;color:#596579;line-height:1.5}
+.transfer-balance{font-size:14px;font-weight:bold;color:#172033;margin-top:4px}
 
 .order-section{margin:16px}
 .order-box{background:white;border-radius:18px;padding:16px;box-shadow:0 4px 15px rgba(0,0,0,.07)}
@@ -78,6 +80,7 @@ header{background:linear-gradient(135deg,#075e54,#087f73);color:white;padding:14
 .buy-button{background:#e8f8f3;color:#087f73}
 .sell-button{background:#fdecec;color:#c0392b}
 .create-order-button{width:100%;margin-top:10px;border:none;background:#087f73;color:white;padding:12px;border-radius:10px;font-weight:bold}
+.create-order-button.sell-create{background:#c0392b}
 
 .orders-list{display:flex;flex-direction:column;gap:10px}
 .order-card{background:white;border-radius:15px;padding:14px;box-shadow:0 3px 12px rgba(0,0,0,.06);border-left:4px solid #087f73}
@@ -149,9 +152,7 @@ header{background:linear-gradient(135deg,#075e54,#087f73);color:white;padding:14
 .order-modal-type.buy{background:#e8f8f3;color:#087f73}
 .order-modal-type.sell{background:#fdecec;color:#c0392b}
 .form-label{display:block;font-size:12px;font-weight:bold;color:#596579;margin:3px 0 6px}
-.fee-preview{background:#f5f7fb;border-radius:11px;padding:12px;margin-top:2px;margin-bottom:10px}
-.fee-row{display:flex;justify-content:space-between;gap:10px;font-size:12px;margin-bottom:7px}
-.fee-row:last-child{margin-bottom:0;padding-top:7px;border-top:1px solid #dfe4eb;font-weight:bold}
+
 .order-submit{width:100%;border:none;background:#087f73;color:white;padding:12px;border-radius:10px;font-weight:bold}
 .order-submit.sell-submit{background:#c0392b}
 
@@ -183,318 +184,467 @@ header{padding:12px}
 .brand-text p{font-size:6px}
 .order-details{grid-template-columns:1fr}
 }
-</style>
-</head>
-
-<body>
-
-<header>
+</style></head><body><header>
 <div class="header-row">
-<button class="back-btn" onclick="goHome()">‹</button>
-<div class="brand-header">
+<button class="back-btn" onclick="goHome()">‹</button><div class="brand-header">
 <div class="brand-icon">
 <div class="brand-p-left"></div>
 <div class="brand-p-right"></div>
 <div class="brand-center"><div class="brand-dot"></div></div>
-</div>
-<div class="brand-text">
+</div><div class="brand-text">
 <h1>P2P <span>Social</span></h1>
 <p>CONNECT • TRADE • SHARE</p>
 </div>
 </div>
 </div>
-</header>
+</header><div class="profile-card"><div class="profile-top"><div class="profile-photo-wrap">
+<div id="profilePhotoBox" class="profile-photo">U</div><label class="photo-button" for="photoInput">📷</label>
 
-<div class="profile-card">
+<input
+id="photoInput"
+type="file"
+accept="image/*"
+onchange="changeProfilePhoto(event)"
 
-<div class="profile-top">
-<div class="profile-photo-wrap">
-<div id="profilePhotoBox" class="profile-photo">U</div>
-<label class="photo-button" for="photoInput">📷</label>
-<input id="photoInput" type="file" accept="image/*" onchange="changeProfilePhoto(event)">
-</div>
+«»
 
-<div class="profile-info">
-<div class="profile-name-row">
+</div><div class="profile-info"><div class="profile-name-row">
 <div id="profileName" class="profile-name">Loading...</div>
 <div id="verificationBadge" class="verification-badge unverified">Unverified</div>
-</div>
-<div id="profileId" class="profile-id">Username: --</div>
+</div><div id="profileId" class="profile-id">Username: --</div>
 <div id="profileBio" class="profile-bio">No bio yet.</div>
-<div id="lockStatus" class="lock-status">🔓 Public profile</div>
+<div id="lockStatus" class="lock-status">🔓 Public profile</div></div>
+</div><div class="stats">
+<div class="stat">
+<strong id="postCount">0</strong>
+<span>Posts</span>
+</div><div class="stat">
+<strong id="followersCount">0</strong>
+<span>Followers</span>
+</div><div class="stat">
+<strong id="followingCount">0</strong>
+<span>Following</span>
+</div><div class="stat">
+<strong id="likeCount">0</strong>
+<span>Likes</span>
 </div>
-</div>
-
-<div class="stats">
-<div class="stat"><strong id="postCount">0</strong><span>Posts</span></div>
-<div class="stat"><strong id="followersCount">0</strong><span>Followers</span></div>
-<div class="stat"><strong id="followingCount">0</strong><span>Following</span></div>
-<div class="stat"><strong id="likeCount">0</strong><span>Likes</span></div>
-</div>
-
-<div class="trading-stats">
-<div class="trading-stat"><strong id="completedRate">0%</strong><span>30 Day Completed Rate</span></div>
-<div class="trading-stat"><strong id="thirtyDayTrade">0</strong><span>30 Day Trade</span></div>
-<div class="trading-stat"><strong id="totalTrade">0</strong><span>Total Trade</span></div>
-<div class="trading-stat"><strong id="usernameAge">--</strong><span>Username</span></div>
-</div>
-
-<div class="profile-buttons">
+</div><div class="trading-stats"><div class="trading-stat">
+<strong id="completedRate">0%</strong>
+<span>30 Day Completed Rate</span>
+</div><div class="trading-stat">
+<strong id="thirtyDayTrade">0</strong>
+<span>30 Day Trade</span>
+</div><div class="trading-stat">
+<strong id="totalTrade">0</strong>
+<span>Total Trade</span>
+</div><div class="trading-stat">
+<strong id="usernameAge">--</strong>
+<span>Username</span>
+</div></div><div class="profile-buttons">
 <button class="edit-btn" onclick="openEditProfile()">✏️ Edit</button>
 <button id="lockButton" class="lock-btn" onclick="toggleProfileLock()">🔒 Lock</button>
 <button class="settings-btn" onclick="openSettings()">⚙️ Settings</button>
-</div>
+</div></div><section class="section"><div class="section-title">
+<h2>💰 Wallet</h2>
+</div><div class="wallet"><div class="wallet-header">
+<div class="wallet-label">USDT Balance • Username Account</div><button
+id="balanceToggleButton"
+class="balance-toggle"
+onclick="toggleBalanceVisibility()"
 
-</div>
+«👁️</button>»
 
-<section class="section">
-<div class="section-title"><h2>💰 Wallet</h2></div>
+</div><div class="wallet-balances"><div class="balance-box"><div class="balance-title">USDT</div><div id="usdtBalance" class="balance-value">
+Loading...
+</div></div></div><div class="wallet-actions"><button
+class="wallet-action deposit-btn"
+onclick="openDeposit()"
 
-<div class="wallet">
-<div class="wallet-header">
-<div class="wallet-label">USDT Balance • Username Account</div>
-<button id="balanceToggleButton" class="balance-toggle" onclick="toggleBalanceVisibility()">👁️</button>
-</div>
+«⬇️ Deposit</button>»
 
-<div class="wallet-balances">
-<div class="balance-box">
-<div class="balance-title">USDT</div>
-<div id="usdtBalance" class="balance-value">Loading...</div>
-</div>
-</div>
+<button
+class="wallet-action withdraw-btn"
+onclick="openWithdraw()"
 
-<div class="wallet-actions">
-<button class="wallet-action deposit-btn" onclick="openDeposit()">⬇️ Deposit</button>
-<button class="wallet-action withdraw-btn" onclick="openWithdraw()">⬆️ Withdrawal</button>
-</div>
-</div>
-</section>
+«⬆️ Withdrawal</button>»
 
-<section class="order-section">
-<div class="section-title">
-<h2>🔄 P2P Orders</h2>
-<button class="view-comments" onclick="loadMyOrders()">Refresh</button>
-</div>
+<button
+class="wallet-action transfer-btn"
+onclick="openTransfer()"
 
-<div class="order-box">
-<div class="order-buttons">
-<button class="order-button buy-button" onclick="openOrderModal('buy')">🟢 Buy</button>
-<button class="order-button sell-button" onclick="openOrderModal('sell')">🔴 Sell</button>
-</div>
+«💎 Transfer</button>»
 
-<button class="create-order-button" onclick="openOrderModal('buy')">➕ Create Buy Order</button>
-<button class="create-order-button" style="background:#c0392b;" onclick="openOrderModal('sell')">➕ Create Sell Order</button>
-</div>
-</section>
+</div></div>
+</section><section class="order-section"><div class="section-title">
+<h2>🔄 P2P Orders</h2><button
+class="view-comments"
+onclick="loadMyOrders()"
 
-<section class="section">
-<div class="section-title">
-<h2>📋 My Orders</h2>
-<button class="view-comments" onclick="loadMyOrders()">Refresh</button>
-</div>
-<div id="myOrders" class="orders-list">
-<div class="order-empty">Loading orders...</div>
-</div>
-</section>
+«Refresh</button>»
 
-<section class="section">
-<div class="section-title"><h2>📝 Create Post</h2></div>
-<div class="create-box">
-<textarea id="postContent" maxlength="5000" placeholder="What's on your mind?"></textarea>
-<div class="post-options">
-<select id="postVisibility">
+</div><div class="order-box"><button
+class="create-order-button"
+onclick="openOrderModal('buy')"
+
+«➕ Create Buy Order</button>»
+
+<button
+class="create-order-button sell-create"
+onclick="openOrderModal('sell')"
+
+«➕ Create Sell Order</button>»
+
+</div></section><section class="section"><div class="section-title"><h2>📋 My Orders</h2><button
+class="view-comments"
+onclick="loadMyOrders()"
+
+«Refresh</button>»
+
+</div><div id="myOrders" class="orders-list"><div class="order-empty">
+Loading orders...
+</div></div></section><section class="section"><div class="section-title">
+<h2>📝 Create Post</h2>
+</div><div class="create-box"><textarea
+id="postContent"
+maxlength="5000"
+placeholder="What's on your mind?"
+></textarea><div class="post-options"><select id="postVisibility">
 <option value="public">🌍 Public</option>
 <option value="private">👥 Friends / Private</option>
-</select>
-<button id="createPostButton" class="create-post-btn" onclick="createPost()">Post</button>
-</div>
-</div>
-</section>
+</select><button
+id="createPostButton"
+class="create-post-btn"
+onclick="createPost()"
 
-<section class="section">
-<div class="section-title">
-<h2>📄 Your Posts</h2>
-<button class="view-comments" onclick="loadPosts()">Refresh</button>
-</div>
-<div id="postsFeed" class="posts-feed">
-<div class="empty">Loading posts...</div>
-</div>
-</section>
+«Post</button>»
 
-<div id="depositModal" class="modal">
-<div class="modal-box">
-<h3>⬇️ Deposit USDT</h3>
-<div class="money-modal-info">
-USDT account
-<div id="depositBalance" class="money-balance">0.00 USDT</div>
 </div>
+</div>
+</section><section class="section"><div class="section-title"><h2>📄 Your Posts</h2><button
+class="view-comments"
+onclick="loadPosts()"
 
-<label class="form-label">Network</label>
+«Refresh</button>»
+
+</div><div id="postsFeed" class="posts-feed"><div class="empty">
+Loading posts...
+</div></div></section><div id="depositModal" class="modal"><div class="modal-box"><h3>⬇️ Deposit USDT</h3><div class="money-modal-info">USDT deposit address
+
+<div
+class="money-balance"
+style="word-break:break-all;"
+>
+UQACkUS0J6lEIlo6iHWoAjxnUYoOOR4StNPVbTXDOt-Em1zl
+</div></div><label class="form-label">Network</label>
+
 <select id="depositNetwork">
-<option value="TRC20">TRON TRC-20</option>
-</select>
+<option value="TON">TON</option>
+</select><label class="form-label">Amount (USDT)</label>
 
-<label class="form-label">Amount (USDT)</label>
-<input id="depositAmount" type="number" min="0" step="any" placeholder="Enter USDT amount">
+<input
+id="depositAmount"
+type="number"
+min="0"
+step="any"
+placeholder="Enter USDT amount"
+
+«»
 
 <label class="form-label">Transaction Hash</label>
-<input id="depositTxHash" type="text" maxlength="200" placeholder="Enter transaction hash">
 
-<div class="modal-buttons">
-<button class="cancel-btn" onclick="closeDeposit()">Cancel</button>
-<button id="depositSubmitButton" class="save-btn" onclick="submitDeposit()">Submit Deposit</button>
-</div>
-</div>
-</div>
+<input
+id="depositTxHash"
+type="text"
+maxlength="200"
+placeholder="Enter transaction hash"
 
-<div id="withdrawModal" class="modal">
-<div class="modal-box">
-<h3>⬆️ Withdrawal USDT</h3>
-<div class="money-modal-info">
-Available USDT
-<div id="withdrawBalance" class="money-balance">0.00 USDT</div>
-</div>
+«»
 
-<label class="form-label">Network</label>
+<div class="modal-buttons"><button
+class="cancel-btn"
+onclick="closeDeposit()"
+
+«Cancel</button>»
+
+<button
+id="depositSubmitButton"
+class="save-btn"
+onclick="submitDeposit()"
+
+«Submit Deposit</button>»
+
+</div></div>
+</div><div id="withdrawModal" class="modal"><div class="modal-box"><h3>⬆️ Withdrawal USDT</h3><div class="money-modal-info">Available USDT
+
+<div
+id="withdrawBalance"
+class="money-balance"
+>0.00 USDT</div></div><label class="form-label">Network</label>
+
 <select id="withdrawNetwork">
-<option value="TRC20">TRON TRC-20</option>
-</select>
+<option value="TON">TON</option>
+</select><label class="form-label">Withdrawal Address</label>
 
-<label class="form-label">Withdrawal Address</label>
-<input id="withdrawAddress" type="text" maxlength="150" placeholder="Enter TRON address">
+<input
+id="withdrawAddress"
+type="text"
+maxlength="150"
+placeholder="Enter TON address"
 
-<label class="form-label">Amount (USDT)</label>
-<input id="withdrawAmount" type="number" min="0" step="any" placeholder="Enter USDT amount">
-
-<div class="modal-buttons">
-<button class="cancel-btn" onclick="closeWithdraw()">Cancel</button>
-<button id="withdrawSubmitButton" class="save-btn" onclick="submitWithdrawal()">Submit Withdrawal</button>
-</div>
-</div>
-</div>
-
-<div id="orderModal" class="modal">
-<div class="modal-box">
-
-<div class="order-modal-title">
-<h3 id="orderModalTitle">🟢 Create Buy Order</h3>
-<div id="orderModalType" class="order-modal-type buy">BUY</div>
-</div>
-
-<div class="money-modal-info">
-P2P identity
-<div id="orderUsername" class="money-balance">Loading username...</div>
-</div>
-
-<label class="form-label">Trading Pair</label>
-<select id="orderPair" onchange="updateOrderCurrency();updateFeePreview();">
-<option value="USDT_USD">USDT / USD</option>
-<option value="USDT_EUR">USDT / EUR</option>
-<option value="USDT_AED">USDT / AED</option>
-<option value="USDT_GBP">USDT / GBP</option>
-<option value="USDT_USDT">USDT / USDT</option>
-<option value="USDT_ETB">USDT / ETB</option>
-<option value="USDT_NGN">USDT / NGN</option>
-<option value="USDT_KES">USDT / KES</option>
-<option value="USDT_BRL">USDT / BRL</option>
-<option value="USDT_ARS">USDT / ARS</option>
-<option value="USDT_MXN">USDT / MXN</option>
-<option value="USDT_TRY">USDT / TRY</option>
-<option value="USDT_PHP">USDT / PHP</option>
-<option value="USDT_AUD">USDT / AUD</option>
-<option value="USDT_CAD">USDT / CAD</option>
-<option value="USDT_CHF">USDT / CHF</option>
-<option value="USDT_SGD">USDT / SGD</option>
-<option value="USDT_HKD">USDT / HKD</option>
-<option value="USDT_JPY">USDT / JPY</option>
-<option value="USDT_KRY">USDT / KRY</option>
-<option value="USDT_ZAR">USDT / ZAR</option>
-<option value="USDT_INR">USDT / INR</option>
-</select>
+«»
 
 <label class="form-label">Amount (USDT)</label>
-<input id="orderAmount" type="number" min="0" step="any" placeholder="Enter USDT amount" oninput="updateFeePreview()">
 
-<label class="form-label">Price (<span id="orderPriceCurrency">USD</span>)</label>
-<input id="orderPrice" type="number" min="0" step="any" placeholder="Enter price" oninput="updateFeePreview()">
+<input
+id="withdrawAmount"
+type="number"
+min="0"
+step="any"
+placeholder="Enter USDT amount"
+
+«»
+
+<div class="modal-buttons"><button
+class="cancel-btn"
+onclick="closeWithdraw()"
+
+«Cancel</button>»
+
+<button
+id="withdrawSubmitButton"
+class="save-btn"
+onclick="submitWithdrawal()"
+
+«Submit Withdrawal</button>»
+
+</div></div>
+</div><div id="transferModal" class="modal"><div class="modal-box"><h3>💎 Transfer USDT</h3><div class="transfer-info">Transfer using permanent username.
+
+<div
+id="transferBalance"
+class="transfer-balance"
+>0.00 USDT</div></div><label class="form-label">Recipient Username</label>
+
+<input
+id="transferUsername"
+type="text"
+maxlength="100"
+placeholder="Enter username"
+
+«»
+
+<label class="form-label">Amount (USDT)</label>
+
+<input
+id="transferAmount"
+type="number"
+min="0"
+step="any"
+placeholder="Enter USDT amount"
+
+«»
+
+<div class="modal-buttons"><button
+class="cancel-btn"
+onclick="closeTransfer()"
+
+«Cancel</button>»
+
+<button
+id="transferSubmitButton"
+class="save-btn"
+onclick="submitTransfer()"
+
+«Transfer</button>»
+
+</div></div>
+</div><div id="orderModal" class="modal"><div class="modal-box"><div class="order-modal-title"><h3 id="orderModalTitle">
+🟢 Create Buy Order
+</h3><div
+id="orderModalType"
+class="order-modal-type buy"
+>BUY</div></div><div class="money-modal-info">P2P identity
+
+<div
+id="orderUsername"
+class="money-balance"
+>Loading username...</div></div><label class="form-label">Trading Pair</label>
+
+<select
+id="orderPair"
+onchange="updateOrderCurrency()"
+
+«»
+
+<option value="OTHER_USDT">
+OTHER / USDT
+</option><option value="USDT_OTHER">
+USDT / OTHER
+</option></select><label class="form-label">Amount (USDT)</label>
+
+<input
+id="orderAmount"
+type="number"
+min="0"
+step="any"
+placeholder="Enter USDT amount"
+
+«»
+
+<label class="form-label">
+Price (<span id="orderPriceCurrency">USDT</span>)
+</label><input
+id="orderPrice"
+type="number"
+min="0"
+step="any"
+placeholder="Enter price"
+
+«»
 
 <label class="form-label">Payment Method</label>
-<select id="orderPayment">
-<option value="">Select payment method</option>
-<option value="Telebirr">🟦 PayPal</option>
-<option value="CBE">🟪 Payoneer</option>
-<option value="Bank">🏦 Bank Transfer</option>
-</select>
 
-<div class="fee-preview">
-<div class="fee-row"><span>Trade Value</span><span id="orderTradeValue">0.00</span></div>
-<div class="fee-row"><span>Platform Fee (1%)</span><span id="orderFee">0.00</span></div>
-<div class="fee-row"><span>Total</span><span id="orderTotal">0.00</span></div>
+<select id="orderPayment"><option value="">
+Select payment method
+</option><option value="Telebirr">
+🟦 PayPal
+</option><option value="CBE">
+🟪 Payoneer
+</option><option value="Bank">
+🏦 Bank Transfer
+</option></select><div class="modal-buttons"><button
+class="cancel-btn"
+onclick="closeOrderModal()"
+
+«Cancel</button>»
+
+<button
+id="submitOrderButton"
+class="order-submit"
+onclick="createOrder()"
+
+«Create Buy Order</button>»
+
+</div></div>
+</div><div id="editModal" class="modal"><div class="modal-box"><h3>✏️ Edit Profile</h3><div class="money-modal-info">Username
+
+<div
+id="permanentUsername"
+class="money-balance"
+>Loading...</div></div><div class="money-modal-info">Your username is your permanent identity and cannot be changed.
+
+</div><textarea
+id="editBio"
+maxlength="300"
+placeholder="Bio"
+></textarea><div class="modal-buttons"><button
+class="cancel-btn"
+onclick="closeEditProfile()"
+
+«Cancel</button>»
+
+<button
+id="saveProfileButton"
+class="save-btn"
+onclick="saveProfile()"
+
+«Save</button>»
+
+</div></div>
+</div><div id="settingsModal" class="modal"><div class="modal-box"><h3>⚙️ Settings</h3><div class="settings-list"><button
+class="settings-item"
+onclick="openEditProfile();closeSettings();"
+
+«✏️ Edit Profile</button>»
+
+<button
+class="settings-item"
+onclick="toggleProfileLock();closeSettings();"
+
+«🔒 Lock / Unlock Profile</button>»
+
+<button
+class="settings-item"
+onclick="openOrderModal('buy');closeSettings();"
+
+«➕ Create Buy Order</button>»
+
+<button
+class="settings-item"
+onclick="openOrderModal('sell');closeSettings();"
+
+«➕ Create Sell Order</button>»
+
+<button
+class="settings-item"
+onclick="openDeposit();closeSettings();"
+
+«⬇️ Deposit</button>»
+
+<button
+class="settings-item"
+onclick="openWithdraw();closeSettings();"
+
+«⬆️ Withdrawal</button>»
+
+<button
+class="settings-item"
+onclick="openTransfer();closeSettings();"
+
+«💎 Transfer</button>»
+
+<button
+class="settings-item"
+onclick="openMessages();"
+
+«💬 Messages</button>»
+
+<button
+class="settings-item"
+onclick="openLive();"
+
+«🔴 Live</button>»
+
+<button
+class="settings-item logout"
+onclick="logout();"
+
+«🚪 Logout</button>»
+
+<button
+class="cancel-btn"
+style="width:100%;padding:11px;border:none;border-radius:10px;"
+onclick="closeSettings();"
+
+«Close</button>»
+
 </div>
-
-<div class="modal-buttons">
-<button class="cancel-btn" onclick="closeOrderModal()">Cancel</button>
-<button id="submitOrderButton" class="order-submit" onclick="createOrder()">Create Buy Order</button>
 </div>
-
-</div>
-</div>
-
-<div id="editModal" class="modal">
-<div class="modal-box">
-<h3>✏️ Edit Profile</h3>
-
-<div class="money-modal-info">
-Username
-<div id="permanentUsername" class="money-balance">Loading...</div>
-</div>
-
-<div class="money-modal-info">
-Your username is your permanent identity and cannot be changed.
-</div>
-
-<textarea id="editBio" maxlength="300" placeholder="Bio"></textarea>
-
-<div class="modal-buttons">
-<button class="cancel-btn" onclick="closeEditProfile()">Cancel</button>
-<button id="saveProfileButton" class="save-btn" onclick="saveProfile()">Save</button>
-</div>
-</div>
-</div>
-
-<div id="settingsModal" class="modal">
-<div class="modal-box">
-<h3>⚙️ Settings</h3>
-
-<div class="settings-list">
-
-<button class="settings-item" onclick="openEditProfile();closeSettings();">✏️ Edit Profile</button>
-<button class="settings-item" onclick="toggleProfileLock();closeSettings();">🔒 Lock / Unlock Profile</button>
-<button class="settings-item" onclick="openOrderModal('buy');closeSettings();">🟢 Buy</button>
-<button class="settings-item" onclick="openOrderModal('sell');closeSettings();">🔴 Sell</button>
-<button class="settings-item" onclick="openDeposit();closeSettings();">⬇️ Deposit</button>
-<button class="settings-item" onclick="openWithdraw();closeSettings();">⬆️ Withdrawal</button>
-<button class="settings-item" onclick="openMessages();">💬 Messages</button>
-<button class="settings-item" onclick="openLive();">🔴 Live</button>
-<button class="settings-item logout" onclick="logout();">🚪 Logout</button>
-
-<button class="cancel-btn" style="width:100%;padding:11px;border:none;border-radius:10px;" onclick="closeSettings();">Close</button>
-
-</div>
-</div>
-</div>
-
-<nav class="bottom-nav">
-<div class="nav-item" onclick="goHome()"><span>🏠</span>Home</div>
-<div class="nav-item" onclick="openBuy()"><span>🟢</span>Buy</div>
-<div class="nav-item" onclick="openSell()"><span>🔴</span>Sell</div>
-<div class="nav-item" onclick="openMessages()"><span>💬</span>Messages</div>
-<div class="nav-item active"><span>👤</span>Profile</div>
-</nav>
-
-<script>
+</div><nav class="bottom-nav"><div
+class="nav-item"
+onclick="goHome()"
+>
+<span>🏠</span>
+Home
+</div><div
+class="nav-item"
+onclick="openMessages()"
+>
+<span>💬</span>
+Messages
+</div><div
+class="nav-item"
+onclick="openLive()"
+>
+<span>🔴</span>
+Live
+</div><div class="nav-item active">
+<span>👤</span>
+Profile
+</div></nav><script>
 
 const SUPABASE_URL="https://mbsvuwrgigqfporxwpfr.supabase.co";
+
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
 
 const supabaseClient=window.supabase.createClient(
@@ -509,8 +659,6 @@ let allProfiles={};
 let allComments=[];
 let orderType="buy";
 let balanceVisible=true;
-
-const PLATFORM_FEE_RATE=0.01;
 
 let permanentUsername="";
 
@@ -532,7 +680,6 @@ currentSession.user.user_metadata?.username||
 }
 
 return"";
-
 }
 
 function requirePermanentUsername(){
@@ -550,7 +697,6 @@ return false;
 }
 
 return true;
-
 }
 
 function getUsernameIdentity(){
@@ -558,8 +704,10 @@ return getPermanentUsername();
 }
 
 function usernameEquals(a,b){
+
 return String(a||"").trim().toLowerCase()===
 String(b||"").trim().toLowerCase();
+
 }
 
 async function startApp(){
@@ -757,13 +905,17 @@ const fallback=await supabaseClient
 .maybeSingle();
 
 if(fallback.data){
+
 profile=fallback.data;
 profileError=null;
+
 }else if(fallback.error){
+
 console.error(
 "Profile user_id lookup:",
 fallback.error
 );
+
 }
 
 }
@@ -1266,8 +1418,7 @@ bio:bio
 
 if(error){
 
-const fallback=
-await supabaseClient
+const fallback=await supabaseClient
 .from("profiles")
 .update({
 bio:bio
@@ -1532,10 +1683,6 @@ function openDeposit(){
 const balance=
 getNumberFromProfile(["usdt_balance"]);
 
-document.getElementById("depositBalance")
-.textContent=
-formatNumber(balance)+" USDT";
-
 document.getElementById("depositModal")
 .classList.add("show");
 
@@ -1603,7 +1750,8 @@ amount:amount,
 type:"deposit",
 status:"pending",
 network:network,
-tx_hash:txHash
+tx_hash:txHash,
+deposit_address:"UQACkUS0J6lEIlo6iHWoAjxnUYoOOR4StNPVbTXDOt-Em1zl"
 });
 
 button.disabled=false;
@@ -1710,13 +1858,10 @@ return;
 
 }
 
-if(
-network==="TRC20"&&
-!address.startsWith("T")
-){
+if(network==="TON"&&address.length<20){
 
 alert(
-"Please enter a valid TRON TRC-20 address."
+"Please enter a valid TON address."
 );
 
 return;
@@ -1780,6 +1925,151 @@ alert(
 
 }
 
+function openTransfer(){
+
+if(!requirePermanentUsername()){
+return;
+}
+
+document.getElementById("transferUsername").value="";
+document.getElementById("transferAmount").value="";
+
+document.getElementById("transferBalance")
+.textContent=
+formatNumber(currentUSDTBalance)+" USDT";
+
+document.getElementById("transferModal")
+.classList.add("show");
+
+}
+
+function closeTransfer(){
+
+document.getElementById("transferModal")
+.classList.remove("show");
+
+}
+
+async function submitTransfer(){
+
+if(!currentSession){
+showLogin();
+return;
+}
+
+if(!requirePermanentUsername()){
+return;
+}
+
+const recipient=
+document.getElementById("transferUsername")
+.value
+.trim();
+
+const amount=
+Number(
+document.getElementById("transferAmount")
+.value
+);
+
+const senderUsername=
+getPermanentUsername();
+
+if(!recipient){
+
+alert("Please enter the recipient username.");
+return;
+
+}
+
+if(usernameEquals(recipient,senderUsername)){
+
+alert("You cannot transfer to your own username.");
+return;
+
+}
+
+if(!Number.isFinite(amount)||amount<=0){
+
+alert("Please enter a valid transfer amount.");
+return;
+
+}
+
+if(amount>currentUSDTBalance){
+
+alert("Insufficient USDT balance.");
+return;
+
+}
+
+const confirmed=confirm(
+"Transfer "+
+formatNumber(amount)+
+" USDT to @"+
+recipient+
+"?");
+
+if(!confirmed){
+return;
+}
+
+const button=
+document.getElementById(
+"transferSubmitButton"
+);
+
+button.disabled=true;
+button.textContent="Transferring...";
+
+let transferError=null;
+
+const rpcResult=
+await supabaseClient.rpc(
+"transfer_usdt_by_username",
+{
+p_recipient_username:recipient,
+p_amount:amount,
+p_sender_username:senderUsername
+}
+);
+
+transferError=rpcResult.error;
+
+if(transferError){
+
+console.error(
+"Username transfer error:",
+transferError
+);
+
+}
+
+button.disabled=false;
+button.textContent="Transfer";
+
+if(transferError){
+
+alert(
+"Could not complete transfer:\n\n"+
+transferError.message
+);
+
+return;
+
+}
+
+closeTransfer();
+
+await loadUSDTBalance();
+
+alert(
+"USDT transferred successfully to @"+
+recipient+"."
+);
+
+}
+
 function openOrderModal(type){
 
 if(!requirePermanentUsername()){
@@ -1803,6 +2093,9 @@ document.getElementById("orderModalType");
 const submitButton=
 document.getElementById("submitOrderButton");
 
+const pairSelect=
+document.getElementById("orderPair");
+
 document.getElementById("orderUsername")
 .textContent=
 "@"+getPermanentUsername();
@@ -1821,6 +2114,8 @@ submitButton.textContent=
 submitButton.className=
 "order-submit sell-submit";
 
+pairSelect.value="USDT_OTHER";
+
 }else{
 
 title.textContent="🟢 Create Buy Order";
@@ -1835,10 +2130,11 @@ submitButton.textContent=
 submitButton.className=
 "order-submit";
 
+pairSelect.value="OTHER_USDT";
+
 }
 
 updateOrderCurrency();
-updateFeePreview();
 
 modal.classList.add("show");
 
@@ -1858,8 +2154,8 @@ String(pair||"")
 .split("_");
 
 return{
-base:parts[0]||"USDT",
-quote:parts[1]||"USD"
+base:parts[0]||"OTHER",
+quote:parts[1]||"USDT"
 };
 
 }
@@ -1876,41 +2172,6 @@ getPairParts(pair);
 document.getElementById(
 "orderPriceCurrency"
 ).textContent=quote;
-
-}
-
-function calculatePlatformFee(value){
-
-const number=Number(value);
-
-if(
-!Number.isFinite(number)||
-number<=0
-){
-
-return 0;
-
-}
-
-return number*PLATFORM_FEE_RATE;
-
-}
-
-function calculateTotalWithFee(value){
-
-const number=Number(value);
-
-if(
-!Number.isFinite(number)||
-number<=0
-){
-
-return 0;
-
-}
-
-return number+
-calculatePlatformFee(number);
 
 }
 
@@ -1931,78 +2192,6 @@ return 0;
 }
 
 return a*p;
-
-}
-
-function updateFeePreview(){
-
-const amount=
-Number(
-document.getElementById("orderAmount")
-.value
-);
-
-const price=
-Number(
-document.getElementById("orderPrice")
-.value
-);
-
-const pair=
-document.getElementById("orderPair")
-.value;
-
-const {quote}=
-getPairParts(pair);
-
-const tradeValue=
-calculatePairValue(
-amount,
-price
-);
-
-const fee=
-calculatePlatformFee(
-tradeValue
-);
-
-const total=
-calculateTotalWithFee(
-tradeValue
-);
-
-document.getElementById(
-"orderTradeValue"
-).textContent=
-tradeValue.toLocaleString(
-undefined,
-{
-minimumFractionDigits:2,
-maximumFractionDigits:2
-}
-)+" "+quote;
-
-document.getElementById(
-"orderFee"
-).textContent=
-fee.toLocaleString(
-undefined,
-{
-minimumFractionDigits:2,
-maximumFractionDigits:2
-}
-)+" "+quote;
-
-document.getElementById(
-"orderTotal"
-).textContent=
-total.toLocaleString(
-undefined,
-{
-minimumFractionDigits:2,
-maximumFractionDigits:2
-}
-)+" "+quote;
 
 }
 
@@ -2040,10 +2229,17 @@ const payment=
 document.getElementById("orderPayment")
 .value;
 
-if(!pair){
+const expectedPair=
+orderType==="buy"?
+"OTHER_USDT":
+"USDT_OTHER";
+
+if(pair!==expectedPair){
 
 alert(
-"Please select a trading pair."
+orderType==="buy"?
+"Create Buy uses OTHER / USDT.":
+"Create Sell uses USDT / OTHER."
 );
 
 return;
@@ -2142,8 +2338,6 @@ document.getElementById(
 "orderPayment"
 ).value="";
 
-updateFeePreview();
-
 closeOrderModal();
 
 alert(
@@ -2224,7 +2418,7 @@ order.type||
 
 const pair=
 order.pair||
-"USDT_USD";
+"OTHER_USDT";
 
 const {base,quote}=
 getPairParts(pair);
@@ -3234,30 +3428,6 @@ window.location.href="wallet.html";
 
 }
 
-function openBuy(){
-
-const username=
-getPermanentUsername();
-
-window.location.href=
-"live.html?username="+
-encodeURIComponent(username)+
-"&action=buy";
-
-}
-
-function openSell(){
-
-const username=
-getPermanentUsername();
-
-window.location.href=
-"wallet.html?username="+
-encodeURIComponent(username)+
-"&action=sell";
-
-}
-
 function openMessages(){
 
 const username=
@@ -3438,7 +3608,5 @@ session.user.user_metadata.username
 
 startApp();
 
-</script>
-
-</body>
+</script></body>
 </html>

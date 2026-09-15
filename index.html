@@ -154,6 +154,9 @@ section{padding:18px 18px 5px}
 display:flex;justify-content:space-between;align-items:center;margin-bottom:12px
 }
 .posts-title h2{font-size:19px}
+.see-all{
+font-size:12px;color:#087f73;font-weight:bold;cursor:pointer
+}
 .create-post-btn{
 border:none;background:#087f73;color:white;padding:9px 12px;
 border-radius:10px;font-weight:bold;cursor:pointer
@@ -328,6 +331,10 @@ width:100%;max-height:280px;display:block;object-fit:cover
 background:#f7f8fa;border:1px dashed #ccd2da;border-radius:11px;
 padding:12px;color:#687386;font-size:12px;line-height:1.45
 }
+.info-box{
+background:#edf8f5;color:#087f73;border-radius:10px;
+padding:11px;font-size:12px;line-height:1.4
+}
 .publish-btn{
 width:100%;margin-top:14px;border:none;background:#087f73;color:white;
 padding:12px;border-radius:10px;font-weight:bold;cursor:pointer
@@ -435,13 +442,13 @@ Logged in as:
 <button class="quick-card" onclick="openVerifyIdentity()">
 <div class="quick-card-icon">🪪</div>
 <div class="quick-card-title">Verify identity</div>
-<div class="quick-card-text">Submit identity details</div>
+<div class="quick-card-text">Contact @Eccboss in Messages</div>
 </button>
 
 <button class="quick-card" onclick="openReferral()">
 <div class="quick-card-icon">🎁</div>
 <div class="quick-card-title">Referral 30% commission</div>
-<div class="quick-card-text">Invite users and earn commission</div>
+<div class="quick-card-text">View referral bonus in Profile</div>
 </button>
 
 <button class="quick-card" onclick="openTransfer()">
@@ -453,7 +460,7 @@ Logged in as:
 <button class="quick-card" onclick="openSupport()">
 <div class="quick-card-icon">🛟</div>
 <div class="quick-card-title">Support</div>
-<div class="quick-card-text">Get help from P2P Social</div>
+<div class="quick-card-text">Contact @Eccboss in Messages</div>
 </button>
 
 <button class="quick-card" onclick="openTwoFA()">
@@ -525,35 +532,19 @@ onclick="loadMorePosts()" style="display:none;">
 </div>
 
 <div class="verify-text">
-Submit your identity details for admin review.
-Verification status is controlled by the backend.
+For identity verification, contact @Eccboss through P2P Social Messages.
+Your verification request will be handled by the support team.
 </div>
 
 <div class="verify-status">
 Status:
-<strong id="verificationStatus">Not submitted</strong>
+<strong id="verificationStatus">Contact support</strong>
 </div>
 
 <div class="verify-form">
 
-<select id="identityType" class="verify-select">
-<option value="passport">Passport</option>
-<option value="national_id">National ID</option>
-<option value="drivers_license">Driver's License</option>
-</select>
-
-<input id="identityName" class="verify-input"
-type="text" maxlength="120" placeholder="Full legal name">
-
-<input id="identityNumber" class="verify-input"
-type="text" maxlength="100" placeholder="ID / Passport number">
-
-<input id="identityCountry" class="verify-input"
-type="text" maxlength="80" placeholder="Country">
-
-<button id="verifySubmitBtn" class="verify-submit"
-onclick="submitVerification()">
-Submit for Review
+<button class="verify-submit" onclick="openVerificationSupport()">
+💬 Contact @Eccboss
 </button>
 
 </div>
@@ -581,9 +572,8 @@ Submit for Review
 <div class="referral-percent">30%</div>
 
 <div class="referral-description">
-Invite new users with your referral link and receive
-30% commission according to the platform's referral
-rules and settlement system.
+Your referral bonus and balance are managed from your
+P2P Social Profile.
 </div>
 
 <div class="referral-code-box">
@@ -595,6 +585,14 @@ Loading...
 <button class="copy-btn" onclick="copyReferralCode()">Copy</button>
 
 </div>
+
+<button
+class="verify-submit"
+style="width:100%;margin-top:12px"
+onclick="openReferralBalance()">
+👤 Open Profile Balance
+</button>
+
 </div>
 </div>
 </div>
@@ -668,16 +666,16 @@ Transfer USDT
 
 <div class="support-list">
 
-<div class="support-item" onclick="openMessages()">
+<div class="support-item" onclick="openSupportContact()">
 
 <div class="support-icon">💬</div>
 
 <div class="support-info">
 
-<div class="support-title">Contact Support</div>
+<div class="support-title">Contact @Eccboss</div>
 
 <div class="support-text">
-Open messages and contact the support team.
+Open Messages and contact P2P Social support.
 </div>
 
 </div>
@@ -957,7 +955,9 @@ user.user_metadata?.username||
 user.email?.split("@")[0]||
 "User";
 
-const{data:profile,error}=
+let profile=null;
+
+const{data,error}=
 await supabaseClient
 .from("profiles")
 .select("*")
@@ -967,6 +967,8 @@ await supabaseClient
 if(error){
 console.log("Profile:",error.message);
 }
+
+profile=data||null;
 
 currentProfile=profile||{};
 
@@ -1306,72 +1308,17 @@ formatStatus(result.data.status);
 
 }else{
 
-statusElement.textContent="Not submitted";
+statusElement.textContent="Contact @Eccboss";
 
 }
 
 }
 
-async function submitVerification(){
+function openVerificationSupport(){
 
-if(!requireLogin())return;
+closeVerifyIdentity();
 
-const button=
-document.getElementById("verifySubmitBtn");
-
-const identityType=
-document.getElementById("identityType").value;
-
-const fullName=
-document.getElementById("identityName").value.trim();
-
-const identityNumber=
-document.getElementById("identityNumber").value.trim();
-
-const country=
-document.getElementById("identityCountry").value.trim();
-
-if(!fullName||!identityNumber||!country){
-
-alert("Please complete all identity fields.");
-return;
-
-}
-
-button.disabled=true;
-button.textContent="Submitting...";
-
-const payload={
-
-user_id:currentSession.user.id,
-identity_type:identityType,
-full_name:fullName,
-identity_number:identityNumber,
-country:country,
-status:"pending"
-
-};
-
-const{error}=
-await supabaseClient
-.from("identity_verifications")
-.insert(payload);
-
-button.disabled=false;
-button.textContent="Submit for Review";
-
-if(error){
-
-console.error(error);
-
-alert("Could not submit verification: "+error.message);
-return;
-
-}
-
-alert("Identity verification submitted for admin review.");
-
-await updateVerificationStatus();
+openSupportContact();
 
 }
 
@@ -1436,6 +1383,16 @@ alert("Referral link copied.");
 prompt("Copy referral link:",value);
 
 }
+
+}
+
+function openReferralBalance(){
+
+closeReferral();
+
+if(!requireLogin())return;
+
+window.location.href="./profile.html?referral=balance";
 
 }
 
@@ -1568,11 +1525,25 @@ document.getElementById("supportModal").style.display="none";
 
 }
 
+function openSupportContact(){
+
+closeSupport();
+
+window.location.href=
+"./message.html?username="+
+encodeURIComponent("Eccboss")+
+"&support=support";
+
+}
+
 function openP2PHelp(){
 
 closeSupport();
 
-window.location.href="./message.html?support=p2p";
+window.location.href=
+"./message.html?username="+
+encodeURIComponent("Eccboss")+
+"&support=p2p";
 
 }
 
@@ -1580,7 +1551,10 @@ function openSecurityHelp(){
 
 closeSupport();
 
-window.location.href="./message.html?support=security";
+window.location.href=
+"./message.html?username="+
+encodeURIComponent("Eccboss")+
+"&support=security";
 
 }
 

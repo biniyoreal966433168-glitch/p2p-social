@@ -307,7 +307,7 @@ font-size:13px
 .detail-row span:first-child{color:#7a8790}
 .detail-row strong{text-align:right;overflow-wrap:anywhere}
 
-.fee-card{
+.trade-value-card{
 margin-top:4px;
 margin-bottom:12px;
 background:#f7fbfa;
@@ -316,14 +316,14 @@ border-radius:13px;
 padding:14px
 }
 
-.fee-title{
+.trade-value-title{
 display:flex;
 justify-content:space-between;
 align-items:center;
 margin-bottom:10px
 }
 
-.fee-badge{
+.trade-value-badge{
 background:#e2f5ef;
 color:#087f73;
 border-radius:7px;
@@ -332,7 +332,7 @@ font-size:11px;
 font-weight:bold
 }
 
-.fee-row{
+.trade-value-row{
 display:flex;
 justify-content:space-between;
 align-items:center;
@@ -341,10 +341,10 @@ padding:6px 0;
 font-size:13px
 }
 
-.fee-row span:first-child{color:#71808a}
-.fee-row strong{text-align:right}
+.trade-value-row span:first-child{color:#71808a}
+.trade-value-row strong{text-align:right}
 
-.fee-total{
+.trade-value-total{
 border-top:1px solid #dce9e7;
 margin-top:5px;
 padding-top:10px
@@ -498,24 +498,36 @@ type="number"
 min="0"
 step="0.000001"
 placeholder="USDT amount"
-oninput="updateTradeFeePreview()"
+oninput="updateTradeValuePreview()"
 >
 
-<div class="fee-card">
+<div class="trade-value-card">
 
-<div class="fee-title">
+<div class="trade-value-title">
 
 <strong>
-💸 Platform Fee
+💰 Trade Value
 </strong>
 
-<span class="fee-badge">
-<span id="tradeFeeRateText">1%</span>
+<span class="trade-value-badge">
+USDT
 </span>
 
 </div>
 
-<div class="fee-row">
+<div class="trade-value-row">
+
+<span>
+USDT amount
+</span>
+
+<strong id="tradeAmountPreview">
+0.000000
+</strong>
+
+</div>
+
+<div class="trade-value-row">
 
 <span>
 Trade value
@@ -527,22 +539,10 @@ Trade value
 
 </div>
 
-<div class="fee-row">
+<div class="trade-value-row trade-value-total">
 
 <span>
-Platform fee
-</span>
-
-<strong id="tradeFeePreviewAmount">
-0.00
-</strong>
-
-</div>
-
-<div class="fee-row fee-total">
-
-<span>
-Total
+You pay
 </span>
 
 <strong id="tradeTotalPreview">
@@ -627,8 +627,6 @@ SUPABASE_URL,
 SUPABASE_PUBLISHABLE_KEY
 );
 
-const PLATFORM_FEE_RATE = .01;
-
 let currentSession = null;
 let currentUser = null;
 let currentUsername = null;
@@ -686,8 +684,6 @@ currentUser =
 currentSession.user;
 
 await loadCurrentUsername();
-
-updateFeeRateText();
 
 await loadBuyMarket();
 
@@ -747,6 +743,7 @@ realtimeChannel
 
 realtimeChannel =
 null;
+
 }
 
 if(tradeRealtimeChannel){
@@ -757,6 +754,7 @@ tradeRealtimeChannel
 
 tradeRealtimeChannel =
 null;
+
 }
 
 window.location.href =
@@ -866,6 +864,7 @@ data.username
 );
 
 return data.username;
+
 }
 
 }catch(error){
@@ -1520,7 +1519,7 @@ selectedOffer.payment
 
 `;
 
-updateTradeFeePreview();
+updateTradeValuePreview();
 
 openModal(
 "tradeModal"
@@ -1628,18 +1627,17 @@ return amount * price;
 
 }
 
-function updateTradeFeePreview(){
+function updateTradeValuePreview(){
+
+const amount =
+Number(
+document.getElementById(
+"tradeAmount"
+)?.value
+) || 0;
 
 const value =
 getTradeValue();
-
-const fee =
-value *
-PLATFORM_FEE_RATE;
-
-const total =
-value +
-fee;
 
 const parts =
 getPairParts(
@@ -1651,65 +1649,53 @@ const currency =
 parts.quote ||
 "ETB";
 
-const a =
+const amountElement =
+document.getElementById(
+"tradeAmountPreview"
+);
+
+const valueElement =
 document.getElementById(
 "tradeValuePreview"
 );
 
-const b =
-document.getElementById(
-"tradeFeePreviewAmount"
-);
-
-const c =
+const totalElement =
 document.getElementById(
 "tradeTotalPreview"
 );
 
-if(a){
+if(amountElement){
 
-a.textContent =
+amountElement.textContent =
+Number.isFinite(amount)
+?
+amount.toLocaleString(
+undefined,
+{
+minimumFractionDigits:6,
+maximumFractionDigits:6
+}
+)
+:
+"0.000000";
+
+}
+
+if(valueElement){
+
+valueElement.textContent =
 money(value) +
 " " +
 currency;
 
 }
 
-if(b){
+if(totalElement){
 
-b.textContent =
-money(fee) +
+totalElement.textContent =
+money(value) +
 " " +
 currency;
-
-}
-
-if(c){
-
-c.textContent =
-money(total) +
-" " +
-currency;
-
-}
-
-}
-
-function updateFeeRateText(){
-
-const e =
-document.getElementById(
-"tradeFeeRateText"
-);
-
-if(e){
-
-e.textContent =
-(
-PLATFORM_FEE_RATE *
-100
-) +
-"%";
 
 }
 

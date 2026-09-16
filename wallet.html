@@ -444,10 +444,11 @@ header{
 
   <div class="section-title">
     <h2>
-      🟢 Available Buy (<span id="offerCount">0</span>)
+      🟢 Available Sell (<span id="offerCount">0</span>)
     </h2>
 
     <div class="section-actions">
+
       <button
         type="button"
         id="offerViewButton"
@@ -460,18 +461,26 @@ header{
       <button
         type="button"
         class="refresh-btn"
-        onclick="loadBuyOrders()"
+        onclick="loadBuyMarket()"
       >
         🔃 Refresh
       </button>
+
     </div>
   </div>
 
   <section id="offers" class="offer-list">
+
     <div class="empty">
+
       <div class="empty-icon">🟢</div>
-      <strong>Loading available buy...</strong>
+
+      <strong>
+        Loading available sell...
+      </strong>
+
     </div>
+
   </section>
 
 </main>
@@ -482,9 +491,10 @@ header{
   role="dialog"
   aria-modal="true"
 >
+
   <div class="modal-box">
 
-    <h3>🤝 Sell USDT to Buyer</h3>
+    <h3>🤝 Buy USDT from Seller</h3>
 
     <div id="tradeSummary"></div>
 
@@ -500,26 +510,51 @@ header{
     <div class="fee-card">
 
       <div class="fee-title">
-        <strong>💸 Platform Fee</strong>
+
+        <strong>
+          💸 Platform Fee
+        </strong>
 
         <span class="fee-badge">
           <span id="tradeFeeRateText">1%</span>
         </span>
+
       </div>
 
       <div class="fee-row">
-        <span>Trade value</span>
-        <strong id="tradeValuePreview">0.00</strong>
+
+        <span>
+          Trade value
+        </span>
+
+        <strong id="tradeValuePreview">
+          0.00
+        </strong>
+
       </div>
 
       <div class="fee-row">
-        <span>Platform fee</span>
-        <strong id="tradeFeePreviewAmount">0.00</strong>
+
+        <span>
+          Platform fee
+        </span>
+
+        <strong id="tradeFeePreviewAmount">
+          0.00
+        </strong>
+
       </div>
 
       <div class="fee-row fee-total">
-        <span>Total</span>
-        <strong id="tradeTotalPreview">0.00</strong>
+
+        <span>
+          Total
+        </span>
+
+        <strong id="tradeTotalPreview">
+          0.00
+        </strong>
+
       </div>
 
     </div>
@@ -540,12 +575,13 @@ header{
         id="tradeSubmitButton"
         onclick="submitTrade()"
       >
-        Create Trade
+        Start Trade
       </button>
 
     </div>
 
   </div>
+
 </div>
 
 <div
@@ -604,7 +640,7 @@ let currentSession = null;
 let currentUser = null;
 let currentUsername = null;
 
-let availableOrders = [];
+let availableOffers = [];
 let selectedOffer = null;
 
 let offersExpanded = false;
@@ -644,7 +680,8 @@ async function startApp(){
       return;
     }
 
-    currentSession = data.session;
+    currentSession =
+      data.session;
 
     if(!currentSession){
 
@@ -652,13 +689,14 @@ async function startApp(){
       return;
     }
 
-    currentUser = currentSession.user;
+    currentUser =
+      currentSession.user;
 
     await loadCurrentUsername();
 
     updateFeeRateText();
 
-    await loadBuyOrders();
+    await loadBuyMarket();
 
     setupRealtime();
 
@@ -678,7 +716,9 @@ async function startApp(){
 
 function showLogin(){
 
-  alert("Please login first.");
+  alert(
+    "Please login first."
+  );
 
   window.location.href =
     "login.html";
@@ -687,15 +727,23 @@ function showLogin(){
 supabaseClient.auth.onAuthStateChange(
   (event,session)=>{
 
-    currentSession = session;
+    currentSession =
+      session;
+
     currentUser =
-      session?.user || null;
+      session?.user ||
+      null;
 
     if(!currentUser){
-      currentUsername = null;
+
+      currentUsername =
+        null;
     }
 
-    if(event === "SIGNED_OUT"){
+    if(
+      event ===
+      "SIGNED_OUT"
+    ){
 
       if(realtimeChannel){
 
@@ -703,7 +751,8 @@ supabaseClient.auth.onAuthStateChange(
           realtimeChannel
         );
 
-        realtimeChannel = null;
+        realtimeChannel =
+          null;
       }
 
       if(tradeRealtimeChannel){
@@ -712,7 +761,8 @@ supabaseClient.auth.onAuthStateChange(
           tradeRealtimeChannel
         );
 
-        tradeRealtimeChannel = null;
+        tradeRealtimeChannel =
+          null;
       }
 
       window.location.href =
@@ -744,7 +794,9 @@ async function loadCurrentUsername(){
 
     currentUsername =
       data?.username ||
-      currentUser.user_metadata?.username ||
+      currentUser
+        .user_metadata
+        ?.username ||
       null;
 
     if(currentUsername){
@@ -763,19 +815,30 @@ async function loadCurrentUsername(){
     );
 
     currentUsername =
-      currentUser.user_metadata?.username ||
+      currentUser
+        .user_metadata
+        ?.username ||
       null;
   }
 }
 
 async function getUsername(userId){
 
-  if(!userId)return "User";
+  if(!userId){
 
-  const key = String(userId);
+    return "User";
+  }
 
-  if(usernameCache.has(key)){
-    return usernameCache.get(key);
+  const key =
+    String(userId);
+
+  if(
+    usernameCache.has(key)
+  ){
+
+    return usernameCache.get(
+      key
+    );
   }
 
   try{
@@ -817,12 +880,15 @@ async function getUsername(userId){
   return "User";
 }
 
-async function loadOrderUsernames(){
+async function loadOfferUsernames(){
 
   const ids = [
     ...new Set(
-      availableOrders
-        .map(order => order.user_id)
+      availableOffers
+        .map(
+          offer =>
+            offer.user_id
+        )
         .filter(Boolean)
         .map(String)
     )
@@ -830,7 +896,8 @@ async function loadOrderUsernames(){
 
   const missing =
     ids.filter(
-      id => !usernameCache.has(id)
+      id =>
+        !usernameCache.has(id)
     );
 
   if(!missing.length)return;
@@ -843,7 +910,9 @@ async function loadOrderUsernames(){
     } =
     await supabaseClient
       .from("profiles")
-      .select("id,username")
+      .select(
+        "id,username"
+      )
       .in(
         "id",
         missing
@@ -870,13 +939,13 @@ async function loadOrderUsernames(){
   }catch(error){
 
     console.error(
-      "BUY USERNAMES ERROR:",
+      "SELL USERNAMES ERROR:",
       error
     );
   }
 }
 
-async function loadBuyOrders(){
+async function loadBuyMarket(){
 
   if(!currentUser){
 
@@ -889,12 +958,14 @@ async function loadBuyOrders(){
   isLoading = true;
 
   const container =
-    document.getElementById("offers");
+    document.getElementById(
+      "offers"
+    );
 
   if(container){
 
     container.innerHTML =
-      '<div class="empty">Loading available buy...</div>';
+      '<div class="empty">Loading available sell...</div>';
   }
 
   try{
@@ -912,7 +983,7 @@ async function loadBuyOrders(){
       )
       .eq(
         "order_type",
-        "buy"
+        "sell"
       )
       .in(
         "status",
@@ -936,14 +1007,14 @@ async function loadBuyOrders(){
         error
       );
 
-      availableOrders = [];
+      availableOffers = [];
 
       if(container){
 
         container.innerHTML =
           emptyHtml(
             "⚠️",
-            "Could not load available buy.",
+            "Could not load available sell.",
             getErrorMessage(error)
           );
       }
@@ -951,9 +1022,10 @@ async function loadBuyOrders(){
       return;
     }
 
-    availableOrders = data || [];
+    availableOffers =
+      data || [];
 
-    await loadOrderUsernames();
+    await loadOfferUsernames();
 
     const count =
       document.getElementById(
@@ -961,11 +1033,12 @@ async function loadBuyOrders(){
       );
 
     if(count){
+
       count.textContent =
-        availableOrders.length;
+        availableOffers.length;
     }
 
-    renderBuyOrders();
+    renderBuyMarket();
 
   }catch(error){
 
@@ -979,7 +1052,7 @@ async function loadBuyOrders(){
       container.innerHTML =
         emptyHtml(
           "⚠️",
-          "Could not load available buy.",
+          "Could not load available sell.",
           getErrorMessage(error)
         );
     }
@@ -990,20 +1063,22 @@ async function loadBuyOrders(){
   }
 }
 
-function renderBuyOrders(){
+function renderBuyMarket(){
 
   const container =
-    document.getElementById("offers");
+    document.getElementById(
+      "offers"
+    );
 
   if(!container)return;
 
-  if(!availableOrders.length){
+  if(!availableOffers.length){
 
     container.innerHTML =
       emptyHtml(
         "🟢",
-        "No available buy.",
-        "Active buyers from other traders will appear here."
+        "No available sell.",
+        "Active sellers from other traders will appear here."
       );
 
     updateOfferButton();
@@ -1011,35 +1086,43 @@ function renderBuyOrders(){
     return;
   }
 
-  container.innerHTML = "";
+  container.innerHTML =
+    "";
 
   const items =
     offersExpanded
-      ? availableOrders
-      : availableOrders.slice(0,3);
+      ? availableOffers
+      : availableOffers.slice(
+          0,
+          3
+        );
 
   items.forEach(
-    order => {
+    offer => {
 
       const parts =
         getPairParts(
-          order.pair ||
-          order.trading_pair
+          offer.pair ||
+          offer.trading_pair
         );
 
       const status =
         normalizeStatus(
-          order.status
+          offer.status
         );
 
       const username =
         usernameCache.get(
-          String(order.user_id)
+          String(
+            offer.user_id
+          )
         ) ||
-        "Buyer";
+        "Seller";
 
       const card =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       card.className =
         "offer-card";
@@ -1053,20 +1136,20 @@ function renderBuyOrders(){
             <div>
 
               <div class="offer-user">
-                🟢 ${escapeHtml(username)}
+                🔴 ${escapeHtml(username)}
               </div>
 
               <div class="offer-meta">
-                🟢 Buying ·
+                🔴 Selling ·
                 ${escapeHtml(
-                  formatPair(order)
+                  formatPair(offer)
                 )}
               </div>
 
             </div>
 
             <span class="offer-type">
-              🟢 BUY
+              🔴 SELL
             </span>
 
           </div>
@@ -1089,7 +1172,7 @@ function renderBuyOrders(){
                   font-size:12px;
                 "
               >
-                Buying price
+                Selling price
               </div>
 
               <div
@@ -1099,10 +1182,10 @@ function renderBuyOrders(){
                   margin-top:3px;
                 "
               >
-                ${money(order.price)}
+                ${money(offer.price)}
                 ${escapeHtml(
                   parts.quote ||
-                  "USDT"
+                  "ETB"
                 )}
               </div>
 
@@ -1116,19 +1199,19 @@ function renderBuyOrders(){
 
           <div class="offer-amount">
 
-            Wants to buy:
+            Available:
 
             <strong>
               ${escapeHtml(
-                formatAmount(order)
+                formatAmount(offer)
               )}
             </strong>
 
           </div>
 
           ${
-            order.payment_method ||
-            order.payment
+            offer.payment_method ||
+            offer.payment
             ?
             `
               <div
@@ -1143,8 +1226,8 @@ function renderBuyOrders(){
 
                 <strong>
                   ${escapeHtml(
-                    order.payment_method ||
-                    order.payment
+                    offer.payment_method ||
+                    offer.payment
                   )}
                 </strong>
 
@@ -1157,23 +1240,25 @@ function renderBuyOrders(){
           <button
             type="button"
             class="profile-btn"
-            onclick="viewUser('${escapeJs(order.user_id)}')"
+            onclick="viewUser('${escapeJs(offer.user_id)}')"
           >
-            👤 View Buyer
+            👤 View Seller
           </button>
 
           <button
             type="button"
             class="offer-trade"
-            onclick="openTrade('${escapeJs(order.id)}')"
+            onclick="openTrade('${escapeJs(offer.id)}')"
           >
-            🤝 Sell USDT
+            🤝 Buy USDT
           </button>
 
         </div>
       `;
 
-      container.appendChild(card);
+      container.appendChild(
+        card
+      );
     }
   );
 
@@ -1186,12 +1271,14 @@ function viewUser(userId){
 
   window.location.href =
     "profile.html?user_id=" +
-    encodeURIComponent(userId);
+    encodeURIComponent(
+      userId
+    );
 }
 
 function openMessagesForTrade(
   tradeId,
-  order
+  offer
 ){
 
   const params =
@@ -1205,18 +1292,18 @@ function openMessagesForTrade(
     );
   }
 
-  if(order?.id){
+  if(offer?.id){
 
     params.set(
       "order_id",
-      String(order.id)
+      String(offer.id)
     );
   }
 
-  if(order?.user_id){
+  if(offer?.user_id){
 
     getUsername(
-      order.user_id
+      offer.user_id
     ).then(
       username => {
 
@@ -1251,10 +1338,12 @@ function updateOfferButton(){
 
   if(!button)return;
 
-  if(availableOrders.length <= 3){
+  if(
+    availableOffers.length <= 3
+  ){
 
     button.style.display =
-      availableOrders.length
+      availableOffers.length
         ? "none"
         : "block";
 
@@ -1264,7 +1353,8 @@ function updateOfferButton(){
     return;
   }
 
-  button.style.display = "block";
+  button.style.display =
+    "block";
 
   button.textContent =
     offersExpanded
@@ -1277,22 +1367,28 @@ function toggleOffers(){
   offersExpanded =
     !offersExpanded;
 
-  renderBuyOrders();
+  renderBuyMarket();
 }
 
-function openTrade(orderId){
+function openTrade(
+  offerId
+){
 
   selectedOffer =
-    availableOrders.find(
-      order =>
-        String(order.id) ===
-        String(orderId)
+    availableOffers.find(
+      offer =>
+        String(
+          offer.id
+        ) ===
+        String(
+          offerId
+        )
     );
 
   if(!selectedOffer){
 
     toast(
-      "This available buy is no longer available. Refresh.",
+      "This available sell is no longer available. Refresh.",
       "warning"
     );
 
@@ -1307,7 +1403,7 @@ function openTrade(orderId){
   if(available <= 0){
 
     toast(
-      "This available buy has no remaining amount.",
+      "This available sell has no remaining amount.",
       "warning"
     );
 
@@ -1319,7 +1415,8 @@ function openTrade(orderId){
       "tradeAmount"
     );
 
-  input.value = "";
+  input.value =
+    "";
 
   input.min =
     getMinimumTradeAmount(
@@ -1341,7 +1438,7 @@ function openTrade(orderId){
         selectedOffer.user_id
       )
     ) ||
-    "Buyer";
+    "Seller";
 
   document.getElementById(
     "tradeSummary"
@@ -1353,30 +1450,34 @@ function openTrade(orderId){
     >
 
       ${detail(
-        "Buyer",
+        "Seller",
         username
       )}
 
       ${detail(
         "Pair",
-        formatPair(selectedOffer)
+        formatPair(
+          selectedOffer
+        )
       )}
 
       ${detail(
-        "Buying price",
+        "Selling price",
         money(
           selectedOffer.price
         ) +
         " " +
         (
           parts.quote ||
-          "USDT"
+          "ETB"
         )
       )}
 
       ${detail(
         "Available",
-        formatAmount(selectedOffer)
+        formatAmount(
+          selectedOffer
+        )
       )}
 
       ${
@@ -1515,7 +1616,7 @@ function updateTradeFeePreview(){
 
   const currency =
     parts.quote ||
-    "USDT";
+    "ETB";
 
   const a =
     document.getElementById(
@@ -1567,7 +1668,10 @@ function updateFeeRateText(){
   if(e){
 
     e.textContent =
-      (PLATFORM_FEE_RATE * 100) +
+      (
+        PLATFORM_FEE_RATE *
+        100
+      ) +
       "%";
   }
 }
@@ -1585,14 +1689,15 @@ async function submitTrade(){
   if(!selectedOffer){
 
     toast(
-      "Select an available buy first.",
+      "Select an available sell first.",
       "warning"
     );
 
     return;
   }
 
-  let freshOffer = null;
+  let freshOffer =
+    null;
 
   try{
 
@@ -1622,7 +1727,7 @@ async function submitTrade(){
     if(!data){
 
       toast(
-        "This available buy is no longer available.",
+        "This available sell is no longer available.",
         "warning"
       );
 
@@ -1630,12 +1735,13 @@ async function submitTrade(){
         "tradeModal"
       );
 
-      await loadBuyOrders();
+      await loadBuyMarket();
 
       return;
     }
 
-    freshOffer = data;
+    freshOffer =
+      data;
 
   }catch(error){
 
@@ -1647,16 +1753,18 @@ async function submitTrade(){
     return;
   }
 
-  selectedOffer = freshOffer;
+  selectedOffer =
+    freshOffer;
 
   if(
     String(
       selectedOffer.order_type
-    ).toLowerCase() !== "buy"
+    ).toLowerCase() !==
+    "sell"
   ){
 
     toast(
-      "This is not a buy market entry.",
+      "This is not a sell market entry.",
       "warning"
     );
 
@@ -1681,7 +1789,7 @@ async function submitTrade(){
   ){
 
     toast(
-      "This available buy is no longer active.",
+      "This available sell is no longer active.",
       "warning"
     );
 
@@ -1689,7 +1797,7 @@ async function submitTrade(){
       "tradeModal"
     );
 
-    await loadBuyOrders();
+    await loadBuyMarket();
 
     return;
   }
@@ -1757,11 +1865,12 @@ async function submitTrade(){
 
   if(
     amount >
-    max + .000000001
+    max +
+    .000000001
   ){
 
     toast(
-      "Amount is greater than the available buy.",
+      "Amount is greater than the available sell.",
       "warning"
     );
 
@@ -1790,7 +1899,7 @@ async function submitTrade(){
 
   if(
     !confirm(
-      "Sell this amount of USDT to the buyer?"
+      "Buy this amount of USDT from the seller?"
     )
   ){
 
@@ -1802,11 +1911,14 @@ async function submitTrade(){
       "tradeSubmitButton"
     );
 
-  actionLoading = true;
+  actionLoading =
+    true;
 
-  button.disabled = true;
+  button.disabled =
+    true;
+
   button.textContent =
-    "Creating...";
+    "Starting...";
 
   try{
 
@@ -1838,7 +1950,7 @@ async function submitTrade(){
     const tradeId =
       extractId(data);
 
-    const tradeOrder =
+    const tradeOffer =
       selectedOffer;
 
     closeModal(
@@ -1846,28 +1958,19 @@ async function submitTrade(){
     );
 
     toast(
-      "Sell trade created successfully.",
+      "Buy trade started successfully.",
       "success"
     );
 
-    selectedOffer = null;
+    selectedOffer =
+      null;
 
-    await loadBuyOrders();
+    await loadBuyMarket();
 
-    if(tradeId){
-
-      openMessagesForTrade(
-        tradeId,
-        tradeOrder
-      );
-
-    }else{
-
-      openMessagesForTrade(
-        null,
-        tradeOrder
-      );
-    }
+    openMessagesForTrade(
+      tradeId,
+      tradeOffer
+    );
 
   }catch(error){
 
@@ -1878,11 +1981,14 @@ async function submitTrade(){
 
   }finally{
 
-    actionLoading = false;
+    actionLoading =
+      false;
 
-    button.disabled = false;
+    button.disabled =
+      false;
+
     button.textContent =
-      "Create Trade";
+      "Start Trade";
   }
 }
 
@@ -1890,12 +1996,17 @@ function extractId(data){
 
   if(!data)return null;
 
-  if(typeof data === "string"){
+  if(
+    typeof data ===
+    "string"
+  ){
+
     return data;
   }
 
   if(
-    typeof data === "object"
+    typeof data ===
+    "object"
   ){
 
     return (
@@ -1938,7 +2049,7 @@ function setupRealtime(){
         },
         () => {
 
-          loadBuyOrders();
+          loadBuyMarket();
         }
       )
       .subscribe(
@@ -1973,7 +2084,7 @@ function setupRealtime(){
         },
         () => {
 
-          loadBuyOrders();
+          loadBuyMarket();
         }
       )
       .subscribe(
@@ -1990,11 +2101,15 @@ function setupRealtime(){
 function openModal(id){
 
   const e =
-    document.getElementById(id);
+    document.getElementById(
+      id
+    );
 
   if(!e)return;
 
-  e.classList.add("show");
+  e.classList.add(
+    "show"
+  );
 
   setTimeout(
     () => {
@@ -2005,6 +2120,7 @@ function openModal(id){
         );
 
       if(input){
+
         input.focus();
       }
 
@@ -2016,7 +2132,9 @@ function openModal(id){
 function closeModal(id){
 
   const e =
-    document.getElementById(id);
+    document.getElementById(
+      id
+    );
 
   if(e){
 
@@ -2026,16 +2144,18 @@ function closeModal(id){
   }
 }
 
-function formatPair(order){
+function formatPair(offer){
 
   const pair =
     String(
-      order?.pair ||
-      order?.trading_pair ||
+      offer?.pair ||
+      offer?.trading_pair ||
       ""
     );
 
-  if(pair.includes("_")){
+  if(
+    pair.includes("_")
+  ){
 
     return pair.replace(
       "_",
@@ -2047,17 +2167,17 @@ function formatPair(order){
     "P2P";
 }
 
-function formatAmount(order){
+function formatAmount(offer){
 
   const amount =
     getOfferAvailableAmount(
-      order
+      offer
     );
 
   const parts =
     getPairParts(
-      order?.pair ||
-      order?.trading_pair ||
+      offer?.pair ||
+      offer?.trading_pair ||
       ""
     );
 
@@ -2082,6 +2202,7 @@ function getPairParts(pair){
     ).split("_");
 
   return {
+
     base:
       parts[0] || "",
 
@@ -2197,7 +2318,9 @@ function detail(
             'class="status'
           )
           ? rendered
-          : escapeHtml(rendered)
+          : escapeHtml(
+              rendered
+            )
         }
       </strong>
 
@@ -2233,7 +2356,9 @@ function emptyHtml(
         ?
         `
           <div style="margin-top:7px;">
-            ${escapeHtml(message)}
+            ${escapeHtml(
+              message
+            )}
           </div>
         `
         :
@@ -2421,7 +2546,7 @@ setInterval(
 
       try{
 
-        await loadBuyOrders();
+        await loadBuyMarket();
 
       }catch(error){
 

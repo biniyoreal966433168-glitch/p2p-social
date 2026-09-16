@@ -1,86 +1,65 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#087f73">
-<title>Profile • P2P Social</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
-body{background:#f5f7fb;color:#172033;padding-bottom:85px}
-button,input,textarea,select{font-family:inherit}
-button{cursor:pointer}
-
-header{background:linear-gradient(135deg,#075e54,#087f73);color:white;padding:14px 18px;border-radius:0 0 22px 22px}
-.header-row{display:flex;align-items:center;gap:12px}
-.back-btn{border:none;background:rgba(255,255,255,.15);color:white;width:40px;height:40px;border-radius:50%;font-size:25px;flex-shrink:0}
-.brand-header{display:flex;align-items:center;gap:10px}
-.brand-icon{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#064e46,#10a889);position:relative;display:flex;justify-content:center;align-items:center;box-shadow:0 5px 14px rgba(0,0,0,.18);flex-shrink:0}
-.brand-p-left{position:absolute;left:8px;top:10px;width:12px;height:23px;border:4px solid white;border-right:0;border-radius:8px 0 0 8px}
-.brand-p-right{position:absolute;right:8px;top:10px;width:12px;height:23px;border:4px solid white;border-left:0;border-radius:0 8px 8px 0}
-.brand-center{width:12px;height:12px;background:white;border-radius:50%;position:absolute;display:flex;justify-content:center;align-items:center;z-index:5}
-.brand-dot{width:4px;height:4px;background:#087f73;border-radius:50%}
-.brand-text{display:flex;flex-direction:column;justify-content:center}
-.brand-text h1{font-size:18px;line-height:1;font-weight:800;color:white}
-.brand-text h1 span{color:#b8fff1}
-.brand-text p{margin-top:5px;font-size:7px;color:rgba(255,255,255,.78);letter-spacing:.6px}
-
-.profile-card{background:white;margin:16px;border-radius:20px;padding:20px;box-shadow:0 4px 15px rgba(0,0,0,.07)}
-.profile-top{display:flex;align-items:center;gap:15px}
-.profile-photo-wrap{position:relative;width:82px;height:82px;flex-shrink:0}
-.profile-photo{width:82px;height:82px;border-radius:50%;object-fit:cover;background:#dfeeea;display:flex;align-items:center;justify-content:center;color:#087f73;font-size:30px;font-weight:bold;overflow:hidden}
-.photo-button{position:absolute;right:-2px;bottom:-2px;width:29px;height:29px;border:none;border-radius:50%;background:#087f73;color:white;font-size:14px;display:flex;align-items:center;justify-content:center}
-.profile-info{min-width:0}
-.profile-name-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.profile-name{font-size:20px;font-weight:bold;word-break:break-word}
-.verification-badge{display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;padding:3px 7px;border-radius:8px;background:#e8f8f3;color:#087f73}
-.verification-badge.unverified{background:#f1f4f8;color:#7a8494}
-.profile-id{margin-top:5px;color:#7a8494;font-size:12px}
-.profile-bio{margin-top:5px;color:#596579;font-size:13px;word-break:break-word}
-.lock-status{margin-top:7px;display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:8px;background:#f1f4f8;color:#596579;font-size:11px;font-weight:bold}
-
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:20px;border-top:1px solid #edf0f4;padding-top:16px}
-.stat{text-align:center}
-.stat strong{display:block;font-size:18px}
-.stat span{display:block;color:#7a8494;font-size:11px;margin-top:4px}
-
-.profile-buttons{display:flex;gap:8px;margin-top:17px}
-.profile-buttons button{flex:1;border:none;padding:11px;border-radius:10px;font-weight:bold}
-.edit-btn{background:#087f73;color:white}
-.settings-btn{background:#edf7f5;color:#087f73}
-.lock-btn{background:#f1f4f8;color:#172033}
-
-.trading-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
-.trading-stat{background:#f5f7fb;border-radius:12px;padding:12px;text-align:center}
-.trading-stat strong{display:block;font-size:17px}
-.trading-stat span{display:block;color:#7a8494;font-size:11px;margin-top:5px}
-
-.section{margin:16px}
-.section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.section-title h2{font-size:19px}
-
-.wallet{background:linear-gradient(135deg,#172033,#29364f);color:white;border-radius:18px;padding:18px;box-shadow:0 5px 18px rgba(0,0,0,.1)}
-.wallet-label{opacity:.75;font-size:13px}
-.wallet-header{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.balance-toggle{border:none;background:rgba(255,255,255,.1);color:white;width:36px;height:32px;border-radius:9px;font-size:17px}
-.wallet-balances{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:9px}
-.balance-box{background:rgba(255,255,255,.08);border-radius:12px;padding:12px;min-width:0}
-.balance-title{font-size:12px;opacity:.7}
-.balance-value{font-size:21px;font-weight:bold;margin-top:5px;word-break:break-word}
-.wallet-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:15px}
-.wallet-action{border:none;color:white;padding:11px;border-radius:10px;font-weight:bold}
-.deposit-btn{background:#16a085}
-.withdraw-btn{background:#c0392b}
-.transfer-btn{background:#087f73}
-.history-btn{background:#34445f}
-
-.order-section{margin:16px}
+<!DOCTYPE html>  <html lang="en">    <head>      <meta charset="UTF-8">        <meta name="viewport" content="width=device-width, initial-scale=1.0">        
+<title>Profile • P2P Social</title>        
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <style>        
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}        
+body{background:#f5f7fb;color:#172033;padding-bottom:85px}        
+button,input,textarea,select{font-family:inherit}        
+button{cursor:pointer}        
+header{background:linear-gradient(135deg,#075e54,#087f73);color:white;padding:14px 18px;border-radius:0 0 22px 22px}        
+.header-row{display:flex;align-items:center;gap:12px}        
+.back-btn{border:none;background:rgba(255,255,255,.15);color:white;width:40px;height:40px;border-radius:50%;font-size:25px;flex-shrink:0}        
+.brand-header{display:flex;align-items:center;gap:10px}        
+.brand-icon{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#064e46,#10a889);position:relative;display:flex;justify-content:center;align-items:center;box-shadow:0 5px 14px rgba(0,0,0,.18);flex-shrink:0}        
+.brand-p-left{position:absolute;left:8px;top:10px;width:12px;height:23px;border:4px solid white;border-right:0;border-radius:8px 0 0 8px}        
+.brand-p-right{position:absolute;right:8px;top:10px;width:12px;height:23px;border:4px solid white;border-left:0;border-radius:0 8px 8px 0}        
+.brand-center{width:12px;height:12px;background:white;border-radius:50%;position:absolute;display:flex;justify-content:center;align-items:center;z-index:5}        
+.brand-dot{width:4px;height:4px;background:#087f73;border-radius:50%}        
+.brand-text{display:flex;flex-direction:column;justify-content:center}        
+.brand-text h1{font-size:18px;line-height:1;font-weight:800;color:white}        
+.brand-text h1 span{color:#b8fff1}        
+.brand-text p{margin-top:5px;font-size:7px;color:rgba(255,255,255,.78);letter-spacing:.6px}    .profile-card{background:white;margin:16px;border-radius:20px;padding:20px;box-shadow:0 4px 15px rgba(0,0,0,.07)}    
+.profile-top{display:flex;align-items:center;gap:15px}    
+.profile-photo-wrap{position:relative;width:82px;height:82px;flex-shrink:0}    
+.profile-photo{width:82px;height:82px;border-radius:50%;object-fit:cover;background:#dfeeea;display:flex;align-items:center;justify-content:center;color:#087f73;font-size:30px;font-weight:bold;overflow:hidden}    
+.photo-button{position:absolute;right:-2px;bottom:-2px;width:29px;height:29px;border:none;border-radius:50%;background:#087f73;color:white;font-size:14px;display:flex;align-items:center;justify-content:center}    
+.profile-info{min-width:0}    
+.profile-name-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}    
+.profile-name{font-size:20px;font-weight:bold;word-break:break-word}    
+.verification-badge{display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;padding:3px 7px;border-radius:8px;background:#e8f8f3;color:#087f73}    
+.verification-badge.unverified{background:#f1f4f8;color:#7a8494}    
+.profile-id{margin-top:5px;color:#7a8494;font-size:12px}    
+.profile-bio{margin-top:5px;color:#596579;font-size:13px;word-break:break-word}    
+.lock-status{margin-top:7px;display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:8px;background:#f1f4f8;color:#596579;font-size:11px;font-weight:bold}    
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:20px;border-top:1px solid #edf0f4;padding-top:16px}    
+.stat{text-align:center}    
+.stat strong{display:block;font-size:18px}    
+.stat span{display:block;color:#7a8494;font-size:11px;margin-top:4px}    
+.profile-buttons{display:flex;gap:8px;margin-top:17px}    
+.profile-buttons button{flex:1;border:none;padding:11px;border-radius:10px;font-weight:bold}    
+.edit-btn{background:#087f73;color:white}    
+.settings-btn{background:#edf7f5;color:#087f73}    
+.lock-btn{background:#f1f4f8;color:#172033}    
+.trading-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}    
+.trading-stat{background:#f5f7fb;border-radius:12px;padding:12px;text-align:center}    
+.trading-stat strong{display:block;font-size:17px}    
+.trading-stat span{display:block;color:#7a8494;font-size:11px;margin-top:5px}  .section{margin:16px}  
+.section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}  
+.section-title h2{font-size:19px}  
+.wallet{background:linear-gradient(135deg,#172033,#29364f);color:white;border-radius:18px;padding:18px;box-shadow:0 5px 18px rgba(0,0,0,.1)}  
+.wallet-label{opacity:.75;font-size:13px}  
+.wallet-header{display:flex;align-items:center;justify-content:space-between;gap:10px}  
+.balance-toggle{border:none;background:rgba(255,255,255,.1);color:white;width:36px;height:32px;border-radius:9px;font-size:17px}  
+.wallet-balances{display:grid;grid-template-columns:1fr;gap:10px;margin-top:9px}  
+.balance-box{background:rgba(255,255,255,.08);border-radius:12px;padding:12px;min-width:0}  
+.balance-title{font-size:12px;opacity:.7}  
+.balance-value{font-size:21px;font-weight:bold;margin-top:5px;word-break:break-word}  
+.wallet-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:15px}  
+.wallet-action{border:none;color:white;padding:11px;border-radius:10px;font-weight:bold}  
+.deposit-btn{background:#16a085}  
+.withdraw-btn{background:#c0392b}  
+.transfer-btn{background:#087f73}  .order-section{margin:16px}
 .order-box{background:white;border-radius:18px;padding:16px;box-shadow:0 4px 15px rgba(0,0,0,.07)}
 .create-order-button{width:100%;margin-top:10px;border:none;background:#087f73;color:white;padding:12px;border-radius:10px;font-weight:bold}
-.create-order-button:first-child{margin-top:0}
 .create-order-button.sell-create{background:#c0392b}
 .orders-list{display:flex;flex-direction:column;gap:10px}
 .order-card{background:white;border-radius:15px;padding:14px;box-shadow:0 3px 12px rgba(0,0,0,.06);border-left:4px solid #087f73}
@@ -95,17 +74,6 @@ header{background:linear-gradient(135deg,#075e54,#087f73);color:white;padding:14
 .order-detail-value{margin-top:4px;font-size:13px;font-weight:bold;word-break:break-word}
 .cancel-order-btn{width:100%;border:none;margin-top:10px;padding:10px;border-radius:9px;background:#fdecec;color:#c0392b;font-weight:bold}
 .order-empty{background:white;border-radius:15px;padding:18px;text-align:center;color:#7b8492;font-size:13px}
-
-.history-list{display:flex;flex-direction:column;gap:9px}
-.history-card{background:white;border-radius:14px;padding:13px;box-shadow:0 3px 12px rgba(0,0,0,.06)}
-.history-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.history-type{font-size:13px;font-weight:bold}
-.history-status{font-size:10px;padding:5px 8px;border-radius:8px;background:#edf7f5;color:#087f73;font-weight:bold}
-.history-status.pending{background:#fff5df;color:#a66b00}
-.history-status.failed,.history-status.rejected{background:#fdecec;color:#c0392b}
-.history-amount{font-size:16px;font-weight:bold;margin-top:8px}
-.history-meta{font-size:11px;color:#7a8494;margin-top:4px;word-break:break-word}
-.history-empty{background:white;border-radius:14px;padding:18px;text-align:center;color:#7b8492;font-size:13px}
 
 .create-box{background:white;border-radius:17px;padding:16px;box-shadow:0 3px 12px rgba(0,0,0,.06)}
 .create-box textarea{width:100%;min-height:100px;resize:vertical;border:1px solid #dfe4eb;border-radius:12px;padding:12px;outline:none;font-size:14px}
@@ -156,7 +124,6 @@ header{background:linear-gradient(135deg,#075e54,#087f73);color:white;padding:14
 .money-modal-info{background:#f5f7fb;border-radius:11px;padding:12px;margin-bottom:12px;font-size:12px;color:#596579;line-height:1.5}
 .money-balance{font-size:14px;font-weight:bold;color:#172033;margin-top:4px}
 .deposit-address{background:white;border:1px solid #dfe4eb;border-radius:9px;padding:12px;margin-top:8px;word-break:break-all;font-size:12px;color:#172033}
-.network-address{margin-bottom:10px}
 .copy-address-btn{width:100%;border:none;background:#087f73;color:white;padding:11px;border-radius:9px;margin-top:10px;font-weight:bold}
 .order-modal-title{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .order-modal-type{font-size:12px;padding:5px 9px;border-radius:8px;font-weight:bold}
@@ -168,12 +135,10 @@ header{background:linear-gradient(135deg,#075e54,#087f73);color:white;padding:14
 .fee-row:last-child{margin-bottom:0;padding-top:7px;border-top:1px solid #dfe4eb;font-weight:bold}
 .order-submit{width:100%;border:none;background:#087f73;color:white;padding:12px;border-radius:10px;font-weight:bold}
 .order-submit.sell-submit{background:#c0392b}
-
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:68px;background:white;border-top:1px solid #ddd;display:flex;justify-content:space-around;align-items:center;z-index:2000}
 .nav-item{text-align:center;color:#777;font-size:11px;min-width:55px;cursor:pointer}
 .nav-item span{display:block;font-size:22px;margin-bottom:3px}
 .nav-item.active{color:#087f73;font-weight:bold}
-
 input[type=file]{display:none}
 button:disabled{opacity:.6;cursor:not-allowed}
 
@@ -197,791 +162,233 @@ header{padding:12px}
 .brand-text p{font-size:6px}
 .order-details{grid-template-columns:1fr}
 }
-</style>
-</head>
-
-<body>
-
-<header>
-<div class="header-row">
-<button class="back-btn" onclick="goHome()">‹</button>
-
-<div class="brand-header">
-<div class="brand-icon">
-<div class="brand-p-left"></div>
-<div class="brand-p-right"></div>
-<div class="brand-center"><div class="brand-dot"></div></div>
-</div>
-
-<div class="brand-text">
-<h1>P2P <span>Social</span></h1>
-<p>CONNECT • TRADE • SHARE</p>
-</div>
-</div>
-</div>
-</header>
-
-<div class="profile-card">
-
-<div class="profile-top">
-<div class="profile-photo-wrap">
-<div id="profilePhotoBox" class="profile-photo">U</div>
-
-<label class="photo-button" for="photoInput">📷</label>
-
-<input
-id="photoInput"
-type="file"
-accept="image/*"
-onchange="changeProfilePhoto(event)"
->
-</div>
-
-<div class="profile-info">
-<div class="profile-name-row">
-<div id="profileName" class="profile-name">Loading...</div>
-<div id="verificationBadge" class="verification-badge unverified">Unverified</div>
-</div>
-
-<div id="profileId" class="profile-id">Username: --</div>
-<div id="profileBio" class="profile-bio">No bio yet.</div>
-<div id="lockStatus" class="lock-status">🔓 Public profile</div>
-</div>
-</div>
-
-<div class="stats">
-<div class="stat"><strong id="postCount">0</strong><span>Posts</span></div>
-<div class="stat"><strong id="followersCount">0</strong><span>Followers</span></div>
-<div class="stat"><strong id="followingCount">0</strong><span>Following</span></div>
-<div class="stat"><strong id="likeCount">0</strong><span>Likes</span></div>
-</div>
-
-<div class="trading-stats">
-<div class="trading-stat"><strong id="completedRate">0%</strong><span>30 Day Completed Rate</span></div>
-<div class="trading-stat"><strong id="thirtyDayTrade">0</strong><span>30 Day Trade</span></div>
-<div class="trading-stat"><strong id="totalTrade">0</strong><span>Total Trade</span></div>
-<div class="trading-stat"><strong id="usernameAge">--</strong><span>Username</span></div>
-</div>
-
-<div class="profile-buttons">
-<button class="edit-btn" onclick="openEditProfile()">✏️ Edit</button>
-<button id="lockButton" class="lock-btn" onclick="toggleProfileLock()">🔒 Lock</button>
-<button class="settings-btn" onclick="openSettings()">⚙️ Settings</button>
-</div>
-
-</div>
-
-<section class="section">
-<div class="section-title">
-<h2>💰 Wallet</h2>
-</div>
-
-<div class="wallet">
-
-<div class="wallet-header">
-<div class="wallet-label">USDT Balance • Username Account</div>
-
-<button
-id="balanceToggleButton"
-class="balance-toggle"
-onclick="toggleBalanceVisibility()"
->👁️</button>
-</div>
-
-<div class="wallet-balances">
-
-<div class="balance-box">
-<div class="balance-title">Available USDT</div>
-<div id="usdtBalance" class="balance-value">Loading...</div>
-</div>
-
-<div class="balance-box">
-<div class="balance-title">Locked USDT</div>
-<div id="lockedUSDTBalance" class="balance-value">Loading...</div>
-</div>
-
-</div>
-
-<div class="wallet-actions">
-<button class="wallet-action deposit-btn" onclick="openDeposit()">⬇️ Deposit</button>
-<button class="wallet-action withdraw-btn" onclick="openWithdraw()">⬆️ Withdrawal</button>
-<button class="wallet-action transfer-btn" onclick="openTransfer()">💵 Transfer USDT</button>
-<button class="wallet-action history-btn" onclick="openHistory()">📋 History</button>
-</div>
-
-</div>
-</section>
-
-<section class="order-section">
-
-<div class="section-title">
-<h2>🔄 P2P Orders</h2>
-<button class="view-comments" onclick="loadMyOrders()">Refresh</button>
-</div>
-
-<div class="order-box">
-<button class="create-order-button" onclick="openOrderModal('buy')">
-➕ Create Buy Order
-</button>
-
-<button class="create-order-button sell-create" onclick="openOrderModal('sell')">
-➕ Create Sell Order
-</button>
-</div>
-
-</section>
-
-<section class="section">
-
-<div class="section-title">
-<h2>📋 My Orders</h2>
-<button class="view-comments" onclick="loadMyOrders()">Refresh</button>
-</div>
-
-<div id="myOrders" class="orders-list">
-<div class="order-empty">Loading orders...</div>
-</div>
-
-</section>
-
-<section class="section">
-
-<div class="section-title">
-<h2>📝 Create Post</h2>
-</div>
-
-<div class="create-box">
-
-<textarea
-id="postContent"
-maxlength="5000"
-placeholder="What's on your mind?"
-></textarea>
-
-<div class="post-options">
-
-<select id="postVisibility">
-<option value="public">🌍 Public</option>
-<option value="private">👥 Friends / Private</option>
-</select>
-
-<button
-id="createPostButton"
-class="create-post-btn"
-onclick="createPost()"
->Post</button>
-
-</div>
-</div>
-
-</section>
-
-<section class="section">
-
-<div class="section-title">
-<h2>📄 Your Posts</h2>
-<button class="view-comments" onclick="loadPosts()">Refresh</button>
-</div>
-
-<div id="postsFeed" class="posts-feed">
-<div class="empty">Loading posts...</div>
-</div>
-
-</section>
-
-<!-- DEPOSIT -->
-
-<div id="depositModal" class="modal">
-
-<div class="modal-box">
-
-<h3>⬇️ Deposit USDT</h3>
-
-<div class="money-modal-info">
-
-<label class="form-label">Supported Network</label>
-
-<select id="depositNetwork" onchange="updateDepositAddress()">
-<option value="TON">TON</option>
-<option value="TRON">TRON TRC-20</option>
-<option value="ETHEREUM">Ethereum ERC-20</option>
-<option value="SOLANA">Solana</option>
-</select>
-
-<div>
-USDT Deposit Address
-</div>
-
-<div
-class="deposit-address"
-id="depositAddress"
->
-UQACkUS0J6lEIlo6iHWoAjxnUYoOOR4StNPVbTXDOt-Em1zl
-</div>
-
-<button
-class="copy-address-btn"
-onclick="copyDepositAddress()"
->📋 Copy Address</button>
-
-</div>
-
-<div class="money-modal-info">
-Send USDT only through the selected supported network. Your deposit becomes available after backend verification. No transaction hash is required from the user.
-</div>
-
-<div class="modal-buttons">
-<button class="cancel-btn" onclick="closeDeposit()">Close</button>
-</div>
-
-</div>
-</div>
-
-<!-- WITHDRAW -->
-
-<div id="withdrawModal" class="modal">
-
-<div class="modal-box">
-
-<h3>⬆️ Withdrawal USDT</h3>
-
-<div class="money-modal-info">
-Available USDT
-<div id="withdrawBalance" class="money-balance">0.00 USDT</div>
-
-<div style="margin-top:5px">
-Locked USDT
-<div id="withdrawLockedBalance" class="money-balance">0.00 USDT</div>
-</div>
-</div>
-
-<label class="form-label">Network</label>
-
-<select id="withdrawNetwork">
-<option value="TON">TON</option>
-<option value="TRON">TRON TRC-20</option>
-<option value="ETHEREUM">Ethereum ERC-20</option>
-<option value="SOLANA">Solana</option>
-</select>
-
-<label class="form-label">Withdrawal Address</label>
-
-<input
-id="withdrawAddress"
-type="text"
-maxlength="150"
-placeholder="Enter withdrawal address"
->
-
-<label class="form-label">Amount (USDT)</label>
-
-<input
-id="withdrawAmount"
-type="number"
-min="0"
-step="any"
-placeholder="Enter USDT amount"
->
-
-<div class="modal-buttons">
-<button class="cancel-btn" onclick="closeWithdraw()">Cancel</button>
-
-<button
-id="withdrawSubmitButton"
-class="save-btn"
-onclick="submitWithdrawal()"
->Submit Withdrawal</button>
-</div>
-
-</div>
-</div>
-
-<!-- TRANSFER -->
-
-<div id="transferModal" class="modal">
-
-<div class="modal-box">
-
-<h3>💵 Transfer USDT</h3>
-
-<div class="money-modal-info">
-Transfer using permanent username
-
-<div id="transferSender" class="money-balance">
-Loading username...
-</div>
-
-<div style="margin-top:6px">
-Available:
-<span id="transferAvailable">0.00 USDT</span>
-</div>
-</div>
-
-<label class="form-label">Recipient Username</label>
-
-<input
-id="transferUsername"
-type="text"
-maxlength="100"
-placeholder="Enter username"
->
-
-<label class="form-label">Amount (USDT)</label>
-
-<input
-id="transferAmount"
-type="number"
-min="0"
-step="any"
-placeholder="Enter USDT amount"
->
-
-<div class="modal-buttons">
-
-<button class="cancel-btn" onclick="closeTransfer()">
-Cancel
-</button>
-
-<button
-id="transferSubmitButton"
-class="save-btn"
-onclick="submitTransfer()"
->
-Transfer
-</button>
-
-</div>
-
-</div>
-</div>
-
-<!-- ORDER -->
-
-<div id="orderModal" class="modal">
-
-<div class="modal-box">
-
-<div class="order-modal-title">
-
-<h3 id="orderModalTitle">
-🟢 Create Buy Order
-</h3>
-
-<div
-id="orderModalType"
-class="order-modal-type buy"
->
-BUY
-</div>
-
-</div>
-
-<div class="money-modal-info">
-P2P identity
-
-<div id="orderUsername" class="money-balance">
-Loading username...
-</div>
-</div>
-
-<label class="form-label">Trading Pair</label>
-
-<select
-id="orderPair"
-onchange="updateOrderCurrency();updateFeePreview()"
-></select>
-
-<label class="form-label">Amount (USDT)</label>
-
-<input
-id="orderAmount"
-type="number"
-min="0"
-step="any"
-placeholder="Enter USDT amount"
-oninput="updateFeePreview()"
->
-
-<label class="form-label">
-Price (<span id="orderPriceCurrency">USD</span>)
-</label>
-
-<input
-id="orderPrice"
-type="number"
-min="0"
-step="any"
-placeholder="Enter price"
-oninput="updateFeePreview()"
->
-
-<label class="form-label">Payment Method</label>
-
+</style>  </head>  <body>  <header>
+
+<div class="header-row">        
+<button class="back-btn" onclick="goHome()">‹</button>        
+<div class="brand-header">        
+<div class="brand-icon">        
+<div class="brand-p-left"></div>        
+<div class="brand-p-right"></div>        
+<div class="brand-center"><div class="brand-dot"></div></div>        
+</div>        
+<div class="brand-text">        
+<h1>P2P <span>Social</span></h1>        
+<p>CONNECT • TRADE • SHARE</p>        
+</div>        
+</div>        
+</div>        
+</header>  <div class="profile-card">  <div class="profile-top">        
+<div class="profile-photo-wrap">        
+<div id="profilePhotoBox" class="profile-photo">U</div>        
+<label class="photo-button" for="photoInput">📷</label>        
+<input id="photoInput" type="file" accept="image/*" onchange="changeProfilePhoto(event)">        
+</div>  <div class="profile-info">        
+<div class="profile-name-row">        
+<div id="profileName" class="profile-name">Loading...</div>        
+<div id="verificationBadge" class="verification-badge unverified">Unverified</div>        
+</div>        
+<div id="profileId" class="profile-id">Username: --</div>        
+<div id="profileBio" class="profile-bio">No bio yet.</div>        
+<div id="lockStatus" class="lock-status">🔓 Public profile</div>        
+</div>        
+</div>  <div class="stats">        
+<div class="stat"><strong id="postCount">0</strong><span>Posts</span></div>        
+<div class="stat"><strong id="followersCount">0</strong><span>Followers</span></div>        
+<div class="stat"><strong id="followingCount">0</strong><span>Following</span></div>        
+<div class="stat"><strong id="likeCount">0</strong><span>Likes</span></div>        
+</div>  <div class="trading-stats">        
+<div class="trading-stat"><strong id="completedRate">0%</strong><span>30 Day Completed Rate</span></div>        
+<div class="trading-stat"><strong id="thirtyDayTrade">0</strong><span>30 Day Trade</span></div>        
+<div class="trading-stat"><strong id="totalTrade">0</strong><span>Total Trade</span></div>        
+<div class="trading-stat"><strong id="usernameAge">--</strong><span>Username</span></div>        
+</div>  <div class="profile-buttons">        
+<button class="edit-btn" onclick="openEditProfile()">✏️ Edit</button>        
+<button id="lockButton" class="lock-btn" onclick="toggleProfileLock()">🔒 Lock</button>        
+<button class="settings-btn" onclick="openSettings()">⚙️ Settings</button>        
+</div>        
+</div>  <section class="section">        
+<div class="section-title"><h2>💰 Wallet</h2></div>  <div class="wallet">        
+<div class="wallet-header">        
+<div class="wallet-label">USDT Balance • Username Account</div>        
+<button id="balanceToggleButton" class="balance-toggle" onclick="toggleBalanceVisibility()">👁️</button>        
+</div>  <div class="wallet-balances">        
+<div class="balance-box">        
+<div class="balance-title">USDT</div>        
+<div id="usdtBalance" class="balance-value">Loading...</div>        
+</div>        
+</div>  <div class="wallet-actions">        
+<button class="wallet-action deposit-btn" onclick="openDeposit()">⬇️ Deposit</button>        
+<button class="wallet-action withdraw-btn" onclick="openWithdraw()">⬆️ Withdrawal</button>        
+<button class="wallet-action transfer-btn" onclick="openTransfer()">💵 Transfer USDT</button>        
+</div>        
+</div>        
+</section>  <section class="order-section">        
+<div class="section-title">        
+<h2>🔄 P2P Orders</h2>        
+<button class="view-comments" onclick="loadMyOrders()">Refresh</button>        
+</div>  <div class="order-box">        
+<button class="create-order-button" onclick="openOrderModal('buy')">➕ Create Buy Order</button>        
+<button class="create-order-button sell-create" onclick="openOrderModal('sell')">➕ Create Sell Order</button>        
+</div>        
+</section>  <section class="section">        
+<div class="section-title">        
+<h2>📋 My Orders</h2>        
+<button class="view-comments" onclick="loadMyOrders()">Refresh</button>        
+</div>        
+<div id="myOrders" class="orders-list">        
+<div class="order-empty">Loading orders...</div>        
+</div>        
+</section>  <section class="section">        
+<div class="section-title"><h2>📝 Create Post</h2></div>  <div class="create-box">        
+<textarea id="postContent" maxlength="5000" placeholder="What's on your mind?"></textarea>  <div class="post-options">        
+<select id="postVisibility">        
+<option value="public">🌍 Public</option>        
+<option value="private">👥 Friends / Private</option>        
+</select>        
+<button id="createPostButton" class="create-post-btn" onclick="createPost()">Post</button>        
+</div>        
+</div>        
+</section>  <section class="section">        
+<div class="section-title">        
+<h2>📄 Your Posts</h2>        
+<button class="view-comments" onclick="loadPosts()">Refresh</button>        
+</div>  <div id="postsFeed" class="posts-feed">        
+<div class="empty">Loading posts...</div>        
+</div>        
+</section>  <!-- DEPOSIT -->  <div id="depositModal" class="modal">        
+<div class="modal-box">        
+<h3>⬇️ Deposit USDT</h3>  <div class="money-modal-info">        
+USDT TON Deposit Address        
+<div class="deposit-address" id="depositAddress">        
+UQACkUS0J6lEIlo6iHWoAjxnUYoOOR4StNPVbTXDOt-Em1zl        
+</div>        
+<button class="copy-address-btn" onclick="copyDepositAddress()">📋 Copy Address</button>        
+</div>  <div class="modal-buttons">        
+<button class="cancel-btn" onclick="closeDeposit()">Close</button>        
+</div>        
+</div>        
+</div>  <!-- WITHDRAW -->  <div id="withdrawModal" class="modal">        
+<div class="modal-box">        
+<h3>⬆️ Withdrawal USDT</h3>  <div class="money-modal-info">        
+Available USDT        
+<div id="withdrawBalance" class="money-balance">0.00 USDT</div>        
+</div>  <label class="form-label">Network</label>      
+<select id="withdrawNetwork">  <option value="TON">TON</option>        
+</select>  <label class="form-label">Withdrawal Address</label>      
+<input id="withdrawAddress" type="text" maxlength="150" placeholder="Enter TON address">  <label class="form-label">Amount (USDT)</label>    
+<input id="withdrawAmount" type="number" min="0" step="any" placeholder="Enter USDT amount">  <div class="modal-buttons">        
+<button class="cancel-btn" onclick="closeWithdraw()">Cancel</button>        
+<button id="withdrawSubmitButton" class="save-btn" onclick="submitWithdrawal()">Submit Withdrawal</button>        
+</div>        
+</div>        
+</div>  <!-- USDT TRANSFER -->  <div id="transferModal" class="modal">        
+<div class="modal-box">        
+<h3>💵 Transfer USDT</h3>  <div class="money-modal-info">        
+Transfer using permanent username        
+<div id="transferSender" class="money-balance">Loading username...</div>        
+</div>  <label class="form-label">Recipient Username</label>      
+<input id="transferUsername" type="text" maxlength="100" placeholder="Enter username">  <label class="form-label">Amount (USDT)</label>    
+<input id="transferAmount" type="number" min="0" step="any" placeholder="Enter USDT amount">  <div class="modal-buttons">        
+<button class="cancel-btn" onclick="closeTransfer()">Cancel</button>        
+<button id="transferSubmitButton" class="save-btn" onclick="submitTransfer()">Transfer</button>        
+</div>        
+</div>        
+</div>  <!-- P2P ORDER -->  <div id="orderModal" class="modal">        
+<div class="modal-box">  <div class="order-modal-title">        
+<h3 id="orderModalTitle">🟢 Create Buy Order</h3>        
+<div id="orderModalType" class="order-modal-type buy">BUY</div>        
+</div>  <div class="money-modal-info">        
+P2P identity        
+<div id="orderUsername" class="money-balance">Loading username...</div>        
+</div>  <label class="form-label">Trading Pair</label>      
+<select id="orderPair" onchange="updateOrderCurrency();updateFeePreview()"></select>  <label class="form-label">Amount (USDT)</label>    
+<input id="orderAmount" type="number" min="0" step="any" placeholder="Enter USDT amount" oninput="updateFeePreview()">  <label class="form-label">Price (<span id="orderPriceCurrency">USD</span>)</label>  
+<input id="orderPrice" type="number" min="0" step="any" placeholder="Enter price" oninput="updateFeePreview()">  <label class="form-label">Payment Method</label>
 <select id="orderPayment">
 
-<option value="">Select payment method</option>
-<option value="PayPal">🟦 PayPal</option>
-<option value="Payoneer">🟪 Payoneer</option>
-<option value="Bank">🏦 Bank Transfer</option>
-<option value="Telebirr">🟩 Telebirr</option>
-<option value="CBE">🏦 CBE</option>
-
-</select>
-
-<div class="fee-preview">
-
-<div class="fee-row">
-<span>Trade Value</span>
-<span id="orderTradeValue">0.00</span>
-</div>
-
-<div class="fee-row">
-<span>Platform Fee (1%)</span>
-<span id="orderFee">0.00</span>
-</div>
-
-<div class="fee-row">
-<span>Total</span>
-<span id="orderTotal">0.00</span>
-</div>
-
-</div>
-
-<div class="modal-buttons">
-
-<button
-class="cancel-btn"
-onclick="closeOrderModal()"
->
-Cancel
-</button>
-
-<button
-id="submitOrderButton"
-class="order-submit"
-onclick="createOrder()"
->
-Create Buy Order
-</button>
-
-</div>
-
-</div>
-</div>
-
-<!-- HISTORY -->
-
-<div id="historyModal" class="modal">
-
-<div class="modal-box">
-
-<h3>📋 USDT History</h3>
-
-<div class="settings-list">
-
-<button
-class="settings-item"
-onclick="showHistoryTab('transfer')"
->
-💵 Transfer History
-</button>
-
-<button
-class="settings-item"
-onclick="showHistoryTab('deposit')"
->
-⬇️ Deposit History
-</button>
-
-<button
-class="settings-item"
-onclick="showHistoryTab('withdrawal')"
->
-⬆️ Withdrawal History
-</button>
-
-</div>
-
-<div style="margin-top:15px">
-
-<div id="historyTitle" style="font-weight:bold;margin-bottom:10px">
-Transfer History
-</div>
-
-<div id="historyList" class="history-list">
-<div class="history-empty">Loading history...</div>
-</div>
-
-</div>
-
-<div class="modal-buttons" style="margin-top:15px">
-<button class="cancel-btn" onclick="closeHistory()">Close</button>
-</div>
-
-</div>
-</div>
-
-<!-- EDIT -->
-
-<div id="editModal" class="modal">
-
-<div class="modal-box">
-
-<h3>✏️ Edit Profile</h3>
-
-<div class="money-modal-info">
-
-Username
-
-<div id="permanentUsername" class="money-balance">
-Loading...
-</div>
-
-</div>
-
-<div class="money-modal-info">
-Your username is your permanent identity and cannot be changed.
-</div>
-
-<textarea
-id="editBio"
-maxlength="300"
-placeholder="Bio"
-></textarea>
-
-<div class="modal-buttons">
-
-<button
-class="cancel-btn"
-onclick="closeEditProfile()"
->
-Cancel
-</button>
-
-<button
-id="saveProfileButton"
-class="save-btn"
-onclick="saveProfile()"
->
-Save
-</button>
-
-</div>
-
-</div>
-</div>
-
-<!-- SETTINGS -->
-
-<div id="settingsModal" class="modal">
-
-<div class="modal-box">
-
-<h3>⚙️ Settings</h3>
-
-<div class="settings-list">
-
-<button
-class="settings-item"
-onclick="openEditProfile();closeSettings()"
->
-✏️ Edit Profile
-</button>
-
-<button
-class="settings-item"
-onclick="toggleProfileLock();closeSettings()"
->
-🔒 Lock / Unlock Profile
-</button>
-
-<button
-class="settings-item"
-onclick="openOrderModal('buy');closeSettings()"
->
-🟢 Create Buy Order
-</button>
-
-<button
-class="settings-item"
-onclick="openOrderModal('sell');closeSettings()"
->
-🔴 Create Sell Order
-</button>
-
-<button
-class="settings-item"
-onclick="openTransfer();closeSettings()"
->
-💵 Transfer USDT
-</button>
-
-<button
-class="settings-item"
-onclick="openDeposit();closeSettings()"
->
-⬇️ Deposit USDT
-</button>
-
-<button
-class="settings-item"
-onclick="openWithdraw();closeSettings()"
->
-⬆️ Withdrawal USDT
-</button>
-
-<button
-class="settings-item"
-onclick="openHistory();closeSettings()"
->
-📋 USDT History
-</button>
-
-<button
-class="settings-item"
-onclick="openMessages()"
->
-💬 Messages
-</button>
-
-<button
-class="settings-item"
-onclick="openLive()"
->
-🔴 Live
-</button>
-
-<button
-class="settings-item"
-onclick="openAdminVerification()"
->
-✓ Verification Support
-</button>
-
-<button
-class="settings-item"
-onclick="openAdminSupport()"
->
-🛟 Support
-</button>
-
-<button
-class="settings-item logout"
-onclick="logout()"
->
-🚪 Logout
-</button>
-
-<button
-class="cancel-btn"
-style="width:100%;padding:11px;border:none;border-radius:10px"
-onclick="closeSettings()"
->
-Close
-</button>
-
-</div>
-</div>
-</div>
-
-<nav class="bottom-nav">
-
-<div class="nav-item" onclick="goHome()">
-<span>🏠</span>
-Home
-</div>
-
-<div class="nav-item" onclick="openBuy()">
-<span>🟢</span>
-Buy
-</div>
-
-<div class="nav-item" onclick="openSell()">
-<span>🔴</span>
-Sell
-</div>
-
-<div class="nav-item" onclick="openMessages()">
-<span>💬</span>
-Messages
-</div>
-
-<div class="nav-item active" onclick="openProfile()">
-<span>👤</span>
-Profile
-</div>
-
-</nav>
-
-<script>
-const SUPABASE_URL="https://mbsvuwrgigqfporxwpfr.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY="sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
-
-const supabaseClient=window.supabase.createClient(
-SUPABASE_URL,
-SUPABASE_PUBLISHABLE_KEY
-);
-
-let currentSession=null;
-let currentProfile=null;
-
-let currentUSDTBalance=0;
-let currentLockedUSDTBalance=0;
-
-let allProfiles={};
-let allComments=[];
-
-let orderType="buy";
-let balanceVisible=true;
-let permanentUsername="";
-
-let balanceChannel=null;
-
-let historyType="transfer";
-
-const PLATFORM_FEE_RATE=0.01;
-
-const DEPOSIT_ADDRESSES={
-TON:"UQACkUS0J6lEIlo6iHWoAjxnUYoOOR4StNPVbTXDOt-Em1zl",
-TRON:"",
-ETHEREUM:"",
-SOLANA:""
-};
+<option value="">Select payment method</option>        
+<option value="PayPal">🟦 PayPal</option>        
+<option value="Payoneer">🟪 Payoneer</option>        
+<option value="Bank">🏦 Bank Transfer</option>        
+<option value="Telebirr">🟩 Telebirr</option>        
+<option value="CBE">🏦 CBE</option>        
+</select>  <div class="fee-preview">        
+<div class="fee-row"><span>Trade Value</span><span id="orderTradeValue">0.00</span></div>        
+<div class="fee-row"><span>Platform Fee (1%)</span><span id="orderFee">0.00</span></div>        
+<div class="fee-row"><span>Total</span><span id="orderTotal">0.00</span></div>        
+</div>  <div class="modal-buttons">        
+<button class="cancel-btn" onclick="closeOrderModal()">Cancel</button>        
+<button id="submitOrderButton" class="order-submit" onclick="createOrder()">Create Buy Order</button>        
+</div>        
+</div>        
+</div>  <!-- EDIT -->  <div id="editModal" class="modal">        
+<div class="modal-box">        
+<h3>✏️ Edit Profile</h3>  <div class="money-modal-info">        
+Username        
+<div id="permanentUsername" class="money-balance">Loading...</div>        
+</div>  <div class="money-modal-info">        
+Your username is your permanent identity and cannot be changed.        
+</div>  <textarea id="editBio" maxlength="300" placeholder="Bio"></textarea>  <div class="modal-buttons">        
+<button class="cancel-btn" onclick="closeEditProfile()">Cancel</button>        
+<button id="saveProfileButton" class="save-btn" onclick="saveProfile()">Save</button>        
+</div>        
+</div>        
+</div>  <!-- SETTINGS -->  <div id="settingsModal" class="modal">        
+<div class="modal-box">        
+<h3>⚙️ Settings</h3>  <div class="settings-list">  <button class="settings-item" onclick="openEditProfile();closeSettings()">✏️ Edit Profile</button>      
+<button class="settings-item" onclick="toggleProfileLock();closeSettings()">🔒 Lock / Unlock Profile</button>      
+<button class="settings-item" onclick="openOrderModal('buy');closeSettings()">🟢 Create Buy Order</button>      
+<button class="settings-item" onclick="openOrderModal('sell');closeSettings()">🔴 Create Sell Order</button>      
+<button class="settings-item" onclick="openTransfer();closeSettings()">💵 Transfer USDT</button>      
+<button class="settings-item" onclick="openDeposit();closeSettings()">⬇️ Deposit USDT</button>      
+<button class="settings-item" onclick="openWithdraw();closeSettings()">⬆️ Withdrawal USDT</button>      
+<button class="settings-item" onclick="openMessages()">💬 Messages</button>      
+<button class="settings-item" onclick="openLive()">🔴 Live</button>      
+<button class="settings-item logout" onclick="logout()">🚪 Logout</button>  <button class="cancel-btn" style="width:100%;padding:11px;border:none;border-radius:10px" onclick="closeSettings()">Close</button>  </div>        
+</div>        
+</div>  <nav class="bottom-nav">        
+<div class="nav-item" onclick="goHome()"><span>🏠</span>Home</div>        
+<div class="nav-item" onclick="openBuy()"><span>🟢</span>Buy</div>        
+<div class="nav-item" onclick="openSell()"><span>🔴</span>Sell</div>        
+<div class="nav-item" onclick="openMessages()"><span>💬</span>Messages</div>        
+<div class="nav-item active" onclick="openProfile()"><span>👤</span>Profile</div>        
+</nav>  <script>        
+const SUPABASE_URL="https://mbsvuwrgigqfporxwpfr.supabase.co";        
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";    const supabaseClient=window.supabase.createClient(    
+SUPABASE_URL,    
+SUPABASE_PUBLISHABLE_KEY    
+);  let currentSession=null;  
+let currentProfile=null;  
+let currentUSDTBalance=0;  
+let allProfiles={};  
+let allComments=[];  
+let orderType="buy";  
+let balanceVisible=true;  
+let permanentUsername="";  
+let balanceChannel=null;  const PLATFORM_FEE_RATE=0.01;
 
 function getPermanentUsername(){
 if(permanentUsername)return permanentUsername;
-
-if(currentProfile?.username){
-return String(currentProfile.username).trim();
-}
-
-if(currentSession?.user){
-return String(
-currentSession.user.user_metadata?.username||""
-).trim();
-}
-
+if(currentProfile?.username)return String(currentProfile.username).trim();
+if(currentSession?.user)return String(currentSession.user.user_metadata?.username||"").trim();
 return"";
 }
 
 function requirePermanentUsername(){
 const username=getPermanentUsername();
-
 if(!username){
 alert("Your permanent username is not available. Please complete your profile first.");
 return false;
 }
-
 return true;
 }
 
 function usernameEquals(a,b){
-return String(a||"").trim().toLowerCase()===
-String(b||"").trim().toLowerCase();
+return String(a||"").trim().toLowerCase()===String(b||"").trim().toLowerCase();
 }
 
 async function startApp(){
-
 const {data,error}=await supabaseClient.auth.getSession();
 
 if(error){
@@ -1009,15 +416,10 @@ window.location.href="login.html";
 }
 
 function getVerificationStatus(){
-
 if(!currentSession)return false;
 
 const user=currentSession.user;
-
-const emailConfirmed=Boolean(
-user.email_confirmed_at||
-user.confirmed_at
-);
+const emailConfirmed=Boolean(user.email_confirmed_at||user.confirmed_at);
 
 const profileVerified=Boolean(
 currentProfile&&(
@@ -1033,9 +435,7 @@ return emailConfirmed||profileVerified;
 }
 
 function updateVerificationUI(){
-
 const badge=document.getElementById("verificationBadge");
-
 if(!badge)return;
 
 if(getVerificationStatus()){
@@ -1048,104 +448,30 @@ badge.className="verification-badge unverified";
 }
 
 async function loadUSDTBalance(){
-
 if(!currentSession)return 0;
 
 const userId=currentSession.user.id;
 
-/*
-Backend RPC is preferred.
-The RPC should return the authenticated user's
-available and locked USDT without trusting client input.
-*/
-
-let rpcResult=await supabaseClient.rpc(
-"get_my_usdt_balance"
-);
-
-if(!rpcResult.error){
-
-let result=rpcResult.data;
-
-if(Array.isArray(result)){
-result=result[0];
-}
-
-if(result&&typeof result==="object"){
-
-const available=Number(
-result.usdt_balance ??
-result.available_usdt ??
-result.available_balance ??
-result.balance ??
-0
-);
-
-const locked=Number(
-result.locked_usdt ??
-result.locked_balance ??
-result.locked ??
-0
-);
-
-currentUSDTBalance=
-Number.isFinite(available)?available:0;
-
-currentLockedUSDTBalance=
-Number.isFinite(locked)?locked:0;
-
-renderUSDTBalance();
-return currentUSDTBalance;
-}
-
-if(typeof result==="number"){
-
-currentUSDTBalance=Number.isFinite(result)?result:0;
-currentLockedUSDTBalance=0;
-
-renderUSDTBalance();
-return currentUSDTBalance;
-}
-}
-
-/*
-Compatibility fallback for installations where the secure RPC
-has not yet been created.
-*/
-
 const {data,error}=await supabaseClient
 .from("usdt_balances")
-.select("user_id,usdt_balance,locked_usdt")
+.select("user_id,usdt_balance")
 .eq("user_id",userId)
 .maybeSingle();
 
 if(error){
 console.error("USDT balance error:",error);
-
 currentUSDTBalance=0;
-currentLockedUSDTBalance=0;
-
-renderUSDTBalance();
-
+renderUSDTBalance(0);
 return 0;
 }
 
 const balance=Number(data?.usdt_balance);
-const locked=Number(data?.locked_usdt);
-
-currentUSDTBalance=
-Number.isFinite(balance)?balance:0;
-
-currentLockedUSDTBalance=
-Number.isFinite(locked)?locked:0;
-
-renderUSDTBalance();
-
+currentUSDTBalance=Number.isFinite(balance)?balance:0;
+renderUSDTBalance(currentUSDTBalance);
 return currentUSDTBalance;
 }
 
 function setupUSDTBalanceRealtime(){
-
 if(!currentSession)return;
 
 if(balanceChannel){
@@ -1162,19 +488,19 @@ schema:"public",
 table:"usdt_balances",
 filter:"user_id=eq."+currentSession.user.id
 },
-async()=>{
-await loadUSDTBalance();
+payload=>{
+const value=Number(payload.new?.usdt_balance);
+currentUSDTBalance=Number.isFinite(value)?value:0;
+renderUSDTBalance(currentUSDTBalance);
 }
 )
 .subscribe();
 }
 
 async function loadProfile(){
-
 if(!currentSession)return;
 
 const user=currentSession.user;
-
 let profile=null;
 let profileError=null;
 
@@ -1188,7 +514,6 @@ profile=primary.data;
 profileError=primary.error;
 
 if(!profile){
-
 const fallback=await supabaseClient
 .from("profiles")
 .select("*")
@@ -1199,18 +524,13 @@ if(fallback.data){
 profile=fallback.data;
 profileError=null;
 }else if(fallback.error){
-console.error(
-"Profile user_id lookup:",
-fallback.error
-);
+console.error("Profile user_id lookup:",fallback.error);
 }
 }
 
-const metadataUsername=
-String(user.user_metadata?.username||"").trim();
+const metadataUsername=String(user.user_metadata?.username||"").trim();
 
 if(!profile&&metadataUsername){
-
 const usernameLookup=await supabaseClient
 .from("profiles")
 .select("*")
@@ -1221,201 +541,110 @@ if(usernameLookup.data){
 profile=usernameLookup.data;
 profileError=null;
 }else if(usernameLookup.error){
-console.error(
-"Profile username lookup:",
-usernameLookup.error
-);
+console.error("Profile username lookup:",usernameLookup.error);
 }
 }
 
-if(profileError){
-console.error(
-"Profile error:",
-profileError
-);
-}
+if(profileError)console.error("Profile error:",profileError);
 
 currentProfile=profile||{};
 
-const username=
-currentProfile.username||
-metadataUsername||
-"";
+const username=currentProfile.username||metadataUsername||"";
 
 if(!username){
-
-document.getElementById(
-"profileName"
-).textContent="Username unavailable";
-
-document.getElementById(
-"profileId"
-).textContent="Username: --";
-
+document.getElementById("profileName").textContent="Username unavailable";
+document.getElementById("profileId").textContent="Username: --";
 }else{
-
-permanentUsername=
-String(username).trim();
-
-document.getElementById(
-"profileName"
-).textContent=permanentUsername;
-
-document.getElementById(
-"profileId"
-).textContent=
-"Username: @"+permanentUsername;
+permanentUsername=String(username).trim();
+document.getElementById("profileName").textContent=permanentUsername;
+document.getElementById("profileId").textContent="Username: @"+permanentUsername;
 }
 
 await loadUSDTBalance();
 
-document.getElementById(
-"profileBio"
-).textContent=
-currentProfile.bio||"No bio yet.";
+document.getElementById("profileBio").textContent=currentProfile.bio||"No bio yet.";
 
-await loadUserNumber();
+await loadUserNumber(user.id);
 
-setProfilePhoto(
-currentProfile.avatar_url||"",
-username||"U"
-);
-
+setProfilePhoto(currentProfile.avatar_url||"",username||"U");
 updateVerificationUI();
 
-document.getElementById(
-"permanentUsername"
-).textContent=
-permanentUsername||"--";
-
-document.getElementById(
-"editBio"
-).value=
-currentProfile.bio||"";
+document.getElementById("permanentUsername").textContent=permanentUsername||"--";
+document.getElementById("editBio").value=currentProfile.bio||"";
 
 updateLockUI();
-
 await loadStats();
 await loadTradeStats();
 }
 
-function renderUSDTBalance(){
-
-const element=
-document.getElementById("usdtBalance");
-
-const lockedElement=
-document.getElementById("lockedUSDTBalance");
-
+function renderUSDTBalance(value){
+const element=document.getElementById("usdtBalance");
 if(!element)return;
 
 if(!balanceVisible){
-
 element.textContent="•••••• USDT";
-
-if(lockedElement){
-lockedElement.textContent="•••••• USDT";
-}
-
 return;
 }
 
-element.textContent=
-formatNumber(currentUSDTBalance)+" USDT";
+const balance=Number(value);
 
-if(lockedElement){
-lockedElement.textContent=
-formatNumber(currentLockedUSDTBalance)+" USDT";
-}
-
-const withdrawBalance=
-document.getElementById("withdrawBalance");
-
-if(withdrawBalance){
-withdrawBalance.textContent=
-formatNumber(currentUSDTBalance)+" USDT";
-}
-
-const withdrawLockedBalance=
-document.getElementById("withdrawLockedBalance");
-
-if(withdrawLockedBalance){
-withdrawLockedBalance.textContent=
-formatNumber(currentLockedUSDTBalance)+" USDT";
-}
-
-const transferAvailable=
-document.getElementById("transferAvailable");
-
-if(transferAvailable){
-transferAvailable.textContent=
-formatNumber(currentUSDTBalance)+" USDT";
-}
+element.textContent=(Number.isFinite(balance)?balance:0).toLocaleString(
+undefined,
+{minimumFractionDigits:2,maximumFractionDigits:8}
+)+" USDT";
 }
 
 function toggleBalanceVisibility(){
-
 balanceVisible=!balanceVisible;
+renderUSDTBalance(currentUSDTBalance);
 
-renderUSDTBalance();
-
-const button=
-document.getElementById(
-"balanceToggleButton"
-);
-
-if(button){
-button.textContent=
-balanceVisible?"👁️":"🙈";
+const button=document.getElementById("balanceToggleButton");
+if(button)button.textContent=balanceVisible?"👁️":"🙈";
 }
+
+function getNumberFromProfile(fields){
+if(fields.includes("usdt_balance")){
+return Number.isFinite(Number(currentUSDTBalance))?Number(currentUSDTBalance):0;
+}
+
+if(!currentProfile)return 0;
+
+for(const field of fields){
+if(currentProfile[field]!==undefined&&currentProfile[field]!==null){
+const value=Number(currentProfile[field]);
+if(Number.isFinite(value))return value;
+}
+}
+
+return 0;
 }
 
 async function loadUserNumber(){
-
 if(!requirePermanentUsername())return;
-
-document.getElementById(
-"profileId"
-).textContent=
-"Username: @"+getPermanentUsername();
+document.getElementById("profileId").textContent="Username: @"+getPermanentUsername();
 }
 
 function setProfilePhoto(avatar,username){
-
-const oldBox=
-document.getElementById("profilePhotoBox");
-
+const oldBox=document.getElementById("profilePhotoBox");
 if(!oldBox)return;
 
 if(avatar){
-
-const img=
-document.createElement("img");
-
+const img=document.createElement("img");
 img.id="profilePhotoBox";
 img.className="profile-photo";
 img.src=avatar;
 img.alt="Profile photo";
-
 oldBox.replaceWith(img);
-
 }else{
-
-oldBox.textContent=
-String(username||"U")
-.charAt(0)
-.toUpperCase();
-
+oldBox.textContent=String(username||"U").charAt(0).toUpperCase();
 oldBox.className="profile-photo";
 }
 }
 
 async function changeProfilePhoto(event){
-
 if(!currentSession)return;
 
 const file=event.target.files[0];
-
 if(!file)return;
 
 if(!file.type.startsWith("image/")){
@@ -1423,308 +652,174 @@ alert("Please select an image.");
 return;
 }
 
-if(file.size>5*1024*1024){
+if(file.size>510241024){
 alert("Image must be smaller than 5 MB.");
 return;
 }
 
-const userId=
-currentSession.user.id;
+const userId=currentSession.user.id;
+const extension=file.name.split(".").pop().toLowerCase();
+const filePath=userId+"/profile."+extension;
 
-const extension=
-file.name.split(".").pop().toLowerCase();
-
-const filePath=
-userId+"/profile."+extension;
-
-const {error:uploadError}=
-await supabaseClient
+const {error:uploadError}=await supabaseClient
 .storage
 .from("avatars")
-.upload(
-filePath,
-file,
-{
-upsert:true,
-contentType:file.type
-}
-);
+.upload(filePath,file,{upsert:true,contentType:file.type});
 
 if(uploadError){
-
 console.error(uploadError);
-
-alert(
-"Photo upload failed.\n\n"+
-uploadError.message
-);
-
+alert("Photo upload failed.\n\n"+uploadError.message);
 return;
 }
 
-const {data}=
-supabaseClient
-.storage
-.from("avatars")
-.getPublicUrl(filePath);
+const {data}=supabaseClient.storage.from("avatars").getPublicUrl(filePath);
+const avatarUrl=data.publicUrl+"?t="+Date.now();
 
-const avatarUrl=
-data.publicUrl+"?t="+Date.now();
-
-let {error:updateError}=
-await supabaseClient
+let {error:updateError}=await supabaseClient
 .from("profiles")
-.update({
-avatar_url:avatarUrl
-})
+.update({avatar_url:avatarUrl})
 .eq("id",userId);
 
 if(updateError){
-
-const fallbackUpdate=
-await supabaseClient
+const fallbackUpdate=await supabaseClient
 .from("profiles")
-.update({
-avatar_url:avatarUrl
-})
+.update({avatar_url:avatarUrl})
 .eq("user_id",userId);
-
 updateError=fallbackUpdate.error;
 }
 
 if(updateError){
-
 console.error(updateError);
-
-alert(
-"Could not save profile photo.\n\n"+
-updateError.message
-);
-
+alert("Could not save profile photo.\n\n"+updateError.message);
 return;
 }
 
-currentProfile.avatar_url=
-avatarUrl;
-
+currentProfile.avatar_url=avatarUrl;
 await loadProfile();
 await loadPosts();
-
 event.target.value="";
 }
 
 function isProfileLocked(){
-
-return Boolean(
-currentProfile&&(
+return Boolean(currentProfile&&(
 currentProfile.profile_locked===true||
 currentProfile.is_locked===true||
 currentProfile.locked===true
-)
-);
+));
 }
 
 function updateLockUI(){
-
 const locked=isProfileLocked();
-
-const button=
-document.getElementById("lockButton");
-
-const status=
-document.getElementById("lockStatus");
+const button=document.getElementById("lockButton");
+const status=document.getElementById("lockStatus");
 
 if(locked){
-
 button.textContent="🔓 Unlock";
 status.textContent="🔒 Locked profile";
-
 }else{
-
 button.textContent="🔒 Lock";
 status.textContent="🔓 Public profile";
 }
 }
 
 async function toggleProfileLock(){
-
 if(!currentSession)return;
 
 const newValue=!isProfileLocked();
 
-if(!confirm(
-newValue?
-"Lock your profile from viewers?":
-"Unlock your profile for viewers?"
-))return;
+if(!confirm(newValue?"Lock your profile from viewers?":"Unlock your profile for viewers?"))return;
 
-let {error}=
-await supabaseClient
+let {error}=await supabaseClient
 .from("profiles")
-.update({
-profile_locked:newValue
-})
+.update({profile_locked:newValue})
 .eq("id",currentSession.user.id);
 
 if(error){
-
-const fallback=
-await supabaseClient
+const fallback=await supabaseClient
 .from("profiles")
-.update({
-profile_locked:newValue
-})
+.update({profile_locked:newValue})
 .eq("user_id",currentSession.user.id);
-
 error=fallback.error;
 }
 
 if(error){
-
 console.error(error);
-
-alert(
-"Could not change profile lock:\n\n"+
-error.message
-);
-
+alert("Could not change profile lock:\n\n"+error.message);
 return;
 }
 
-currentProfile.profile_locked=
-newValue;
-
+currentProfile.profile_locked=newValue;
 updateLockUI();
-
 await loadPosts();
 }
 
 function openEditProfile(){
-
 if(!requirePermanentUsername())return;
 
-document.getElementById(
-"permanentUsername"
-).textContent=
-"@"+getPermanentUsername();
-
-document.getElementById(
-"editModal"
-).classList.add("show");
+document.getElementById("permanentUsername").textContent="@"+getPermanentUsername();
+document.getElementById("editModal").classList.add("show");
 }
 
 function closeEditProfile(){
-
-document.getElementById(
-"editModal"
-).classList.remove("show");
+document.getElementById("editModal").classList.remove("show");
 }
 
 async function saveProfile(){
+if(!currentSession||!requirePermanentUsername())return;
 
-if(!currentSession||
-!requirePermanentUsername())return;
-
-const bio=
-document.getElementById(
-"editBio"
-).value.trim();
-
-const button=
-document.getElementById(
-"saveProfileButton"
-);
+const bio=document.getElementById("editBio").value.trim();
+const button=document.getElementById("saveProfileButton");
 
 button.disabled=true;
 
-let {error}=
-await supabaseClient
+let {error}=await supabaseClient
 .from("profiles")
-.update({
-bio:bio
-})
+.update({bio:bio})
 .eq("id",currentSession.user.id);
 
 if(error){
-
-const fallback=
-await supabaseClient
+const fallback=await supabaseClient
 .from("profiles")
-.update({
-bio:bio
-})
+.update({bio:bio})
 .eq("user_id",currentSession.user.id);
-
 error=fallback.error;
 }
 
 button.disabled=false;
 
 if(error){
-
 console.error(error);
-
-alert(
-"Could not update profile:\n\n"+
-error.message
-);
-
+alert("Could not update profile:\n\n"+error.message);
 return;
 }
 
 closeEditProfile();
-
 await loadProfile();
 await loadPosts();
 }
 
 function openSettings(){
-
-document.getElementById(
-"settingsModal"
-).classList.add("show");
+document.getElementById("settingsModal").classList.add("show");
 }
 
 function closeSettings(){
-
-document.getElementById(
-"settingsModal"
-).classList.remove("show");
+document.getElementById("settingsModal").classList.remove("show");
 }
 
 function openTransfer(){
-
 if(!requirePermanentUsername())return;
 
-document.getElementById(
-"transferSender"
-).textContent=
-"@"+getPermanentUsername();
-
-document.getElementById(
-"transferUsername"
-).value="";
-
-document.getElementById(
-"transferAmount"
-).value="";
-
-document.getElementById(
-"transferModal"
-).classList.add("show");
-
-renderUSDTBalance();
+document.getElementById("transferSender").textContent="@"+getPermanentUsername();
+document.getElementById("transferUsername").value="";
+document.getElementById("transferAmount").value="";
+document.getElementById("transferModal").classList.add("show");
 }
 
 function closeTransfer(){
-
-document.getElementById(
-"transferModal"
-).classList.remove("show");
+document.getElementById("transferModal").classList.remove("show");
 }
 
 async function submitTransfer(){
-
 if(!currentSession){
 showLogin();
 return;
@@ -1732,27 +827,15 @@ return;
 
 if(!requirePermanentUsername())return;
 
-const recipient=
-document.getElementById(
-"transferUsername"
-).value.trim();
-
-const amount=
-Number(
-document.getElementById(
-"transferAmount"
-).value
-);
+const recipient=document.getElementById("transferUsername").value.trim();
+const amount=Number(document.getElementById("transferAmount").value);
 
 if(!recipient){
 alert("Please enter the recipient username.");
 return;
 }
 
-if(usernameEquals(
-recipient,
-getPermanentUsername()
-)){
+if(usernameEquals(recipient,getPermanentUsername())){
 alert("You cannot transfer to your own username.");
 return;
 }
@@ -1767,16 +850,11 @@ alert("Insufficient USDT balance.");
 return;
 }
 
-const button=
-document.getElementById(
-"transferSubmitButton"
-);
-
+const button=document.getElementById("transferSubmitButton");
 button.disabled=true;
 button.textContent="Transferring...";
 
-const result=
-await supabaseClient.rpc(
+const result=await supabaseClient.rpc(
 "transfer_usdt_by_username",
 {
 p_recipient_username:recipient,
@@ -1788,59 +866,32 @@ button.disabled=false;
 button.textContent="Transfer";
 
 if(result.error){
-
-console.error(
-"USDT transfer error:",
-result.error
-);
-
-alert(
-"Could not complete transfer:\n\n"+
-result.error.message
-);
-
+console.error("USDT transfer error:",result.error);
+alert("Could not complete transfer:\n\n"+result.error.message);
 return;
 }
 
-document.getElementById(
-"transferAmount"
-).value="";
-
+document.getElementById("transferAmount").value="";
 closeTransfer();
 
 await loadUSDTBalance();
 
-alert(
-"USDT transfer completed successfully."
-);
+alert("USDT transfer completed successfully.");
 }
 
 async function loadStats(){
-
 if(!currentSession)return;
 
-const userId=
-currentSession.user.id;
+const userId=currentSession.user.id;
 
-const {count:postCount}=
-await supabaseClient
+const {count:postCount}=await supabaseClient
 .from("posts")
-.select(
-"id",
-{
-count:"exact",
-head:true
-}
-)
+.select("id",{count:"exact",head:true})
 .eq("user_id",userId);
 
-document.getElementById(
-"postCount"
-).textContent=
-postCount||0;
+document.getElementById("postCount").textContent=postCount||0;
 
-const {data:userPosts}=
-await supabaseClient
+const {data:userPosts}=await supabaseClient
 .from("posts")
 .select("id")
 .eq("user_id",userId);
@@ -1848,295 +899,123 @@ await supabaseClient
 let totalLikes=0;
 
 if(userPosts?.length){
+const postIds=userPosts.map(post=>post.id);
 
-const postIds=
-userPosts.map(post=>post.id);
-
-const {count}=
-await supabaseClient
+const {count}=await supabaseClient
 .from("post_likes")
-.select(
-"post_id",
-{
-count:"exact",
-head:true
-}
-)
+.select("post_id",{count:"exact",head:true})
 .in("post_id",postIds);
 
 totalLikes=count||0;
 }
 
-document.getElementById(
-"likeCount"
-).textContent=
-totalLikes;
+document.getElementById("likeCount").textContent=totalLikes;
 
-const {count:followers,error:followersError}=
-await supabaseClient
+const {count:followers,error:followersError}=await supabaseClient
 .from("followers")
-.select(
-"follower_id",
-{
-count:"exact",
-head:true
-}
-)
+.select("follower_id",{count:"exact",head:true})
 .eq("following_id",userId);
 
-document.getElementById(
-"followersCount"
-).textContent=
-followersError?"0":followers||0;
+document.getElementById("followersCount").textContent=followersError?"0":followers||0;
 
-const {count:following,error:followingError}=
-await supabaseClient
+const {count:following,error:followingError}=await supabaseClient
 .from("followers")
-.select(
-"following_id",
-{
-count:"exact",
-head:true
-}
-)
+.select("following_id",{count:"exact",head:true})
 .eq("follower_id",userId);
 
-document.getElementById(
-"followingCount"
-).textContent=
-followingError?"0":following||0;
+document.getElementById("followingCount").textContent=followingError?"0":following||0;
 }
 
 async function loadTradeStats(){
-
 if(!currentSession)return;
 
-const userId=
-currentSession.user.id;
-
-const thirtyDaysAgo=
-new Date(
-Date.now()-
-30*24*60*60*1000
-).toISOString();
+const userId=currentSession.user.id;
+const thirtyDaysAgo=new Date(Date.now()-302460601000).toISOString();
 
 let totalTrades=0;
 let recentTrades=[];
 
-const {data:trades,error:tradeError}=
-await supabaseClient
+const {data:trades,error:tradeError}=await supabaseClient
 .from("p2p_trades")
 .select("*")
-.or(
-"buyer_id.eq."+userId+
-",seller_id.eq."+userId
-);
+.or("buyer_id.eq."+userId+",seller_id.eq."+userId);
 
 if(!tradeError&&trades){
-
 totalTrades=trades.length;
-
-recentTrades=
-trades.filter(
-trade=>
-new Date(
-trade.created_at||
-trade.completed_at||
-trade.updated_at||
-0
-).getTime()>=
-new Date(
-thirtyDaysAgo
-).getTime()
-);
+recentTrades=trades.filter(trade=>new Date(
+trade.created_at||trade.completed_at||trade.updated_at||0
+).getTime()>=new Date(thirtyDaysAgo).getTime());
 }
 
 if(tradeError||totalTrades===0){
-
-const {data:orders}=
-await supabaseClient
+const {data:orders}=await supabaseClient
 .from("p2p_orders")
 .select("*")
 .eq("user_id",userId);
 
 if(orders){
+const completedOrders=orders.filter(order=>isCompletedStatus(order.status));
+totalTrades=Math.max(totalTrades,completedOrders.length);
 
-const completedOrders=
-orders.filter(
-order=>
-isCompletedStatus(order.status)
-);
-
-totalTrades=
-Math.max(
-totalTrades,
-completedOrders.length
-);
-
-recentTrades=
-completedOrders.filter(
-order=>
-new Date(
-order.completed_at||
-order.updated_at||
-order.created_at||
-0
-).getTime()>=
-new Date(
-thirtyDaysAgo
-).getTime()
-);
+recentTrades=completedOrders.filter(order=>new Date(
+order.completed_at||order.updated_at||order.created_at||0
+).getTime()>=new Date(thirtyDaysAgo).getTime());
 }
 }
 
-const completedRecent=
-recentTrades.filter(
-trade=>
-isCompletedStatus(
-trade.status||
-trade.trade_status||
-trade.order_status
-)
-).length;
+const completedRecent=recentTrades.filter(trade=>isCompletedStatus(
+trade.status||trade.trade_status||trade.order_status
+)).length;
 
-const recentTotal=
-recentTrades.length;
+const recentTotal=recentTrades.length;
+const completedRate=recentTotal>0?(completedRecent/recentTotal)*100:0;
 
-const completedRate=
-recentTotal>0?
-(completedRecent/recentTotal)*100:
-0;
+document.getElementById("completedRate").textContent=
+completedRate.toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:2})+"%";
 
-document.getElementById(
-"completedRate"
-).textContent=
-completedRate.toLocaleString(
-undefined,
-{
-minimumFractionDigits:0,
-maximumFractionDigits:2
-}
-)+"%";
-
-document.getElementById(
-"thirtyDayTrade"
-).textContent=
-recentTotal;
-
-document.getElementById(
-"totalTrade"
-).textContent=
-totalTrades;
-
-document.getElementById(
-"usernameAge"
-).textContent=
-"Permanent";
+document.getElementById("thirtyDayTrade").textContent=recentTotal;
+document.getElementById("totalTrade").textContent=totalTrades;
+document.getElementById("usernameAge").textContent="Permanent";
 }
 
 function isCompletedStatus(status){
-
 return[
-"completed",
-"complete",
-"closed",
-"success",
-"successful",
-"settled",
-"done",
-"finished"
-].includes(
-String(status||"")
-.toLowerCase()
-.trim()
-);
+"completed","complete","closed","success","successful",
+"settled","done","finished"
+].includes(String(status||"").toLowerCase().trim());
 }
 
 function openDeposit(){
-
-updateDepositAddress();
-
-document.getElementById(
-"depositModal"
-).classList.add("show");
+document.getElementById("depositModal").classList.add("show");
 }
 
 function closeDeposit(){
-
-document.getElementById(
-"depositModal"
-).classList.remove("show");
-}
-
-function updateDepositAddress(){
-
-const network=
-document.getElementById(
-"depositNetwork"
-).value;
-
-const address=
-DEPOSIT_ADDRESSES[network]||"";
-
-const element=
-document.getElementById(
-"depositAddress"
-);
-
-if(address){
-
-element.textContent=address;
-
-}else{
-
-element.textContent=
-"Deposit address will be supplied by the backend.";
-}
+document.getElementById("depositModal").classList.remove("show");
 }
 
 async function copyDepositAddress(){
-
-const address=
-document.getElementById(
-"depositAddress"
-).textContent.trim();
-
-if(!address||
-address.startsWith("Deposit address")){
-alert("Deposit address is not available for this network.");
-return;
-}
+const address=document.getElementById("depositAddress").textContent.trim();
 
 try{
-
 await navigator.clipboard.writeText(address);
-
 alert("Deposit address copied.");
-
 }catch(error){
-
 alert(address);
 }
 }
 
 function openWithdraw(){
+document.getElementById("withdrawBalance").textContent=
+formatNumber(currentUSDTBalance)+" USDT";
 
-renderUSDTBalance();
-
-document.getElementById(
-"withdrawModal"
-).classList.add("show");
+document.getElementById("withdrawModal").classList.add("show");
 }
 
 function closeWithdraw(){
-
-document.getElementById(
-"withdrawModal"
-).classList.remove("show");
+document.getElementById("withdrawModal").classList.remove("show");
 }
 
 async function submitWithdrawal(){
-
 if(!currentSession){
 showLogin();
 return;
@@ -2144,98 +1023,38 @@ return;
 
 if(!requirePermanentUsername())return;
 
-const amount=
-Number(
-document.getElementById(
-"withdrawAmount"
-).value
-);
-
-const address=
-document.getElementById(
-"withdrawAddress"
-).value.trim();
-
-const network=
-document.getElementById(
-"withdrawNetwork"
-).value;
-
-const available=
-currentUSDTBalance;
+const amount=Number(document.getElementById("withdrawAmount").value);
+const address=document.getElementById("withdrawAddress").value.trim();
+const network=document.getElementById("withdrawNetwork").value;
+const available=currentUSDTBalance;
 
 if(!Number.isFinite(amount)||amount<=0){
-
-alert(
-"Please enter a valid withdrawal amount."
-);
-
+alert("Please enter a valid withdrawal amount.");
 return;
 }
 
 if(amount>available){
-
-alert(
-"Insufficient available USDT balance."
-);
-
+alert("Insufficient USDT balance.");
 return;
 }
 
 if(!address){
-
-alert(
-"Please enter a withdrawal address."
-);
-
+alert("Please enter a withdrawal address.");
 return;
 }
 
-if(!confirm(
-"Submit this withdrawal request?"
-))return;
+if(network==="TON"&&address.length<20){
+alert("Please enter a valid TON address.");
+return;
+}
 
-const button=
-document.getElementById(
-"withdrawSubmitButton"
-);
+if(!confirm("Submit this withdrawal request?"))return;
 
+const button=document.getElementById("withdrawSubmitButton");
 button.disabled=true;
 button.textContent="Submitting...";
 
-/*
-The backend should validate the balance, lock the amount,
-create the pending withdrawal and prevent double spending.
-*/
-
-const result=
-await supabaseClient.rpc(
-"request_usdt_withdrawal",
-{
-p_amount:amount,
-p_network:network,
-p_withdrawal_address:address
-}
-);
-
-button.disabled=false;
-button.textContent=
-"Submit Withdrawal";
-
-if(result.error){
-
-console.error(
-"Withdrawal RPC:",
-result.error
-);
-
-/*
-Compatibility fallback for installations using
-direct ledger insertion with RLS.
-*/
-
-const {error:fallbackError}=
-await supabaseClient
+const {error}=await supabaseClient
 .from("usdt_ledger")
 .insert({
 user_id:currentSession.user.id,
@@ -2247,158 +1066,93 @@ network:network,
 withdrawal_address:address
 });
 
-if(fallbackError){
+button.disabled=false;
+button.textContent="Submit Withdrawal";
 
-alert(
-"Could not submit withdrawal:\n\n"+
-result.error.message
-);
-
+if(error){
+console.error("Withdrawal:",error);
+alert("Could not submit withdrawal:\n\n"+error.message);
 return;
 }
-}
 
-document.getElementById(
-"withdrawAmount"
-).value="";
-
-document.getElementById(
-"withdrawAddress"
-).value="";
-
+document.getElementById("withdrawAmount").value="";
+document.getElementById("withdrawAddress").value="";
 closeWithdraw();
 
-await loadUSDTBalance();
-
-alert(
-"Withdrawal request submitted successfully and is pending backend approval."
-);
+alert("Withdrawal request submitted successfully.");
 }
 
 function openOrderModal(type){
-
 if(!requirePermanentUsername())return;
 
-orderType=
-type==="sell"?
-"sell":
-"buy";
+orderType=type==="sell"?"sell":"buy";
 
-const title=
-document.getElementById(
-"orderModalTitle"
-);
+const title=document.getElementById("orderModalTitle");
+const typeBadge=document.getElementById("orderModalType");
+const submitButton=document.getElementById("submitOrderButton");
 
-const typeBadge=
-document.getElementById(
-"orderModalType"
-);
-
-const submitButton=
-document.getElementById(
-"submitOrderButton"
-);
-
-document.getElementById(
-"orderUsername"
-).textContent=
-"@"+getPermanentUsername();
+document.getElementById("orderUsername").textContent="@"+getPermanentUsername();
 
 if(orderType==="sell"){
-
-title.textContent=
-"🔴 Create Sell Order";
-
+title.textContent="🔴 Create Sell Order";
 typeBadge.textContent="SELL";
-
-typeBadge.className=
-"order-modal-type sell";
-
-submitButton.textContent=
-"Create Sell Order";
-
-submitButton.className=
-"order-submit sell-submit";
-
+typeBadge.className="order-modal-type sell";
+submitButton.textContent="Create Sell Order";
+submitButton.className="order-submit sell-submit";
 }else{
-
-title.textContent=
-"🟢 Create Buy Order";
-
+title.textContent="🟢 Create Buy Order";
 typeBadge.textContent="BUY";
-
-typeBadge.className=
-"order-modal-type buy";
-
-submitButton.textContent=
-"Create Buy Order";
-
-submitButton.className=
-"order-submit";
+typeBadge.className="order-modal-type buy";
+submitButton.textContent="Create Buy Order";
+submitButton.className="order-submit";
 }
 
 updatePairOptions();
 updateOrderCurrency();
 updateFeePreview();
 
-document.getElementById(
-"orderModal"
-).classList.add("show");
+document.getElementById("orderModal").classList.add("show");
 }
 
 function updatePairOptions(){
+const select=document.getElementById("orderPair");
 
-const select=
-document.getElementById(
-"orderPair"
-);
-
-const currencies=[
-"USD",
-"EUR",
-"AED",
-"GBP",
-"ETB",
-"NGN",
-"KES",
-"BRL",
-"ARS",
-"MXN",
-"TRY",
-"PHP",
-"AUD",
-"CAD",
-"CHF",
-"SGD",
-"HKD",
-"JPY",
-"KRY",
-"ZAR",
-"INR"
+const options=[
+["USD_USDT","USD / USDT"],
+["EUR_USDT","EUR / USDT"],
+["AED_USDT","AED / USDT"],
+["GBP_USDT","GBP / USDT"],
+["ETB_USDT","ETB / USDT"],
+["NGN_USDT","NGN / USDT"],
+["KES_USDT","KES / USDT"],
+["BRL_USDT","BRL / USDT"],
+["ARS_USDT","ARS / USDT"],
+["MXN_USDT","MXN / USDT"],
+["TRY_USDT","TRY / USDT"],
+["PHP_USDT","PHP / USDT"],
+["AUD_USDT","AUD / USDT"],
+["CAD_USDT","CAD / USDT"],
+["CHF_USDT","CHF / USDT"],
+["SGD_USDT","SGD / USDT"],
+["HKD_USDT","HKD / USDT"],
+["JPY_USDT","JPY / USDT"],
+["KRY_USDT","KRY / USDT"],
+["ZAR_USDT","ZAR / USDT"],
+["INR_USDT","INR / USDT"]
 ];
 
 select.innerHTML="";
 
-currencies.forEach(currency=>{
-
-const option=
-document.createElement("option");
+options.forEach(item=>{
+const option=document.createElement("option");
 
 if(orderType==="buy"){
-
-option.value=
-currency+"_USDT";
-
-option.textContent=
-currency+" / USDT";
-
+option.value=item[0];
+option.textContent=item[1];
 }else{
-
-option.value=
-"USDT_"+currency;
-
-option.textContent=
-"USDT / "+currency;
+const parts=item[0].split("");
+option.value="USDT"+parts[0];
+option.textContent="USDT / "+parts[0];
 }
 
 select.appendChild(option);
@@ -2406,17 +1160,11 @@ select.appendChild(option);
 }
 
 function closeOrderModal(){
-
-document.getElementById(
-"orderModal"
-).classList.remove("show");
+document.getElementById("orderModal").classList.remove("show");
 }
 
 function getPairParts(pair){
-
-const parts=
-String(pair||"").split("_");
-
+const parts=String(pair||"").split("_");
 return{
 base:parts[0]||"USDT",
 quote:parts[1]||"USD"
@@ -2424,139 +1172,54 @@ quote:parts[1]||"USD"
 }
 
 function updateOrderCurrency(){
+const pair=document.getElementById("orderPair").value;
+const {base,quote}=getPairParts(pair);
 
-const pair=
-document.getElementById(
-"orderPair"
-).value;
-
-const {base,quote}=
-getPairParts(pair);
-
-document.getElementById(
-"orderPriceCurrency"
-).textContent=
-orderType==="buy"?
-base:
-quote;
+document.getElementById("orderPriceCurrency").textContent=
+orderType==="buy"?base:quote;
 }
 
 function calculatePlatformFee(value){
-
-const number=
-Number(value);
-
-return Number.isFinite(number)&&number>0?
-number*PLATFORM_FEE_RATE:
-0;
+const number=Number(value);
+return Number.isFinite(number)&&number>0?number*PLATFORM_FEE_RATE:0;
 }
 
 function calculateTotalWithFee(value){
-
-const number=
-Number(value);
-
-return Number.isFinite(number)&&number>0?
-number+calculatePlatformFee(number):
-0;
+const number=Number(value);
+return Number.isFinite(number)&&number>0?number+calculatePlatformFee(number):0;
 }
 
 function calculatePairValue(amount,price){
-
 const a=Number(amount);
 const p=Number(price);
 
-if(
-!Number.isFinite(a)||
-!Number.isFinite(p)||
-a<=0||
-p<=0
-)return 0;
+if(!Number.isFinite(a)||!Number.isFinite(p)||a<=0||p<=0)return 0;
 
 return a*p;
 }
 
 function updateFeePreview(){
+const amount=Number(document.getElementById("orderAmount").value);
+const price=Number(document.getElementById("orderPrice").value);
+const pair=document.getElementById("orderPair").value;
 
-const amount=
-Number(
-document.getElementById(
-"orderAmount"
-).value
-);
+const {base,quote}=getPairParts(pair);
+const tradeValue=calculatePairValue(amount,price);
+const fee=calculatePlatformFee(tradeValue);
+const total=calculateTotalWithFee(tradeValue);
+const currency=orderType==="buy"?base:quote;
 
-const price=
-Number(
-document.getElementById(
-"orderPrice"
-).value
-);
+document.getElementById("orderTradeValue").textContent=
+tradeValue.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+" "+currency;
 
-const pair=
-document.getElementById(
-"orderPair"
-).value;
+document.getElementById("orderFee").textContent=
+fee.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+" "+currency;
 
-const {base,quote}=
-getPairParts(pair);
-
-const tradeValue=
-calculatePairValue(
-amount,
-price
-);
-
-const fee=
-calculatePlatformFee(
-tradeValue
-);
-
-const total=
-calculateTotalWithFee(
-tradeValue
-);
-
-const currency=
-orderType==="buy"?
-base:
-quote;
-
-document.getElementById(
-"orderTradeValue"
-).textContent=
-tradeValue.toLocaleString(
-undefined,
-{
-minimumFractionDigits:2,
-maximumFractionDigits:2
-}
-)+" "+currency;
-
-document.getElementById(
-"orderFee"
-).textContent=
-fee.toLocaleString(
-undefined,
-{
-minimumFractionDigits:2,
-maximumFractionDigits:2
-}
-)+" "+currency;
-
-document.getElementById(
-"orderTotal"
-).textContent=
-total.toLocaleString(
-undefined,
-{
-minimumFractionDigits:2,
-maximumFractionDigits:2
-}
-)+" "+currency;
+document.getElementById("orderTotal").textContent=
+total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})+" "+currency;
 }
 
 async function createOrder(){
-
 if(!currentSession){
 showLogin();
 return;
@@ -2564,91 +1227,42 @@ return;
 
 if(!requirePermanentUsername())return;
 
-const username=
-getPermanentUsername();
-
-const pair=
-document.getElementById(
-"orderPair"
-).value;
-
-const amount=
-Number(
-document.getElementById(
-"orderAmount"
-).value
-);
-
-const price=
-Number(
-document.getElementById(
-"orderPrice"
-).value
-);
-
-const payment=
-document.getElementById(
-"orderPayment"
-).value;
+const username=getPermanentUsername();
+const pair=document.getElementById("orderPair").value;
+const amount=Number(document.getElementById("orderAmount").value);
+const price=Number(document.getElementById("orderPrice").value);
+const payment=document.getElementById("orderPayment").value;
 
 if(!pair){
-
-alert(
-"Please select a trading pair."
-);
-
+alert("Please select a trading pair.");
 return;
 }
 
 if(!Number.isFinite(amount)||amount<=0){
-
-alert(
-"Please enter a valid USDT amount."
-);
-
+alert("Please enter a valid USDT amount.");
 return;
 }
 
 if(!Number.isFinite(price)||price<=0){
-
-alert(
-"Please enter a valid price."
-);
-
+alert("Please enter a valid price.");
 return;
 }
 
 if(!payment){
-
-alert(
-"Please select a payment method."
-);
-
+alert("Please select a payment method.");
 return;
 }
 
-if(
-orderType==="sell"&&
-amount>currentUSDTBalance
-){
-
-alert(
-"Insufficient USDT balance for this Sell Order."
-);
-
+if(orderType==="sell"&&amount>currentUSDTBalance){
+alert("Insufficient USDT balance for this Sell Order.");
 return;
 }
 
-const button=
-document.getElementById(
-"submitOrderButton"
-);
-
+const button=document.getElementById("submitOrderButton");
 button.disabled=true;
 button.textContent="Creating...";
 
-const {data,error}=
-await supabaseClient.rpc(
+const {data,error}=await supabaseClient.rpc(
 "create_p2p_order",
 {
 p_order_type:orderType,
@@ -2661,363 +1275,141 @@ p_username:username
 );
 
 button.disabled=false;
-
-button.textContent=
-orderType==="sell"?
-"Create Sell Order":
-"Create Buy Order";
+button.textContent=orderType==="sell"?"Create Sell Order":"Create Buy Order";
 
 if(error){
-
-console.error(
-"Create order error:",
-error
-);
-
-alert(
-"Could not create order:\n\n"+
-error.message
-);
-
+console.error("Create order error:",error);
+alert("Could not create order:\n\n"+error.message);
 return;
 }
 
-document.getElementById(
-"orderAmount"
-).value="";
-
-document.getElementById(
-"orderPrice"
-).value="";
-
-document.getElementById(
-"orderPayment"
-).value="";
+document.getElementById("orderAmount").value="";
+document.getElementById("orderPrice").value="";
+document.getElementById("orderPayment").value="";
 
 updateFeePreview();
-
 closeOrderModal();
 
-alert(
-"Order created successfully."
-);
+alert("Order created successfully.");
 
 await loadMyOrders();
-await loadUSDTBalance();
 await loadProfile();
 }
 
 async function loadMyOrders(){
-
 if(!currentSession)return;
 
-const container=
-document.getElementById(
-"myOrders"
-);
+const container=document.getElementById("myOrders");
+container.innerHTML='<div class="order-empty">Loading orders...</div>';
 
-container.innerHTML=
-'<div class="order-empty">Loading orders...</div>';
-
-const {data:orders,error}=
-await supabaseClient
+const {data:orders,error}=await supabaseClient
 .from("p2p_orders")
 .select("*")
-.eq(
-"user_id",
-currentSession.user.id
-)
-.order(
-"created_at",
-{
-ascending:false
-}
-);
+.eq("user_id",currentSession.user.id)
+.order("created_at",{ascending:false});
 
 if(error){
-
-console.error(
-"Orders error:",
-error
-);
-
+console.error("Orders error:",error);
 container.innerHTML=
 '<div class="order-empty">Could not load orders.<br><br><small>'+
-escapeHtml(error.message)+
-'</small></div>';
-
+escapeHtml(error.message)+'</small></div>';
 return;
 }
 
 if(!orders?.length){
-
-container.innerHTML=
-'<div class="order-empty">You have no Buy / Sell orders yet.</div>';
-
+container.innerHTML='<div class="order-empty">You have no Buy / Sell orders yet.</div>';
 return;
 }
 
 container.innerHTML="";
 
-orders.forEach(
-order=>
-renderOrderCard(
-order,
-container
-)
-);
+orders.forEach(order=>renderOrderCard(order,container));
 }
 
-function renderOrderCard(
-order,
-container
-){
+function renderOrderCard(order,container){
+const type=String(order.order_type||order.type||"buy").toLowerCase();
+const pair=order.pair||"USD_USDT";
+const {base,quote}=getPairParts(pair);
+const amount=Number(order.amount||0);
+const price=Number(order.price||0);
+const tradeValue=calculatePairValue(amount,price);
 
-const type=
-String(
-order.order_type||
-order.type||
-"buy"
-).toLowerCase();
+const status=String(order.status||"open").toLowerCase();
+const statusText=status.charAt(0).toUpperCase()+status.slice(1);
+const payment=order.payment_method||order.payment||"Not specified";
+const username=order.username||getPermanentUsername();
+const created=order.created_at?formatTime(order.created_at):"";
 
-const pair=
-order.pair||
-"USD_USDT";
+const card=document.createElement("div");
+card.className="order-card "+(type==="sell"?"sell":"");
 
-const {base,quote}=
-getPairParts(pair);
-
-const amount=
-Number(order.amount||0);
-
-const price=
-Number(order.price||0);
-
-const tradeValue=
-calculatePairValue(
-amount,
-price
-);
-
-const status=
-String(
-order.status||"open"
-).toLowerCase();
-
-const statusText=
-status.charAt(0).toUpperCase()+
-status.slice(1);
-
-const payment=
-order.payment_method||
-order.payment||
-"Not specified";
-
-const username=
-order.username||
-getPermanentUsername();
-
-const created=
-order.created_at?
-formatTime(order.created_at):
-"";
-
-const card=
-document.createElement("div");
-
-card.className=
-"order-card "+
-(type==="sell"?"sell":"");
-
-const canCancel=[
-"open",
-"active",
-"pending"
-].includes(status);
+const canCancel=["open","active","pending"].includes(status);
 
 card.innerHTML=`
 
-<div class="order-card-top">
-
-<div class="order-type">
-${type==="sell"?
-"🔴 Sell USDT":
-"🟢 Buy USDT"}
-</div>
-
-<div class="order-status ${
-type==="sell"?
-"sell-status":
-""
-}">
-${escapeHtml(statusText)}
-</div>
-
-</div>
-
-<div class="order-details">
-
-<div class="order-detail">
-<div class="order-detail-label">
-Username
-</div>
-<div class="order-detail-value">
-@${escapeHtml(username)}
-</div>
-</div>
-
-<div class="order-detail">
-<div class="order-detail-label">
-Pair
-</div>
-<div class="order-detail-value">
-${escapeHtml(base)} / ${escapeHtml(quote)}
-</div>
-</div>
-
-<div class="order-detail">
-<div class="order-detail-label">
-Amount
-</div>
-<div class="order-detail-value">
-${formatNumber(amount)} USDT
-</div>
-</div>
-
-<div class="order-detail">
-<div class="order-detail-label">
-Price
-</div>
-<div class="order-detail-value">
-${formatNumber(price)} ${escapeHtml(
-type==="buy"?base:quote
-)}
-</div>
-</div>
-
-<div class="order-detail">
-<div class="order-detail-label">
-Trade Value
-</div>
-<div class="order-detail-value">
-${formatNumber(tradeValue)}
-${escapeHtml(
-type==="buy"?base:quote
-)}
-</div>
-</div>
-
-<div class="order-detail">
-<div class="order-detail-label">
-Payment
-</div>
-<div class="order-detail-value">
-${escapeHtml(payment)}
-</div>
-</div>
-
-<div class="order-detail">
-<div class="order-detail-label">
-Created
-</div>
-<div class="order-detail-value">
-${escapeHtml(created)}
-</div>
-</div>
-
-</div>
-
-${
-canCancel?
-`
-<button
-class="cancel-order-btn"
-onclick="cancelOrder('${escapeJs(order.id)}')"
->
-Cancel Order
-</button>
-`:
-""
-}
-
-`;
-
-container.appendChild(card);
-}
-
-async function cancelOrder(orderId){
-
+<div class="order-card-top">        
+<div class="order-type">${type==="sell"?"🔴 Sell USDT":"🟢 Buy USDT"}</div>        
+<div class="order-status ${type==="sell"?"sell-status":""}">${escapeHtml(statusText)}</div>        
+</div>    <div class="order-details">    <div class="order-detail">        
+<div class="order-detail-label">Username</div>        
+<div class="order-detail-value">@${escapeHtml(username)}</div>        
+</div>    <div class="order-detail">        
+<div class="order-detail-label">Pair</div>        
+<div class="order-detail-value">${escapeHtml(base)} / ${escapeHtml(quote)}</div>        
+</div>    <div class="order-detail">        
+<div class="order-detail-label">Amount</div>        
+<div class="order-detail-value">${formatNumber(amount)} USDT</div>        
+</div>    <div class="order-detail">        
+<div class="order-detail-label">Price</div>        
+<div class="order-detail-value">${formatNumber(price)} ${escapeHtml(quote)}</div>        
+</div>    <div class="order-detail">        
+<div class="order-detail-label">Trade Value</div>        
+<div class="order-detail-value">${formatNumber(tradeValue)} ${escapeHtml(quote)}</div>        
+</div>    <div class="order-detail">        
+<div class="order-detail-label">Payment</div>        
+<div class="order-detail-value">${escapeHtml(payment)}</div>        
+</div>    <div class="order-detail">        
+<div class="order-detail-label">Created</div>        
+<div class="order-detail-value">${escapeHtml(created)}</div>        
+</div>    </div>    ${canCancel?     <button class="cancel-order-btn" onclick="cancelOrder('${escapeJs(order.id)}')">     Cancel Order     </button>:""}    
+`;  container.appendChild(card);  
+}  async function cancelOrder(orderId){
 if(!currentSession)return;
 
-if(!confirm(
-"Cancel this order?"
-))return;
+if(!confirm("Cancel this order?"))return;
 
-const {error}=
-await supabaseClient.rpc(
+const {error}=await supabaseClient.rpc(
 "cancel_p2p_order",
-{
-p_order_id:orderId
-}
+{p_order_id:orderId}
 );
 
 if(error){
-
-console.error(
-"Cancel order error:",
-error
-);
-
-alert(
-"Could not cancel order:\n\n"+
-error.message
-);
-
+console.error("Cancel order error:",error);
+alert("Could not cancel order:\n\n"+error.message);
 return;
 }
 
 await loadMyOrders();
-await loadUSDTBalance();
 await loadProfile();
 }
 
 async function createPost(){
-
 if(!currentSession)return;
-
 if(!requirePermanentUsername())return;
 
-const textarea=
-document.getElementById(
-"postContent"
-);
-
-const visibility=
-document.getElementById(
-"postVisibility"
-).value;
-
-const content=
-textarea.value.trim();
+const textarea=document.getElementById("postContent");
+const visibility=document.getElementById("postVisibility").value;
+const content=textarea.value.trim();
 
 if(!content){
-
-alert(
-"Write something first."
-);
-
+alert("Write something first.");
 return;
 }
 
-const button=
-document.getElementById(
-"createPostButton"
-);
-
+const button=document.getElementById("createPostButton");
 button.disabled=true;
 
-const {error}=
-await supabaseClient
+const {error}=await supabaseClient
 .from("posts")
 .insert({
 user_id:currentSession.user.id,
@@ -3029,146 +1421,81 @@ visibility:visibility
 button.disabled=false;
 
 if(error){
-
 console.error(error);
-
-alert(
-"Could not create post:\n\n"+
-error.message
-);
-
+alert("Could not create post:\n\n"+error.message);
 return;
 }
 
 textarea.value="";
-
 await loadPosts();
 await loadStats();
 }
 
 async function loadPosts(){
-
 if(!currentSession)return;
 
-const feed=
-document.getElementById(
-"postsFeed"
-);
+const feed=document.getElementById("postsFeed");
+feed.innerHTML='<div class="empty">Loading posts...</div>';
 
-feed.innerHTML=
-'<div class="empty">Loading posts...</div>';
-
-const {data:posts,error}=
-await supabaseClient
+const {data:posts,error}=await supabaseClient
 .from("posts")
-.select(
-"id,user_id,username,content,visibility,created_at"
-)
-.eq(
-"user_id",
-currentSession.user.id
-)
-.order(
-"created_at",
-{
-ascending:false
-}
-);
+.select("id,user_id,username,content,visibility,created_at")
+.eq("user_id",currentSession.user.id)
+.order("created_at",{ascending:false});
 
 if(error){
-
 console.error(error);
-
 feed.innerHTML=
 '<div class="empty">Could not load posts.<br><br><small>'+
-escapeHtml(error.message)+
-'</small></div>';
-
+escapeHtml(error.message)+'</small></div>';
 return;
 }
 
 if(!posts?.length){
-
-feed.innerHTML=
-'<div class="empty">You have not created any posts yet.</div>';
-
+feed.innerHTML='<div class="empty">You have not created any posts yet.</div>';
 return;
 }
 
-const postIds=
-posts.map(post=>post.id);
+const postIds=posts.map(post=>post.id);
 
 await loadPostProfiles(posts);
 
-const likes=
-await loadLikes(postIds);
-
-const comments=
-await loadComments(postIds);
+const likes=await loadLikes(postIds);
+const comments=await loadComments(postIds);
 
 allComments=comments;
-
-renderPosts(
-posts,
-likes,
-comments
-);
+renderPosts(posts,likes,comments);
 }
 
 async function loadPostProfiles(posts){
-
-const ids=[
-...new Set(
-posts.map(post=>post.user_id)
-)
-];
-
+const ids=[...new Set(posts.map(post=>post.user_id))];
 allProfiles={};
 
 if(!ids.length)return;
 
-const {data,error}=
-await supabaseClient
+const {data,error}=await supabaseClient
 .from("profiles")
-.select(
-"id,username,avatar_url"
-)
+.select("id,username,avatar_url")
 .in("id",ids);
 
 if(error){
-
 console.error(error);
 return;
 }
 
-(data||[]).forEach(
-profile=>
-allProfiles[profile.id]=profile
-);
+(data||[]).forEach(profile=>allProfiles[profile.id]=profile);
 }
 
 async function loadLikes(postIds){
-
 if(!postIds.length)return[];
 
-const {data,error}=
-await supabaseClient
+const {data,error}=await supabaseClient
 .from("post_likes")
-.select(
-"post_id,user_id"
-)
-.in(
-"post_id",
-postIds
-);
+.select("post_id,user_id")
+.in("post_id",postIds);
 
 if(error){
-
-console.error(
-"Likes error:",
-error
-);
-
+console.error("Likes error:",error);
 return[];
 }
 
@@ -3176,374 +1503,125 @@ return data||[];
 }
 
 async function loadComments(postIds){
-
 if(!postIds.length)return[];
 
-const {data,error}=
-await supabaseClient
+const {data,error}=await supabaseClient
 .from("post_comments")
-.select(
-"id,post_id,user_id,comment,created_at"
-)
-.in(
-"post_id",
-postIds
-)
-.order(
-"created_at",
-{
-ascending:true
-}
-);
+.select("id,post_id,user_id,comment,created_at")
+.in("post_id",postIds)
+.order("created_at",{ascending:true});
 
 if(error){
-
-console.error(
-"Comments error:",
-error
-);
-
+console.error("Comments error:",error);
 return[];
 }
 
-const ids=[
-...new Set(
-(data||[]).map(
-comment=>comment.user_id
-)
-)
-];
+const ids=[...new Set((data||[]).map(comment=>comment.user_id))];
 
 if(ids.length){
-
-const {data:profiles,error:profileError}=
-await supabaseClient
+const {data:profiles,error:profileError}=await supabaseClient
 .from("profiles")
-.select(
-"id,username,avatar_url"
-)
+.select("id,username,avatar_url")
 .in("id",ids);
 
 if(!profileError){
-
-(profiles||[]).forEach(
-profile=>
-allProfiles[profile.id]=profile
-);
+(profiles||[]).forEach(profile=>allProfiles[profile.id]=profile);
 }
 }
 
 return data||[];
 }
 
-function renderPosts(
-posts,
-likes,
-comments
-){
-
-const feed=
-document.getElementById(
-"postsFeed"
-);
-
+function renderPosts(posts,likes,comments){
+const feed=document.getElementById("postsFeed");
 feed.innerHTML="";
 
 posts.forEach(post=>{
+const profile=allProfiles[post.user_id]||{};
+const username=post.username||profile.username||"User";
+const avatar=profile.avatar_url||"";
+const initial=username.charAt(0).toUpperCase();
 
-const profile=
-allProfiles[post.user_id]||{};
+const postLikes=likes.filter(like=>String(like.post_id)===String(post.id));
+const liked=postLikes.some(like=>like.user_id===currentSession.user.id);
 
-const username=
-post.username||
-profile.username||
-"User";
-
-const avatar=
-profile.avatar_url||"";
-
-const initial=
-username.charAt(0).toUpperCase();
-
-const postLikes=
-likes.filter(
-like=>
-String(like.post_id)===
-String(post.id)
+const postComments=comments.filter(
+comment=>String(comment.post_id)===String(post.id)
 );
 
-const liked=
-postLikes.some(
-like=>
-like.user_id===
-currentSession.user.id
-);
-
-const postComments=
-comments.filter(
-comment=>
-String(comment.post_id)===
-String(post.id)
-);
-
-const card=
-document.createElement("article");
-
+const card=document.createElement("article");
 card.className="post-card";
 
 card.innerHTML=`
 
-<div class="post-header">
-
-${
-avatar?
-`
-<img
-class="post-avatar"
-src="${escapeHtml(avatar)}"
-alt="Profile"
->
-`:
-`
-<div class="post-avatar">
-${escapeHtml(initial)}
-</div>
-`
-}
-
-<div class="post-user">
-
-<div class="post-name-row">
-
-<div class="post-name">
-@${escapeHtml(username)}
-</div>
-
-</div>
-
-<div class="post-meta">
-${
-post.visibility==="private"?
-"👥 Friends / Private":
-"🌍 Public"
-}
-· ${escapeHtml(
-formatTime(post.created_at)
-)}
-</div>
-
-</div>
-
-<button
-class="post-menu"
-title="Delete post"
-onclick="deletePost('${escapeJs(post.id)}')"
->
-⋮
-</button>
-
-</div>
-
-<div class="post-content">
-${escapeHtml(post.content||"")}
-</div>
-
-<div class="post-actions">
-
-<button
-class="post-action ${liked?"liked":""}"
-onclick="likePost('${escapeJs(post.id)}')"
->
-${liked?"❤️ Liked":"♡ Like"}
-<span>${postLikes.length}</span>
-</button>
-
-<button
-class="post-action"
-onclick="toggleComments('${escapeJs(post.id)}')"
->
-💬 Comments
-<span>${postComments.length}</span>
-</button>
-
-<button
-class="post-action"
-onclick="sharePost('${escapeJs(post.id)}')"
->
+<div class="post-header">    ${avatar?    
+<img class="post-avatar" src="${escapeHtml(avatar)}" alt="Profile">:    
+<div class="post-avatar">${escapeHtml(initial)}</div>}  <div class="post-user">        
+<div class="post-name-row">        
+<div class="post-name">@${escapeHtml(username)}</div>        
+</div>    <div class="post-meta">        
+${post.visibility==="private"?"👥 Friends / Private":"🌍 Public"}        
+· ${escapeHtml(formatTime(post.created_at))}        
+</div>        
+</div>    <button class="post-menu" title="Delete post"        
+onclick="deletePost('${escapeJs(post.id)}')">⋮</button>  </div>    <div class="post-content">${escapeHtml(post.content||"")}</div>    <div class="post-actions">    <button class="post-action ${liked?"liked":""}"    
+onclick="likePost('${escapeJs(post.id)}')">    
+${liked?"❤️ Liked":"♡ Like"} <span>${postLikes.length}</span>    
+</button>  <button class="post-action"        
+onclick="toggleComments('${escapeJs(post.id)}')">  
+💬 Comments <span>${postComments.length}</span>  
+</button>  <button class="post-action"        
+onclick="sharePost('${escapeJs(post.id)}')">
 ↗️ Share
 </button>
 
-</div>
+</div>    <button id="view-comments-${escapeHtml(post.id)}"        
+class="view-comments"        
+onclick="toggleComments('${escapeJs(post.id)}')">    
+💬 View comments    
+</button>  <div id="comments-${escapeHtml(post.id)}" class="comments-box hidden">    ${renderComments(postComments)}  <div class="comment-input-row">        
+<input id="comment-input-${escapeHtml(post.id)}"        
+class="comment-input"        
+maxlength="500"        
+placeholder="Write a comment..."        
+onkeydown="if(event.key==='Enter'){event.preventDefault();sendComment('${escapeJs(post.id)}')}">    <button class="comment-send"        
+onclick="sendComment('${escapeJs(post.id)}')">    
+Send    
+</button>  </div>    </div>        
+`;    feed.appendChild(card);    
+});    
+}  function renderComments(comments){  
+if(!comments.length){  
+return<div style="font-size:12px;color:#8a93a1;margin-bottom:8px">No comments yet.</div>;  
+}  return comments.map(comment=>{
+const profile=allProfiles[comment.user_id]||{};
+const username=profile.username||"User";
+const avatar=profile.avatar_url||"";
+const initial=username.charAt(0).toUpperCase();
+const isOwner=comment.user_id===currentSession.user.id;
 
-<button
-id="view-comments-${escapeHtml(post.id)}"
-class="view-comments"
-onclick="toggleComments('${escapeJs(post.id)}')"
->
-💬 View comments
-</button>
+return`
 
-<div
-id="comments-${escapeHtml(post.id)}"
-class="comments-box hidden"
->
-
-${renderComments(postComments)}
-
-<div class="comment-input-row">
-
-<input
-id="comment-input-${escapeHtml(post.id)}"
-class="comment-input"
-maxlength="500"
-placeholder="Write a comment..."
-onkeydown="
-if(event.key==='Enter'){
-event.preventDefault();
-sendComment('${escapeJs(post.id)}')
-}
-"
->
-
-<button
-class="comment-send"
-onclick="sendComment('${escapeJs(post.id)}')"
->
-Send
-</button>
-
-</div>
-
-</div>
-`;
-
-feed.appendChild(card);
-});
-}
-
-function renderComments(comments){
-
-if(!comments.length){
-
-return `
-<div
-style="
-font-size:12px;
-color:#8a93a1;
-margin-bottom:8px
-"
->
-No comments yet.
-</div>
-`;
-}
-
-return comments.map(
-comment=>{
-
-const profile=
-allProfiles[comment.user_id]||{};
-
-const username=
-profile.username||"User";
-
-const avatar=
-profile.avatar_url||"";
-
-const initial=
-username.charAt(0).toUpperCase();
-
-const isOwner=
-comment.user_id===
-currentSession.user.id;
-
-return `
-
-<div class="comment">
-
-${
-avatar?
-`
-<img
-class="comment-avatar"
-src="${escapeHtml(avatar)}"
-alt="Profile"
->
-`:
-`
-<div class="comment-avatar">
-${escapeHtml(initial)}
-</div>
-`
-}
-
-<div class="comment-body">
-
-<div class="comment-top">
-
-<div class="comment-name">
-@${escapeHtml(username)}
-</div>
-
-${
-isOwner?
-`
-<button
-class="comment-delete"
-onclick="deleteComment('${escapeJs(comment.id)}')"
->
-Delete
-</button>
-`:
-""
-}
-
-</div>
-
-<div class="comment-text">
-${escapeHtml(comment.comment||"")}
-</div>
-
-</div>
-
-</div>
-`;
-}
-).join("");
-}
-
-function toggleComments(postId){
-
-const box=
-document.getElementById(
-"comments-"+postId
-);
-
-const button=
-document.getElementById(
-"view-comments-"+postId
-);
-
-if(!box||!button)return;
-
-const hidden=
-box.classList.toggle("hidden");
-
-button.textContent=
-hidden?
-"💬 View comments":
-"🔽 Hide comments";
+<div class="comment">    ${avatar?    
+<img class="comment-avatar" src="${escapeHtml(avatar)}" alt="Profile">:    
+<div class="comment-avatar">${escapeHtml(initial)}</div>}  <div class="comment-body">    <div class="comment-top">        
+<div class="comment-name">@${escapeHtml(username)}</div>    ${isOwner?    
+<button class="comment-delete"     onclick="deleteComment('${escapeJs(comment.id)}')">     Delete     </button>:""}  </div>    <div class="comment-text">${escapeHtml(comment.comment||"")}</div>    </div>        
+</div>        
+`;        
+}).join("");        
+}    function toggleComments(postId){    
+const box=document.getElementById("comments-"+postId);    
+const button=document.getElementById("view-comments-"+postId);  if(!box||!button)return;  const hidden=box.classList.toggle("hidden");
+button.textContent=hidden?"💬 View comments":"🔽 Hide comments";
 }
 
 async function likePost(postId){
-
 if(!currentSession)return;
 
-const userId=
-currentSession.user.id;
+const userId=currentSession.user.id;
 
-const {data:existing,error:checkError}=
-await supabaseClient
+const {data:existing,error:checkError}=await supabaseClient
 .from("post_likes")
 .select("post_id")
 .eq("post_id",postId)
@@ -3551,40 +1629,24 @@ await supabaseClient
 .maybeSingle();
 
 if(checkError){
-
 console.error(checkError);
-
-alert(
-"Could not check like:\n\n"+
-checkError.message
-);
-
+alert("Could not check like:\n\n"+checkError.message);
 return;
 }
 
 if(existing){
-
-const {error}=
-await supabaseClient
+const {error}=await supabaseClient
 .from("post_likes")
 .delete()
 .eq("post_id",postId)
 .eq("user_id",userId);
 
 if(error){
-
-alert(
-"Could not unlike post:\n\n"+
-error.message
-);
-
+alert("Could not unlike post:\n\n"+error.message);
 return;
 }
-
 }else{
-
-const {error}=
-await supabaseClient
+const {error}=await supabaseClient
 .from("post_likes")
 .insert({
 post_id:postId,
@@ -3593,15 +1655,9 @@ username:getPermanentUsername()
 });
 
 if(error){
-
-alert(
-"Could not like post:\n\n"+
-error.message
-);
-
+alert("Could not like post:\n\n"+error.message);
 return;
 }
-
 }
 
 await loadPosts();
@@ -3609,34 +1665,22 @@ await loadStats();
 }
 
 async function sendComment(postId){
-
 if(!currentSession)return;
-
 if(!requirePermanentUsername())return;
 
-const input=
-document.getElementById(
-"comment-input-"+postId
-);
-
+const input=document.getElementById("comment-input-"+postId);
 if(!input)return;
 
-const comment=
-input.value.trim();
+const comment=input.value.trim();
 
 if(!comment)return;
 
 if(comment.length>500){
-
-alert(
-"Comment is too long."
-);
-
+alert("Comment is too long.");
 return;
 }
 
-const {error}=
-await supabaseClient
+const {error}=await supabaseClient
 .from("post_comments")
 .insert({
 post_id:postId,
@@ -3646,50 +1690,27 @@ comment:comment
 });
 
 if(error){
-
-console.error(
-"Comment failed:",
-error
-);
-
-alert(
-"Comment failed:\n\n"+
-error.message
-);
-
+console.error("Comment failed:",error);
+alert("Comment failed:\n\n"+error.message);
 return;
 }
 
 input.value="";
-
 await loadPosts();
 }
 
 async function deleteComment(commentId){
+if(!confirm("Delete your comment?"))return;
 
-if(!confirm(
-"Delete your comment?"
-))return;
-
-const {error}=
-await supabaseClient
+const {error}=await supabaseClient
 .from("post_comments")
 .delete()
 .eq("id",commentId)
-.eq(
-"user_id",
-currentSession.user.id
-);
+.eq("user_id",currentSession.user.id);
 
 if(error){
-
 console.error(error);
-
-alert(
-"Could not delete comment:\n\n"+
-error.message
-);
-
+alert("Could not delete comment:\n\n"+error.message);
 return;
 }
 
@@ -3697,30 +1718,17 @@ await loadPosts();
 }
 
 async function deletePost(postId){
+if(!confirm("Delete this post?"))return;
 
-if(!confirm(
-"Delete this post?"
-))return;
-
-const {error}=
-await supabaseClient
+const {error}=await supabaseClient
 .from("posts")
 .delete()
 .eq("id",postId)
-.eq(
-"user_id",
-currentSession.user.id
-);
+.eq("user_id",currentSession.user.id);
 
 if(error){
-
 console.error(error);
-
-alert(
-"Could not delete post:\n\n"+
-error.message
-);
-
+alert("Could not delete post:\n\n"+error.message);
 return;
 }
 
@@ -3729,373 +1737,81 @@ await loadStats();
 }
 
 async function sharePost(postId){
+const username=getPermanentUsername();
 
-const username=
-getPermanentUsername();
-
-const url=
-window.location.origin+
+const url=window.location.origin+
 window.location.pathname+
-"?username="+
-encodeURIComponent(username)+
-"&post="+
-encodeURIComponent(postId);
+"?username="+encodeURIComponent(username)+
+"&post="+encodeURIComponent(postId);
 
 if(navigator.share){
-
 try{
-
 await navigator.share({
 title:"P2P Social Post",
 text:"Check out this post.",
 url:url
 });
-
 }catch(error){
-
 console.log(error);
 }
-
 return;
 }
 
 try{
-
 await navigator.clipboard.writeText(url);
-
-alert(
-"Post link copied."
-);
-
+alert("Post link copied.");
 }catch(error){
-
 alert(url);
 }
 }
 
-function openHistory(){
-
-document.getElementById(
-"historyModal"
-).classList.add("show");
-
-showHistoryTab("transfer");
-}
-
-function closeHistory(){
-
-document.getElementById(
-"historyModal"
-).classList.remove("show");
-}
-
-async function showHistoryTab(type){
-
-historyType=type;
-
-const titles={
-transfer:"Transfer History",
-deposit:"Deposit History",
-withdrawal:"Withdrawal History"
-};
-
-document.getElementById(
-"historyTitle"
-).textContent=
-titles[type]||"USDT History";
-
-const container=
-document.getElementById(
-"historyList"
-);
-
-container.innerHTML=
-'<div class="history-empty">Loading history...</div>';
-
-if(!currentSession)return;
-
-const typeMap={
-transfer:[
-"transfer",
-"send",
-"receive"
-],
-deposit:[
-"deposit"
-],
-withdrawal:[
-"withdrawal"
-]
-};
-
-const {data,error}=
-await supabaseClient
-.from("usdt_ledger")
-.select("*")
-.eq(
-"user_id",
-currentSession.user.id
-)
-.in(
-"type",
-typeMap[type]||[type]
-)
-.order(
-"created_at",
-{
-ascending:false
-}
-);
-
-if(error){
-
-console.error(
-"History error:",
-error
-);
-
-container.innerHTML=
-'<div class="history-empty">Could not load history.<br><br><small>'+
-escapeHtml(error.message)+
-'</small></div>';
-
-return;
-}
-
-if(!data?.length){
-
-container.innerHTML=
-'<div class="history-empty">No history yet.</div>';
-
-return;
-}
-
-container.innerHTML="";
-
-data.forEach(
-item=>
-renderHistoryItem(
-item,
-container
-)
-);
-}
-
-function renderHistoryItem(
-item,
-container
-){
-
-const rawType=
-String(
-item.type||historyType
-).toLowerCase();
-
-let title="USDT";
-
-if(rawType==="deposit"){
-title="⬇️ Deposit";
-}else if(rawType==="withdrawal"){
-title="⬆️ Withdrawal";
-}else if(
-rawType==="transfer"||
-rawType==="send"
-){
-title="💵 Transfer";
-}else if(rawType==="receive"){
-title="💵 Received";
-}
-
-const status=
-String(
-item.status||"completed"
-).toLowerCase();
-
-const amount=
-Number(item.amount||0);
-
-const created=
-item.created_at?
-formatTime(item.created_at):
-"";
-
-const card=
-document.createElement("div");
-
-card.className="history-card";
-
-let meta=[];
-
-if(item.network){
-meta.push(
-"Network: "+
-String(item.network)
-);
-}
-
-if(item.withdrawal_address){
-meta.push(
-"Address: "+
-String(item.withdrawal_address)
-);
-}
-
-if(item.recipient_username){
-meta.push(
-"Recipient: @"+
-String(item.recipient_username)
-);
-}
-
-if(item.sender_username){
-meta.push(
-"From: @"+
-String(item.sender_username)
-);
-}
-
-card.innerHTML=`
-
-<div class="history-top">
-
-<div class="history-type">
-${escapeHtml(title)}
-</div>
-
-<div class="history-status ${
-status==="pending"?
-"pending":
-(
-status==="failed"||
-status==="rejected"?
-"failed":
-""
-)
-}">
-${escapeHtml(
-status.charAt(0).toUpperCase()+
-status.slice(1)
-)}
-</div>
-
-</div>
-
-<div class="history-amount">
-${amount>=0?"+":""}${formatNumber(amount)} USDT
-</div>
-
-<div class="history-meta">
-${escapeHtml(meta.join(" • "))}
-</div>
-
-<div class="history-meta">
-${escapeHtml(created)}
-</div>
-
-`;
-
-container.appendChild(card);
-}
-
-function openAdminVerification(){
-
-window.location.href=
-"message.html?username="+
-encodeURIComponent(
-"@P2P_Social_Admin"
-)+
-"&support=verification";
-}
-
-function openAdminSupport(){
-
-window.location.href=
-"message.html?username="+
-encodeURIComponent(
-"@P2P_Social_Admin"
-)+
-"&support=true";
-}
-
 function openBuy(){
-
-window.location.href=
-"live.html";
+window.location.href="live.html";
 }
 
 function openSell(){
-
-window.location.href=
-"wallet.html";
+window.location.href="wallet.html";
 }
 
 function openProfile(){
-
-window.location.href=
-"profile.html";
+window.location.href="profile.html";
 }
 
 function openMessages(){
-
-window.location.href=
-"message.html?username="+
-encodeURIComponent(
-getPermanentUsername()
-);
+window.location.href="message.html?username="+
+encodeURIComponent(getPermanentUsername());
 }
 
 function openLive(){
-
-window.location.href=
-"live.html";
+window.location.href="live.html";
 }
 
 function openWallet(){
-
-window.location.href=
-"wallet.html";
+window.location.href="wallet.html";
 }
 
 function goHome(){
-
-window.location.href=
-"index.html?username="+
-encodeURIComponent(
-getPermanentUsername()
-);
+window.location.href="index.html?username="+
+encodeURIComponent(getPermanentUsername());
 }
 
 async function logout(){
+if(!confirm("Do you want to log out?"))return;
 
-if(!confirm(
-"Do you want to log out?"
-))return;
-
-const {error}=
-await supabaseClient.auth.signOut();
+const {error}=await supabaseClient.auth.signOut();
 
 if(error){
-
-alert(
-"Logout failed:\n\n"+
-error.message
-);
-
+alert("Logout failed:\n\n"+error.message);
 return;
 }
 
-window.location.href=
-"login.html";
+window.location.href="login.html";
 }
 
 function formatNumber(value){
+const number=Number(value||0);
 
-const number=
-Number(value||0);
-
-if(!Number.isFinite(number)){
-return"0.00";
-}
+if(!Number.isFinite(number))return"0.00";
 
 return number.toLocaleString(
 undefined,
@@ -4107,121 +1823,58 @@ maximumFractionDigits:8
 }
 
 function formatTime(dateString){
+const date=new Date(dateString);
 
-const date=
-new Date(dateString);
+if(isNaN(date.getTime()))return"";
 
-if(isNaN(date.getTime())){
-return"";
-}
-
-const now=
-new Date();
-
-const seconds=
-Math.floor(
-(now-date)/1000
-);
+const now=new Date();
+const seconds=Math.floor((now-date)/1000);
 
 if(seconds<60)return"now";
 
-const minutes=
-Math.floor(seconds/60);
+const minutes=Math.floor(seconds/60);
+if(minutes<60)return minutes+"m";
 
-if(minutes<60){
-return minutes+"m";
-}
+const hours=Math.floor(minutes/60);
+if(hours<24)return hours+"h";
 
-const hours=
-Math.floor(minutes/60);
-
-if(hours<24){
-return hours+"h";
-}
-
-const days=
-Math.floor(hours/24);
-
-if(days<7){
-return days+"d";
-}
+const days=Math.floor(hours/24);
+if(days<7)return days+"d";
 
 return date.toLocaleDateString();
 }
 
 function escapeHtml(text){
-
-const div=
-document.createElement("div");
-
-div.textContent=
-text==null?
-"":
-String(text);
-
+const div=document.createElement("div");
+div.textContent=text==null?"":String(text);
 return div.innerHTML;
 }
 
 function escapeJs(text){
-
-return String(
-text==null?
-"":
-text
-)
-.replace(/\\/g,"\\\\")
-.replace(/'/g,"\\'")
-.replace(/"/g,'\\"')
-.replace(/\r/g,"\\r")
-.replace(/\n/g,"\\n");
+return String(text==null?"":text)
+.replace(//g,"")
+.replace(/'/g,"'")
+.replace(/"/g,'"')
+.replace(/\r/g,"\r")
+.replace(/\n/g,"\n");
 }
 
-document.querySelectorAll(".modal").forEach(
-modal=>{
-
-modal.addEventListener(
-"click",
-event=>{
-
-if(event.target===modal){
-modal.classList.remove("show");
-}
-
-}
-);
-
-}
-);
-
-supabaseClient.auth.onAuthStateChange(
-(event,session)=>{
-
+supabaseClient.auth.onAuthStateChange((event,session)=>{
 currentSession=session;
 
 if(!session){
-
-window.location.href=
-"login.html";
-
+window.location.href="login.html";
 return;
 }
 
-if(
-!permanentUsername&&
-session.user.user_metadata?.username
-){
-
-permanentUsername=
-String(
+if(!permanentUsername&&session.user.user_metadata?.username){
+permanentUsername=String(
 session.user.user_metadata.username
 ).trim();
 }
-
-}
-);
+});
 
 startApp();
-</script>
+</script>  </body>
 
-</body>
 </html>

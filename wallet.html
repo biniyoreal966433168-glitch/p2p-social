@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#087f73">
 <title>Sell USDT • P2P Social</title>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -21,7 +20,6 @@ height:68px;background:#fff;border-bottom:1px solid #e2e8ea;
 display:flex;align-items:center;justify-content:space-between;
 padding:0 18px;position:sticky;top:0;z-index:100
 }
-
 .brand{display:flex;align-items:center;gap:10px}
 .brand-logo{
 width:42px;height:42px;border-radius:13px;
@@ -76,11 +74,6 @@ gap:10px;margin:22px 0 12px
 .view-btn,.refresh-btn{
 border:none;background:#edf7f5;color:#087f73;
 padding:7px 10px;border-radius:8px;font-weight:bold
-}
-
-.create-btn{
-border:none;background:#d72c50;color:#fff;
-padding:9px 12px;border-radius:9px;font-weight:bold
 }
 
 .offer-list{display:flex;flex-direction:column;gap:10px}
@@ -185,7 +178,6 @@ gap:10px;padding:6px 0;font-size:13px
 .fee-total{
 border-top:1px solid #dce9e7;margin-top:5px;padding-top:10px
 }
-
 .balance-warning{
 padding:10px 12px;border-radius:10px;background:#fff2d9;
 color:#9a6500;font-size:12px;margin-bottom:10px
@@ -202,7 +194,6 @@ font-size:11px;min-width:55px
 }
 .bottom-nav a.active{color:#d72c50;font-weight:bold}
 .nav-icon{display:block;font-size:21px;margin-bottom:4px}
-.buy-nav{color:#087f73!important}
 
 .toast{
 position:fixed;left:50%;bottom:90px;transform:translateX(-50%);
@@ -231,21 +222,19 @@ font-size:13px;z-index:1000;display:none;max-width:90%;text-align:center
 
 <header>
 <div class="brand">
-<div class="brand-logo" aria-label="P2P Social logo">
+<div class="brand-logo">
 <div class="p-left"></div>
 <div class="p-right"></div>
 <div class="center-dot"></div>
 </div>
 <div class="brand-name">P2P <span>Social</span></div>
 </div>
-
 <div class="security">🔴 Sell Orders</div>
 </header>
 
 <main class="container">
 
 <div class="wallet-card">
-
 <div class="wallet-title">
 <div>
 <div class="wallet-label">USDT Balance • Username Account</div>
@@ -263,32 +252,41 @@ Show
 </div>
 
 <div class="wallet-actions">
-
-<button
-type="button"
-class="primary"
-onclick="openCreateOrder()">
-🔴 Sell USDT
-</button>
-
-<button
-type="button"
-onclick="window.location.href='message.html'">
-💬 Messages
-</button>
-
-<button
-type="button"
-onclick="window.location.href='profile.html'">
-👤 Profile
-</button>
-
+<button type="button" class="primary" onclick="openCreateOrder()">🔴 Sell USDT</button>
+<button type="button" onclick="window.location.href='message.html'">💬 Messages</button>
+<button type="button" onclick="window.location.href='profile.html'">👤 Profile</button>
 </div>
-
 </div>
 
 <div class="section-title">
+<h2>Available sell Orders (<span id="sellOrderCount">0</span>)</h2>
 
+<div class="section-actions">
+<button
+type="button"
+class="view-btn"
+id="sellViewButton"
+onclick="toggleSellOrders()">
+View All
+</button>
+
+<button
+type="button"
+class="refresh-btn"
+onclick="loadSellOrders()">
+🔃 Refresh
+</button>
+</div>
+</div>
+
+<section id="sellOrders" class="offer-list">
+<div class="empty">
+<div class="empty-icon">🔴</div>
+<strong>Loading sell orders...</strong>
+</div>
+</section>
+
+<div class="section-title">
 <h2>🔴 My Sell Orders (<span id="myOrderCount">0</span>)</h2>
 
 <div class="section-actions">
@@ -307,54 +305,18 @@ onclick="loadMyOrders()">
 🔃 Refresh
 </button>
 </div>
-
 </div>
 
 <section id="myOrders" class="offer-list">
-
 <div class="empty">
 <div class="empty-icon">🔴</div>
 <strong>Loading your sell orders...</strong>
 </div>
-
-</section>
-
-<div class="section-title">
-
-<h2>🔴 Market Buy Orders (<span id="marketCount">0</span>)</h2>
-
-<div class="section-actions">
-<button
-type="button"
-class="view-btn"
-id="marketViewButton"
-onclick="toggleMarketOrders()">
-View All
-</button>
-
-<button
-type="button"
-class="refresh-btn"
-onclick="loadMarketOrders()">
-🔃 Refresh
-</button>
-</div>
-
-</div>
-
-<section id="marketOrders" class="offer-list">
-
-<div class="empty">
-<div class="empty-icon">🟢</div>
-<strong>Loading buyer orders...</strong>
-</div>
-
 </section>
 
 </main>
 
-<div id="createOrderModal" class="modal" role="dialog" aria-modal="true">
-
+<div id="createOrderModal" class="modal">
 <div class="modal-box">
 
 <h3>🔴 Create Sell Order</h3>
@@ -363,39 +325,20 @@ onclick="loadMarketOrders()">
 Your USDT must be available before creating a sell order.
 </div>
 
-<input
-id="sellAmount"
-type="number"
-min="0.000001"
-step="0.000001"
-placeholder="USDT amount"
-oninput="updateCreatePreview()">
+<input id="sellAmount" type="number" min="0.000001" step="0.000001" placeholder="USDT amount">
 
-<input
-id="sellPrice"
-type="number"
-min="0"
-step="0.000001"
-placeholder="Price">
+<input id="sellPrice" type="number" min="0" step="0.000001" placeholder="Price">
 
 <select id="sellPair">
 <option value="USDT_ETB">USDT / ETB</option>
 <option value="USDT_DIAMOND">USDT / 💎</option>
 </select>
 
-<input
-id="sellPayment"
-type="text"
-maxlength="100"
-placeholder="Payment method">
+<input id="sellPayment" type="text" maxlength="100" placeholder="Payment method">
 
-<textarea
-id="sellTerms"
-maxlength="1000"
-placeholder="Payment terms / instructions"></textarea>
+<textarea id="sellTerms" maxlength="1000" placeholder="Payment terms / instructions"></textarea>
 
 <div class="fee-card">
-
 <div class="fee-title">
 <strong>🔐 Secure Sell Order</strong>
 <span class="fee-badge">USDT LOCK</span>
@@ -415,36 +358,20 @@ placeholder="Payment terms / instructions"></textarea>
 <span>After opening</span>
 <strong>USDT locked</strong>
 </div>
-
 </div>
 
 <div class="modal-actions">
-
-<button
-type="button"
-class="close-btn"
-onclick="closeModal('createOrderModal')">
-Cancel
-</button>
-
-<button
-type="button"
-class="confirm-btn"
-id="createOrderButton"
-onclick="createSellOrder()">
-Create Sell
-</button>
-
+<button type="button" class="close-btn" onclick="closeModal('createOrderModal')">Cancel</button>
+<button type="button" class="confirm-btn" id="createOrderButton" onclick="createSellOrder()">Create Sell</button>
 </div>
 
 </div>
 </div>
 
-<div id="tradeModal" class="modal" role="dialog" aria-modal="true">
-
+<div id="tradeModal" class="modal">
 <div class="modal-box">
 
-<h3>🤝 Sell USDT to Buyer</h3>
+<h3>🤝 Buy USDT</h3>
 
 <div id="tradeSummary"></div>
 
@@ -453,8 +380,7 @@ id="tradeAmount"
 type="number"
 min="0.000001"
 step="0.000001"
-placeholder="USDT amount"
-oninput="updateTradePreview()">
+placeholder="USDT amount">
 
 <div class="fee-card">
 
@@ -475,62 +401,20 @@ oninput="updateTradePreview()">
 
 <div class="fee-row fee-total">
 <span>Status</span>
-<strong>Buyer payment required</strong>
+<strong>Seller confirmation required</strong>
 </div>
 
 </div>
 
 <div class="modal-actions">
-
-<button
-type="button"
-class="close-btn"
-onclick="closeModal('tradeModal')">
-Cancel
-</button>
-
-<button
-type="button"
-class="confirm-btn"
-id="tradeSubmitButton"
-onclick="submitSellTrade()">
-Sell USDT
-</button>
-
+<button type="button" class="close-btn" onclick="closeModal('tradeModal')">Cancel</button>
+<button type="button" class="confirm-btn" id="tradeSubmitButton" onclick="submitBuyTrade()">Buy USDT</button>
 </div>
 
 </div>
 </div>
 
-<div id="tradeActionModal" class="modal" role="dialog" aria-modal="true">
-
-<div class="modal-box">
-
-<h3>🔐 Trade Management</h3>
-
-<div id="tradeActionSummary"></div>
-
-<div class="modal-actions">
-<button
-type="button"
-class="close-btn"
-onclick="closeModal('tradeActionModal')">
-Close
-</button>
-
-<button
-type="button"
-class="confirm-btn"
-id="tradeActionButton"
-onclick="processTradeAction()">
-Confirm
-</button>
-</div>
-
-</div>
-</div>
-
-<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="toast" class="toast"></div>
 
 <nav class="bottom-nav">
 
@@ -562,11 +446,8 @@ Profile
 </nav>
 
 <script>
-
 const SUPABASE_URL="https://mbsvuwrgigqfporxwpfr.supabase.co";
-
-const SUPABASE_PUBLISHABLE_KEY=
-"sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
 
 const supabaseClient=
 window.supabase.createClient(
@@ -574,120 +455,69 @@ SUPABASE_URL,
 SUPABASE_PUBLISHABLE_KEY
 );
 
-let currentSession=null;
 let currentUser=null;
 let currentUsername=null;
-
 let availableBalance=0;
 let balanceVisible=false;
 
+let sellOrders=[];
 let myOrders=[];
-let marketOrders=[];
 
+let sellOrdersExpanded=false;
 let myOrdersExpanded=false;
-let marketOrdersExpanded=false;
 
-let selectedBuyerOrder=null;
-let selectedTrade=null;
-let selectedAction=null;
-
-let isLoadingMyOrders=false;
-let isLoadingMarket=false;
+let selectedSellOrder=null;
 let actionLoading=false;
-
-let realtimeChannel=null;
-let tradeRealtimeChannel=null;
-let toastTimer=null;
 
 const usernameCache=new Map();
 
-document.addEventListener(
-"DOMContentLoaded",
-startApp
-);
+document.addEventListener("DOMContentLoaded",startApp);
 
 async function startApp(){
 
 try{
 
-const {
-data,
-error
-}=
+const {data,error}=
 await supabaseClient.auth.getSession();
 
 if(error)throw error;
 
-currentSession=data.session;
-
-if(!currentSession){
-
-showLogin();
+if(!data.session){
+window.location.href="login.html";
 return;
-
 }
 
-currentUser=currentSession.user;
+currentUser=data.session.user;
 
 await loadCurrentUsername();
 await loadBalance();
+await loadSellOrders();
 await loadMyOrders();
-await loadMarketOrders();
 
 setupRealtime();
 
 }catch(error){
 
 console.error(error);
-
-toast(
-getErrorMessage(error),
-"error"
-);
+toast(getErrorMessage(error),"error");
 
 }
 
 }
 
-function showLogin(){
-
-alert("Please login first.");
-
-window.location.href="login.html";
-
-}
-
-supabaseClient.auth.onAuthStateChange(
-(event,session)=>{
-
-currentSession=session;
-currentUser=session?.user||null;
+supabaseClient.auth.onAuthStateChange((event,session)=>{
 
 if(event==="SIGNED_OUT"){
-
-if(realtimeChannel)
-supabaseClient.removeChannel(realtimeChannel);
-
-if(tradeRealtimeChannel)
-supabaseClient.removeChannel(tradeRealtimeChannel);
-
 window.location.href="login.html";
-
 }
 
-}
-);
+});
 
 async function loadCurrentUsername(){
 
-if(!currentUser)return;
-
 try{
 
-const {
-data,
-error
-}=
+const {data,error}=
 await supabaseClient
 .from("profiles")
 .select("username")
@@ -699,9 +529,7 @@ if(error)throw error;
 currentUsername=
 data?.username||
 currentUser.user_metadata?.username||
-null;
-
-if(currentUsername){
+"user";
 
 usernameCache.set(
 String(currentUser.id),
@@ -711,18 +539,14 @@ currentUsername
 document.getElementById("usernameText").textContent=
 "@"+currentUsername;
 
-}
-
 }catch(error){
-
-console.error(error);
 
 currentUsername=
 currentUser.user_metadata?.username||
-null;
+"user";
 
 document.getElementById("usernameText").textContent=
-"@"+(currentUsername||"user");
+"@"+currentUsername;
 
 }
 
@@ -730,40 +554,22 @@ document.getElementById("usernameText").textContent=
 
 async function loadBalance(){
 
-if(!currentUser)return;
-
 try{
 
-/*
-The balance must come from the backend.
-This page never creates or edits the balance locally.
-*/
-
-const {
-data,
-error
-}=
-await supabaseClient.rpc(
-"get_usdt_balance"
-);
+const {data,error}=
+await supabaseClient.rpc("get_usdt_balance");
 
 if(error)throw error;
 
-availableBalance=
-extractNumber(data);
+availableBalance=extractNumber(data);
 
 renderBalance();
 
 }catch(error){
 
-console.error(
-"BALANCE ERROR:",
-error
-);
-
 availableBalance=0;
-
 renderBalance();
+console.error(error);
 
 }
 
@@ -771,27 +577,19 @@ renderBalance();
 
 function extractNumber(data){
 
-if(data===null||data===undefined)return 0;
-
 if(typeof data==="number")return data;
 
 if(typeof data==="string"){
 
 const n=Number(data);
-
 return Number.isFinite(n)?n:0;
 
 }
 
-if(Array.isArray(data)){
+if(Array.isArray(data))
+return data.length?extractNumber(data[0]):0;
 
-if(!data.length)return 0;
-
-return extractNumber(data[0]);
-
-}
-
-if(typeof data==="object"){
+if(data&&typeof data==="object"){
 
 for(const key of [
 "balance",
@@ -800,13 +598,10 @@ for(const key of [
 "amount"
 ]){
 
-if(data[key]!==undefined){
-
 const n=Number(data[key]);
 
-if(Number.isFinite(n))return n;
-
-}
+if(Number.isFinite(n))
+return n;
 
 }
 
@@ -818,26 +613,16 @@ return 0;
 
 function renderBalance(){
 
-const e=document.getElementById("balanceText");
-
-if(!e)return;
-
-if(balanceVisible){
-
-e.textContent=
-availableBalance.toLocaleString(
+document.getElementById("balanceText").textContent=
+balanceVisible
+?availableBalance.toLocaleString(
 undefined,
 {
 minimumFractionDigits:2,
 maximumFractionDigits:6
 }
-)+" USDT";
-
-}else{
-
-e.textContent="••••••";
-
-}
+)+" USDT"
+:"••••••";
 
 document.getElementById("balanceToggle").textContent=
 balanceVisible?"Hide":"Show";
@@ -847,49 +632,82 @@ balanceVisible?"Hide":"Show";
 function toggleBalance(){
 
 balanceVisible=!balanceVisible;
-
 renderBalance();
 
 }
 
-async function getUsername(userId){
-
-if(!userId)return"User";
-
-const key=String(userId);
-
-if(usernameCache.has(key))
-return usernameCache.get(key);
+async function loadSellOrders(){
 
 try{
 
-const {
-data
-}=
+const {data,error}=
 await supabaseClient
-.from("profiles")
-.select("username")
-.eq("id",userId)
-.maybeSingle();
+.from("p2p_orders")
+.select("*")
+.eq("order_type","sell")
+.neq("user_id",currentUser.id)
+.in("status",["active","open","pending"])
+.order("created_at",{ascending:false});
 
-if(data?.username){
+if(error)throw error;
 
-usernameCache.set(
-key,
-data.username
-);
+sellOrders=data||[];
 
-return data.username;
+await loadUsernames(sellOrders);
 
-}
+document.getElementById("sellOrderCount").textContent=
+sellOrders.length;
+
+renderSellOrders();
 
 }catch(error){
 
 console.error(error);
 
+document.getElementById("sellOrders").innerHTML=
+emptyHtml(
+"⚠️",
+"Could not load sell orders.",
+getErrorMessage(error)
+);
+
 }
 
-return"User";
+}
+
+async function loadMyOrders(){
+
+try{
+
+const {data,error}=
+await supabaseClient
+.from("p2p_orders")
+.select("*")
+.eq("user_id",currentUser.id)
+.eq("order_type","sell")
+.order("created_at",{ascending:false});
+
+if(error)throw error;
+
+myOrders=data||[];
+
+document.getElementById("myOrderCount").textContent=
+myOrders.length;
+
+renderMyOrders();
+
+}catch(error){
+
+console.error(error);
+
+document.getElementById("myOrders").innerHTML=
+emptyHtml(
+"⚠️",
+"Could not load your sell orders.",
+getErrorMessage(error)
+);
+
+}
 
 }
 
@@ -905,27 +723,19 @@ const ids=[
 ];
 
 const missing=
-ids.filter(
-id=>!usernameCache.has(id)
-);
+ids.filter(id=>!usernameCache.has(id));
 
 if(!missing.length)return;
 
-try{
-
-const {
-data,
-error
-}=
+const {data,error}=
 await supabaseClient
 .from("profiles")
 .select("id,username")
 .in("id",missing);
 
-if(error)throw error;
+if(error)return;
 
-(data||[]).forEach(
-profile=>{
+(data||[]).forEach(profile=>{
 
 if(profile.id&&profile.username){
 
@@ -936,121 +746,50 @@ profile.username
 
 }
 
-}
-);
-
-}catch(error){
-
-console.error(error);
+});
 
 }
 
-}
-
-async function loadMyOrders(){
-
-if(!currentUser)return;
-
-if(isLoadingMyOrders)return;
-
-isLoadingMyOrders=true;
+function renderSellOrders(){
 
 const container=
-document.getElementById("myOrders");
+document.getElementById("sellOrders");
 
-try{
-
-const {
-data,
-error
-}=
-await supabaseClient
-.from("p2p_orders")
-.select("*")
-.eq("user_id",currentUser.id)
-.eq("order_type","sell")
-.order("created_at",{ascending:false});
-
-if(error)throw error;
-
-myOrders=data||[];
-
-await loadUsernames(myOrders);
-
-document.getElementById("myOrderCount").textContent=
-myOrders.length;
-
-renderMyOrders();
-
-}catch(error){
-
-console.error(error);
-
-container.innerHTML=
-emptyHtml(
-"⚠️",
-"Could not load your sell orders.",
-getErrorMessage(error)
-);
-
-}finally{
-
-isLoadingMyOrders=false;
-
-}
-
-}
-
-function renderMyOrders(){
-
-const container=
-document.getElementById("myOrders");
-
-if(!container)return;
-
-if(!myOrders.length){
+if(!sellOrders.length){
 
 container.innerHTML=
 emptyHtml(
 "🔴",
-"No sell orders yet.",
-"Create a sell order using your real available USDT balance."
+"No available sell orders.",
+""
 );
 
-updateMyOrderButton();
+updateSellButton();
 
 return;
 
 }
 
 const items=
-myOrdersExpanded
-?myOrders
-:myOrders.slice(0,3);
+sellOrdersExpanded
+?sellOrders
+:sellOrders.slice(0,3);
 
 container.innerHTML="";
 
-items.forEach(
-order=>{
+items.forEach(order=>{
+
+const username=
+usernameCache.get(String(order.user_id))
+||"Seller";
+
+const amount=
+getAvailableAmount(order);
 
 const card=
 document.createElement("div");
 
 card.className="offer-card";
-
-const status=
-normalizeStatus(order.status);
-
-const available=
-getAvailableAmount(order);
-
-const locked=
-getLockedAmount(order);
-
-const parts=
-getPairParts(
-order.pair||order.trading_pair
-);
 
 card.innerHTML=`
 
@@ -1061,7 +800,7 @@ card.innerHTML=`
 <div>
 
 <div class="offer-user">
-🔴 @${escapeHtml(currentUsername||"seller")}
+🔴 ${escapeHtml(username)}
 </div>
 
 <div class="offer-meta">
@@ -1094,279 +833,7 @@ Selling price
 style="text-align:left;margin-top:3px">
 
 ${money(order.price)}
-${escapeHtml(parts.quote||"ETB")}
-
-</div>
-
-</div>
-
-<span class="status ${statusClass(status)}">
-${escapeHtml(status)}
-</span>
-
-</div>
-
-<div class="offer-amount">
-
-Sell amount:
-<strong>
-${formatNumber(order.amount)}
-${escapeHtml(parts.base||"USDT")}
-</strong>
-
-</div>
-
-<div class="offer-amount">
-
-Locked:
-<strong>
-${formatNumber(locked)} USDT
-</strong>
-
-</div>
-
-<div class="offer-amount">
-
-Available:
-<strong>
-${formatNumber(available)} USDT
-</strong>
-
-</div>
-
-${
-order.payment_method
-?
-`<div style="
-margin-top:8px;
-color:#596579;
-font-size:13px
-">
-💳 Payment:
-<strong>
-${escapeHtml(order.payment_method)}
-</strong>
-</div>`
-:""
-}
-
-${
-["active","open","pending"].includes(status)
-?
-`
-<button
-type="button"
-class="message-btn"
-onclick="openOrderMessages('${escapeJs(order.id)}')">
-💬 Messages
-</button>
-
-<button
-type="button"
-class="offer-trade"
-onclick="cancelSellOrder('${escapeJs(order.id)}')">
-Cancel / Unlock USDT
-</button>
-`
-:
-`
-<button
-type="button"
-class="message-btn"
-onclick="openOrderMessages('${escapeJs(order.id)}')">
-💬 View Messages
-</button>
-`
-}
-
-</div>
-`;
-
-container.appendChild(card);
-
-}
-);
-
-updateMyOrderButton();
-
-}
-
-function updateMyOrderButton(){
-
-const button=
-document.getElementById("orderViewButton");
-
-if(!button)return;
-
-if(myOrders.length<=3){
-
-button.style.display=
-myOrders.length?"none":"block";
-
-return;
-
-}
-
-button.style.display="block";
-
-button.textContent=
-myOrdersExpanded?"Show 3":"View All";
-
-}
-
-function toggleMyOrders(){
-
-myOrdersExpanded=!myOrdersExpanded;
-
-renderMyOrders();
-
-}
-
-async function loadMarketOrders(){
-
-if(!currentUser)return;
-
-if(isLoadingMarket)return;
-
-isLoadingMarket=true;
-
-const container=
-document.getElementById("marketOrders");
-
-try{
-
-const {
-data,
-error
-}=
-await supabaseClient
-.from("p2p_orders")
-.select("*")
-.eq("order_type","buy")
-.neq("user_id",currentUser.id)
-.in("status",["active","open","pending"])
-.order("created_at",{ascending:false});
-
-if(error)throw error;
-
-marketOrders=data||[];
-
-await loadUsernames(marketOrders);
-
-document.getElementById("marketCount").textContent=
-marketOrders.length;
-
-renderMarketOrders();
-
-}catch(error){
-
-console.error(error);
-
-container.innerHTML=
-emptyHtml(
-"⚠️",
-"Could not load buyer orders.",
-getErrorMessage(error)
-);
-
-}finally{
-
-isLoadingMarket=false;
-
-}
-
-}
-
-function renderMarketOrders(){
-
-const container=
-document.getElementById("marketOrders");
-
-if(!container)return;
-
-if(!marketOrders.length){
-
-container.innerHTML=
-emptyHtml(
-"🟢",
-"No buyer orders available.",
-"Buyers looking for USDT will appear here."
-);
-
-updateMarketButton();
-
-return;
-
-}
-
-const items=
-marketOrdersExpanded
-?marketOrders
-:marketOrders.slice(0,3);
-
-container.innerHTML="";
-
-items.forEach(
-order=>{
-
-const username=
-usernameCache.get(
-String(order.user_id)
-)||"Buyer";
-
-const parts=
-getPairParts(
-order.pair||order.trading_pair
-);
-
-const card=
-document.createElement("div");
-
-card.className="offer-card";
-
-card.innerHTML=`
-
-<div class="offer-main">
-
-<div class="row">
-
-<div>
-
-<div class="offer-user">
-🟢 ${escapeHtml(username)}
-</div>
-
-<div class="offer-meta">
-🟢 Buying · ${escapeHtml(formatPair(order))}
-</div>
-
-</div>
-
-<span class="offer-type">
-🟢 BUY
-</span>
-
-</div>
-
-<div style="
-display:flex;
-justify-content:space-between;
-align-items:center;
-gap:10px;
-margin-top:12px;
-">
-
-<div>
-
-<div style="color:#7b8790;font-size:12px">
-Buying price
-</div>
-
-<div class="offer-price"
-style="text-align:left;margin-top:3px">
-
-${money(order.price)}
-${escapeHtml(parts.quote||"ETB")}
+${escapeHtml(getPairParts(order.pair||order.trading_pair).quote)}
 
 </div>
 
@@ -1379,27 +846,18 @@ ${escapeHtml(normalizeStatus(order.status))}
 </div>
 
 <div class="offer-amount">
-
-Wants to buy:
+Available:
 <strong>
-${formatNumber(getAvailableAmount(order))}
-${escapeHtml(parts.base||"USDT")}
+${formatNumber(amount)} USDT
 </strong>
-
 </div>
 
 ${
 order.payment_method
 ?
-`<div style="
-margin-top:8px;
-color:#596579;
-font-size:13px
-">
+`<div class="offer-amount">
 💳 Payment:
-<strong>
-${escapeHtml(order.payment_method)}
-</strong>
+<strong>${escapeHtml(order.payment_method)}</strong>
 </div>`
 :""
 }
@@ -1407,22 +865,22 @@ ${escapeHtml(order.payment_method)}
 <button
 type="button"
 class="profile-btn"
-onclick="viewBuyer('${escapeJs(order.user_id)}')">
-👤 View Buyer
+onclick="viewUser('${escapeJs(order.user_id)}')">
+👤 View Seller
 </button>
 
 <button
 type="button"
 class="message-btn"
-onclick="openBuyerMessages('${escapeJs(order.id)}')">
-💬 Message Buyer
+onclick="openOrderMessage('${escapeJs(order.id)}')">
+💬 Messages
 </button>
 
 <button
 type="button"
 class="offer-trade"
-onclick="openSellTrade('${escapeJs(order.id)}')">
-🤝 Sell USDT
+onclick="openBuyTrade('${escapeJs(order.id)}')">
+🟢 Buy USDT
 </button>
 
 </div>
@@ -1430,24 +888,21 @@ onclick="openSellTrade('${escapeJs(order.id)}')">
 
 container.appendChild(card);
 
+});
+
+updateSellButton();
+
 }
-);
 
-updateMarketButton();
-
-}
-
-function updateMarketButton(){
+function updateSellButton(){
 
 const button=
-document.getElementById("marketViewButton");
+document.getElementById("sellViewButton");
 
-if(!button)return;
-
-if(marketOrders.length<=3){
+if(sellOrders.length<=3){
 
 button.style.display=
-marketOrders.length?"none":"block";
+sellOrders.length?"none":"block";
 
 return;
 
@@ -1456,26 +911,111 @@ return;
 button.style.display="block";
 
 button.textContent=
-marketOrdersExpanded?"Show 3":"View All";
+sellOrdersExpanded?"Show 3":"View All";
 
 }
 
-function toggleMarketOrders(){
+function toggleSellOrders(){
 
-marketOrdersExpanded=!marketOrdersExpanded;
+sellOrdersExpanded=!sellOrdersExpanded;
+renderSellOrders();
 
-renderMarketOrders();
+}
+
+function renderMyOrders(){
+
+const container=
+document.getElementById("myOrders");
+
+if(!myOrders.length){
+
+container.innerHTML=
+emptyHtml(
+"🔴",
+"No sell orders yet.",
+"Create a sell order using your available USDT."
+);
+
+return;
+
+}
+
+const items=
+myOrdersExpanded
+?myOrders
+:myOrders.slice(0,3);
+
+container.innerHTML="";
+
+items.forEach(order=>{
+
+const card=
+document.createElement("div");
+
+card.className="offer-card";
+
+card.innerHTML=`
+
+<div class="offer-main">
+
+<div class="row">
+
+<div class="offer-user">
+🔴 @${escapeHtml(currentUsername)}
+</div>
+
+<span class="offer-type">SELL</span>
+
+</div>
+
+<div class="offer-meta">
+${escapeHtml(formatPair(order))}
+</div>
+
+<div class="offer-amount">
+Amount:
+<strong>${formatNumber(order.amount)} USDT</strong>
+</div>
+
+<div class="offer-amount">
+Available:
+<strong>${formatNumber(getAvailableAmount(order))} USDT</strong>
+</div>
+
+<div class="offer-amount">
+Locked:
+<strong>${formatNumber(getLockedAmount(order))} USDT</strong>
+</div>
+
+<div class="offer-amount">
+Status:
+<strong>${escapeHtml(normalizeStatus(order.status))}</strong>
+</div>
+
+${
+["active","open","pending"].includes(
+normalizeStatus(order.status)
+)
+?
+`<button
+type="button"
+class="offer-trade"
+onclick="cancelSellOrder('${escapeJs(order.id)}')">
+Cancel / Unlock USDT
+</button>`
+:""
+}
+
+</div>
+`;
+
+container.appendChild(card);
+
+});
 
 }
 
 function openCreateOrder(){
-
-if(!currentUser){
-
-showLogin();
-return;
-
-}
 
 document.getElementById("sellAmount").value="";
 document.getElementById("sellPrice").value="";
@@ -1485,25 +1025,26 @@ document.getElementById("sellTerms").value="";
 document.getElementById("createBalanceWarning").textContent=
 "Available USDT: "+
 formatNumber(availableBalance)+
-" USDT. The backend will lock the amount when the order opens.";
+" USDT. Backend locks the amount when the order opens.";
 
 updateCreatePreview();
-
 openModal("createOrderModal");
 
 }
 
+document.getElementById("sellAmount")
+?.addEventListener("input",updateCreatePreview);
+
+document.getElementById("sellPrice")
+?.addEventListener("input",updateCreatePreview);
+
 function updateCreatePreview(){
 
 const amount=
-Number(
-document.getElementById("sellAmount").value
-)||0;
+Number(document.getElementById("sellAmount").value)||0;
 
 const price=
-Number(
-document.getElementById("sellPrice").value
-)||0;
+Number(document.getElementById("sellPrice").value)||0;
 
 document.getElementById("createAmountPreview").textContent=
 formatNumber(amount)+" USDT";
@@ -1517,22 +1058,11 @@ async function createSellOrder(){
 
 if(actionLoading)return;
 
-if(!currentUser){
-
-showLogin();
-return;
-
-}
-
 const amount=
-Number(
-document.getElementById("sellAmount").value
-);
+Number(document.getElementById("sellAmount").value);
 
 const price=
-Number(
-document.getElementById("sellPrice").value
-);
+Number(document.getElementById("sellPrice").value);
 
 const pair=
 document.getElementById("sellPair").value;
@@ -1545,78 +1075,47 @@ document.getElementById("sellTerms").value.trim();
 
 if(!Number.isFinite(amount)||amount<=0){
 
-toast(
-"Enter a valid USDT amount.",
-"warning"
-);
-
-return;
-
-}
-
-if(!Number.isFinite(price)||price<=0){
-
-toast(
-"Enter a valid price.",
-"warning"
-);
-
+toast("Enter a valid USDT amount.","warning");
 return;
 
 }
 
 if(amount>availableBalance){
 
-toast(
-"Insufficient available USDT balance.",
-"warning"
-);
+toast("Insufficient available USDT balance.","warning");
+return;
 
+}
+
+if(!Number.isFinite(price)||price<=0){
+
+toast("Enter a valid price.","warning");
 return;
 
 }
 
 if(!payment){
 
-toast(
-"Enter a payment method.",
-"warning"
-);
-
+toast("Enter a payment method.","warning");
 return;
 
 }
 
-const normalizedAmount=
-Number(amount.toFixed(6));
+actionLoading=true;
 
 const button=
 document.getElementById("createOrderButton");
 
-actionLoading=true;
 button.disabled=true;
 button.textContent="Creating...";
 
 try{
 
-/*
-The secure RPC must perform:
-1. authentication check
-2. balance check
-3. atomic USDT lock
-4. p2p_orders insert
-5. prevention of negative balance
-6. immutable seller ownership
-*/
-
-const {
-data,
-error
-}=
+const {data,error}=
 await supabaseClient.rpc(
 "create_p2p_order",
 {
-p_amount:normalizedAmount,
+p_amount:Number(amount.toFixed(6)),
 p_order_type:"sell",
 p_pair:pair,
 p_payment_method:payment,
@@ -1635,24 +1134,17 @@ toast(
 );
 
 await loadBalance();
+await loadSellOrders();
 await loadMyOrders();
-await loadMarketOrders();
 
-const orderId=
-extractId(data);
+const orderId=extractId(data);
 
-if(orderId){
-
-openOrderMessages(orderId);
-
-}
+if(orderId)
+openOrderMessage(orderId);
 
 }catch(error){
 
-console.error(
-"CREATE SELL ORDER ERROR:",
-error
-);
+console.error(error);
 
 toast(
 getErrorMessage(error),
@@ -1669,17 +1161,17 @@ button.textContent="Create Sell";
 
 }
 
-function openSellTrade(orderId){
+function openBuyTrade(orderId){
 
-selectedBuyerOrder=
-marketOrders.find(
+selectedSellOrder=
+sellOrders.find(
 order=>String(order.id)===String(orderId)
 );
 
-if(!selectedBuyerOrder){
+if(!selectedSellOrder){
 
 toast(
-"Buyer order is no longer available. Refresh.",
+"Sell order is no longer available.",
 "warning"
 );
 
@@ -1688,84 +1180,43 @@ return;
 }
 
 const amount=
-getAvailableAmount(selectedBuyerOrder);
-
-if(amount<=0){
-
-toast(
-"This buyer order has no available amount.",
-"warning"
-);
-
-return;
-
-}
-
-if(availableBalance<=0){
-
-toast(
-"You have no available USDT to sell.",
-"warning"
-);
-
-return;
-
-}
-
-const max=
-Math.min(
-amount,
-availableBalance
-);
-
-const parts=
-getPairParts(
-selectedBuyerOrder.pair||
-selectedBuyerOrder.trading_pair
-);
+getAvailableAmount(selectedSellOrder);
 
 const username=
 usernameCache.get(
-String(selectedBuyerOrder.user_id)
-)||"Buyer";
+String(selectedSellOrder.user_id)
+)||"Seller";
 
-document.getElementById("tradeAmount").value="";
-document.getElementById("tradeAmount").max=max;
+const parts=
+getPairParts(
+selectedSellOrder.pair||
+selectedSellOrder.trading_pair
+);
 
 document.getElementById("tradeSummary").innerHTML=`
 
-<div class="details" style="margin-bottom:12px">
+<div class="details">
 
-${detail("Buyer",username)}
+${detail("Seller",username)}
+
+${detail("Pair",formatPair(selectedSellOrder))}
 
 ${detail(
-"Pair",
-formatPair(selectedBuyerOrder)
+"Price",
+money(selectedSellOrder.price)+" "+parts.quote
 )}
 
 ${detail(
-"Buying price",
-money(selectedBuyerOrder.price)+
-" "+(parts.quote||"ETB")
-)}
-
-${detail(
-"Buyer wants",
-formatNumber(amount)+" "+
-(parts.base||"USDT")
-)}
-
-${detail(
-"Your available",
-formatNumber(availableBalance)+" USDT"
+"Available",
+formatNumber(amount)+" USDT"
 )}
 
 ${
-selectedBuyerOrder.payment_method
+selectedSellOrder.payment_method
 ?
 detail(
 "Payment",
-selectedBuyerOrder.payment_method
+selectedSellOrder.payment_method
 )
 :""
 }
@@ -1773,11 +1224,18 @@ selectedBuyerOrder.payment_method
 </div>
 `;
 
-updateTradePreview();
+document.getElementById("tradeAmount").value="";
+document.getElementById("tradeAmount").max=amount;
 
 openModal("tradeModal");
 
 }
+
+document.getElementById("tradeAmount")
+?.addEventListener(
+"input",
+updateTradePreview
+);
 
 function updateTradePreview(){
 
@@ -1787,9 +1245,7 @@ document.getElementById("tradeAmount").value
 )||0;
 
 const price=
-Number(
-selectedBuyerOrder?.price
-)||0;
+Number(selectedSellOrder?.price)||0;
 
 document.getElementById("tradeAmountPreview").textContent=
 formatNumber(amount)+" USDT";
@@ -1799,40 +1255,29 @@ money(amount*price);
 
 }
 
-async function submitSellTrade(){
+async function submitBuyTrade(){
 
-if(actionLoading)return;
-
-if(!currentUser){
-
-showLogin();
-return;
-
-}
-
-if(!selectedBuyerOrder){
-
-toast(
-"Select a buyer order first.",
-"warning"
-);
-
-return;
-
-}
+if(actionLoading||!selectedSellOrder)return;
 
 const amount=
 Number(
 document.getElementById("tradeAmount").value
 );
 
-const buyerAvailable=
-getAvailableAmount(selectedBuyerOrder);
+const available=
+getAvailableAmount(selectedSellOrder);
 
 if(!Number.isFinite(amount)||amount<=0){
 
+toast("Enter a valid amount.","warning");
+return;
+
+}
+
+if(amount>available){
+
 toast(
-"Enter a valid USDT amount.",
+"Amount exceeds available sell order.",
 "warning"
 );
 
@@ -1840,113 +1285,47 @@ return;
 
 }
 
-if(amount>availableBalance){
-
-toast(
-"Insufficient available USDT balance.",
-"warning"
-);
-
-return;
-
-}
-
-if(amount>buyerAvailable){
-
-toast(
-"Amount is greater than the buyer's available order amount.",
-"warning"
-);
-
-return;
-
-}
-
-if(
-String(selectedBuyerOrder.user_id)===
-String(currentUser.id)
-){
-
-toast(
-"You cannot trade with your own order.",
-"warning"
-);
-
-return;
-
-}
-
-if(
-!confirm(
-"Sell "+formatNumber(amount)+" USDT to this buyer?"
-)
-){
-
-return;
-
-}
+actionLoading=true;
 
 const button=
 document.getElementById("tradeSubmitButton");
 
-actionLoading=true;
 button.disabled=true;
 button.textContent="Creating...";
 
 try{
 
-/*
-Secure RPC:
-- verifies seller
-- verifies buyer order
-- checks seller balance
-- locks seller USDT
-- prevents negative balance
-- creates trade atomically
-*/
-
-const {
-data,
-error
-}=
+const {data,error}=
 await supabaseClient.rpc(
 "create_p2p_trade",
 {
-p_order_id:selectedBuyerOrder.id,
+p_order_id:selectedSellOrder.id,
 p_amount:Number(amount.toFixed(6))
 }
 );
 
 if(error)throw error;
 
-const tradeId=
-extractId(data);
+const tradeId=extractId(data);
 
 closeModal("tradeModal");
 
 toast(
-"Sell trade created. USDT is locked until completion.",
+"Trade created. Continue in Messages.",
 "success"
 );
 
-selectedBuyerOrder=null;
-
-await loadBalance();
-await loadMyOrders();
-await loadMarketOrders();
-
 if(tradeId){
 
-openTradeConversation(
-tradeId,
-data,
-selectedBuyerOrder
-);
+window.location.href=
+"message.html?trade_id="+
+encodeURIComponent(tradeId)+
+"&order_id="+
+encodeURIComponent(selectedSellOrder.id);
 
 }else{
 
-window.location.href=
-"message.html";
+window.location.href="message.html";
 
 }
 
@@ -1963,7 +1342,7 @@ getErrorMessage(error),
 
 actionLoading=false;
 button.disabled=false;
-button.textContent="Sell USDT";
+button.textContent="Buy USDT";
 
 }
 
@@ -1971,30 +1350,12 @@ button.textContent="Sell USDT";
 
 async function cancelSellOrder(orderId){
 
-if(actionLoading)return;
-
-if(
-!confirm(
-"Cancel this sell order and unlock the remaining USDT?"
-)
-){
-
+if(!confirm("Cancel this sell order and unlock USDT?"))
 return;
-
-}
-
-actionLoading=true;
 
 try{
 
-/*
-Backend performs the atomic unlock.
-The browser never directly changes balances.
-*/
-
-const {
-error
-}=
+const {error}=
 await supabaseClient.rpc(
 "cancel_p2p_order",
 {
@@ -2005,157 +1366,34 @@ p_order_id:orderId
 if(error)throw error;
 
 toast(
-"Sell order cancelled and USDT unlocked.",
+"Order cancelled and USDT unlocked.",
 "success"
 );
 
 await loadBalance();
+await loadSellOrders();
 await loadMyOrders();
-await loadMarketOrders();
 
 }catch(error){
-
-console.error(error);
 
 toast(
 getErrorMessage(error),
 "error"
 );
 
-}finally{
-
-actionLoading=false;
-
 }
 
 }
 
-function openOrderMessages(orderId){
-
-const order=
-myOrders.find(
-x=>String(x.id)===String(orderId)
-);
-
-const params=
-new URLSearchParams();
-
-params.set(
-"order_id",
-String(orderId)
-);
-
-if(order?.user_id){
-
-getUsername(order.user_id).then(
-username=>{
-
-if(username)
-params.set("username",username);
+function openOrderMessage(orderId){
 
 window.location.href=
-"message.html?"+params.toString();
-
-}
-);
-
-return;
+"message.html?order_id="+
+encodeURIComponent(orderId);
 
 }
 
-window.location.href=
-"message.html?"+params.toString();
-
-}
-
-function openBuyerMessages(orderId){
-
-const order=
-marketOrders.find(
-x=>String(x.id)===String(orderId)
-);
-
-const params=
-new URLSearchParams();
-
-params.set(
-"order_id",
-String(orderId)
-);
-
-if(order?.user_id){
-
-getUsername(order.user_id).then(
-username=>{
-
-if(username)
-params.set("username",username);
-
-window.location.href=
-"message.html?"+params.toString();
-
-}
-);
-
-return;
-
-}
-
-window.location.href=
-"message.html?"+params.toString();
-
-}
-
-function openTradeConversation(
-tradeId,
-trade,
-order
-){
-
-const params=
-new URLSearchParams();
-
-params.set(
-"trade_id",
-String(tradeId)
-);
-
-if(order?.id){
-
-params.set(
-"order_id",
-String(order.id)
-);
-
-}
-
-if(order?.user_id){
-
-getUsername(order.user_id).then(
-username=>{
-
-if(username)
-params.set(
-"username",
-username
-);
-
-window.location.href=
-"message.html?"+params.toString();
-
-}
-);
-
-return;
-
-}
-
-window.location.href=
-"message.html?"+params.toString();
-
-}
-
-function viewBuyer(userId){
+function viewUser(userId){
 
 if(!userId)return;
 
@@ -2165,163 +1403,50 @@ encodeURIComponent(userId);
 
 }
 
-function setupRealtime(){
+function toggleMyOrders(){
 
-if(!currentUser)return;
-
-if(realtimeChannel){
-
-supabaseClient.removeChannel(
-realtimeChannel
-);
-
-}
-
-realtimeChannel=
-supabaseClient
-.channel(
-"sell-orders-live-"+currentUser.id
-)
-.on(
-"postgres_changes",
-{
-event:"*",
-schema:"public",
-table:"p2p_orders"
-},
-()=>{
-
-loadMyOrders();
-loadMarketOrders();
-loadBalance();
-
-}
-)
-.subscribe(
-status=>{
-
-console.log(
-"Sell orders realtime:",
-status
-);
-
-}
-);
-
-if(tradeRealtimeChannel){
-
-supabaseClient.removeChannel(
-tradeRealtimeChannel
-);
-
-}
-
-tradeRealtimeChannel=
-supabaseClient
-.channel(
-"sell-trades-live-"+currentUser.id
-)
-.on(
-"postgres_changes",
-{
-event:"*",
-schema:"public",
-table:"p2p_trades"
-},
-()=>{
-
-loadMyOrders();
-loadMarketOrders();
-loadBalance();
-
-}
-)
-.subscribe(
-status=>{
-
-console.log(
-"Sell trades realtime:",
-status
-);
-
-}
-);
+myOrdersExpanded=!myOrdersExpanded;
+renderMyOrders();
 
 }
 
 function getAvailableAmount(order){
 
-if(!order)return 0;
-
 for(
-const value of [
-order.remaining_amount,
-order.available_amount,
-order.remaining
+const key of [
+"remaining_amount",
+"available_amount",
+"remaining"
 ]
 ){
 
-if(
-value!==null&&
-value!==undefined&&
-value!==""
-){
+const value=Number(order?.[key]);
 
-const n=Number(value);
-
-if(
-Number.isFinite(n)&&
-n>=0
-){
-
-return n;
+if(Number.isFinite(value)&&value>=0)
+return value;
 
 }
 
-}
+const value=Number(order?.amount);
 
-}
-
-const n=Number(order.amount);
-
-return Number.isFinite(n)&&n>=0?n:0;
+return Number.isFinite(value)&&value>=0?value:0;
 
 }
 
 function getLockedAmount(order){
 
-if(!order)return 0;
-
 for(
-const value of [
-order.locked_amount,
-order.reserved_amount,
-order.escrow_amount
+const key of [
+"locked_amount",
+"reserved_amount",
+"escrow_amount"
 ]
 ){
 
-const n=Number(value);
+const value=Number(order?.[key]);
 
-if(
-Number.isFinite(n)&&
-n>=0
-){
-
-return n;
-
-}
-
-}
-
-const status=
-normalizeStatus(order.status);
-
-if(
-["active","open","pending","paid","payment_confirmed"]
-.includes(status)
-){
-
-return Number(order.amount)||0;
+if(Number.isFinite(value)&&value>=0)
+return value;
 
 }
 
@@ -2332,8 +1457,7 @@ return 0;
 function getPairParts(pair){
 
 const parts=
-String(pair||"")
-.split("_");
+String(pair||"USDT_ETB").split("_");
 
 return{
 base:parts[0]||"USDT",
@@ -2348,16 +1472,12 @@ const pair=
 String(
 order?.pair||
 order?.trading_pair||
-""
+"USDT_ETB"
 );
 
-if(pair.includes("_")){
-
-return pair.replace("_"," / ");
-
-}
-
-return pair||"USDT / ETB";
+return pair.includes("_")
+?pair.replace("_"," / ")
+:pair;
 
 }
 
@@ -2365,8 +1485,7 @@ function formatNumber(value){
 
 const n=Number(value);
 
-if(!Number.isFinite(n))
-return"0.000000";
+if(!Number.isFinite(n))return"0";
 
 return n.toLocaleString(
 undefined,
@@ -2382,8 +1501,7 @@ function money(value){
 
 const n=Number(value);
 
-if(!Number.isFinite(n))
-return"0.00";
+if(!Number.isFinite(n))return"0.00";
 
 return n.toLocaleString(
 undefined,
@@ -2397,60 +1515,29 @@ maximumFractionDigits:6
 
 function normalizeStatus(status){
 
-return String(
-status||"pending"
-)
-.trim()
-.toLowerCase()||"pending";
+return String(status||"pending")
+.toLowerCase()
+.trim();
 
 }
 
 function statusClass(status){
 
-const value=
-normalizeStatus(status);
+const s=normalizeStatus(status);
 
-if(
-[
+return [
 "active",
-"open",
 "pending",
-"paid",
-"payment_confirmed"
-].includes(value)
-){
-
-return value;
-
-}
-
-if(
-[
+"open",
 "expired",
 "cancelled",
-"closed"
-].includes(value)
-){
-
-return value;
-
-}
-
-if(value==="disputed")
-return"disputed";
-
-if(
-[
+"closed",
+"disputed",
 "completed",
-"released"
-].includes(value)
-){
-
-return value;
-
-}
-
-return"";
+"released",
+"paid",
+"payment_confirmed"
+].includes(s)?s:"";
 
 }
 
@@ -2465,32 +1552,13 @@ return`
 
 }
 
-function emptyHtml(
-icon,
-title,
-message
-){
+function emptyHtml(icon,title,message){
 
 return`
 <div class="empty">
-
-<div class="empty-icon">
-${escapeHtml(icon||"ℹ️")}
-</div>
-
-<strong>
-${escapeHtml(title||"")}
-</strong>
-
-${
-message
-?
-`<div style="margin-top:7px">
-${escapeHtml(message)}
-</div>`
-:""
-}
-
+<div class="empty-icon">${escapeHtml(icon)}</div>
+<strong>${escapeHtml(title)}</strong>
+${message?`<div style="margin-top:7px">${escapeHtml(message)}</div>`:""}
 </div>
 `;
 
@@ -2500,8 +1568,7 @@ function extractId(data){
 
 if(!data)return null;
 
-if(typeof data==="string")
-return data;
+if(typeof data==="string")return data;
 
 if(typeof data==="object"){
 
@@ -2543,181 +1610,84 @@ return String(value??"")
 
 function getErrorMessage(error){
 
-if(!error)
-return"Something went wrong.";
-
-return(
-error.message||
-error.details||
-error.hint||
-"Something went wrong."
-);
+return error?.message||
+error?.details||
+error?.hint||
+"Something went wrong.";
 
 }
 
 function openModal(id){
 
-const e=
-document.getElementById(id);
-
-if(!e)return;
-
-e.classList.add("show");
-
-setTimeout(
-()=>{
-
-const input=
-e.querySelector(
-"input,textarea,select"
-);
-
-if(input)
-input.focus();
-
-},
-50
-);
+document.getElementById(id)?.classList.add("show");
 
 }
 
 function closeModal(id){
 
-const e=
-document.getElementById(id);
-
-if(e)
-e.classList.remove("show");
+document.getElementById(id)?.classList.remove("show");
 
 }
 
-function toast(
-message,
-type="normal"
-){
+let toastTimer;
 
-const e=
-document.getElementById("toast");
+function toast(message,type="normal"){
 
-if(!e)return;
+const e=document.getElementById("toast");
 
 clearTimeout(toastTimer);
 
-e.textContent=
-String(message||"");
+e.textContent=message;
 
-e.classList.remove(
-"success",
-"error",
-"warning"
-);
+e.className="toast show "+type;
 
-if(
-["success","error","warning"]
-.includes(type)
-){
-
-e.classList.add(type);
-
-}
-
-e.classList.add("show");
-
-toastTimer=
-setTimeout(
-()=>{
-
-e.classList.remove("show");
-
-},
+toastTimer=setTimeout(
+()=>e.className="toast",
 3500
 );
 
 }
 
-document.addEventListener(
-"click",
-event=>{
+document.addEventListener("click",e=>{
 
-if(
-event.target.classList.contains("modal")
-){
+if(e.target.classList.contains("modal"))
+e.target.classList.remove("show");
 
-event.target.classList.remove("show");
+});
+
+function setupRealtime(){
+
+supabaseClient
+.channel("sell-page-orders")
+.on(
+"postgres_changes",
+{
+event:"*",
+schema:"public",
+table:"p2p_orders"
+},
+async()=>{
+await loadBalance();
+await loadSellOrders();
+await loadMyOrders();
+}
+)
+.subscribe();
 
 }
-
-}
-);
-
-document.addEventListener(
-"keydown",
-event=>{
-
-if(event.key==="Escape"){
-
-document
-.querySelectorAll(".modal.show")
-.forEach(
-modal=>
-modal.classList.remove("show")
-);
-
-}
-
-}
-);
 
 setInterval(
 async()=>{
-
 if(
 currentUser&&
 document.visibilityState==="visible"
 ){
-
-try{
-
 await loadBalance();
+await loadSellOrders();
 await loadMyOrders();
-await loadMarketOrders();
-
-}catch(error){
-
-console.error(
-"AUTO REFRESH ERROR:",
-error
-);
-
 }
-
-}
-
 },
 30000
-);
-
-window.addEventListener(
-"beforeunload",
-()=>{
-
-if(realtimeChannel){
-
-supabaseClient.removeChannel(
-realtimeChannel
-);
-
-}
-
-if(tradeRealtimeChannel){
-
-supabaseClient.removeChannel(
-tradeRealtimeChannel
-);
-
-}
-
-}
 );
 
 </script>

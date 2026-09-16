@@ -1,2214 +1,2587 @@
-<!DOCTYPE html>  <html lang="en">  
-<head>  
-<meta charset="UTF-8">  
-<meta name="viewport" content="width=device-width, initial-scale=1.0">  
-<title>Buy USDT • P2P Social</title>  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <style>  
-*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}  
-html{scroll-behavior:smooth}  
-body{background:#f4f7f8;color:#172033;min-height:100vh;padding-bottom:90px}  
-button,input,select,textarea{font-family:Arial,sans-serif}  
-button{cursor:pointer}  
-button:disabled{opacity:.6;cursor:not-allowed}  
-  
-header{height:68px;background:#fff;border-bottom:1px solid #e2e8ea;display:flex;align-items:center;justify-content:space-between;padding:0 18px;position:sticky;top:0;z-index:100}  
-.brand{display:flex;align-items:center;gap:10px}  
-.brand-logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#064e46,#10a889);position:relative;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.12);flex-shrink:0}  
-.p-left{position:absolute;left:8px;top:10px;width:13px;height:23px;border:4px solid #fff;border-right:0;border-radius:8px 0 0 8px}  
-.p-right{position:absolute;right:8px;top:10px;width:13px;height:23px;border:4px solid #fff;border-left:0;border-radius:0 8px 8px 0}  
-.center-dot{width:10px;height:10px;background:#fff;border-radius:50%;position:absolute}  
-.brand-name{font-size:19px;font-weight:800}  
-.brand-name span{color:#087f73}  
-.security{color:#087f73;font-size:13px;font-weight:bold}  
-  
-.container{width:100%;max-width:850px;margin:auto;padding:18px}  
-.section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:22px 0 12px}  
-.section-title h2{font-size:20px}  
-.section-title span{color:#087f73;font-size:13px;font-weight:bold}  
-.section-actions{display:flex;align-items:center;gap:7px}  
-  
-.view-btn,.refresh-btn{border:none;background:#edf7f5;color:#087f73;padding:7px 10px;border-radius:8px;font-weight:bold}  
-.offer-list{display:flex;flex-direction:column;gap:10px}  
-.offer-card{background:#fff;border:1px solid #dfe7e9;border-radius:15px;overflow:hidden}  
-.offer-main{padding:16px}  
-.row{display:flex;justify-content:space-between;align-items:center;gap:10px}  
-.offer-user{font-weight:bold}  
-.offer-meta{color:#7b8790;font-size:12px;margin-top:5px}  
-.offer-price{font-size:18px;font-weight:bold;color:#087f73;text-align:right}  
-.offer-amount{margin-top:10px;font-size:13px;color:#596579}  
-.offer-trade{width:100%;margin-top:12px;border:none;padding:11px;border-radius:9px;background:#087f73;color:#fff;font-weight:bold}  
-.offer-type{padding:6px 9px;border-radius:8px;font-size:12px;font-weight:bold;white-space:nowrap;background:#e2f5ef;color:#087f73}  
-  
-.profile-btn{  
-  margin-top:10px;  
-  width:100%;  
-  padding:9px;  
-  border:1px solid #d7ebe7;  
-  background:#f7fbfa;  
-  color:#087f73;  
-  border-radius:9px;  
-  font-weight:bold  
-}  
-  
-.status{display:inline-block;padding:6px 9px;border-radius:8px;font-size:11px;font-weight:bold;background:#edf3f3;color:#596579;text-transform:capitalize}  
-.status.active,.status.pending,.status.open{background:#e2f5ef;color:#087f73}  
-.status.expired,.status.cancelled,.status.closed{background:#fde8ed;color:#d72c50}  
-.status.disputed{background:#fff2d9;color:#a56a00}  
-.status.completed,.status.released{background:#e9f7eb;color:#159447}  
-.status.paid,.status.payment_confirmed{background:#e9f7eb;color:#159447}  
-  
-.empty{background:#fff;border:1px dashed #ccd8da;border-radius:15px;padding:30px 18px;text-align:center;color:#7b8790}  
-.empty-icon{font-size:34px;margin-bottom:10px}  
-  
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center;padding:18px}  
-.modal.show{display:flex}  
-.modal-box{width:100%;max-width:430px;max-height:90vh;overflow:auto;background:#fff;border-radius:18px;padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.2)}  
-.modal-box h3{margin-bottom:15px}  
-.modal-box input,.modal-box textarea{width:100%;border:1px solid #dfe4eb;border-radius:10px;padding:11px;margin-bottom:10px;outline:none;font-size:14px}  
-.modal-box input:focus,.modal-box textarea:focus{border-color:#087f73;box-shadow:0 0 0 3px rgba(8,127,115,.08)}  
-.modal-box textarea{min-height:90px;resize:vertical}  
-.modal-actions{display:flex;gap:8px;margin-top:5px}  
-.modal-actions button{flex:1;padding:11px;border:none;border-radius:10px;font-weight:bold}  
-.close-btn{background:#edf0f4;color:#172033}  
-.confirm-btn{background:#087f73;color:#fff}  
-  
-.details{padding:15px 16px;border-top:1px solid #e5ebec;background:#fafcfc}  
-.detail-row{display:flex;justify-content:space-between;gap:10px;margin-bottom:9px;font-size:13px}  
-.detail-row:last-child{margin-bottom:0}  
-.detail-row span:first-child{color:#7a8790}  
-.detail-row strong{text-align:right;overflow-wrap:anywhere}  
-  
-.fee-card{margin-top:4px;margin-bottom:12px;background:#f7fbfa;border:1px solid #d7ebe7;border-radius:13px;padding:14px}  
-.fee-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}  
-.fee-badge{background:#e2f5ef;color:#087f73;border-radius:7px;padding:5px 8px;font-size:11px;font-weight:bold}  
-.fee-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;font-size:13px}  
-.fee-row span:first-child{color:#71808a}  
-.fee-row strong{text-align:right}  
-.fee-total{border-top:1px solid #dce9e7;margin-top:5px;padding-top:10px}  
-  
-.bottom-nav{position:fixed;left:0;right:0;bottom:0;height:72px;background:#fff;border-top:1px solid #dfe7e9;display:flex;justify-content:space-around;align-items:center;z-index:300;box-shadow:0 -4px 15px rgba(0,0,0,.05)}  
-.bottom-nav a{color:#7b8790;text-decoration:none;text-align:center;font-size:11px;min-width:55px}  
-.bottom-nav a.active{color:#087f73;font-weight:bold}  
-.nav-icon{display:block;font-size:21px;margin-bottom:4px}  
-.live-nav{color:#ef3155!important}  
-  
-.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#172033;color:#fff;padding:12px 16px;border-radius:10px;font-size:13px;z-index:1000;display:none;max-width:90%;text-align:center}  
-.toast.show{display:block}  
-.toast.success{background:#087f73}  
-.toast.error{background:#b4233f}  
-.toast.warning{background:#9a6500}  
-  
-@media(max-width:450px){  
-.container{padding:14px}  
-.brand-name{font-size:17px}  
-.security{font-size:11px}  
-.offer-price{font-size:16px}  
-.bottom-nav{height:70px}  
-.section-title h2{font-size:17px}  
-.view-btn,.refresh-btn{padding:6px 7px;font-size:11px}  
-}  
-</style>  </head>  <body>  <header>  
-<div class="brand">  
-<div class="brand-logo" aria-label="P2P Social logo">  
-<div class="p-left"></div>  
-<div class="p-right"></div>  
-<div class="center-dot"></div>  
-</div>  
-<div class="brand-name">P2P <span>Social</span></div>  
-</div>  
-<div class="security">🟢 Buy Orders</div>  
-</header>  <main class="container">  <div class="section-title">  
-<h2>🟢 Available Buy Orders (<span id="offerCount">0</span>)</h2>  <div class="section-actions">  
-<button type="button" id="offerViewButton" class="view-btn" onclick="toggleOffers()">View All</button>  
-<button type="button" class="refresh-btn" onclick="loadBuyOrders()">🔃 Refresh</button>  
-</div>  
-</div>  <section id="offers" class="offer-list">  
-<div class="empty">  
-<div class="empty-icon">🟢</div>  
-<strong>Loading buy orders...</strong>  
-</div>  
-</section>  </main>  <div id="tradeModal" class="modal" role="dialog" aria-modal="true">  <div class="modal-box">  <h3>🤝 Sell USDT to Buyer</h3>  <div id="tradeSummary"></div>  <input  
-id="tradeAmount"  
-type="number"  
-min="0"  
-step="0.000001"  
-placeholder="USDT amount"  
-oninput="updateTradeFeePreview()">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buy USDT • P2P Social</title>
 
-<div class="fee-card">  <div class="fee-title">  
-<strong>💸 Platform Fee</strong>  
-<span class="fee-badge">  
-<span id="tradeFeeRateText">1%</span>  
-</span>  
-</div>  <div class="fee-row">  
-<span>Trade value</span>  
-<strong id="tradeValuePreview">0.00</strong>  
-</div>  <div class="fee-row">  
-<span>Platform fee</span>  
-<strong id="tradeFeePreviewAmount">0.00</strong>  
-</div>  <div class="fee-row fee-total">  
-<span>Total</span>  
-<strong id="tradeTotalPreview">0.00</strong>  
-</div>  </div>  <div class="modal-actions">  <button  
-type="button"  
-class="close-btn"  
-onclick="closeModal('tradeModal')">
-Cancel
-</button>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<button  
-type="button"  
-class="confirm-btn"  
-id="tradeSubmitButton"  
-onclick="submitTrade()">
-Create Trade
-</button>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
+html{scroll-behavior:smooth}
+body{background:#f4f7f8;color:#172033;min-height:100vh;padding-bottom:90px}
+button,input,select,textarea{font-family:Arial,sans-serif}
+button{cursor:pointer}
+button:disabled{opacity:.6;cursor:not-allowed}
 
-</div>  </div>  
-</div>  <div id="toast" class="toast" role="status" aria-live="polite"></div>  <nav class="bottom-nav">  <a href="index.html">  
-<span class="nav-icon">🏠</span>  
-Home  
-</a>  <a href="live.html" class="active">  
-<span class="nav-icon">🟢</span>  
-Buy  
-</a>  <a href="wallet.html">  
-<span class="nav-icon">🔴</span>  
-Sell  
-</a>  <a href="message.html">  
-<span class="nav-icon">💬</span>  
-Messages  
-</a>  <a href="profile.html">  
-<span class="nav-icon">👤</span>  
-Profile  
-</a>  </nav>  <script>  
-  
-const SUPABASE_URL="https://mbsvuwrgigqfporxwpfr.supabase.co";  
-  
-const SUPABASE_PUBLISHABLE_KEY="sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";  
-  
-const supabaseClient=  
-window.supabase.createClient(  
-SUPABASE_URL,  
-SUPABASE_PUBLISHABLE_KEY  
-);  
-  
-const PLATFORM_FEE_RATE=.01;  
-  
-let currentSession=null;  
-let currentUser=null;  
-let currentUsername=null;  
-  
-let availableOrders=[];  
-let selectedOffer=null;  
-  
-let offersExpanded=false;  
-  
-let realtimeChannel=null;  
-let tradeRealtimeChannel=null;  
-  
-let toastTimer=null;  
-let isLoading=false;  
-let actionLoading=false;  
-  
-const usernameCache=new Map();  
-  
-document.addEventListener(  
-"DOMContentLoaded",  
-startApp  
-);  
-  
-async function startApp(){  
-  
-try{  
-  
-const {  
-data,  
-error  
-}=  
-await supabaseClient.auth.getSession();  
-  
-if(error){  
-  
-console.error(  
-"SESSION ERROR:",  
-error  
-);  
-  
-showLogin();  
-return;  
-  
-}  
-  
-currentSession=data.session;  
-  
-if(!currentSession){  
-  
-showLogin();  
-return;  
-  
-}  
-  
-currentUser=currentSession.user;  
-  
-await loadCurrentUsername();  
-  
-updateFeeRateText();  
-  
-await loadBuyOrders();  
-  
-setupRealtime();  
-  
-}catch(error){  
-  
-console.error(  
-"START ERROR:",  
-error  
-);  
-  
-toast(  
-getErrorMessage(error),  
-"error"  
-);  
-  
-}  
-  
-}  
-  
-function showLogin(){  
-  
-alert("Please login first.");  
-  
-window.location.href=  
-"login.html";  
-  
-}  
-  
-supabaseClient.auth.onAuthStateChange(  
-(event,session)=>{  
-  
-currentSession=session;  
-  
-currentUser=  
-session?.user||null;  
-  
-if(!currentUser){  
-  
-currentUsername=null;  
-  
-}  
-  
-if(event==="SIGNED_OUT"){  
-  
-if(realtimeChannel){  
-  
-supabaseClient.removeChannel(  
-realtimeChannel  
-);  
-  
-realtimeChannel=null;  
-  
-}  
-  
-if(tradeRealtimeChannel){  
-  
-supabaseClient.removeChannel(  
-tradeRealtimeChannel  
-);  
-  
-tradeRealtimeChannel=null;  
-  
-}  
-  
-window.location.href=  
-"login.html";  
-  
-}  
-  
-}  
-);  
-  
-async function loadCurrentUsername(){  
-  
-if(!currentUser)return;  
-  
-try{  
-  
-const {  
-data,  
-error  
-}=  
-await supabaseClient  
-.from("profiles")  
-.select("username")  
-.eq(  
-"id",  
-currentUser.id  
-)  
-.maybeSingle();  
-  
-if(error)throw error;  
-  
-currentUsername=  
-data?.username||  
-currentUser.user_metadata?.username||  
-null;  
-  
-if(currentUsername){  
-  
-usernameCache.set(  
-String(currentUser.id),  
-currentUsername  
-);  
-  
-}  
-  
-}catch(error){  
-  
-console.error(  
-"USERNAME ERROR:",  
-error  
-);  
-  
-currentUsername=  
-currentUser.user_metadata?.username||  
-null;  
-  
-}  
-  
-}  
-  
-async function getUsername(userId){  
-  
-if(!userId)return"User";  
-  
-const key=String(userId);  
-  
-if(usernameCache.has(key)){  
-  
-return usernameCache.get(key);  
-  
-}  
-  
-try{  
-  
-const {  
-data,  
-error  
-}=  
-await supabaseClient  
-.from("profiles")  
-.select("username")  
-.eq(  
-"id",  
-userId  
-)  
-.maybeSingle();  
-  
-if(  
-!error&&  
-data?.username  
-){  
-  
-usernameCache.set(  
-key,  
-data.username  
-);  
-  
-return data.username;  
-  
-}  
-  
-}catch(error){  
-  
-console.error(  
-"PROFILE USERNAME ERROR:",  
-error  
-);  
-  
-}  
-  
-return"User";  
-  
-}  
-  
-async function loadOrderUsernames(){  
-  
-const ids=[  
-...new Set(  
-availableOrders  
-.map(  
-order=>order.user_id  
-)  
-.filter(Boolean)  
-.map(String)  
-)  
-];  
-  
-const missing=  
-ids.filter(  
-id=>!usernameCache.has(id)  
-);  
-  
-if(!missing.length)return;  
-  
-try{  
-  
-const {  
-data,  
-error  
-}=  
-await supabaseClient  
-.from("profiles")  
-.select(  
-"id,username"  
-)  
-.in(  
-"id",  
-missing  
-);  
-  
-if(error)throw error;  
-  
-(data||[]).forEach(  
-profile=>{  
-  
-if(  
-profile.id&&  
-profile.username  
-){  
-  
-usernameCache.set(  
-String(profile.id),  
-profile.username  
-);  
-  
-}  
-  
-}  
-);  
-  
-}catch(error){  
-  
-console.error(  
-"ORDER USERNAMES ERROR:",  
-error  
-);  
-  
-}  
-  
-}  
-  
-async function loadBuyOrders(){  
-  
-if(!currentUser){  
-  
-showLogin();  
-return;  
-  
-}  
-  
-if(isLoading)return;  
-  
-isLoading=true;  
-  
-const container=  
-document.getElementById(  
-"offers"  
-);  
-  
-if(container){  
-  
-container.innerHTML=  
-'<div class="empty">Loading buy orders...</div>';  
-  
-}  
-  
-try{  
-  
-const {  
-data,  
-error  
-}=  
-await supabaseClient  
-.from("p2p_orders")  
-.select("*")  
-.neq(  
-"user_id",  
-currentUser.id  
-)  
-.eq(  
-"order_type",  
-"buy"  
-)  
-.in(  
-"status",  
-[  
-"active",  
-"open",  
-"pending"  
-]  
-)  
-.order(  
-"created_at",  
-{  
-ascending:false  
-}  
-);  
-  
-if(error){  
-  
-console.error(  
-"BUY ORDERS ERROR:",  
-error  
-);  
-  
-availableOrders=[];  
-  
-if(container){  
-  
-container.innerHTML=  
-emptyHtml(  
-"⚠️",  
-"Could not load buy orders.",  
-getErrorMessage(error)  
-);  
-  
-}  
-  
-return;  
-  
-}  
-  
-availableOrders=data||[];  
-  
-await loadOrderUsernames();  
-  
-const count=  
-document.getElementById(  
-"offerCount"  
-);  
-  
-if(count){  
-  
-count.textContent=  
-availableOrders.length;  
-  
-}  
-  
-renderBuyOrders();  
-  
-}catch(error){  
-  
-console.error(  
-"BUY ORDERS ERROR:",  
-error  
-);  
-  
-if(container){  
-  
-container.innerHTML=  
-emptyHtml(  
-"⚠️",  
-"Could not load buy orders.",  
-getErrorMessage(error)  
-);  
-  
-}  
-  
-}finally{  
-  
-isLoading=false;  
-  
-}  
-  
-}  
-  
-function renderBuyOrders(){  
-  
-const container=  
-document.getElementById(  
-"offers"  
-);  
-  
-if(!container)return;  
-  
-if(!availableOrders.length){  
-  
-container.innerHTML=  
-emptyHtml(  
-"🟢",  
-"No buy orders available.",  
-"Real active buy orders from other traders will appear here."  
-);  
-  
-updateOfferButton();  
-  
-return;  
-  
-}  
-  
-container.innerHTML="";  
-  
-const items=  
-offersExpanded  
-?availableOrders  
-:availableOrders.slice(0,3);  
-  
-items.forEach(  
-order=>{  
-  
-const parts=  
-getPairParts(  
-order.pair||  
-order.trading_pair  
-);  
-  
-const status=  
-normalizeStatus(  
-order.status  
-);  
-  
-const username=  
-usernameCache.get(  
-String(order.user_id)  
-)||  
-"Buyer";  
-  
-const card=  
-document.createElement(  
-"div"  
-);  
-  
-card.className=  
-"offer-card";  
-  
-card.innerHTML=`  
-  
-<div class="offer-main">  
-  
-<div class="row">  
-  
-<div>  
-  
-<div class="offer-user">  
-🟢 ${escapeHtml(username)}  
-</div>  
-  
-<div class="offer-meta">  
-🟢 Buying ·  
-${escapeHtml(  
-formatPair(order)  
-)}  
-</div>  
-  
-</div>  
-  
-<span class="offer-type">  
-🟢 BUY  
-</span>  
-  
-</div>  
-  
-<div  
-style="  
-display:flex;  
-justify-content:space-between;  
-align-items:center;  
-gap:10px;  
-margin-top:12px;  
-">  
-  
-<div>  
-  
-<div  
-style="  
-color:#7b8790;  
-font-size:12px;  
-">  
-Buying price  
-</div>  
-  
-<div  
-class="offer-price"  
-style="text-align:left;margin-top:3px;"  
->  
-  
-${money(order.price)}  
-${escapeHtml(  
-parts.quote||  
-"USDT"  
-)}  
-  
-</div>  
-  
-</div>  
-  
-<span class="status ${  
-statusClass(status)  
-}">  
-  
-${escapeHtml(status)}  
-  
-</span>  
-  
-</div>  
-  
-<div class="offer-amount">  
-  
-Wants to buy:  
-  
-<strong>  
-${escapeHtml(  
-formatAmount(order)  
-)}  
-</strong>  
-  
-</div>  
-  
-${  
-order.payment_method||  
-order.payment  
-?  
-`  
-<div  
-style="  
-margin-top:8px;  
-color:#596579;  
-font-size:13px;  
-">  
-  
-💳 Payment:  
-  
-<strong>  
-${escapeHtml(  
-order.payment_method||  
-order.payment  
-)}  
-</strong>  
-  
-</div>  
-`  
-:""  
-}  
-  
-<button  
-type="button"  
-class="profile-btn"  
-onclick="viewUser('${escapeJs(order.user_id)}')">  
-  
-👤 View Buyer  
-  
-</button>  
-  
-<button  
-type="button"  
-class="offer-trade"  
-onclick="openTrade('${escapeJs(order.id)}')">  
-  
-🤝 Sell USDT  
-  
-</button>  
-  
-</div>  
-  
-`;  
-  
-container.appendChild(card);  
-  
-}  
-);  
-  
-updateOfferButton();  
-  
-}  
-  
-function viewUser(userId){  
-  
-if(!userId)return;  
-  
-window.location.href=  
-"profile.html?user_id="+  
-encodeURIComponent(userId);  
-  
-}  
-  
-function viewUserByUsername(username){  
-  
-if(!username)return;  
-  
-window.location.href=  
-"profile.html?username="+  
-encodeURIComponent(username);  
-  
-}  
-  
-function openMessagesForOrder(order){  
-  
-if(!order)return;  
-  
-const username=  
-usernameCache.get(  
-String(order.user_id)  
-)||"";  
-  
-const params=  
-new URLSearchParams();  
-  
-params.set(  
-"order_id",  
-String(order.id)  
-);  
-  
-if(username){  
-  
-params.set(  
-"username",  
-username  
-);  
-  
-}  
-  
-window.location.href=  
-"message.html?"+  
-params.toString();  
-  
-}  
-  
-function updateOfferButton(){  
-  
-const button=  
-document.getElementById(  
-"offerViewButton"  
-);  
-  
-if(!button)return;  
-  
-if(  
-availableOrders.length<=3  
-){  
-  
-button.style.display=  
-availableOrders.length  
-?"none"  
-:"block";  
-  
-button.textContent=  
-"View All";  
-  
-return;  
-  
-}  
-  
-button.style.display=  
-"block";  
-  
-button.textContent=  
-offersExpanded  
-?"Show 3"  
-:"View All";  
-  
-}  
-  
-function toggleOffers(){  
-  
-offersExpanded=  
-!offersExpanded;  
-  
-renderBuyOrders();  
-  
-}  
-  
-function openTrade(orderId){  
-  
-selectedOffer=  
-availableOrders.find(  
-order=>  
-String(order.id)===  
-String(orderId)  
-);  
-  
-if(!selectedOffer){  
-  
-toast(  
-"Buy order no longer exists. Refresh.",  
-"warning"  
-);  
-  
-return;  
-  
-}  
-  
-const available=  
-getOfferAvailableAmount(  
-selectedOffer  
-);  
-  
-if(available<=0){  
-  
-toast(  
-"This buy order has no available amount.",  
-"warning"  
-);  
-  
-return;  
-  
-}  
-  
-const input=  
-document.getElementById(  
-"tradeAmount"  
-);  
-  
-input.value="";  
-  
-input.min=  
-getMinimumTradeAmount(  
-selectedOffer  
-);  
-  
-input.max=  
-available;  
-  
-const parts=  
-getPairParts(  
-selectedOffer.pair||  
-selectedOffer.trading_pair  
-);  
-  
-const username=  
-usernameCache.get(  
-String(  
-selectedOffer.user_id  
-)  
-)||  
-"Buyer";  
-  
-document.getElementById(  
-"tradeSummary"  
-).innerHTML=`  
-  
-<div  
-class="details"  
-style="margin-bottom:12px;"  
->  
-  
-${detail(  
-"Buyer",  
-username  
-)}  
-  
-${detail(  
-"Pair",  
-formatPair(selectedOffer)  
-)}  
-  
-${detail(  
-"Buying price",  
-money(  
-selectedOffer.price  
-)+  
-" "+  
-(  
-parts.quote||  
-"USDT"  
-)  
-)}  
-  
-${detail(  
-"Available",  
-formatAmount(selectedOffer)  
-)}  
-  
-${  
-selectedOffer.payment_method||  
-selectedOffer.payment  
-?  
-detail(  
-"Payment",  
-selectedOffer.payment_method||  
-selectedOffer.payment  
-)  
-:""  
-}  
-  
-</div>  
-  
-`;  
-  
-updateTradeFeePreview();  
-  
-openModal(  
-"tradeModal"  
-);  
-  
-}  
-  
-function getOfferAvailableAmount(  
-offer  
-){  
-  
-if(!offer)return 0;  
-  
-for(  
-const value of [  
-offer.remaining_amount,  
-offer.available_amount,  
-offer.remaining  
-]  
-){  
-  
-if(  
-value!==null&&  
-value!==undefined&&  
-value!==""  
-){  
-  
-const n=Number(value);  
-  
-if(  
-Number.isFinite(n)&&  
-n>=0  
-){  
-  
-return n;  
-  
-}  
-  
-}  
-  
-}  
-  
-const n=  
-Number(  
-offer.amount  
-);  
-  
-return Number.isFinite(n)&&n>=0  
-?n  
-:0;  
-  
-}  
-  
-function getMinimumTradeAmount(  
-offer  
-){  
-  
-if(!offer)return.000001;  
-  
-for(  
-const value of [  
-offer.min_trade_amount,  
-offer.minimum_amount,  
-offer.min_amount  
-]  
-){  
-  
-const n=Number(value);  
-  
-if(  
-Number.isFinite(n)&&  
-n>0  
-){  
-  
-return n;  
-  
-}  
-  
-}  
-  
-return.000001;  
-  
-}  
-  
-function getTradeValue(){  
-  
-if(!selectedOffer)return 0;  
-  
-const amount=  
-Number(  
-document.getElementById(  
-"tradeAmount"  
-)?.value  
-)||0;  
-  
-const price=  
-Number(  
-selectedOffer.price  
-)||0;  
-  
-return amount*price;  
-  
-}  
-  
-function updateTradeFeePreview(){  
-  
-const value=  
-getTradeValue();  
-  
-const fee=  
-value*PLATFORM_FEE_RATE;  
-  
-const total=  
-value+fee;  
-  
-const parts=  
-getPairParts(  
-selectedOffer?.pair||  
-selectedOffer?.trading_pair  
-);  
-  
-const currency=  
-parts.quote||  
-"USDT";  
-  
-const a=  
-document.getElementById(  
-"tradeValuePreview"  
-);  
-  
-const b=  
-document.getElementById(  
-"tradeFeePreviewAmount"  
-);  
-  
-const c=  
-document.getElementById(  
-"tradeTotalPreview"  
-);  
-  
-if(a){  
-  
-a.textContent=  
-money(value)+  
-" "+  
-currency;  
-  
-}  
-  
-if(b){  
-  
-b.textContent=  
-money(fee)+  
-" "+  
-currency;  
-  
-}  
-  
-if(c){  
-  
-c.textContent=  
-money(total)+  
-" "+  
-currency;  
-  
-}  
-  
-}  
-  
-function updateFeeRateText(){  
-  
-const e=  
-document.getElementById(  
-"tradeFeeRateText"  
-);  
-  
-if(e){  
-  
-e.textContent=  
-(PLATFORM_FEE_RATE*100)+  
-"%";  
-  
-}  
-  
-}  
-  
-async function submitTrade(){  
-  
-if(actionLoading)return;  
-  
-if(!currentUser){  
-  
-showLogin();  
-return;  
-  
-}  
-  
-if(!selectedOffer){  
-  
-toast(  
-"Select a buy order first.",  
-"warning"  
-);  
-  
-return;  
-  
-}  
-  
-let freshOffer=null;  
-  
-try{  
-  
-const {  
-data,  
-error  
-}=  
-await supabaseClient  
-.from("p2p_orders")  
-.select("*")  
-.eq(  
-"id",  
-selectedOffer.id  
-)  
-.maybeSingle();  
-  
-if(error){  
-  
-toast(  
-getErrorMessage(error),  
-"error"  
-);  
-  
-return;  
-  
-}  
-  
-if(!data){  
-  
-toast(  
-"This buy order is no longer available.",  
-"warning"  
-);  
-  
-closeModal(  
-"tradeModal"  
-);  
-  
-await loadBuyOrders();  
-  
-return;  
-  
-}  
-  
-freshOffer=data;  
-  
-}catch(error){  
-  
-toast(  
-getErrorMessage(error),  
-"error"  
-);  
-  
-return;  
-  
-}  
-  
-selectedOffer=freshOffer;  
-  
-if(  
-String(  
-selectedOffer.order_type  
-).toLowerCase()!=="buy"  
-){  
-  
-toast(  
-"This is not a buy order.",  
-"warning"  
-);  
-  
-closeModal(  
-"tradeModal"  
-);  
-  
-return;  
-  
-}  
-  
-const status=  
-normalizeStatus(  
-selectedOffer.status  
-);  
-  
-if(  
-![  
-"active",  
-"open",  
-"pending"  
-].includes(status)  
-){  
-  
-toast(  
-"This buy order is no longer active.",  
-"warning"  
-);  
-  
-closeModal(  
-"tradeModal"  
-);  
-  
-await loadBuyOrders();  
-  
-return;  
-  
-}  
-  
-if(  
-String(  
-selectedOffer.user_id  
-)===  
-String(  
-currentUser.id  
-)  
-){  
-  
-toast(  
-"You cannot trade with your own order.",  
-"warning"  
-);  
-  
-closeModal(  
-"tradeModal"  
-);  
-  
-return;  
-  
-}  
-  
-const amount=  
-Number(  
-document.getElementById(  
-"tradeAmount"  
-).value  
-);  
-  
-const max=  
-getOfferAvailableAmount(  
-selectedOffer  
-);  
-  
-const min=  
-getMinimumTradeAmount(  
-selectedOffer  
-);  
-  
-if(  
-!Number.isFinite(amount)||  
-amount<=0  
-){  
-  
-toast(  
-"Enter a valid USDT amount.",  
-"warning"  
-);  
-  
-return;  
-  
-}  
-  
-if(amount<min){  
-  
-toast(  
-"Trade amount is below the minimum.",  
-"warning"  
-);  
-  
-return;  
-  
-}  
-  
-if(  
-amount>  
-max+.000000001  
-){  
-  
-toast(  
-"Amount is greater than the available buy order.",  
-"warning"  
-);  
-  
-return;  
-  
-}  
-  
-const normalizedAmount=  
-Number(  
-amount.toFixed(6)  
-);  
-  
-if(  
-!Number.isFinite(  
-normalizedAmount  
-)||  
-normalizedAmount<=0  
-){  
-  
-toast(  
-"Invalid trade amount.",  
-"warning"  
-);  
-  
-return;  
-  
-}  
-  
-if(  
-!confirm(  
-"Sell this amount of USDT to the buyer?"  
-)  
-){  
-  
-return;  
-  
-}  
-  
-const button=  
-document.getElementById(  
-"tradeSubmitButton"  
-);  
-  
-actionLoading=true;  
-  
-button.disabled=true;  
-  
-button.textContent=  
-"Creating...";  
-  
-try{  
-  
-const {  
-data,  
-error  
-}=  
-await supabaseClient.rpc(  
-"create_p2p_trade",  
-{  
-p_order_id:  
-selectedOffer.id,  
-  
-p_amount:  
-normalizedAmount  
-}  
-);  
-  
-if(error){  
-  
-toast(  
-getErrorMessage(error),  
-"error"  
-);  
-  
-return;  
-  
-}  
-  
-let tradeId=  
-extractId(data);  
-  
-closeModal(  
-"tradeModal"  
-);  
-  
-toast(  
-"Sell trade created successfully.",  
-"success"  
-);  
-  
-selectedOffer=null;  
-  
-await loadBuyOrders();  
-  
-if(tradeId){  
-  
-openTradeConversation(  
-tradeId,  
-selectedOffer,  
-freshOffer  
-);  
-  
-}else{  
-  
-openMessagesForOrder(  
-freshOffer  
-);  
-  
-}  
-  
-}catch(error){  
-  
-toast(  
-getErrorMessage(error),  
-"error"  
-);  
-  
-}finally{  
-  
-actionLoading=false;  
-  
-button.disabled=false;  
-  
-button.textContent=  
-"Create Trade";  
-  
-}  
-  
-}  
-  
-function extractId(data){  
-  
-if(!data)return null;  
-  
-if(typeof data==="string")return data;  
-  
-if(  
-typeof data==="object"  
-){  
-  
-return data.id||  
-data.trade_id||  
-data.order_id||  
-data[0]?.id||  
-data[0]?.trade_id||  
-data[0]?.order_id||  
-null;  
-  
-}  
-  
-return null;  
-  
-}  
-  
-function openTradeConversation(  
-tradeId,  
-trade,  
-order  
-){  
-  
-const target=  
-order||selectedOffer;  
-  
-const params=  
-new URLSearchParams();  
-  
-params.set(  
-"trade_id",  
-String(tradeId)  
-);  
-  
-if(target?.id){  
-  
-params.set(  
-"order_id",  
-String(target.id)  
-);  
-  
-}  
-  
-if(target?.user_id){  
-  
-getUsername(  
-target.user_id  
-).then(  
-username=>{  
-  
-if(username){  
-  
-params.set(  
-"username",  
-username  
-);  
-  
-}  
-  
-window.location.href=  
-"message.html?"+  
-params.toString();  
-  
-}  
-);  
-  
-return;  
-  
-}  
-  
-window.location.href=  
-"message.html?"+  
-params.toString();  
-  
-}  
-  
-function setupRealtime(){  
-  
-if(!currentUser)return;  
-  
-if(realtimeChannel){  
-  
-supabaseClient.removeChannel(  
-realtimeChannel  
-);  
-  
-}  
-  
-realtimeChannel=  
-supabaseClient  
-.channel(  
-"buy-orders-live-"+  
-currentUser.id  
-)  
-.on(  
-"postgres_changes",  
-{  
-event:"*",  
-schema:"public",  
-table:"p2p_orders"  
-},  
-()=>{  
-  
-loadBuyOrders();  
-  
-}  
-)  
-.subscribe(  
-status=>{  
-  
-console.log(  
-"Buy orders realtime:",  
-status  
-);  
-  
-}  
-);  
-  
-if(tradeRealtimeChannel){  
-  
-supabaseClient.removeChannel(  
-tradeRealtimeChannel  
-);  
-  
-}  
-  
-tradeRealtimeChannel=  
-supabaseClient  
-.channel(  
-"buy-trades-live-"+  
-currentUser.id  
-)  
-.on(  
-"postgres_changes",  
-{  
-event:"*",  
-schema:"public",  
-table:"p2p_trades"  
-},  
-()=>{  
-  
-loadBuyOrders();  
-  
-}  
-)  
-.subscribe(  
-status=>{  
-  
-console.log(  
-"Buy trades realtime:",  
-status  
-);  
-  
-}  
-);  
-  
-}  
-  
-function openModal(id){  
-  
-const e=  
-document.getElementById(id);  
-  
-if(!e)return;  
-  
-e.classList.add("show");  
-  
-setTimeout(  
-()=>{  
-  
-const input=  
-e.querySelector(  
-"input,textarea"  
-);  
-  
-if(input){  
-  
-input.focus();  
-  
-}  
-  
-},  
-50  
-);  
-  
-}  
-  
-function closeModal(id){  
-  
-const e=  
-document.getElementById(id);  
-  
-if(e){  
-  
-e.classList.remove(  
-"show"  
-);  
-  
-}  
-  
-}  
-  
-function formatPair(order){  
-  
-const pair=  
-String(  
-order?.pair||  
-order?.trading_pair||  
-""  
-);  
-  
-if(pair.includes("_")){  
-  
-return pair.replace(  
-"_",  
-" / "  
-);  
-  
-}  
-  
-return pair||  
-"P2P";  
-  
-}  
-  
-function formatAmount(order){  
-  
-const amount=  
-getOfferAvailableAmount(  
-order  
-);  
-  
-const parts=  
-getPairParts(  
-order?.pair||  
-order?.trading_pair||  
-""  
-);  
-  
-return amount.toLocaleString(  
-undefined,  
-{  
-maximumFractionDigits:6  
-}  
-)+  
-" "+  
-(  
-parts.base||  
-"USDT"  
-);  
-  
-}  
-  
-function getPairParts(pair){  
-  
-const parts=  
-String(  
-pair||  
-""  
-).split("_");  
-  
-return{  
-base:  
-parts[0]||"",  
-quote:  
-parts[1]||""  
-};  
-  
-}  
-  
-function money(value){  
-  
-const number=  
-Number(value);  
-  
-if(  
-!Number.isFinite(number)  
-){  
-  
-return"0.00";  
-  
-}  
-  
-return number.toLocaleString(  
-undefined,  
-{  
-minimumFractionDigits:2,  
-maximumFractionDigits:6  
-}  
-);  
-  
-}  
-  
-function normalizeStatus(status){  
-  
-return String(  
-status||  
-"pending"  
-)  
-.trim()  
-.toLowerCase()||  
-"pending";  
-  
-}  
-  
-function statusClass(status){  
-  
-const value=  
-normalizeStatus(status);  
-  
-if(  
-[  
-"active",  
-"open",  
-"pending",  
-"paid",  
-"payment_confirmed"  
-].includes(value)  
-){  
-  
-return value;  
-  
-}  
-  
-if(  
-[  
-"expired",  
-"cancelled",  
-"closed"  
-].includes(value)  
-){  
-  
-return value;  
-  
-}  
-  
-if(  
-value==="disputed"  
-){  
-  
-return"disputed";  
-  
-}  
-  
-if(  
-[  
-"completed",  
-"released"  
-].includes(value)  
-){  
-  
-return value;  
-  
-}  
-  
-return"";  
-  
-}  
-  
-function detail(  
-label,  
-value  
-){  
-  
-const rendered=  
-String(  
-value??""  
-);  
-  
-return`  
-<div class="detail-row">  
-<span>  
-${escapeHtml(label)}  
-</span>  
-<strong>  
-${  
-rendered.includes(  
-'class="status'  
-)  
-?rendered  
-:escapeHtml(rendered)  
-}  
-</strong>  
-</div>  
-`;  
-  
-}  
-  
-function emptyHtml(  
-icon,  
-title,  
-message  
-){  
-  
-return`  
-<div class="empty">  
-  
-<div class="empty-icon">  
-${escapeHtml(  
-icon||  
-"ℹ️"  
-)}  
-</div>  
-  
-<strong>  
-${escapeHtml(  
-title||  
-""  
-)}  
-</strong>  
-  
-${  
-message  
-?  
-`  
-<div style="margin-top:7px;">  
-${escapeHtml(message)}  
-</div>  
-`  
-:""  
-}  
-  
-</div>  
-`;  
-  
-}  
-  
-function escapeHtml(value){  
-  
-return String(  
-value??""  
-)  
-.replace(  
-/&/g,  
-"&amp;"  
-)  
-.replace(  
-/</g,  
-"&lt;"  
-)  
-.replace(  
-/>/g,  
-"&gt;"  
-)  
-.replace(  
-/"/g,  
-"&quot;"  
-)  
-.replace(  
-/'/g,  
-"&#039;"  
-);  
-  
-}  
-  
-function escapeJs(value){  
-  
-return String(  
-value??""  
-)  
-.replace(  
-/\\/g,  
-"\\\\"  
-)  
-.replace(  
-/'/g,  
-"\\'"  
-)  
-.replace(  
-/"/g,  
-'\\"'  
-)  
-.replace(  
-/\r/g,  
-"\\r"  
-)  
-.replace(  
-/\n/g,  
-"\\n"  
-);  
-  
-}  
-  
-function getErrorMessage(error){  
-  
-if(!error){  
-  
-return"Something went wrong.";  
-  
-}  
-  
-return(  
-error.message||  
-error.details||  
-error.hint||  
-"Something went wrong."  
-);  
-  
-}  
-  
-function toast(  
-message,  
-type="normal"  
-){  
-  
-const e=  
-document.getElementById(  
-"toast"  
-);  
-  
-if(!e)return;  
-  
-clearTimeout(  
-toastTimer  
-);  
-  
-e.textContent=  
-String(  
-message||  
-""  
-);  
-  
-e.classList.remove(  
-"success",  
-"error",  
-"warning"  
-);  
-  
-if(  
-[  
-"success",  
-"error",  
-"warning"  
-].includes(type)  
-){  
-  
-e.classList.add(type);  
-  
-}  
-  
-e.classList.add(  
-"show"  
-);  
-  
-toastTimer=  
-setTimeout(  
-()=>{  
-  
-e.classList.remove(  
-"show"  
-);  
-  
-},  
-3500  
-);  
-  
-}  
-  
-document.addEventListener(  
-"click",  
-event=>{  
-  
-if(  
-event.target.classList.contains(  
-"modal"  
-)  
-){  
-  
-event.target.classList.remove(  
-"show"  
-);  
-  
-}  
-  
-}  
-);  
-  
-document.addEventListener(  
-"keydown",  
-event=>{  
-  
-if(  
-event.key==="Escape"  
-){  
-  
-document  
-.querySelectorAll(  
-".modal.show"  
-)  
-.forEach(  
-modal=>  
-modal.classList.remove(  
-"show"  
-)  
-);  
-  
-}  
-  
-}  
-);  
-  
-setInterval(  
-async()=>{  
-  
-if(  
-currentUser&&  
-document.visibilityState===  
-"visible"  
-){  
-  
-try{  
-  
-await loadBuyOrders();  
-  
-}catch(error){  
-  
-console.error(  
-"AUTO REFRESH ERROR:",  
-error  
-);  
-  
-}  
-  
-}  
-  
-},  
-30000  
-);  
-  
-window.addEventListener(  
-"beforeunload",  
-()=>{  
-  
-if(realtimeChannel){  
-  
-supabaseClient.removeChannel(  
-realtimeChannel  
-);  
-  
-}  
-  
-if(tradeRealtimeChannel){  
-  
-supabaseClient.removeChannel(  
-tradeRealtimeChannel  
-);  
-  
-}  
-  
-}  
-);  
-  
-</script>  </body>  
+header{
+  height:68px;
+  background:#fff;
+  border-bottom:1px solid #e2e8ea;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 18px;
+  position:sticky;
+  top:0;
+  z-index:100
+}
+
+.brand{display:flex;align-items:center;gap:10px}
+
+.brand-logo{
+  width:42px;
+  height:42px;
+  border-radius:13px;
+  background:linear-gradient(135deg,#064e46,#10a889);
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 4px 12px rgba(0,0,0,.12);
+  flex-shrink:0
+}
+
+.p-left{
+  position:absolute;
+  left:8px;
+  top:10px;
+  width:13px;
+  height:23px;
+  border:4px solid #fff;
+  border-right:0;
+  border-radius:8px 0 0 8px
+}
+
+.p-right{
+  position:absolute;
+  right:8px;
+  top:10px;
+  width:13px;
+  height:23px;
+  border:4px solid #fff;
+  border-left:0;
+  border-radius:0 8px 8px 0
+}
+
+.center-dot{
+  width:10px;
+  height:10px;
+  background:#fff;
+  border-radius:50%;
+  position:absolute
+}
+
+.brand-name{font-size:19px;font-weight:800}
+.brand-name span{color:#087f73}
+.security{color:#087f73;font-size:13px;font-weight:bold}
+
+.container{
+  width:100%;
+  max-width:850px;
+  margin:auto;
+  padding:18px
+}
+
+.section-title{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin:22px 0 12px
+}
+
+.section-title h2{font-size:20px}
+.section-title span{color:#087f73;font-size:13px;font-weight:bold}
+.section-actions{display:flex;align-items:center;gap:7px}
+
+.view-btn,.refresh-btn{
+  border:none;
+  background:#edf7f5;
+  color:#087f73;
+  padding:7px 10px;
+  border-radius:8px;
+  font-weight:bold
+}
+
+.offer-list{display:flex;flex-direction:column;gap:10px}
+
+.offer-card{
+  background:#fff;
+  border:1px solid #dfe7e9;
+  border-radius:15px;
+  overflow:hidden
+}
+
+.offer-main{padding:16px}
+
+.row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px
+}
+
+.offer-user{font-weight:bold}
+.offer-meta{color:#7b8790;font-size:12px;margin-top:5px}
+
+.offer-price{
+  font-size:18px;
+  font-weight:bold;
+  color:#087f73;
+  text-align:right
+}
+
+.offer-amount{
+  margin-top:10px;
+  font-size:13px;
+  color:#596579
+}
+
+.offer-trade{
+  width:100%;
+  margin-top:12px;
+  border:none;
+  padding:11px;
+  border-radius:9px;
+  background:#087f73;
+  color:#fff;
+  font-weight:bold
+}
+
+.offer-type{
+  padding:6px 9px;
+  border-radius:8px;
+  font-size:12px;
+  font-weight:bold;
+  white-space:nowrap;
+  background:#e2f5ef;
+  color:#087f73
+}
+
+.profile-btn{
+  margin-top:10px;
+  width:100%;
+  padding:9px;
+  border:1px solid #d7ebe7;
+  background:#f7fbfa;
+  color:#087f73;
+  border-radius:9px;
+  font-weight:bold
+}
+
+.status{
+  display:inline-block;
+  padding:6px 9px;
+  border-radius:8px;
+  font-size:11px;
+  font-weight:bold;
+  background:#edf3f3;
+  color:#596579;
+  text-transform:capitalize
+}
+
+.status.active,
+.status.pending,
+.status.open{
+  background:#e2f5ef;
+  color:#087f73
+}
+
+.status.expired,
+.status.cancelled,
+.status.closed{
+  background:#fde8ed;
+  color:#d72c50
+}
+
+.status.disputed{
+  background:#fff2d9;
+  color:#a56a00
+}
+
+.status.completed,
+.status.released{
+  background:#e9f7eb;
+  color:#159447
+}
+
+.status.paid,
+.status.payment_confirmed{
+  background:#e9f7eb;
+  color:#159447
+}
+
+.empty{
+  background:#fff;
+  border:1px dashed #ccd8da;
+  border-radius:15px;
+  padding:30px 18px;
+  text-align:center;
+  color:#7b8790
+}
+
+.empty-icon{font-size:34px;margin-bottom:10px}
+
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.5);
+  z-index:500;
+  align-items:center;
+  justify-content:center;
+  padding:18px
+}
+
+.modal.show{display:flex}
+
+.modal-box{
+  width:100%;
+  max-width:430px;
+  max-height:90vh;
+  overflow:auto;
+  background:#fff;
+  border-radius:18px;
+  padding:20px;
+  box-shadow:0 20px 50px rgba(0,0,0,.2)
+}
+
+.modal-box h3{margin-bottom:15px}
+
+.modal-box input,
+.modal-box textarea{
+  width:100%;
+  border:1px solid #dfe4eb;
+  border-radius:10px;
+  padding:11px;
+  margin-bottom:10px;
+  outline:none;
+  font-size:14px
+}
+
+.modal-box input:focus,
+.modal-box textarea:focus{
+  border-color:#087f73;
+  box-shadow:0 0 0 3px rgba(8,127,115,.08)
+}
+
+.modal-box textarea{
+  min-height:90px;
+  resize:vertical
+}
+
+.modal-actions{
+  display:flex;
+  gap:8px;
+  margin-top:5px
+}
+
+.modal-actions button{
+  flex:1;
+  padding:11px;
+  border:none;
+  border-radius:10px;
+  font-weight:bold
+}
+
+.close-btn{background:#edf0f4;color:#172033}
+.confirm-btn{background:#087f73;color:#fff}
+
+.details{
+  padding:15px 16px;
+  border-top:1px solid #e5ebec;
+  background:#fafcfc
+}
+
+.detail-row{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:9px;
+  font-size:13px
+}
+
+.detail-row:last-child{margin-bottom:0}
+.detail-row span:first-child{color:#7a8790}
+.detail-row strong{text-align:right;overflow-wrap:anywhere}
+
+.fee-card{
+  margin-top:4px;
+  margin-bottom:12px;
+  background:#f7fbfa;
+  border:1px solid #d7ebe7;
+  border-radius:13px;
+  padding:14px
+}
+
+.fee-title{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px
+}
+
+.fee-badge{
+  background:#e2f5ef;
+  color:#087f73;
+  border-radius:7px;
+  padding:5px 8px;
+  font-size:11px;
+  font-weight:bold
+}
+
+.fee-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  padding:6px 0;
+  font-size:13px
+}
+
+.fee-row span:first-child{color:#71808a}
+.fee-row strong{text-align:right}
+
+.fee-total{
+  border-top:1px solid #dce9e7;
+  margin-top:5px;
+  padding-top:10px
+}
+
+.bottom-nav{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  height:72px;
+  background:#fff;
+  border-top:1px solid #dfe7e9;
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+  z-index:300;
+  box-shadow:0 -4px 15px rgba(0,0,0,.05)
+}
+
+.bottom-nav a{
+  color:#7b8790;
+  text-decoration:none;
+  text-align:center;
+  font-size:11px;
+  min-width:55px
+}
+
+.bottom-nav a.active{
+  color:#087f73;
+  font-weight:bold
+}
+
+.nav-icon{
+  display:block;
+  font-size:21px;
+  margin-bottom:4px
+}
+
+.live-nav{color:#ef3155!important}
+
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:90px;
+  transform:translateX(-50%);
+  background:#172033;
+  color:#fff;
+  padding:12px 16px;
+  border-radius:10px;
+  font-size:13px;
+  z-index:1000;
+  display:none;
+  max-width:90%;
+  text-align:center
+}
+
+.toast.show{display:block}
+.toast.success{background:#087f73}
+.toast.error{background:#b4233f}
+.toast.warning{background:#9a6500}
+
+@media(max-width:450px){
+  .container{padding:14px}
+  .brand-name{font-size:17px}
+  .security{font-size:11px}
+  .offer-price{font-size:16px}
+  .bottom-nav{height:70px}
+  .section-title h2{font-size:17px}
+  .view-btn,.refresh-btn{
+    padding:6px 7px;
+    font-size:11px
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-logo" aria-label="P2P Social logo">
+      <div class="p-left"></div>
+      <div class="p-right"></div>
+      <div class="center-dot"></div>
+    </div>
+
+    <div class="brand-name">
+      P2P <span>Social</span>
+    </div>
+  </div>
+
+  <div class="security">🟢 Buy Market</div>
+</header>
+
+<main class="container">
+
+  <div class="section-title">
+    <h2>
+      🟢 Available Sell (<span id="offerCount">0</span>)
+    </h2>
+
+    <div class="section-actions">
+
+      <button
+        type="button"
+        id="offerViewButton"
+        class="view-btn"
+        onclick="toggleOffers()"
+      >
+        View All
+      </button>
+
+      <button
+        type="button"
+        class="refresh-btn"
+        onclick="loadBuyMarket()"
+      >
+        🔃 Refresh
+      </button>
+
+    </div>
+  </div>
+
+  <section id="offers" class="offer-list">
+
+    <div class="empty">
+
+      <div class="empty-icon">🟢</div>
+
+      <strong>
+        Loading available sell...
+      </strong>
+
+    </div>
+
+  </section>
+
+</main>
+
+<div
+  id="tradeModal"
+  class="modal"
+  role="dialog"
+  aria-modal="true"
+>
+
+  <div class="modal-box">
+
+    <h3>🤝 Buy USDT from Seller</h3>
+
+    <div id="tradeSummary"></div>
+
+    <input
+      id="tradeAmount"
+      type="number"
+      min="0"
+      step="0.000001"
+      placeholder="USDT amount"
+      oninput="updateTradeFeePreview()"
+    >
+
+    <div class="fee-card">
+
+      <div class="fee-title">
+
+        <strong>
+          💸 Platform Fee
+        </strong>
+
+        <span class="fee-badge">
+          <span id="tradeFeeRateText">1%</span>
+        </span>
+
+      </div>
+
+      <div class="fee-row">
+
+        <span>
+          Trade value
+        </span>
+
+        <strong id="tradeValuePreview">
+          0.00
+        </strong>
+
+      </div>
+
+      <div class="fee-row">
+
+        <span>
+          Platform fee
+        </span>
+
+        <strong id="tradeFeePreviewAmount">
+          0.00
+        </strong>
+
+      </div>
+
+      <div class="fee-row fee-total">
+
+        <span>
+          Total
+        </span>
+
+        <strong id="tradeTotalPreview">
+          0.00
+        </strong>
+
+      </div>
+
+    </div>
+
+    <div class="modal-actions">
+
+      <button
+        type="button"
+        class="close-btn"
+        onclick="closeModal('tradeModal')"
+      >
+        Cancel
+      </button>
+
+      <button
+        type="button"
+        class="confirm-btn"
+        id="tradeSubmitButton"
+        onclick="submitTrade()"
+      >
+        Start Trade
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<div
+  id="toast"
+  class="toast"
+  role="status"
+  aria-live="polite"
+></div>
+
+<nav class="bottom-nav">
+
+  <a href="index.html">
+    <span class="nav-icon">🏠</span>
+    Home
+  </a>
+
+  <a href="live.html" class="active">
+    <span class="nav-icon">🟢</span>
+    Buy
+  </a>
+
+  <a href="wallet.html">
+    <span class="nav-icon">🔴</span>
+    Sell
+  </a>
+
+  <a href="message.html">
+    <span class="nav-icon">💬</span>
+    Messages
+  </a>
+
+  <a href="profile.html">
+    <span class="nav-icon">👤</span>
+    Profile
+  </a>
+
+</nav>
+
+<script>
+
+const SUPABASE_URL =
+"https://mbsvuwrgigqfporxwpfr.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+"sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
+
+const supabaseClient =
+window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
+
+const PLATFORM_FEE_RATE = .01;
+
+let currentSession = null;
+let currentUser = null;
+let currentUsername = null;
+
+let availableOffers = [];
+let selectedOffer = null;
+
+let offersExpanded = false;
+
+let realtimeChannel = null;
+let tradeRealtimeChannel = null;
+
+let toastTimer = null;
+let isLoading = false;
+let actionLoading = false;
+
+const usernameCache = new Map();
+
+document.addEventListener(
+  "DOMContentLoaded",
+  startApp
+);
+
+async function startApp(){
+
+  try{
+
+    const {
+      data,
+      error
+    } =
+    await supabaseClient.auth.getSession();
+
+    if(error){
+
+      console.error(
+        "SESSION ERROR:",
+        error
+      );
+
+      showLogin();
+      return;
+    }
+
+    currentSession =
+      data.session;
+
+    if(!currentSession){
+
+      showLogin();
+      return;
+    }
+
+    currentUser =
+      currentSession.user;
+
+    await loadCurrentUsername();
+
+    updateFeeRateText();
+
+    await loadBuyMarket();
+
+    setupRealtime();
+
+  }catch(error){
+
+    console.error(
+      "START ERROR:",
+      error
+    );
+
+    toast(
+      getErrorMessage(error),
+      "error"
+    );
+  }
+}
+
+function showLogin(){
+
+  alert(
+    "Please login first."
+  );
+
+  window.location.href =
+    "login.html";
+}
+
+supabaseClient.auth.onAuthStateChange(
+  (event,session)=>{
+
+    currentSession =
+      session;
+
+    currentUser =
+      session?.user ||
+      null;
+
+    if(!currentUser){
+
+      currentUsername =
+        null;
+    }
+
+    if(
+      event ===
+      "SIGNED_OUT"
+    ){
+
+      if(realtimeChannel){
+
+        supabaseClient.removeChannel(
+          realtimeChannel
+        );
+
+        realtimeChannel =
+          null;
+      }
+
+      if(tradeRealtimeChannel){
+
+        supabaseClient.removeChannel(
+          tradeRealtimeChannel
+        );
+
+        tradeRealtimeChannel =
+          null;
+      }
+
+      window.location.href =
+        "login.html";
+    }
+  }
+);
+
+async function loadCurrentUsername(){
+
+  if(!currentUser)return;
+
+  try{
+
+    const {
+      data,
+      error
+    } =
+    await supabaseClient
+      .from("profiles")
+      .select("username")
+      .eq(
+        "id",
+        currentUser.id
+      )
+      .maybeSingle();
+
+    if(error)throw error;
+
+    currentUsername =
+      data?.username ||
+      currentUser
+        .user_metadata
+        ?.username ||
+      null;
+
+    if(currentUsername){
+
+      usernameCache.set(
+        String(currentUser.id),
+        currentUsername
+      );
+    }
+
+  }catch(error){
+
+    console.error(
+      "USERNAME ERROR:",
+      error
+    );
+
+    currentUsername =
+      currentUser
+        .user_metadata
+        ?.username ||
+      null;
+  }
+}
+
+async function getUsername(userId){
+
+  if(!userId){
+
+    return "User";
+  }
+
+  const key =
+    String(userId);
+
+  if(
+    usernameCache.has(key)
+  ){
+
+    return usernameCache.get(
+      key
+    );
+  }
+
+  try{
+
+    const {
+      data,
+      error
+    } =
+    await supabaseClient
+      .from("profiles")
+      .select("username")
+      .eq(
+        "id",
+        userId
+      )
+      .maybeSingle();
+
+    if(
+      !error &&
+      data?.username
+    ){
+
+      usernameCache.set(
+        key,
+        data.username
+      );
+
+      return data.username;
+    }
+
+  }catch(error){
+
+    console.error(
+      "PROFILE USERNAME ERROR:",
+      error
+    );
+  }
+
+  return "User";
+}
+
+async function loadOfferUsernames(){
+
+  const ids = [
+    ...new Set(
+      availableOffers
+        .map(
+          offer =>
+            offer.user_id
+        )
+        .filter(Boolean)
+        .map(String)
+    )
+  ];
+
+  const missing =
+    ids.filter(
+      id =>
+        !usernameCache.has(id)
+    );
+
+  if(!missing.length)return;
+
+  try{
+
+    const {
+      data,
+      error
+    } =
+    await supabaseClient
+      .from("profiles")
+      .select(
+        "id,username"
+      )
+      .in(
+        "id",
+        missing
+      );
+
+    if(error)throw error;
+
+    (data || []).forEach(
+      profile => {
+
+        if(
+          profile.id &&
+          profile.username
+        ){
+
+          usernameCache.set(
+            String(profile.id),
+            profile.username
+          );
+        }
+      }
+    );
+
+  }catch(error){
+
+    console.error(
+      "SELL USERNAMES ERROR:",
+      error
+    );
+  }
+}
+
+async function loadBuyMarket(){
+
+  if(!currentUser){
+
+    showLogin();
+    return;
+  }
+
+  if(isLoading)return;
+
+  isLoading = true;
+
+  const container =
+    document.getElementById(
+      "offers"
+    );
+
+  if(container){
+
+    container.innerHTML =
+      '<div class="empty">Loading available sell...</div>';
+  }
+
+  try{
+
+    const {
+      data,
+      error
+    } =
+    await supabaseClient
+      .from("p2p_orders")
+      .select("*")
+      .neq(
+        "user_id",
+        currentUser.id
+      )
+      .eq(
+        "order_type",
+        "sell"
+      )
+      .in(
+        "status",
+        [
+          "active",
+          "open",
+          "pending"
+        ]
+      )
+      .order(
+        "created_at",
+        {
+          ascending:false
+        }
+      );
+
+    if(error){
+
+      console.error(
+        "BUY MARKET ERROR:",
+        error
+      );
+
+      availableOffers = [];
+
+      if(container){
+
+        container.innerHTML =
+          emptyHtml(
+            "⚠️",
+            "Could not load available sell.",
+            getErrorMessage(error)
+          );
+      }
+
+      return;
+    }
+
+    availableOffers =
+      data || [];
+
+    await loadOfferUsernames();
+
+    const count =
+      document.getElementById(
+        "offerCount"
+      );
+
+    if(count){
+
+      count.textContent =
+        availableOffers.length;
+    }
+
+    renderBuyMarket();
+
+  }catch(error){
+
+    console.error(
+      "BUY MARKET ERROR:",
+      error
+    );
+
+    if(container){
+
+      container.innerHTML =
+        emptyHtml(
+          "⚠️",
+          "Could not load available sell.",
+          getErrorMessage(error)
+        );
+    }
+
+  }finally{
+
+    isLoading = false;
+  }
+}
+
+function renderBuyMarket(){
+
+  const container =
+    document.getElementById(
+      "offers"
+    );
+
+  if(!container)return;
+
+  if(!availableOffers.length){
+
+    container.innerHTML =
+      emptyHtml(
+        "🟢",
+        "No available sell.",
+        "Active sellers from other traders will appear here."
+      );
+
+    updateOfferButton();
+
+    return;
+  }
+
+  container.innerHTML =
+    "";
+
+  const items =
+    offersExpanded
+      ? availableOffers
+      : availableOffers.slice(
+          0,
+          3
+        );
+
+  items.forEach(
+    offer => {
+
+      const parts =
+        getPairParts(
+          offer.pair ||
+          offer.trading_pair
+        );
+
+      const status =
+        normalizeStatus(
+          offer.status
+        );
+
+      const username =
+        usernameCache.get(
+          String(
+            offer.user_id
+          )
+        ) ||
+        "Seller";
+
+      const card =
+        document.createElement(
+          "div"
+        );
+
+      card.className =
+        "offer-card";
+
+      card.innerHTML = `
+
+        <div class="offer-main">
+
+          <div class="row">
+
+            <div>
+
+              <div class="offer-user">
+                🔴 ${escapeHtml(username)}
+              </div>
+
+              <div class="offer-meta">
+                🔴 Selling ·
+                ${escapeHtml(
+                  formatPair(offer)
+                )}
+              </div>
+
+            </div>
+
+            <span class="offer-type">
+              🔴 SELL
+            </span>
+
+          </div>
+
+          <div
+            style="
+              display:flex;
+              justify-content:space-between;
+              align-items:center;
+              gap:10px;
+              margin-top:12px;
+            "
+          >
+
+            <div>
+
+              <div
+                style="
+                  color:#7b8790;
+                  font-size:12px;
+                "
+              >
+                Selling price
+              </div>
+
+              <div
+                class="offer-price"
+                style="
+                  text-align:left;
+                  margin-top:3px;
+                "
+              >
+                ${money(offer.price)}
+                ${escapeHtml(
+                  parts.quote ||
+                  "ETB"
+                )}
+              </div>
+
+            </div>
+
+            <span class="status ${statusClass(status)}">
+              ${escapeHtml(status)}
+            </span>
+
+          </div>
+
+          <div class="offer-amount">
+
+            Available:
+
+            <strong>
+              ${escapeHtml(
+                formatAmount(offer)
+              )}
+            </strong>
+
+          </div>
+
+          ${
+            offer.payment_method ||
+            offer.payment
+            ?
+            `
+              <div
+                style="
+                  margin-top:8px;
+                  color:#596579;
+                  font-size:13px;
+                "
+              >
+
+                💳 Payment:
+
+                <strong>
+                  ${escapeHtml(
+                    offer.payment_method ||
+                    offer.payment
+                  )}
+                </strong>
+
+              </div>
+            `
+            :
+            ""
+          }
+
+          <button
+            type="button"
+            class="profile-btn"
+            onclick="viewUser('${escapeJs(offer.user_id)}')"
+          >
+            👤 View Seller
+          </button>
+
+          <button
+            type="button"
+            class="offer-trade"
+            onclick="openTrade('${escapeJs(offer.id)}')"
+          >
+            🤝 Buy USDT
+          </button>
+
+        </div>
+      `;
+
+      container.appendChild(
+        card
+      );
+    }
+  );
+
+  updateOfferButton();
+}
+
+function viewUser(userId){
+
+  if(!userId)return;
+
+  window.location.href =
+    "profile.html?user_id=" +
+    encodeURIComponent(
+      userId
+    );
+}
+
+function openMessagesForTrade(
+  tradeId,
+  offer
+){
+
+  const params =
+    new URLSearchParams();
+
+  if(tradeId){
+
+    params.set(
+      "trade_id",
+      String(tradeId)
+    );
+  }
+
+  if(offer?.id){
+
+    params.set(
+      "order_id",
+      String(offer.id)
+    );
+  }
+
+  if(offer?.user_id){
+
+    getUsername(
+      offer.user_id
+    ).then(
+      username => {
+
+        if(username){
+
+          params.set(
+            "username",
+            username
+          );
+        }
+
+        window.location.href =
+          "message.html?" +
+          params.toString();
+      }
+    );
+
+    return;
+  }
+
+  window.location.href =
+    "message.html?" +
+    params.toString();
+}
+
+function updateOfferButton(){
+
+  const button =
+    document.getElementById(
+      "offerViewButton"
+    );
+
+  if(!button)return;
+
+  if(
+    availableOffers.length <= 3
+  ){
+
+    button.style.display =
+      availableOffers.length
+        ? "none"
+        : "block";
+
+    button.textContent =
+      "View All";
+
+    return;
+  }
+
+  button.style.display =
+    "block";
+
+  button.textContent =
+    offersExpanded
+      ? "Show 3"
+      : "View All";
+}
+
+function toggleOffers(){
+
+  offersExpanded =
+    !offersExpanded;
+
+  renderBuyMarket();
+}
+
+function openTrade(
+  offerId
+){
+
+  selectedOffer =
+    availableOffers.find(
+      offer =>
+        String(
+          offer.id
+        ) ===
+        String(
+          offerId
+        )
+    );
+
+  if(!selectedOffer){
+
+    toast(
+      "This available sell is no longer available. Refresh.",
+      "warning"
+    );
+
+    return;
+  }
+
+  const available =
+    getOfferAvailableAmount(
+      selectedOffer
+    );
+
+  if(available <= 0){
+
+    toast(
+      "This available sell has no remaining amount.",
+      "warning"
+    );
+
+    return;
+  }
+
+  const input =
+    document.getElementById(
+      "tradeAmount"
+    );
+
+  input.value =
+    "";
+
+  input.min =
+    getMinimumTradeAmount(
+      selectedOffer
+    );
+
+  input.max =
+    available;
+
+  const parts =
+    getPairParts(
+      selectedOffer.pair ||
+      selectedOffer.trading_pair
+    );
+
+  const username =
+    usernameCache.get(
+      String(
+        selectedOffer.user_id
+      )
+    ) ||
+    "Seller";
+
+  document.getElementById(
+    "tradeSummary"
+  ).innerHTML = `
+
+    <div
+      class="details"
+      style="margin-bottom:12px;"
+    >
+
+      ${detail(
+        "Seller",
+        username
+      )}
+
+      ${detail(
+        "Pair",
+        formatPair(
+          selectedOffer
+        )
+      )}
+
+      ${detail(
+        "Selling price",
+        money(
+          selectedOffer.price
+        ) +
+        " " +
+        (
+          parts.quote ||
+          "ETB"
+        )
+      )}
+
+      ${detail(
+        "Available",
+        formatAmount(
+          selectedOffer
+        )
+      )}
+
+      ${
+        selectedOffer.payment_method ||
+        selectedOffer.payment
+        ?
+        detail(
+          "Payment",
+          selectedOffer.payment_method ||
+          selectedOffer.payment
+        )
+        :
+        ""
+      }
+
+    </div>
+  `;
+
+  updateTradeFeePreview();
+
+  openModal(
+    "tradeModal"
+  );
+}
+
+function getOfferAvailableAmount(
+  offer
+){
+
+  if(!offer)return 0;
+
+  for(
+    const value of [
+      offer.remaining_amount,
+      offer.available_amount,
+      offer.remaining
+    ]
+  ){
+
+    if(
+      value !== null &&
+      value !== undefined &&
+      value !== ""
+    ){
+
+      const n =
+        Number(value);
+
+      if(
+        Number.isFinite(n) &&
+        n >= 0
+      ){
+
+        return n;
+      }
+    }
+  }
+
+  const n =
+    Number(
+      offer.amount
+    );
+
+  return Number.isFinite(n) &&
+    n >= 0
+      ? n
+      : 0;
+}
+
+function getMinimumTradeAmount(
+  offer
+){
+
+  if(!offer)return .000001;
+
+  for(
+    const value of [
+      offer.min_trade_amount,
+      offer.minimum_amount,
+      offer.min_amount
+    ]
+  ){
+
+    const n =
+      Number(value);
+
+    if(
+      Number.isFinite(n) &&
+      n > 0
+    ){
+
+      return n;
+    }
+  }
+
+  return .000001;
+}
+
+function getTradeValue(){
+
+  if(!selectedOffer)return 0;
+
+  const amount =
+    Number(
+      document.getElementById(
+        "tradeAmount"
+      )?.value
+    ) || 0;
+
+  const price =
+    Number(
+      selectedOffer.price
+    ) || 0;
+
+  return amount * price;
+}
+
+function updateTradeFeePreview(){
+
+  const value =
+    getTradeValue();
+
+  const fee =
+    value *
+    PLATFORM_FEE_RATE;
+
+  const total =
+    value +
+    fee;
+
+  const parts =
+    getPairParts(
+      selectedOffer?.pair ||
+      selectedOffer?.trading_pair
+    );
+
+  const currency =
+    parts.quote ||
+    "ETB";
+
+  const a =
+    document.getElementById(
+      "tradeValuePreview"
+    );
+
+  const b =
+    document.getElementById(
+      "tradeFeePreviewAmount"
+    );
+
+  const c =
+    document.getElementById(
+      "tradeTotalPreview"
+    );
+
+  if(a){
+
+    a.textContent =
+      money(value) +
+      " " +
+      currency;
+  }
+
+  if(b){
+
+    b.textContent =
+      money(fee) +
+      " " +
+      currency;
+  }
+
+  if(c){
+
+    c.textContent =
+      money(total) +
+      " " +
+      currency;
+  }
+}
+
+function updateFeeRateText(){
+
+  const e =
+    document.getElementById(
+      "tradeFeeRateText"
+    );
+
+  if(e){
+
+    e.textContent =
+      (
+        PLATFORM_FEE_RATE *
+        100
+      ) +
+      "%";
+  }
+}
+
+async function submitTrade(){
+
+  if(actionLoading)return;
+
+  if(!currentUser){
+
+    showLogin();
+    return;
+  }
+
+  if(!selectedOffer){
+
+    toast(
+      "Select an available sell first.",
+      "warning"
+    );
+
+    return;
+  }
+
+  let freshOffer =
+    null;
+
+  try{
+
+    const {
+      data,
+      error
+    } =
+    await supabaseClient
+      .from("p2p_orders")
+      .select("*")
+      .eq(
+        "id",
+        selectedOffer.id
+      )
+      .maybeSingle();
+
+    if(error){
+
+      toast(
+        getErrorMessage(error),
+        "error"
+      );
+
+      return;
+    }
+
+    if(!data){
+
+      toast(
+        "This available sell is no longer available.",
+        "warning"
+      );
+
+      closeModal(
+        "tradeModal"
+      );
+
+      await loadBuyMarket();
+
+      return;
+    }
+
+    freshOffer =
+      data;
+
+  }catch(error){
+
+    toast(
+      getErrorMessage(error),
+      "error"
+    );
+
+    return;
+  }
+
+  selectedOffer =
+    freshOffer;
+
+  if(
+    String(
+      selectedOffer.order_type
+    ).toLowerCase() !==
+    "sell"
+  ){
+
+    toast(
+      "This is not a sell market entry.",
+      "warning"
+    );
+
+    closeModal(
+      "tradeModal"
+    );
+
+    return;
+  }
+
+  const status =
+    normalizeStatus(
+      selectedOffer.status
+    );
+
+  if(
+    ![
+      "active",
+      "open",
+      "pending"
+    ].includes(status)
+  ){
+
+    toast(
+      "This available sell is no longer active.",
+      "warning"
+    );
+
+    closeModal(
+      "tradeModal"
+    );
+
+    await loadBuyMarket();
+
+    return;
+  }
+
+  if(
+    String(
+      selectedOffer.user_id
+    ) ===
+    String(
+      currentUser.id
+    )
+  ){
+
+    toast(
+      "You cannot trade with your own entry.",
+      "warning"
+    );
+
+    closeModal(
+      "tradeModal"
+    );
+
+    return;
+  }
+
+  const amount =
+    Number(
+      document.getElementById(
+        "tradeAmount"
+      ).value
+    );
+
+  const max =
+    getOfferAvailableAmount(
+      selectedOffer
+    );
+
+  const min =
+    getMinimumTradeAmount(
+      selectedOffer
+    );
+
+  if(
+    !Number.isFinite(amount) ||
+    amount <= 0
+  ){
+
+    toast(
+      "Enter a valid USDT amount.",
+      "warning"
+    );
+
+    return;
+  }
+
+  if(amount < min){
+
+    toast(
+      "Trade amount is below the minimum.",
+      "warning"
+    );
+
+    return;
+  }
+
+  if(
+    amount >
+    max +
+    .000000001
+  ){
+
+    toast(
+      "Amount is greater than the available sell.",
+      "warning"
+    );
+
+    return;
+  }
+
+  const normalizedAmount =
+    Number(
+      amount.toFixed(6)
+    );
+
+  if(
+    !Number.isFinite(
+      normalizedAmount
+    ) ||
+    normalizedAmount <= 0
+  ){
+
+    toast(
+      "Invalid trade amount.",
+      "warning"
+    );
+
+    return;
+  }
+
+  if(
+    !confirm(
+      "Buy this amount of USDT from the seller?"
+    )
+  ){
+
+    return;
+  }
+
+  const button =
+    document.getElementById(
+      "tradeSubmitButton"
+    );
+
+  actionLoading =
+    true;
+
+  button.disabled =
+    true;
+
+  button.textContent =
+    "Starting...";
+
+  try{
+
+    const {
+      data,
+      error
+    } =
+    await supabaseClient.rpc(
+      "create_p2p_trade",
+      {
+        p_order_id:
+          selectedOffer.id,
+
+        p_amount:
+          normalizedAmount
+      }
+    );
+
+    if(error){
+
+      toast(
+        getErrorMessage(error),
+        "error"
+      );
+
+      return;
+    }
+
+    const tradeId =
+      extractId(data);
+
+    const tradeOffer =
+      selectedOffer;
+
+    closeModal(
+      "tradeModal"
+    );
+
+    toast(
+      "Buy trade started successfully.",
+      "success"
+    );
+
+    selectedOffer =
+      null;
+
+    await loadBuyMarket();
+
+    openMessagesForTrade(
+      tradeId,
+      tradeOffer
+    );
+
+  }catch(error){
+
+    toast(
+      getErrorMessage(error),
+      "error"
+    );
+
+  }finally{
+
+    actionLoading =
+      false;
+
+    button.disabled =
+      false;
+
+    button.textContent =
+      "Start Trade";
+  }
+}
+
+function extractId(data){
+
+  if(!data)return null;
+
+  if(
+    typeof data ===
+    "string"
+  ){
+
+    return data;
+  }
+
+  if(
+    typeof data ===
+    "object"
+  ){
+
+    return (
+      data.id ||
+      data.trade_id ||
+      data.order_id ||
+      data[0]?.id ||
+      data[0]?.trade_id ||
+      data[0]?.order_id ||
+      null
+    );
+  }
+
+  return null;
+}
+
+function setupRealtime(){
+
+  if(!currentUser)return;
+
+  if(realtimeChannel){
+
+    supabaseClient.removeChannel(
+      realtimeChannel
+    );
+  }
+
+  realtimeChannel =
+    supabaseClient
+      .channel(
+        "buy-market-live-" +
+        currentUser.id
+      )
+      .on(
+        "postgres_changes",
+        {
+          event:"*",
+          schema:"public",
+          table:"p2p_orders"
+        },
+        () => {
+
+          loadBuyMarket();
+        }
+      )
+      .subscribe(
+        status => {
+
+          console.log(
+            "Buy market realtime:",
+            status
+          );
+        }
+      );
+
+  if(tradeRealtimeChannel){
+
+    supabaseClient.removeChannel(
+      tradeRealtimeChannel
+    );
+  }
+
+  tradeRealtimeChannel =
+    supabaseClient
+      .channel(
+        "buy-trades-live-" +
+        currentUser.id
+      )
+      .on(
+        "postgres_changes",
+        {
+          event:"*",
+          schema:"public",
+          table:"p2p_trades"
+        },
+        () => {
+
+          loadBuyMarket();
+        }
+      )
+      .subscribe(
+        status => {
+
+          console.log(
+            "Buy trades realtime:",
+            status
+          );
+        }
+      );
+}
+
+function openModal(id){
+
+  const e =
+    document.getElementById(
+      id
+    );
+
+  if(!e)return;
+
+  e.classList.add(
+    "show"
+  );
+
+  setTimeout(
+    () => {
+
+      const input =
+        e.querySelector(
+          "input,textarea"
+        );
+
+      if(input){
+
+        input.focus();
+      }
+
+    },
+    50
+  );
+}
+
+function closeModal(id){
+
+  const e =
+    document.getElementById(
+      id
+    );
+
+  if(e){
+
+    e.classList.remove(
+      "show"
+    );
+  }
+}
+
+function formatPair(offer){
+
+  const pair =
+    String(
+      offer?.pair ||
+      offer?.trading_pair ||
+      ""
+    );
+
+  if(
+    pair.includes("_")
+  ){
+
+    return pair.replace(
+      "_",
+      " / "
+    );
+  }
+
+  return pair ||
+    "P2P";
+}
+
+function formatAmount(offer){
+
+  const amount =
+    getOfferAvailableAmount(
+      offer
+    );
+
+  const parts =
+    getPairParts(
+      offer?.pair ||
+      offer?.trading_pair ||
+      ""
+    );
+
+  return amount.toLocaleString(
+    undefined,
+    {
+      maximumFractionDigits:6
+    }
+  ) +
+  " " +
+  (
+    parts.base ||
+    "USDT"
+  );
+}
+
+function getPairParts(pair){
+
+  const parts =
+    String(
+      pair || ""
+    ).split("_");
+
+  return {
+
+    base:
+      parts[0] || "",
+
+    quote:
+      parts[1] || ""
+  };
+}
+
+function money(value){
+
+  const number =
+    Number(value);
+
+  if(
+    !Number.isFinite(number)
+  ){
+
+    return "0.00";
+  }
+
+  return number.toLocaleString(
+    undefined,
+    {
+      minimumFractionDigits:2,
+      maximumFractionDigits:6
+    }
+  );
+}
+
+function normalizeStatus(status){
+
+  return String(
+    status ||
+    "pending"
+  )
+  .trim()
+  .toLowerCase() ||
+  "pending";
+}
+
+function statusClass(status){
+
+  const value =
+    normalizeStatus(
+      status
+    );
+
+  if(
+    [
+      "active",
+      "open",
+      "pending",
+      "paid",
+      "payment_confirmed"
+    ].includes(value)
+  ){
+
+    return value;
+  }
+
+  if(
+    [
+      "expired",
+      "cancelled",
+      "closed"
+    ].includes(value)
+  ){
+
+    return value;
+  }
+
+  if(
+    value ===
+    "disputed"
+  ){
+
+    return "disputed";
+  }
+
+  if(
+    [
+      "completed",
+      "released"
+    ].includes(value)
+  ){
+
+    return value;
+  }
+
+  return "";
+}
+
+function detail(
+  label,
+  value
+){
+
+  const rendered =
+    String(
+      value ?? ""
+    );
+
+  return `
+    <div class="detail-row">
+
+      <span>
+        ${escapeHtml(label)}
+      </span>
+
+      <strong>
+        ${
+          rendered.includes(
+            'class="status'
+          )
+          ? rendered
+          : escapeHtml(
+              rendered
+            )
+        }
+      </strong>
+
+    </div>
+  `;
+}
+
+function emptyHtml(
+  icon,
+  title,
+  message
+){
+
+  return `
+    <div class="empty">
+
+      <div class="empty-icon">
+        ${escapeHtml(
+          icon ||
+          "ℹ️"
+        )}
+      </div>
+
+      <strong>
+        ${escapeHtml(
+          title ||
+          ""
+        )}
+      </strong>
+
+      ${
+        message
+        ?
+        `
+          <div style="margin-top:7px;">
+            ${escapeHtml(
+              message
+            )}
+          </div>
+        `
+        :
+        ""
+      }
+
+    </div>
+  `;
+}
+
+function escapeHtml(value){
+
+  return String(
+    value ?? ""
+  )
+  .replace(
+    /&/g,
+    "&amp;"
+  )
+  .replace(
+    /</g,
+    "&lt;"
+  )
+  .replace(
+    />/g,
+    "&gt;"
+  )
+  .replace(
+    /"/g,
+    "&quot;"
+  )
+  .replace(
+    /'/g,
+    "&#039;"
+  );
+}
+
+function escapeJs(value){
+
+  return String(
+    value ?? ""
+  )
+  .replace(
+    /\\/g,
+    "\\\\"
+  )
+  .replace(
+    /'/g,
+    "\\'"
+  )
+  .replace(
+    /"/g,
+    '\\"'
+  )
+  .replace(
+    /\r/g,
+    "\\r"
+  )
+  .replace(
+    /\n/g,
+    "\\n"
+  );
+}
+
+function getErrorMessage(error){
+
+  if(!error){
+
+    return "Something went wrong.";
+  }
+
+  return (
+    error.message ||
+    error.details ||
+    error.hint ||
+    "Something went wrong."
+  );
+}
+
+function toast(
+  message,
+  type="normal"
+){
+
+  const e =
+    document.getElementById(
+      "toast"
+    );
+
+  if(!e)return;
+
+  clearTimeout(
+    toastTimer
+  );
+
+  e.textContent =
+    String(
+      message || ""
+    );
+
+  e.classList.remove(
+    "success",
+    "error",
+    "warning"
+  );
+
+  if(
+    [
+      "success",
+      "error",
+      "warning"
+    ].includes(type)
+  ){
+
+    e.classList.add(
+      type
+    );
+  }
+
+  e.classList.add(
+    "show"
+  );
+
+  toastTimer =
+    setTimeout(
+      () => {
+
+        e.classList.remove(
+          "show"
+        );
+
+      },
+      3500
+    );
+}
+
+document.addEventListener(
+  "click",
+  event => {
+
+    if(
+      event.target.classList.contains(
+        "modal"
+      )
+    ){
+
+      event.target.classList.remove(
+        "show"
+      );
+    }
+  }
+);
+
+document.addEventListener(
+  "keydown",
+  event => {
+
+    if(
+      event.key ===
+      "Escape"
+    ){
+
+      document
+        .querySelectorAll(
+          ".modal.show"
+        )
+        .forEach(
+          modal =>
+            modal.classList.remove(
+              "show"
+            )
+        );
+    }
+  }
+);
+
+setInterval(
+  async () => {
+
+    if(
+      currentUser &&
+      document.visibilityState ===
+      "visible"
+    ){
+
+      try{
+
+        await loadBuyMarket();
+
+      }catch(error){
+
+        console.error(
+          "AUTO REFRESH ERROR:",
+          error
+        );
+      }
+    }
+
+  },
+  30000
+);
+
+window.addEventListener(
+  "beforeunload",
+  () => {
+
+    if(realtimeChannel){
+
+      supabaseClient.removeChannel(
+        realtimeChannel
+      );
+    }
+
+    if(tradeRealtimeChannel){
+
+      supabaseClient.removeChannel(
+        tradeRealtimeChannel
+      );
+    }
+  }
+);
+
+</script>
+
+</body>
 </html>

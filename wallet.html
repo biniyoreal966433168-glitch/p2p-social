@@ -3,623 +3,196 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sell Orders • P2P Social</title>
-
+<title>Profile • P2P Social</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-  font-family:Arial,sans-serif
-}
-
-html{scroll-behavior:smooth}
-
-body{
-  background:#f4f7f8;
-  color:#172033;
-  min-height:100vh;
-  padding-bottom:90px
-}
-
-button,input,select,textarea{
-  font-family:Arial,sans-serif
-}
-
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
+body{background:#f5f7fb;color:#172033;padding-bottom:85px}
+button,input,textarea,select{font-family:inherit}
 button{cursor:pointer}
-
-button:disabled{
-  opacity:.6;
-  cursor:not-allowed
-}
-
-header{
-  height:68px;
-  background:#fff;
-  border-bottom:1px solid #e2e8ea;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 18px;
-  position:sticky;
-  top:0;
-  z-index:100
-}
-
-.brand{
-  display:flex;
-  align-items:center;
-  gap:10px
-}
-
-.brand-logo{
-  width:42px;
-  height:42px;
-  border-radius:13px;
-  background:linear-gradient(135deg,#064e46,#10a889);
-  position:relative;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  box-shadow:0 4px 12px rgba(0,0,0,.12);
-  flex-shrink:0
-}
-
-.p-left{
-  position:absolute;
-  left:8px;
-  top:10px;
-  width:13px;
-  height:23px;
-  border:4px solid #fff;
-  border-right:0;
-  border-radius:8px 0 0 8px
-}
-
-.p-right{
-  position:absolute;
-  right:8px;
-  top:10px;
-  width:13px;
-  height:23px;
-  border:4px solid #fff;
-  border-left:0;
-  border-radius:0 8px 8px 0
-}
-
-.center-dot{
-  width:10px;
-  height:10px;
-  background:#fff;
-  border-radius:50%;
-  position:absolute
-}
-
-.brand-name{
-  font-size:19px;
-  font-weight:800
-}
-
-.brand-name span{
-  color:#087f73
-}
-
-.security{
-  color:#d72c50;
-  font-size:13px;
-  font-weight:bold
-}
-
-.container{
-  width:100%;
-  max-width:850px;
-  margin:auto;
-  padding:18px
-}
-
-.section-title{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  margin:22px 0 12px
-}
-
-.section-title h2{
-  font-size:20px
-}
-
-.section-title span{
-  color:#d72c50;
-  font-size:13px;
-  font-weight:bold
-}
-
-.section-actions{
-  display:flex;
-  align-items:center;
-  gap:7px
-}
-
-.view-btn,
-.refresh-btn{
-  border:none;
-  background:#edf7f5;
-  color:#087f73;
-  padding:7px 10px;
-  border-radius:8px;
-  font-weight:bold
-}
-
-.offer-list{
-  display:flex;
-  flex-direction:column;
-  gap:10px
-}
-
-.offer-card{
-  background:#fff;
-  border:1px solid #dfe7e9;
-  border-radius:15px;
-  overflow:hidden
-}
-
-.offer-main{
-  padding:16px
-}
-
-.row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px
-}
-
-.offer-user{
-  font-weight:bold
-}
-
-.offer-meta{
-  color:#7b8790;
-  font-size:12px;
-  margin-top:5px
-}
-
-.offer-price{
-  font-size:18px;
-  font-weight:bold;
-  color:#087f73;
-  text-align:right
-}
-
-.offer-amount{
-  margin-top:10px;
-  font-size:13px;
-  color:#596579
-}
-
-.offer-trade{
-  width:100%;
-  margin-top:12px;
-  border:none;
-  padding:11px;
-  border-radius:9px;
-  background:#087f73;
-  color:#fff;
-  font-weight:bold
-}
-
-.offer-type{
-  padding:6px 9px;
-  border-radius:8px;
-  font-size:12px;
-  font-weight:bold;
-  white-space:nowrap;
-  background:#fde8ed;
-  color:#d72c50
-}
-
-.status{
-  display:inline-block;
-  padding:6px 9px;
-  border-radius:8px;
-  font-size:11px;
-  font-weight:bold;
-  background:#edf3f3;
-  color:#596579;
-  text-transform:capitalize
-}
-
-.status.active,
-.status.pending,
-.status.open{
-  background:#e2f5ef;
-  color:#087f73
-}
-
-.status.expired,
-.status.cancelled,
-.status.closed{
-  background:#fde8ed;
-  color:#d72c50
-}
-
-.status.disputed{
-  background:#fff2d9;
-  color:#a56a00
-}
-
-.status.completed,
-.status.released{
-  background:#e9f7eb;
-  color:#159447
-}
-
-.user-links{
-  display:flex;
-  gap:7px;
-  margin-top:10px
-}
-
-.user-links a{
-  flex:1;
-  text-align:center;
-  text-decoration:none;
-  padding:8px;
-  border-radius:8px;
-  font-size:12px;
-  font-weight:bold
-}
-
-.profile-link{
-  background:#edf7f5;
-  color:#087f73
-}
-
-.message-link{
-  background:#edf0f4;
-  color:#172033
-}
-
-.empty{
-  background:#fff;
-  border:1px dashed #ccd8da;
-  border-radius:15px;
-  padding:30px 18px;
-  text-align:center;
-  color:#7b8790
-}
-
-.empty-icon{
-  font-size:34px;
-  margin-bottom:10px
-}
-
-.modal{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.5);
-  z-index:500;
-  align-items:center;
-  justify-content:center;
-  padding:18px
-}
-
-.modal.show{
-  display:flex
-}
-
-.modal-box{
-  width:100%;
-  max-width:430px;
-  max-height:90vh;
-  overflow:auto;
-  background:#fff;
-  border-radius:18px;
-  padding:20px;
-  box-shadow:0 20px 50px rgba(0,0,0,.2)
-}
-
-.modal-box h3{
-  margin-bottom:15px
-}
-
-.modal-box input,
-.modal-box select,
-.modal-box textarea{
-  width:100%;
-  border:1px solid #dfe4eb;
-  border-radius:10px;
-  padding:11px;
-  margin-bottom:10px;
-  outline:none;
-  font-size:14px;
-  background:#fff
-}
-
-.modal-box input:focus,
-.modal-box select:focus,
-.modal-box textarea:focus{
-  border-color:#087f73;
-  box-shadow:0 0 0 3px rgba(8,127,115,.08)
-}
-
-.modal-box textarea{
-  min-height:90px;
-  resize:vertical
-}
-
-.modal-actions{
-  display:flex;
-  gap:8px;
-  margin-top:5px
-}
-
-.modal-actions button{
-  flex:1;
-  padding:11px;
-  border:none;
-  border-radius:10px;
-  font-weight:bold
-}
-
-.close-btn{
-  background:#edf0f4;
-  color:#172033
-}
-
-.confirm-btn{
-  background:#087f73;
-  color:#fff
-}
-
-.danger-btn{
-  background:#d72c50;
-  color:#fff
-}
-
-.warning-btn{
-  background:#a56a00;
-  color:#fff
-}
-
-.details{
-  padding:15px 16px;
-  border-top:1px solid #e5ebec;
-  background:#fafcfc
-}
-
-.detail-row{
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  margin-bottom:9px;
-  font-size:13px
-}
-
-.detail-row:last-child{
-  margin-bottom:0
-}
-
-.detail-row span:first-child{
-  color:#7a8790
-}
-
-.detail-row strong{
-  text-align:right;
-  overflow-wrap:anywhere
-}
-
-.fee-card{
-  margin-top:4px;
-  margin-bottom:12px;
-  background:#f7fbfa;
-  border:1px solid #d7ebe7;
-  border-radius:13px;
-  padding:14px
-}
-
-.fee-title{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:10px
-}
-
-.fee-badge{
-  background:#e2f5ef;
-  color:#087f73;
-  border-radius:7px;
-  padding:5px 8px;
-  font-size:11px;
-  font-weight:bold
-}
-
-.fee-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  padding:6px 0;
-  font-size:13px
-}
-
-.fee-row span:first-child{
-  color:#71808a
-}
-
-.fee-row strong{
-  text-align:right
-}
-
-.fee-total{
-  border-top:1px solid #dce9e7;
-  margin-top:5px;
-  padding-top:10px
-}
-
-.trade-actions{
-  display:flex;
-  gap:7px;
-  margin-top:10px
-}
-
-.trade-actions button{
-  flex:1;
-  border:none;
-  padding:9px;
-  border-radius:8px;
-  font-size:12px;
-  font-weight:bold
-}
-
-.pay-btn{
-  background:#e2f5ef;
-  color:#087f73
-}
-
-.release-btn{
-  background:#087f73;
-  color:#fff
-}
-
-.cancel-btn{
-  background:#fde8ed;
-  color:#d72c50
-}
-
-.dispute-btn{
-  background:#fff2d9;
-  color:#a56a00
-}
-
-.rate-btn{
-  background:#edf0f4;
-  color:#172033
-}
-
-.rating-stars{
-  display:flex;
-  gap:5px;
-  margin:8px 0 12px
-}
-
-.rating-stars button{
-  border:none;
-  background:#edf0f4;
-  color:#7b8790;
-  width:42px;
-  height:42px;
-  border-radius:9px;
-  font-size:21px
-}
-
-.rating-stars button.selected{
-  background:#fff2d9;
-  color:#d99400
-}
-
-.bottom-nav{
-  position:fixed;
-  left:0;
-  right:0;
-  bottom:0;
-  height:72px;
-  background:#fff;
-  border-top:1px solid #dfe7e9;
-  display:flex;
-  justify-content:space-around;
-  align-items:center;
-  z-index:300;
-  box-shadow:0 -4px 15px rgba(0,0,0,.05)
-}
-
-.bottom-nav a{
-  color:#7b8790;
-  text-decoration:none;
-  text-align:center;
-  font-size:11px;
-  min-width:55px
-}
-
-.bottom-nav a.active{
-  color:#087f73;
-  font-weight:bold
-}
-
-.nav-icon{
-  display:block;
-  font-size:21px;
-  margin-bottom:4px
-}
-
-.toast{
-  position:fixed;
-  left:50%;
-  bottom:90px;
-  transform:translateX(-50%);
-  background:#172033;
-  color:#fff;
-  padding:12px 16px;
-  border-radius:10px;
-  font-size:13px;
-  z-index:1000;
-  display:none;
-  max-width:90%;
-  text-align:center
-}
-
-.toast.show{
-  display:block
-}
-
-.toast.success{
-  background:#087f73
-}
-
-.toast.error{
-  background:#b4233f
-}
-
-.toast.warning{
-  background:#9a6500
-}
+header{background:linear-gradient(135deg,#075e54,#087f73);color:white;padding:14px 18px;border-radius:0 0 22px 22px}
+.header-row{display:flex;align-items:center;gap:12px}
+.back-btn{border:none;background:rgba(255,255,255,.15);color:white;width:40px;height:40px;border-radius:50%;font-size:25px;flex-shrink:0}
+.brand-header{display:flex;align-items:center;gap:10px}
+.brand-icon{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#064e46,#10a889);position:relative;display:flex;justify-content:center;align-items:center;box-shadow:0 5px 14px rgba(0,0,0,.18);flex-shrink:0}
+.brand-p-left{position:absolute;left:8px;top:10px;width:12px;height:23px;border:4px solid white;border-right:0;border-radius:8px 0 0 8px}
+.brand-p-right{position:absolute;right:8px;top:10px;width:12px;height:23px;border:4px solid white;border-left:0;border-radius:0 8px 8px 0}
+.brand-center{width:12px;height:12px;background:white;border-radius:50%;position:absolute;display:flex;justify-content:center;align-items:center;z-index:5}
+.brand-dot{width:4px;height:4px;background:#087f73;border-radius:50%}
+.brand-text{display:flex;flex-direction:column;justify-content:center}
+.brand-text h1{font-size:18px;line-height:1;font-weight:800;color:white}
+.brand-text h1 span{color:#b8fff1}
+.brand-text p{margin-top:5px;font-size:7px;color:rgba(255,255,255,.78);letter-spacing:.6px}
+
+.profile-card{background:white;margin:16px;border-radius:20px;padding:20px;box-shadow:0 4px 15px rgba(0,0,0,.07)}
+.profile-top{display:flex;align-items:center;gap:15px}
+.profile-photo-wrap{position:relative;width:82px;height:82px;flex-shrink:0}
+.profile-photo{width:82px;height:82px;border-radius:50%;object-fit:cover;background:#dfeeea;display:flex;align-items:center;justify-content:center;color:#087f73;font-size:30px;font-weight:bold;overflow:hidden}
+.photo-button{position:absolute;right:-2px;bottom:-2px;width:29px;height:29px;border:none;border-radius:50%;background:#087f73;color:white;font-size:14px;display:flex;align-items:center;justify-content:center}
+.profile-info{min-width:0}
+.profile-name-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.profile-name{font-size:20px;font-weight:bold;word-break:break-word}
+.verification-badge{display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;padding:3px 7px;border-radius:8px;background:#e8f8f3;color:#087f73}
+.verification-badge.unverified{background:#f1f4f8;color:#7a8494}
+.profile-id{margin-top:5px;color:#7a8494;font-size:12px}
+.profile-bio{margin-top:5px;color:#596579;font-size:13px;word-break:break-word}
+.lock-status{margin-top:7px;display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:8px;background:#f1f4f8;color:#596579;font-size:11px;font-weight:bold}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:20px;border-top:1px solid #edf0f4;padding-top:16px}
+.stat{text-align:center}
+.stat strong{display:block;font-size:18px}
+.stat span{display:block;color:#7a8494;font-size:11px;margin-top:4px}
+.profile-buttons{display:flex;gap:8px;margin-top:17px}
+.profile-buttons button{flex:1;border:none;padding:11px;border-radius:10px;font-weight:bold}
+.edit-btn{background:#087f73;color:white}
+.settings-btn{background:#edf7f5;color:#087f73}
+.lock-btn{background:#f1f4f8;color:#172033}
+.trading-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.trading-stat{background:#f5f7fb;border-radius:12px;padding:12px;text-align:center}
+.trading-stat strong{display:block;font-size:17px}
+.trading-stat span{display:block;color:#7a8494;font-size:11px;margin-top:5px}
+
+.section{margin:16px}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.section-title h2{font-size:19px}
+
+.wallet{background:linear-gradient(135deg,#172033,#29364f);color:white;border-radius:18px;padding:18px;box-shadow:0 5px 18px rgba(0,0,0,.1)}
+.wallet-label{opacity:.75;font-size:13px}
+.wallet-header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.balance-toggle{border:none;background:rgba(255,255,255,.1);color:white;width:36px;height:32px;border-radius:9px;font-size:17px}
+.wallet-balances{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:9px}
+.balance-box{background:rgba(255,255,255,.08);border-radius:12px;padding:12px;min-width:0}
+.balance-title{font-size:12px;opacity:.7}
+.balance-value{font-size:21px;font-weight:bold;margin-top:5px;word-break:break-word}
+.wallet-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:15px}
+.wallet-action{border:none;color:white;padding:11px;border-radius:10px;font-weight:bold}
+.deposit-btn{background:#16a085}
+.withdraw-btn{background:#c0392b}
+.transfer-btn{background:#087f73}
+
+.history-box{background:white;border-radius:18px;padding:15px;box-shadow:0 4px 15px rgba(0,0,0,.07)}
+.history-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}
+.history-tab{border:none;background:#f1f4f8;color:#596579;padding:9px 5px;border-radius:9px;font-size:11px;font-weight:bold}
+.history-tab.active{background:#087f73;color:white}
+.history-list{display:flex;flex-direction:column;gap:8px}
+.history-row{background:#f5f7fb;border-radius:11px;padding:11px}
+.history-row-top{display:flex;justify-content:space-between;gap:8px}
+.history-type{font-weight:bold;font-size:12px}
+.history-amount{font-weight:bold;font-size:12px}
+.history-amount.positive{color:#087f73}
+.history-amount.negative{color:#c0392b}
+.history-meta{display:flex;justify-content:space-between;gap:8px;margin-top:5px;color:#7a8494;font-size:10px}
+.history-status{margin-top:6px;display:inline-block;background:#e8f8f3;color:#087f73;padding:4px 7px;border-radius:7px;font-size:10px;font-weight:bold}
+.history-status.pending{background:#fff5df;color:#a86c00}
+.history-status.failed{background:#fdecec;color:#c0392b}
+.history-empty{padding:20px;text-align:center;color:#7b8492;font-size:12px}
+
+.order-section{margin:16px}
+.order-box{background:white;border-radius:18px;padding:16px;box-shadow:0 4px 15px rgba(0,0,0,.07)}
+.create-order-button{width:100%;margin-top:10px;border:none;background:#087f73;color:white;padding:12px;border-radius:10px;font-weight:bold}
+.create-order-button.sell-create{background:#c0392b}
+.orders-list{display:flex;flex-direction:column;gap:10px}
+.order-card{background:white;border-radius:15px;padding:14px;box-shadow:0 3px 12px rgba(0,0,0,.06);border-left:4px solid #087f73}
+.order-card.sell{border-left-color:#c0392b}
+.order-card-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.order-type{font-size:14px;font-weight:bold}
+.order-status{font-size:11px;padding:5px 8px;border-radius:8px;background:#edf7f5;color:#087f73;font-weight:bold}
+.order-status.sell-status{background:#fdecec;color:#c0392b}
+.order-details{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.order-detail{background:#f5f7fb;border-radius:9px;padding:9px}
+.order-detail-label{color:#7a8494;font-size:10px}
+.order-detail-value{margin-top:4px;font-size:13px;font-weight:bold;word-break:break-word}
+.cancel-order-btn{width:100%;border:none;margin-top:10px;padding:10px;border-radius:9px;background:#fdecec;color:#c0392b;font-weight:bold}
+.order-empty{background:white;border-radius:15px;padding:18px;text-align:center;color:#7b8492;font-size:13px}
+
+.create-box{background:white;border-radius:17px;padding:16px;box-shadow:0 3px 12px rgba(0,0,0,.06)}
+.create-box textarea{width:100%;min-height:100px;resize:vertical;border:1px solid #dfe4eb;border-radius:12px;padding:12px;outline:none;font-size:14px}
+.post-options{display:flex;align-items:center;gap:10px;margin-top:10px}
+.post-options select{flex:1;border:1px solid #dfe4eb;border-radius:9px;padding:10px}
+.create-post-btn{border:none;background:#087f73;color:white;padding:10px 15px;border-radius:9px;font-weight:bold}
+.posts-feed{display:flex;flex-direction:column;gap:12px}
+.post-card{background:white;border-radius:17px;padding:16px;box-shadow:0 3px 12px rgba(0,0,0,.06)}
+.post-header{display:flex;align-items:center;gap:10px}
+.post-avatar{width:43px;height:43px;border-radius:50%;object-fit:cover;background:#dfeeea;display:flex;align-items:center;justify-content:center;color:#087f73;font-weight:bold;flex-shrink:0}
+.post-user{flex:1;min-width:0}
+.post-name-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.post-name{font-weight:bold;font-size:14px}
+.post-meta{color:#8a93a1;font-size:11px;margin-top:3px}
+.post-menu{border:none;background:transparent;font-size:20px;color:#687386}
+.post-content{margin-top:13px;font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+.post-actions{display:flex;gap:15px;margin-top:15px;padding-top:12px;border-top:1px solid #edf0f4;flex-wrap:wrap}
+.post-action{border:none;background:transparent;color:#687386;font-size:13px}
+.post-action.liked{color:#e74c3c;font-weight:bold}
+.comments-box{margin-top:12px;border-top:1px solid #edf0f4;padding-top:10px}
+.comments-box.hidden{display:none}
+.comment{display:flex;gap:8px;margin-bottom:9px}
+.comment-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;background:#dfeeea;display:flex;align-items:center;justify-content:center;color:#087f73;font-weight:bold;flex-shrink:0}
+.comment-body{background:#f5f7fb;border-radius:11px;padding:8px 10px;flex:1;min-width:0}
+.comment-top{display:flex;justify-content:space-between;gap:8px}
+.comment-name{font-weight:bold;font-size:12px}
+.comment-delete{border:none;background:transparent;color:#e74c3c;font-size:11px}
+.comment-text{font-size:13px;margin-top:3px;white-space:pre-wrap;word-break:break-word}
+.comment-input-row{display:flex;gap:7px;margin-top:10px}
+.comment-input{flex:1;min-width:0;border:1px solid #dfe4eb;border-radius:10px;padding:9px;outline:none}
+.comment-send{border:none;background:#087f73;color:white;border-radius:10px;padding:0 13px;font-weight:bold}
+.view-comments{border:none;background:transparent;color:#087f73;font-size:12px;font-weight:bold;margin-top:8px}
+.empty{background:white;border-radius:16px;padding:25px;text-align:center;color:#7b8492}
+
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3000;align-items:center;justify-content:center;padding:20px}
+.modal.show{display:flex}
+.modal-box{width:100%;max-width:430px;background:white;border-radius:18px;padding:20px;max-height:90vh;overflow-y:auto}
+.modal-box h3{margin-bottom:15px}
+.modal-box input,.modal-box textarea,.modal-box select{width:100%;border:1px solid #dfe4eb;border-radius:10px;padding:11px;margin-bottom:10px;outline:none;background:white}
+.modal-box textarea{min-height:100px;resize:vertical}
+.modal-buttons{display:flex;gap:8px}
+.modal-buttons button{flex:1;border:none;padding:11px;border-radius:10px;font-weight:bold}
+.cancel-btn{background:#edf0f4;color:#172033}
+.save-btn{background:#087f73;color:white}
+.settings-list{display:flex;flex-direction:column;gap:8px}
+.settings-item{width:100%;border:none;background:#f5f7fb;padding:13px;border-radius:10px;text-align:left;font-weight:bold}
+.settings-item.logout{color:#e74c3c}
+.money-modal-info{background:#f5f7fb;border-radius:11px;padding:12px;margin-bottom:12px;font-size:12px;color:#596579;line-height:1.5}
+.money-balance{font-size:14px;font-weight:bold;color:#172033;margin-top:4px}
+.deposit-address{background:white;border:1px solid #dfe4eb;border-radius:9px;padding:12px;margin-top:8px;word-break:break-all;font-size:12px;color:#172033}
+.copy-address-btn{width:100%;border:none;background:#087f73;color:white;padding:11px;border-radius:9px;margin-top:10px;font-weight:bold}
+.order-modal-title{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.order-modal-type{font-size:12px;padding:5px 9px;border-radius:8px;font-weight:bold}
+.order-modal-type.buy{background:#e8f8f3;color:#087f73}
+.order-modal-type.sell{background:#fdecec;color:#c0392b}
+.form-label{display:block;font-size:12px;font-weight:bold;color:#596579;margin:3px 0 6px}
+.fee-preview{background:#f5f7fb;border-radius:11px;padding:12px;margin-top:2px;margin-bottom:10px}
+.fee-row{display:flex;justify-content:space-between;gap:10px;font-size:12px;margin-bottom:7px}
+.fee-row:last-child{margin-bottom:0;padding-top:7px;border-top:1px solid #dfe4eb;font-weight:bold}
+.order-submit{width:100%;border:none;background:#087f73;color:white;padding:12px;border-radius:10px;font-weight:bold}
+.order-submit.sell-submit{background:#c0392b}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:68px;background:white;border-top:1px solid #ddd;display:flex;justify-content:space-around;align-items:center;z-index:2000}
+.nav-item{text-align:center;color:#777;font-size:11px;min-width:55px;cursor:pointer}
+.nav-item span{display:block;font-size:22px;margin-bottom:3px}
+.nav-item.active{color:#087f73;font-weight:bold}
+input[type=file]{display:none}
+button:disabled{opacity:.6;cursor:not-allowed}
 
 @media(max-width:450px){
-
-.container{
-  padding:14px
-}
-
-.brand-name{
-  font-size:17px
-}
-
-.security{
-  font-size:11px
-}
-
-.offer-price{
-  font-size:16px
-}
-
-.bottom-nav{
-  height:70px
-}
-
-.section-title h2{
-  font-size:17px
-}
-
-.view-btn,
-.refresh-btn{
-  padding:6px 7px;
-  font-size:11px
-}
-
+header{padding:12px}
+.profile-card,.section,.order-section{margin-left:12px;margin-right:12px}
+.profile-top{align-items:flex-start}
+.profile-name{font-size:18px}
+.stats{gap:3px}
+.stat strong{font-size:16px}
+.wallet-balances{grid-template-columns:1fr}
+.post-options{flex-direction:column;align-items:stretch}
+.post-options select,.create-post-btn{width:100%}
+.brand-icon{width:38px;height:38px}
+.brand-p-left,.brand-p-right{top:9px;height:20px}
+.brand-p-left{left:7px}
+.brand-p-right{right:7px}
+.brand-center{width:10px;height:10px}
+.brand-dot{width:3px;height:3px}
+.brand-text h1{font-size:15px}
+.brand-text p{font-size:6px}
+.order-details{grid-template-columns:1fr}
+.history-tabs{grid-template-columns:1fr 1fr 1fr}
+.history-tab{font-size:10px}
 }
 </style>
 </head>
@@ -627,467 +200,988 @@ header{
 <body>
 
 <header>
+<div class="header-row">
+<button class="back-btn" onclick="goHome()">‹</button>
 
-<div class="brand">
-
-<div class="brand-logo" aria-label="P2P Social logo">
-<div class="p-left"></div>
-<div class="p-right"></div>
-<div class="center-dot"></div>
+<div class="brand-header">
+<div class="brand-icon">
+<div class="brand-p-left"></div>
+<div class="brand-p-right"></div>
+<div class="brand-center"><div class="brand-dot"></div></div>
 </div>
 
-<div class="brand-name">
-P2P <span>Social</span>
+<div class="brand-text">
+<h1>P2P <span>Social</span></h1>
+<p>CONNECT • TRADE • SHARE</p>
 </div>
-
 </div>
-
-<div class="security">
-🔴 Sell Orders
 </div>
-
 </header>
 
-<main class="container">
+<div class="profile-card">
+
+<div class="profile-top">
+
+<div class="profile-photo-wrap">
+<div id="profilePhotoBox" class="profile-photo">U</div>
+
+<label class="photo-button" for="photoInput">📷</label>
+
+<input
+id="photoInput"
+type="file"
+accept="image/*"
+onchange="changeProfilePhoto(event)"
+>
+</div>
+
+<div class="profile-info">
+
+<div class="profile-name-row">
+<div id="profileName" class="profile-name">Loading...</div>
+<div id="verificationBadge" class="verification-badge unverified">
+Unverified
+</div>
+</div>
+
+<div id="profileId" class="profile-id">Username: --</div>
+
+<div id="profileBio" class="profile-bio">No bio yet.</div>
+
+<div id="lockStatus" class="lock-status">
+🔓 Public profile
+</div>
+
+</div>
+</div>
+
+<div class="stats">
+<div class="stat">
+<strong id="postCount">0</strong>
+<span>Posts</span>
+</div>
+
+<div class="stat">
+<strong id="followersCount">0</strong>
+<span>Followers</span>
+</div>
+
+<div class="stat">
+<strong id="followingCount">0</strong>
+<span>Following</span>
+</div>
+
+<div class="stat">
+<strong id="likeCount">0</strong>
+<span>Likes</span>
+</div>
+</div>
+
+<div class="trading-stats">
+
+<div class="trading-stat">
+<strong id="completedRate">0%</strong>
+<span>30 Day Completed Rate</span>
+</div>
+
+<div class="trading-stat">
+<strong id="thirtyDayTrade">0</strong>
+<span>30 Day Trade</span>
+</div>
+
+<div class="trading-stat">
+<strong id="totalTrade">0</strong>
+<span>Total Trade</span>
+</div>
+
+<div class="trading-stat">
+<strong id="usernameAge">--</strong>
+<span>Username</span>
+</div>
+
+</div>
+
+<div class="profile-buttons">
+<button class="edit-btn" onclick="openEditProfile()">✏️ Edit</button>
+<button id="lockButton" class="lock-btn" onclick="toggleProfileLock()">🔒 Lock</button>
+<button class="settings-btn" onclick="openSettings()">⚙️ Settings</button>
+</div>
+
+</div>
+
+<section class="section">
 
 <div class="section-title">
+<h2>💰 Wallet</h2>
+</div>
 
-<h2>
-🔴 Available Sell Orders
-(<span id="offerCount">0</span>)
-</h2>
+<div class="wallet">
 
-<div class="section-actions">
+<div class="wallet-header">
 
-<button
-type="button"
-id="offerViewButton"
-class="view-btn"
-onclick="toggleOffers()"
->
-View All
-</button>
+<div class="wallet-label">
+USDT Balance • Username Account
+</div>
 
 <button
-type="button"
-class="refresh-btn"
-onclick="loadSellOrders()"
+id="balanceToggleButton"
+class="balance-toggle"
+onclick="toggleBalanceVisibility()"
 >
-🔃 Refresh
+👁️
 </button>
 
 </div>
 
+<div class="wallet-balances">
+
+<div class="balance-box">
+<div class="balance-title">Available USDT</div>
+<div id="usdtBalance" class="balance-value">Loading...</div>
 </div>
 
-<section id="offers" class="offer-list">
+<div class="balance-box">
+<div class="balance-title">Locked USDT</div>
+<div id="lockedUSDTBalance" class="balance-value">Loading...</div>
+</div>
 
-<div class="empty">
-<div class="empty-icon">🔴</div>
-<strong>Loading sell orders...</strong>
+</div>
+
+<div class="wallet-actions">
+
+<button class="wallet-action deposit-btn" onclick="openDeposit()">
+⬇️ Deposit
+</button>
+
+<button class="wallet-action withdraw-btn" onclick="openWithdraw()">
+⬆️ Withdrawal
+</button>
+
+<button class="wallet-action transfer-btn" onclick="openTransfer()">
+💵 Transfer USDT
+</button>
+
+</div>
+
 </div>
 
 </section>
 
-</main>
+<section class="section">
 
-<div
-id="tradeModal"
-class="modal"
-role="dialog"
-aria-modal="true"
+<div class="section-title">
+<h2>📜 USDT History</h2>
+<button class="view-comments" onclick="loadUSDTHistory()">Refresh</button>
+</div>
+
+<div class="history-box">
+
+<div class="history-tabs">
+
+<button id="historyTabAll" class="history-tab active" onclick="setHistoryType('all')">
+All
+</button>
+
+<button id="historyTabDeposit" class="history-tab" onclick="setHistoryType('deposit')">
+Deposits
+</button>
+
+<button id="historyTabWithdrawal" class="history-tab" onclick="setHistoryType('withdrawal')">
+Withdrawals
+</button>
+
+</div>
+
+<div id="historyList" class="history-list">
+<div class="history-empty">Loading history...</div>
+</div>
+
+</div>
+
+</section>
+
+<section class="order-section">
+
+<div class="section-title">
+
+<h2>🔄 P2P Orders</h2>
+
+<button class="view-comments" onclick="loadMyOrders()">
+Refresh
+</button>
+
+</div>
+
+<div class="order-box">
+
+<button
+class="create-order-button"
+onclick="openOrderModal('buy')"
 >
+➕ Create Buy Order
+</button>
+
+<button
+class="create-order-button sell-create"
+onclick="openOrderModal('sell')"
+>
+➕ Create Sell Order
+</button>
+
+</div>
+
+</section>
+
+<section class="section">
+
+<div class="section-title">
+
+<h2>📋 My Orders</h2>
+
+<button class="view-comments" onclick="loadMyOrders()">
+Refresh
+</button>
+
+</div>
+
+<div id="myOrders" class="orders-list">
+
+<div class="order-empty">
+Loading orders...
+</div>
+
+</div>
+
+</section>
+
+<section class="section">
+
+<div class="section-title">
+<h2>📝 Create Post</h2>
+</div>
+
+<div class="create-box">
+
+<textarea
+id="postContent"
+maxlength="5000"
+placeholder="What's on your mind?"
+></textarea>
+
+<div class="post-options">
+
+<select id="postVisibility">
+
+<option value="public">
+🌍 Public
+</option>
+
+<option value="private">
+👥 Friends / Private
+</option>
+
+</select>
+
+<button
+id="createPostButton"
+class="create-post-btn"
+onclick="createPost()"
+>
+Post
+</button>
+
+</div>
+
+</div>
+
+</section>
+
+<section class="section">
+
+<div class="section-title">
+
+<h2>📄 Your Posts</h2>
+
+<button class="view-comments" onclick="loadPosts()">
+Refresh
+</button>
+
+</div>
+
+<div id="postsFeed" class="posts-feed">
+
+<div class="empty">
+Loading posts...
+</div>
+
+</div>
+
+</section>
+
+<!-- DEPOSIT -->
+
+<div id="depositModal" class="modal">
 
 <div class="modal-box">
 
-<h3>🤝 Buy USDT from Seller</h3>
+<h3>⬇️ Deposit USDT</h3>
 
-<div id="tradeSummary"></div>
+<div class="money-modal-info">
+
+USDT Deposit Network
+
+<select id="depositNetwork" onchange="updateDepositAddress()">
+
+<option value="TON">
+TON
+</option>
+
+</select>
+
+Supported network only.
+
+<div
+class="deposit-address"
+id="depositAddress"
+>
+UQACkUS0J6lEIlo6iHWoAjxnUYoOOR4StNPVbTXDOt-Em1zl
+</div>
+
+<button
+class="copy-address-btn"
+onclick="copyDepositAddress()"
+>
+📋 Copy Address
+</button>
+
+</div>
+
+<div class="money-modal-info">
+
+Send USDT to the displayed address.
+
+No transaction hash is required from you.
+
+After the blockchain/backend verification is completed,
+the verified deposit is credited to your USDT balance.
+
+</div>
+
+<div class="modal-buttons">
+
+<button
+class="cancel-btn"
+onclick="closeDeposit()"
+>
+Close
+</button>
+
+</div>
+
+</div>
+</div>
+
+<!-- WITHDRAW -->
+
+<div id="withdrawModal" class="modal">
+
+<div class="modal-box">
+
+<h3>⬆️ Withdrawal USDT</h3>
+
+<div class="money-modal-info">
+
+Available USDT
+
+<div
+id="withdrawBalance"
+class="money-balance"
+>
+0.00 USDT
+</div>
+
+</div>
+
+<label class="form-label">
+Network
+</label>
+
+<select id="withdrawNetwork">
+
+<option value="TON">
+TON
+</option>
+
+</select>
+
+<label class="form-label">
+Withdrawal Address
+</label>
 
 <input
-id="tradeAmount"
+id="withdrawAddress"
+type="text"
+maxlength="150"
+placeholder="Enter TON address"
+>
+
+<label class="form-label">
+Amount (USDT)
+</label>
+
+<input
+id="withdrawAmount"
 type="number"
 min="0"
-step="0.000001"
-placeholder="USDT amount"
-oninput="updateTradeFeePreview()"
+step="any"
+placeholder="Enter USDT amount"
 >
 
-<div class="fee-card">
+<div class="modal-buttons">
 
-<div class="fee-title">
+<button
+class="cancel-btn"
+onclick="closeWithdraw()"
+>
+Cancel
+</button>
 
-<strong>
-💸 Platform Fee
-</strong>
+<button
+id="withdrawSubmitButton"
+class="save-btn"
+onclick="submitWithdrawal()"
+>
+Submit Withdrawal
+</button>
 
-<span class="fee-badge">
-<span id="tradeFeeRateText">1%</span>
-</span>
+</div>
 
+</div>
+</div>
+
+<!-- TRANSFER -->
+
+<div id="transferModal" class="modal">
+
+<div class="modal-box">
+
+<h3>💵 Transfer USDT</h3>
+
+<div class="money-modal-info">
+
+Transfer using permanent username
+
+<div
+id="transferSender"
+class="money-balance"
+>
+Loading username...
+</div>
+
+</div>
+
+<label class="form-label">
+Recipient Username
+</label>
+
+<input
+id="transferUsername"
+type="text"
+maxlength="100"
+placeholder="Enter username"
+>
+
+<label class="form-label">
+Amount (USDT)
+</label>
+
+<input
+id="transferAmount"
+type="number"
+min="0"
+step="any"
+placeholder="Enter USDT amount"
+>
+
+<div class="modal-buttons">
+
+<button
+class="cancel-btn"
+onclick="closeTransfer()"
+>
+Cancel
+</button>
+
+<button
+id="transferSubmitButton"
+class="save-btn"
+onclick="submitTransfer()"
+>
+Transfer
+</button>
+
+</div>
+
+</div>
+</div>
+
+<!-- P2P ORDER -->
+
+<div id="orderModal" class="modal">
+
+<div class="modal-box">
+
+<div class="order-modal-title">
+
+<h3 id="orderModalTitle">
+🟢 Create Buy Order
+</h3>
+
+<div
+id="orderModalType"
+class="order-modal-type buy"
+>
+BUY
+</div>
+
+</div>
+
+<div class="money-modal-info">
+
+P2P identity
+
+<div
+id="orderUsername"
+class="money-balance"
+>
+Loading username...
+</div>
+
+</div>
+
+<label class="form-label">
+Trading Pair
+</label>
+
+<select
+id="orderPair"
+onchange="updateOrderCurrency();updateFeePreview()"
+>
+</select>
+
+<label class="form-label">
+Amount (USDT)
+</label>
+
+<input
+id="orderAmount"
+type="number"
+min="0"
+step="any"
+placeholder="Enter USDT amount"
+oninput="updateFeePreview()"
+>
+
+<label class="form-label">
+Price (<span id="orderPriceCurrency">USD</span>)
+</label>
+
+<input
+id="orderPrice"
+type="number"
+min="0"
+step="any"
+placeholder="Enter price"
+oninput="updateFeePreview()"
+>
+
+<label class="form-label">
+Payment Method
+</label>
+
+<select id="orderPayment">
+
+<option value="">
+Select payment method
+</option>
+
+<option value="PayPal">
+🟦 PayPal
+</option>
+
+<option value="Payoneer">
+🟪 Payoneer
+</option>
+
+<option value="Bank">
+🏦 Bank Transfer
+</option>
+
+<option value="Telebirr">
+🟩 Telebirr
+</option>
+
+<option value="CBE">
+🏦 CBE
+</option>
+
+</select>
+
+<div class="fee-preview">
+
+<div class="fee-row">
+<span>Trade Value</span>
+<span id="orderTradeValue">0.00</span>
 </div>
 
 <div class="fee-row">
-
-<span>
-Trade value
-</span>
-
-<strong id="tradeValuePreview">
-0.00
-</strong>
-
+<span>Platform Fee (1%)</span>
+<span id="orderFee">0.00</span>
 </div>
 
 <div class="fee-row">
-
-<span>
-Platform fee
-</span>
-
-<strong id="tradeFeePreviewAmount">
-0.00
-</strong>
-
-</div>
-
-<div class="fee-row fee-total">
-
-<span>
-Total
-</span>
-
-<strong id="tradeTotalPreview">
-0.00
-</strong>
-
+<span>Total</span>
+<span id="orderTotal">0.00</span>
 </div>
 
 </div>
 
-<div class="modal-actions">
+<div class="modal-buttons">
 
 <button
-type="button"
-class="close-btn"
-onclick="closeModal('tradeModal')"
+class="cancel-btn"
+onclick="closeOrderModal()"
 >
 Cancel
 </button>
 
 <button
-type="button"
-class="confirm-btn"
-id="tradeSubmitButton"
-onclick="submitTrade()"
+id="submitOrderButton"
+class="order-submit"
+onclick="createOrder()"
 >
-Create Trade
+Create Buy Order
 </button>
 
 </div>
 
 </div>
-
 </div>
 
-<div
-id="actionModal"
-class="modal"
-role="dialog"
-aria-modal="true"
->
+<!-- EDIT -->
+
+<div id="editModal" class="modal">
 
 <div class="modal-box">
 
-<h3 id="actionTitle">
-Trade Action
-</h3>
+<h3>✏️ Edit Profile</h3>
 
-<div id="actionSummary"></div>
+<div class="money-modal-info">
 
-<div class="modal-actions">
-
-<button
-type="button"
-class="close-btn"
-onclick="closeModal('actionModal')"
->
-Cancel
-</button>
-
-<button
-type="button"
-class="confirm-btn"
-id="actionConfirmButton"
-onclick="confirmTradeAction()"
->
-Confirm
-</button>
-
-</div>
-
-</div>
-
-</div>
+Username
 
 <div
-id="disputeModal"
-class="modal"
-role="dialog"
-aria-modal="true"
+id="permanentUsername"
+class="money-balance"
 >
-
-<div class="modal-box">
-
-<h3>
-⚠️ Open Dispute
-</h3>
-
-<div id="disputeSummary"></div>
-
-<textarea
-id="disputeReason"
-placeholder="Explain the reason for the dispute"
-></textarea>
-
-<div class="modal-actions">
-
-<button
-type="button"
-class="close-btn"
-onclick="closeModal('disputeModal')"
->
-Cancel
-</button>
-
-<button
-type="button"
-class="warning-btn"
-id="disputeSubmitButton"
-onclick="submitDispute()"
->
-Open Dispute
-</button>
-
+Loading...
 </div>
 
 </div>
 
-</div>
+<div class="money-modal-info">
 
-<div
-id="ratingModal"
-class="modal"
-role="dialog"
-aria-modal="true"
->
-
-<div class="modal-box">
-
-<h3>
-⭐ Rate Completed Trade
-</h3>
-
-<div id="ratingSummary"></div>
-
-<div class="rating-stars" id="ratingStars">
-
-<button
-type="button"
-data-rating="1"
-onclick="selectRating(1)"
->
-★
-</button>
-
-<button
-type="button"
-data-rating="2"
-onclick="selectRating(2)"
->
-★
-</button>
-
-<button
-type="button"
-data-rating="3"
-onclick="selectRating(3)"
->
-★
-</button>
-
-<button
-type="button"
-data-rating="4"
-onclick="selectRating(4)"
->
-★
-</button>
-
-<button
-type="button"
-data-rating="5"
-onclick="selectRating(5)"
->
-★
-</button>
+Your username is your permanent identity and cannot be changed.
 
 </div>
 
 <textarea
-id="ratingComment"
-placeholder="Comment (optional)"
+id="editBio"
+maxlength="300"
+placeholder="Bio"
 ></textarea>
 
-<div class="modal-actions">
+<div class="modal-buttons">
 
 <button
-type="button"
-class="close-btn"
-onclick="closeModal('ratingModal')"
+class="cancel-btn"
+onclick="closeEditProfile()"
 >
 Cancel
 </button>
 
 <button
-type="button"
-class="confirm-btn"
-id="ratingSubmitButton"
-onclick="submitRating()"
+id="saveProfileButton"
+class="save-btn"
+onclick="saveProfile()"
 >
-Submit Rating
+Save
 </button>
 
 </div>
 
 </div>
-
 </div>
 
-<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<!-- SETTINGS -->
+
+<div id="settingsModal" class="modal">
+
+<div class="modal-box">
+
+<h3>⚙️ Settings</h3>
+
+<div class="settings-list">
+
+<button
+class="settings-item"
+onclick="openEditProfile();closeSettings()"
+>
+✏️ Edit Profile
+</button>
+
+<button
+class="settings-item"
+onclick="toggleProfileLock();closeSettings()"
+>
+🔒 Lock / Unlock Profile
+</button>
+
+<button
+class="settings-item"
+onclick="openOrderModal('buy');closeSettings()"
+>
+🟢 Create Buy Order
+</button>
+
+<button
+class="settings-item"
+onclick="openOrderModal('sell');closeSettings()"
+>
+🔴 Create Sell Order
+</button>
+
+<button
+class="settings-item"
+onclick="openTransfer();closeSettings()"
+>
+💵 Transfer USDT
+</button>
+
+<button
+class="settings-item"
+onclick="openDeposit();closeSettings()"
+>
+⬇️ Deposit USDT
+</button>
+
+<button
+class="settings-item"
+onclick="openWithdraw();closeSettings()"
+>
+⬆️ Withdrawal USDT
+</button>
+
+<button
+class="settings-item"
+onclick="openMessages()"
+>
+💬 Messages
+</button>
+
+<button
+class="settings-item"
+onclick="openVerification()"
+>
+✅ Verification → @P2P_Social_Admin
+</button>
+
+<button
+class="settings-item"
+onclick="openSupport()"
+>
+🆘 Support → @P2P_Social_Admin
+</button>
+
+<button
+class="settings-item"
+onclick="openLive()"
+>
+🔴 Live
+</button>
+
+<button
+class="settings-item logout"
+onclick="logout()"
+>
+🚪 Logout
+</button>
+
+<button
+class="cancel-btn"
+style="width:100%;padding:11px;border:none;border-radius:10px"
+onclick="closeSettings()"
+>
+Close
+</button>
+
+</div>
+</div>
+</div>
 
 <nav class="bottom-nav">
 
-<a href="index.html">
-<span class="nav-icon">🏠</span>
+<div
+class="nav-item"
+onclick="goHome()"
+>
+<span>🏠</span>
 Home
-</a>
+</div>
 
-<a href="live.html">
-<span class="nav-icon">🟢</span>
+<div
+class="nav-item"
+onclick="openBuy()"
+>
+<span>🟢</span>
 Buy
-</a>
+</div>
 
-<a href="wallet.html" class="active">
-<span class="nav-icon">🔴</span>
+<div
+class="nav-item"
+onclick="openSell()"
+>
+<span>🔴</span>
 Sell
-</a>
+</div>
 
-<a href="message.html">
-<span class="nav-icon">💬</span>
+<div
+class="nav-item"
+onclick="openMessages()"
+>
+<span>💬</span>
 Messages
-</a>
+</div>
 
-<a href="profile.html">
-<span class="nav-icon">👤</span>
+<div
+class="nav-item active"
+onclick="openProfile()"
+>
+<span>👤</span>
 Profile
-</a>
+</div>
 
 </nav>
 
 <script>
-const SUPABASE_URL =
-"https://mbsvuwrgigqfporxwpfr.supabase.co";
 
-const SUPABASE_PUBLISHABLE_KEY =
+const SUPABASE_URL="https://mbsvuwrgigqfporxwpfr.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY=
 "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
 
-const supabaseClient =
-window.supabase.createClient(
+const supabaseClient=window.supabase.createClient(
 SUPABASE_URL,
 SUPABASE_PUBLISHABLE_KEY
 );
 
-const PLATFORM_FEE_RATE = 0.01;
+let currentSession=null;
+let currentProfile=null;
 
-let currentSession = null;
-let currentUser = null;
-let currentUsername = null;
+let currentUSDTBalance=0;
+let currentLockedUSDT=0;
 
-let availableOrders = [];
-let selectedOffer = null;
-let selectedTrade = null;
-let selectedAction = null;
-let selectedRating = 0;
+let allProfiles={};
+let allComments=[];
 
-let offersExpanded = false;
-let realtimeChannel = null;
-let toastTimer = null;
-let isLoading = false;
+let orderType="buy";
+let balanceVisible=true;
+let permanentUsername="";
+let balanceChannel=null;
 
-const usernameCache = new Map();
+let currentHistoryType="all";
 
-document.addEventListener(
-"DOMContentLoaded",
-startApp
+const PLATFORM_FEE_RATE=0.01;
+
+const DEPOSIT_NETWORKS={
+TON:{
+address:"UQACkUS0J6lEIlo6iHWoAjxnUYoOOR4StNPVbTXDOt-Em1zl"
+}
+};
+
+function getPermanentUsername(){
+
+if(permanentUsername){
+return permanentUsername;
+}
+
+if(currentProfile?.username){
+return String(currentProfile.username).trim();
+}
+
+if(currentSession?.user){
+return String(
+currentSession.user.user_metadata?.username||""
+).trim();
+}
+
+return "";
+}
+
+function requirePermanentUsername(){
+
+const username=getPermanentUsername();
+
+if(!username){
+
+alert(
+"Your permanent username is not available. Please complete your profile first."
 );
 
-async function startApp(){
+return false;
+}
 
-try{
+return true;
+}
 
-const {
-data,
-error
-} =
-await supabaseClient.auth.getSession();
+function usernameEquals(a,b){
 
-if(error){
-
-console.error(
-"SESSION ERROR:",
-error
-);
-
-showLogin();
-return;
+return String(a||"")
+.trim()
+.toLowerCase()===String(b||"")
+.trim()
+.toLowerCase();
 
 }
 
-currentSession =
-data.session;
+async function startApp(){
+
+const {data,error}=await supabaseClient.auth.getSession();
+
+if(error){
+
+console.error(error);
+
+showLogin();
+
+return;
+}
+
+currentSession=data.session;
 
 if(!currentSession){
 
 showLogin();
+
 return;
-
 }
 
-currentUser =
-currentSession.user;
+await loadProfile();
+await loadPosts();
+await loadMyOrders();
+await loadUSDTHistory();
 
-await loadCurrentUsername();
-
-updateFeeRateText();
-
-await loadSellOrders();
-
-setupRealtime();
-
-}catch(error){
-
-console.error(
-"START ERROR:",
-error
-);
-
-toast(
-getErrorMessage(error),
-"error"
-);
-
-}
+setupUSDTBalanceRealtime();
 
 }
 
@@ -1095,2433 +1189,3307 @@ function showLogin(){
 
 alert("Please login first.");
 
-window.location.href =
-"login.html";
+window.location.href="login.html";
 
 }
 
-supabaseClient.auth.onAuthStateChange(
-function(event,session){
+function getVerificationStatus(){
 
-currentSession =
-session;
+if(!currentSession)return false;
 
-currentUser =
-session?.user || null;
-
-if(!currentUser){
-
-currentUsername =
-null;
-
-}
-
-if(event === "SIGNED_OUT"){
-
-if(realtimeChannel){
-
-supabaseClient.removeChannel(
-realtimeChannel
-);
-
-realtimeChannel =
-null;
-
-}
-
-window.location.href =
-"login.html";
-
-}
-
-}
-);
-
-async function loadCurrentUsername(){
-
-if(!currentUser)return;
-
-try{
-
-const {
-data,
-error
-} =
-await supabaseClient
-.from("profiles")
-.select("username")
-.eq(
-"id",
-currentUser.id
+return Boolean(
+currentProfile&&(
+currentProfile.verified===true||
+currentProfile.is_verified===true||
+currentProfile.user_verified===true||
+currentProfile.verification_status==="verified"
 )
+);
+
+}
+
+function updateVerificationUI(){
+
+const badge=document.getElementById("verificationBadge");
+
+if(!badge)return;
+
+if(getVerificationStatus()){
+
+badge.textContent="✓ Verified";
+badge.className="verification-badge";
+
+}else{
+
+badge.textContent="Unverified";
+badge.className="verification-badge unverified";
+
+}
+
+}
+
+/*
+The balance source remains the existing usdt_balances table.
+The query is restricted by user_id and therefore depends on Supabase RLS.
+No unconfirmed RPC name is invented here.
+*/
+
+async function loadUSDTBalance(){
+
+if(!currentSession)return 0;
+
+const userId=currentSession.user.id;
+
+const {data,error}=await supabaseClient
+.from("usdt_balances")
+.select("user_id,usdt_balance,locked_usdt")
+.eq("user_id",userId)
 .maybeSingle();
 
 if(error){
 
-throw error;
+console.error("USDT balance error:",error);
+
+currentUSDTBalance=0;
+currentLockedUSDT=0;
+
+renderUSDTBalance();
+
+return 0;
 
 }
 
-currentUsername =
-data?.username ||
-currentUser.user_metadata?.username ||
-null;
+const available=Number(data?.usdt_balance);
+const locked=Number(data?.locked_usdt);
 
-if(currentUsername){
+currentUSDTBalance=
+Number.isFinite(available)?available:0;
 
-usernameCache.set(
-String(currentUser.id),
-currentUsername
-);
+currentLockedUSDT=
+Number.isFinite(locked)?locked:0;
 
-}
+renderUSDTBalance();
 
-}catch(error){
-
-console.error(
-"CURRENT USERNAME ERROR:",
-error
-);
-
-currentUsername =
-currentUser.user_metadata?.username ||
-null;
+return currentUSDTBalance;
 
 }
 
-}
+function setupUSDTBalanceRealtime(){
 
-async function loadOrderUsernames(){
+if(!currentSession)return;
 
-const ids =
-[
-...new Set(
-availableOrders
-.map(
-order =>
-order.user_id
-)
-.filter(Boolean)
-.map(
-id =>
-String(id)
-)
-)
-];
+if(balanceChannel){
 
-const missing =
-ids.filter(
-id =>
-!usernameCache.has(id)
-);
-
-if(!missing.length)return;
-
-try{
-
-const {
-data,
-error
-} =
-await supabaseClient
-.from("profiles")
-.select(
-"id,username"
-)
-.in(
-"id",
-missing
-);
-
-if(error){
-
-throw error;
+supabaseClient.removeChannel(balanceChannel);
 
 }
 
-(data || []).forEach(
-profile => {
-
-if(
-profile.id &&
-profile.username
-){
-
-usernameCache.set(
-String(profile.id),
-profile.username
-);
-
-}
-
-}
-);
-
-}catch(error){
-
-console.error(
-"ORDER USERNAME ERROR:",
-error
-);
-
-}
-
-}
-
-async function loadSellOrders(){
-
-if(!currentUser){
-
-showLogin();
-return;
-
-}
-
-if(isLoading)return;
-
-isLoading = true;
-
-const container =
-document.getElementById(
-"offers"
-);
-
-if(container){
-
-container.innerHTML =
-'<div class="empty">' +
-'<div class="empty-icon">🔴</div>' +
-'<strong>Loading sell orders...</strong>' +
-'</div>';
-
-}
-
-try{
-
-const {
-data,
-error
-} =
-await supabaseClient
-.from("p2p_orders")
-.select("*")
-.neq(
-"user_id",
-currentUser.id
-)
-.eq(
-"order_type",
-"sell"
-)
-.in(
-"status",
-[
-"active",
-"open",
-"pending"
-]
-)
-.order(
-"created_at",
+balanceChannel=supabaseClient
+.channel("usdt-balance-"+currentSession.user.id)
+.on(
+"postgres_changes",
 {
-ascending:false
-}
+event:"*",
+schema:"public",
+table:"usdt_balances",
+filter:"user_id=eq."+currentSession.user.id
+},
+payload=>{
+
+const available=Number(
+payload.new?.usdt_balance
 );
 
-if(error){
-
-console.error(
-"SELL ORDERS ERROR:",
-error
+const locked=Number(
+payload.new?.locked_usdt
 );
 
-availableOrders = [];
+currentUSDTBalance=
+Number.isFinite(available)?available:0;
 
-if(container){
+currentLockedUSDT=
+Number.isFinite(locked)?locked:0;
 
-container.innerHTML =
-emptyHtml(
-"⚠️",
-"Could not load sell orders.",
-getErrorMessage(error)
-);
-
-}
-
-return;
+renderUSDTBalance();
 
 }
-
-availableOrders =
-data || [];
-
-await loadOrderUsernames();
-
-const count =
-document.getElementById(
-"offerCount"
-);
-
-if(count){
-
-count.textContent =
-availableOrders.length;
-
-}
-
-renderSellOrders();
-
-}catch(error){
-
-console.error(
-"SELL ORDERS ERROR:",
-error
-);
-
-if(container){
-
-container.innerHTML =
-emptyHtml(
-"⚠️",
-"Could not load sell orders.",
-getErrorMessage(error)
-);
-
-}
-
-}finally{
-
-isLoading = false;
-
-}
-
-}
-
-function renderSellOrders(){
-
-const container =
-document.getElementById(
-"offers"
-);
-
-if(!container)return;
-
-if(!availableOrders.length){
-
-container.innerHTML =
-emptyHtml(
-"🔴",
-"No sell orders available.",
-"Real active sell orders from other traders will appear here."
-);
-
-updateOfferButton();
-
-return;
-
-}
-
-container.innerHTML = "";
-
-const items =
-offersExpanded
-? availableOrders
-: availableOrders.slice(
-0,
-3
-);
-
-items.forEach(
-order => {
-
-const parts =
-getPairParts(
-order.pair ||
-order.trading_pair
-);
-
-const status =
-normalizeStatus(
-order.status
-);
-
-const username =
-usernameCache.get(
-String(
-order.user_id
 )
-) ||
-"Seller";
-
-const card =
-document.createElement(
-"div"
-);
-
-card.className =
-"offer-card";
-
-card.innerHTML = `
-
-<div class="offer-main">
-
-<div class="row">
-
-<div>
-
-<div class="offer-user">
-🔴 ${escapeHtml(username)}
-</div>
-
-<div class="offer-meta">
-🔴 Selling ·
-${escapeHtml(
-formatPair(order)
-)}
-</div>
-
-</div>
-
-<span class="offer-type">
-🔴 SELL
-</span>
-
-</div>
-
-<div
-style="
-display:flex;
-justify-content:space-between;
-align-items:center;
-gap:10px;
-margin-top:12px;
-"
->
-
-<div>
-
-<div
-style="
-color:#7b8790;
-font-size:12px;
-"
->
-Selling price
-</div>
-
-<div
-class="offer-price"
-style="text-align:left;margin-top:3px;"
->
-
-${money(order.price)}
-
-${escapeHtml(
-parts.quote ||
-"USDT"
-)}
-
-</div>
-
-</div>
-
-<span class="status ${statusClass(status)}">
-
-${escapeHtml(status)}
-
-</span>
-
-</div>
-
-<div class="offer-amount">
-
-Wants to sell:
-
-<strong>
-${escapeHtml(
-formatAmount(order)
-)}
-</strong>
-
-</div>
-
-${
-order.payment_method ||
-order.payment
-?
-`
-<div
-style="
-margin-top:8px;
-color:#596579;
-font-size:13px;
-"
->
-
-💳 Payment:
-
-<strong>
-${escapeHtml(
-order.payment_method ||
-order.payment
-)}
-</strong>
-
-</div>
-`
-:
-""
-}
-
-<div class="user-links">
-
-<a
-class="profile-link"
-href="profile.html?username=${encodeURIComponent(username)}"
->
-👤 Profile
-</a>
-
-<a
-class="message-link"
-href="message.html?username=${encodeURIComponent(username)}&order_id=${encodeURIComponent(order.id)}"
->
-💬 Messages
-</a>
-
-</div>
-
-<button
-type="button"
-class="offer-trade"
-data-order-id="${escapeHtml(order.id)}"
->
-🤝 Buy USDT
-</button>
-
-</div>
-
-`;
-
-const tradeButton =
-card.querySelector(
-".offer-trade"
-);
-
-tradeButton.addEventListener(
-"click",
-function(){
-
-openTrade(order.id);
-
-}
-);
-
-container.appendChild(
-card
-);
-
-}
-);
-
-updateOfferButton();
+.subscribe();
 
 }
 
-function updateOfferButton(){
+async function loadProfile(){
 
-const button =
-document.getElementById(
-"offerViewButton"
-);
+if(!currentSession)return;
 
-if(!button)return;
+const user=currentSession.user;
 
-if(
-availableOrders.length <= 3
-){
+let profile=null;
+let profileError=null;
 
-button.style.display =
-availableOrders.length
-? "none"
-: "block";
-
-button.textContent =
-"View All";
-
-return;
-
-}
-
-button.style.display =
-"block";
-
-button.textContent =
-offersExpanded
-? "Show 3"
-: "View All";
-
-}
-
-function toggleOffers(){
-
-offersExpanded =
-!offersExpanded;
-
-renderSellOrders();
-
-}
-
-function openTrade(orderId){
-
-selectedOffer =
-availableOrders.find(
-order =>
-String(order.id) ===
-String(orderId)
-);
-
-if(!selectedOffer){
-
-toast(
-"Sell order no longer exists. Refresh.",
-"warning"
-);
-
-return;
-
-}
-
-const available =
-getOfferAvailableAmount(
-selectedOffer
-);
-
-if(available <= 0){
-
-toast(
-"This sell order has no available amount.",
-"warning"
-);
-
-return;
-
-}
-
-const input =
-document.getElementById(
-"tradeAmount"
-);
-
-input.value = "";
-
-input.min =
-getMinimumTradeAmount(
-selectedOffer
-);
-
-input.max =
-available;
-
-const parts =
-getPairParts(
-selectedOffer.pair ||
-selectedOffer.trading_pair
-);
-
-const sellerUsername =
-usernameCache.get(
-String(
-selectedOffer.user_id
-)
-) ||
-"Seller";
-
-document.getElementById(
-"tradeSummary"
-).innerHTML = `
-
-<div
-class="details"
-style="margin-bottom:12px;"
->
-
-${detail(
-"Seller",
-sellerUsername
-)}
-
-${detail(
-"Pair",
-formatPair(
-selectedOffer
-)
-)}
-
-${detail(
-"Selling price",
-money(
-selectedOffer.price
-) +
-" " +
-(
-parts.quote ||
-"USDT"
-)
-)}
-
-${detail(
-"Available",
-formatAmount(
-selectedOffer
-)
-)}
-
-${
-selectedOffer.payment_method ||
-selectedOffer.payment
-?
-detail(
-"Payment",
-selectedOffer.payment_method ||
-selectedOffer.payment
-)
-:
-""
-}
-
-</div>
-
-`;
-
-updateTradeFeePreview();
-
-openModal(
-"tradeModal"
-);
-
-}
-
-function getOfferAvailableAmount(
-offer
-){
-
-if(!offer)return 0;
-
-const values = [
-offer.remaining_amount,
-offer.available_amount,
-offer.remaining
-];
-
-for(
-const value of values
-){
-
-if(
-value !== null &&
-value !== undefined &&
-value !== ""
-){
-
-const number =
-Number(value);
-
-if(
-Number.isFinite(number) &&
-number >= 0
-){
-
-return number;
-
-}
-
-}
-
-}
-
-const amount =
-Number(
-offer.amount
-);
-
-if(
-Number.isFinite(amount) &&
-amount >= 0
-){
-
-return amount;
-
-}
-
-return 0;
-
-}
-
-function getMinimumTradeAmount(
-offer
-){
-
-if(!offer){
-
-return 0.000001;
-
-}
-
-const values = [
-offer.min_trade_amount,
-offer.minimum_amount,
-offer.min_amount
-];
-
-for(
-const value of values
-){
-
-const number =
-Number(value);
-
-if(
-Number.isFinite(number) &&
-number > 0
-){
-
-return number;
-
-}
-
-}
-
-return 0.000001;
-
-}
-
-function getTradeValue(){
-
-if(!selectedOffer){
-
-return 0;
-
-}
-
-const amount =
-Number(
-document.getElementById(
-"tradeAmount"
-)?.value
-) || 0;
-
-const price =
-Number(
-selectedOffer.price
-) || 0;
-
-return amount * price;
-
-}
-
-function updateTradeFeePreview(){
-
-const value =
-getTradeValue();
-
-const fee =
-value *
-PLATFORM_FEE_RATE;
-
-const total =
-value +
-fee;
-
-const parts =
-getPairParts(
-selectedOffer?.pair ||
-selectedOffer?.trading_pair
-);
-
-const currency =
-parts.quote ||
-"USDT";
-
-const valueElement =
-document.getElementById(
-"tradeValuePreview"
-);
-
-const feeElement =
-document.getElementById(
-"tradeFeePreviewAmount"
-);
-
-const totalElement =
-document.getElementById(
-"tradeTotalPreview"
-);
-
-if(valueElement){
-
-valueElement.textContent =
-money(value) +
-" " +
-currency;
-
-}
-
-if(feeElement){
-
-feeElement.textContent =
-money(fee) +
-" " +
-currency;
-
-}
-
-if(totalElement){
-
-totalElement.textContent =
-money(total) +
-" " +
-currency;
-
-}
-
-}
-
-function updateFeeRateText(){
-
-const text =
-(
-PLATFORM_FEE_RATE *
-100
-) +
-"%";
-
-const element =
-document.getElementById(
-"tradeFeeRateText"
-);
-
-if(element){
-
-element.textContent =
-text;
-
-}
-
-}
-
-async function submitTrade(){
-
-if(!currentUser){
-
-showLogin();
-return;
-
-}
-
-if(!selectedOffer){
-
-toast(
-"Select a sell order first.",
-"warning"
-);
-
-return;
-
-}
-
-let freshOffer = null;
-
-try{
-
-const {
-data,
-error
-} =
-await supabaseClient
-.from("p2p_orders")
+const primary=await supabaseClient
+.from("profiles")
 .select("*")
-.eq(
-"id",
-selectedOffer.id
-)
+.eq("id",user.id)
 .maybeSingle();
 
+profile=primary.data;
+profileError=primary.error;
+
+if(!profile){
+
+const fallback=await supabaseClient
+.from("profiles")
+.select("*")
+.eq("user_id",user.id)
+.maybeSingle();
+
+if(fallback.data){
+
+profile=fallback.data;
+profileError=null;
+
+}else if(fallback.error){
+
+console.error(
+"Profile user_id lookup:",
+fallback.error
+);
+
+}
+
+}
+
+const metadataUsername=
+String(
+user.user_metadata?.username||""
+).trim();
+
+if(!profile&&metadataUsername){
+
+const usernameLookup=await supabaseClient
+.from("profiles")
+.select("*")
+.ilike("username",metadataUsername)
+.maybeSingle();
+
+if(usernameLookup.data){
+
+profile=usernameLookup.data;
+profileError=null;
+
+}else if(usernameLookup.error){
+
+console.error(
+"Profile username lookup:",
+usernameLookup.error
+);
+
+}
+
+}
+
+if(profileError){
+
+console.error(
+"Profile error:",
+profileError
+);
+
+}
+
+currentProfile=profile||{};
+
+const username=
+currentProfile.username||
+metadataUsername||
+"";
+
+if(!username){
+
+document.getElementById(
+"profileName"
+).textContent="Username unavailable";
+
+document.getElementById(
+"profileId"
+).textContent="Username: --";
+
+}else{
+
+permanentUsername=
+String(username).trim();
+
+document.getElementById(
+"profileName"
+).textContent=permanentUsername;
+
+document.getElementById(
+"profileId"
+).textContent=
+"Username: @"+permanentUsername;
+
+}
+
+await loadUSDTBalance();
+
+document.getElementById(
+"profileBio"
+).textContent=
+currentProfile.bio||"No bio yet.";
+
+await loadUserNumber();
+
+setProfilePhoto(
+currentProfile.avatar_url||"",
+username||"U"
+);
+
+updateVerificationUI();
+
+document.getElementById(
+"permanentUsername"
+).textContent=
+permanentUsername?
+"@"+permanentUsername:
+"--";
+
+document.getElementById(
+"editBio"
+).value=
+currentProfile.bio||"";
+
+updateLockUI();
+
+await loadStats();
+await loadTradeStats();
+
+}
+
+function renderUSDTBalance(){
+
+const availableElement=
+document.getElementById("usdtBalance");
+
+const lockedElement=
+document.getElementById("lockedUSDTBalance");
+
+if(!availableElement||!lockedElement)return;
+
+if(!balanceVisible){
+
+availableElement.textContent="•••••• USDT";
+lockedElement.textContent="•••••• USDT";
+
+}else{
+
+availableElement.textContent=
+formatNumber(currentUSDTBalance)+" USDT";
+
+lockedElement.textContent=
+formatNumber(currentLockedUSDT)+" USDT";
+
+}
+
+const withdrawBalance=
+document.getElementById("withdrawBalance");
+
+if(withdrawBalance){
+
+withdrawBalance.textContent=
+formatNumber(currentUSDTBalance)+" USDT";
+
+}
+
+}
+
+function toggleBalanceVisibility(){
+
+balanceVisible=!balanceVisible;
+
+renderUSDTBalance();
+
+const button=
+document.getElementById(
+"balanceToggleButton"
+);
+
+if(button){
+
+button.textContent=
+balanceVisible?"👁️":"🙈";
+
+}
+
+}
+
+async function loadUserNumber(){
+
+if(!requirePermanentUsername())return;
+
+document.getElementById(
+"profileId"
+).textContent=
+"Username: @"+getPermanentUsername();
+
+}
+
+function setProfilePhoto(avatar,username){
+
+const oldBox=
+document.getElementById(
+"profilePhotoBox"
+);
+
+if(!oldBox)return;
+
+if(avatar){
+
+const img=document.createElement("img");
+
+img.id="profilePhotoBox";
+img.className="profile-photo";
+img.src=avatar;
+img.alt="Profile photo";
+
+oldBox.replaceWith(img);
+
+}else{
+
+oldBox.textContent=
+String(username||"U")
+.charAt(0)
+.toUpperCase();
+
+oldBox.className="profile-photo";
+
+}
+
+}
+
+async function changeProfilePhoto(event){
+
+if(!currentSession)return;
+
+const file=event.target.files[0];
+
+if(!file)return;
+
+if(!file.type.startsWith("image/")){
+
+alert("Please select an image.");
+
+return;
+
+}
+
+if(file.size>5*1024*1024){
+
+alert("Image must be smaller than 5 MB.");
+
+return;
+
+}
+
+const userId=
+currentSession.user.id;
+
+const extension=
+file.name
+.split(".")
+.pop()
+.toLowerCase();
+
+const filePath=
+userId+"/profile."+extension;
+
+const {error:uploadError}=
+await supabaseClient
+.storage
+.from("avatars")
+.upload(
+filePath,
+file,
+{
+upsert:true,
+contentType:file.type
+}
+);
+
+if(uploadError){
+
+console.error(uploadError);
+
+alert(
+"Photo upload failed.\n\n"+
+uploadError.message
+);
+
+return;
+
+}
+
+const {data}=
+supabaseClient
+.storage
+.from("avatars")
+.getPublicUrl(filePath);
+
+const avatarUrl=
+data.publicUrl+
+"?t="+Date.now();
+
+let {error:updateError}=
+await supabaseClient
+.from("profiles")
+.update({
+avatar_url:avatarUrl
+})
+.eq("id",userId);
+
+if(updateError){
+
+const fallbackUpdate=
+await supabaseClient
+.from("profiles")
+.update({
+avatar_url:avatarUrl
+})
+.eq("user_id",userId);
+
+updateError=fallbackUpdate.error;
+
+}
+
+if(updateError){
+
+console.error(updateError);
+
+alert(
+"Could not save profile photo.\n\n"+
+updateError.message
+);
+
+return;
+
+}
+
+currentProfile.avatar_url=
+avatarUrl;
+
+await loadProfile();
+await loadPosts();
+
+event.target.value="";
+
+}
+
+function isProfileLocked(){
+
+return Boolean(
+currentProfile&&(
+currentProfile.profile_locked===true||
+currentProfile.is_locked===true||
+currentProfile.locked===true
+)
+);
+
+}
+
+function updateLockUI(){
+
+const locked=isProfileLocked();
+
+const button=
+document.getElementById("lockButton");
+
+const status=
+document.getElementById("lockStatus");
+
+if(locked){
+
+button.textContent="🔓 Unlock";
+
+status.textContent=
+"🔒 Locked profile";
+
+}else{
+
+button.textContent="🔒 Lock";
+
+status.textContent=
+"🔓 Public profile";
+
+}
+
+}
+
+async function toggleProfileLock(){
+
+if(!currentSession)return;
+
+const newValue=!isProfileLocked();
+
+if(!confirm(
+newValue?
+"Lock your profile from viewers?":
+"Unlock your profile for viewers?"
+))return;
+
+let {error}=
+await supabaseClient
+.from("profiles")
+.update({
+profile_locked:newValue
+})
+.eq("id",currentSession.user.id);
+
 if(error){
 
-toast(
-getErrorMessage(error),
-"error"
+const fallback=
+await supabaseClient
+.from("profiles")
+.update({
+profile_locked:newValue
+})
+.eq("user_id",currentSession.user.id);
+
+error=fallback.error;
+
+}
+
+if(error){
+
+console.error(error);
+
+alert(
+"Could not change profile lock:\n\n"+
+error.message
 );
 
 return;
 
 }
 
-if(!data){
+currentProfile.profile_locked=
+newValue;
 
-toast(
-"This sell order is no longer available.",
-"warning"
-);
+updateLockUI();
 
-closeModal(
-"tradeModal"
-);
-
-await loadSellOrders();
-
-return;
+await loadPosts();
 
 }
 
-freshOffer =
-data;
+function openEditProfile(){
 
-}catch(error){
+if(!requirePermanentUsername())return;
 
-toast(
-getErrorMessage(error),
-"error"
-);
+document.getElementById(
+"permanentUsername"
+).textContent=
+"@"+getPermanentUsername();
 
-return;
-
-}
-
-selectedOffer =
-freshOffer;
-
-if(
-String(
-selectedOffer.order_type
-).toLowerCase() !==
-"sell"
-){
-
-toast(
-"This is not a sell order.",
-"warning"
-);
-
-closeModal(
-"tradeModal"
-);
-
-return;
+document.getElementById(
+"editModal"
+).classList.add("show");
 
 }
 
-const status =
-normalizeStatus(
-selectedOffer.status
-);
+function closeEditProfile(){
 
-if(
-![
-"active",
-"open",
-"pending"
-].includes(status)
-){
-
-toast(
-"This sell order is no longer active.",
-"warning"
-);
-
-closeModal(
-"tradeModal"
-);
-
-await loadSellOrders();
-
-return;
+document.getElementById(
+"editModal"
+).classList.remove("show");
 
 }
 
-if(
-String(
-selectedOffer.user_id
-) ===
-String(
-currentUser.id
-)
-){
+async function saveProfile(){
 
-toast(
-"You cannot trade with your own order.",
-"warning"
+if(!currentSession||
+!requirePermanentUsername())return;
+
+const bio=
+document.getElementById(
+"editBio"
+).value.trim();
+
+const button=
+document.getElementById(
+"saveProfileButton"
+);
+
+button.disabled=true;
+
+let {error}=
+await supabaseClient
+.from("profiles")
+.update({
+bio:bio
+})
+.eq("id",currentSession.user.id);
+
+if(error){
+
+const fallback=
+await supabaseClient
+.from("profiles")
+.update({
+bio:bio
+})
+.eq("user_id",currentSession.user.id);
+
+error=fallback.error;
+
+}
+
+button.disabled=false;
+
+if(error){
+
+console.error(error);
+
+alert(
+"Could not update profile:\n\n"+
+error.message
 );
 
 return;
 
 }
 
-const amount =
+closeEditProfile();
+
+await loadProfile();
+await loadPosts();
+
+}
+
+function openSettings(){
+
+document.getElementById(
+"settingsModal"
+).classList.add("show");
+
+}
+
+function closeSettings(){
+
+document.getElementById(
+"settingsModal"
+).classList.remove("show");
+
+}
+
+function openTransfer(){
+
+if(!requirePermanentUsername())return;
+
+document.getElementById(
+"transferSender"
+).textContent=
+"@"+getPermanentUsername();
+
+document.getElementById(
+"transferUsername"
+).value="";
+
+document.getElementById(
+"transferAmount"
+).value="";
+
+document.getElementById(
+"transferModal"
+).classList.add("show");
+
+}
+
+function closeTransfer(){
+
+document.getElementById(
+"transferModal"
+).classList.remove("show");
+
+}
+
+async function submitTransfer(){
+
+if(!currentSession){
+
+showLogin();
+
+return;
+
+}
+
+if(!requirePermanentUsername())return;
+
+const recipient=
+document.getElementById(
+"transferUsername"
+).value.trim();
+
+const amount=
 Number(
 document.getElementById(
-"tradeAmount"
+"transferAmount"
 ).value
 );
 
-const max =
-getOfferAvailableAmount(
-selectedOffer
-);
+if(!recipient){
 
-const min =
-getMinimumTradeAmount(
-selectedOffer
-);
-
-if(
-!Number.isFinite(amount) ||
-amount <= 0
-){
-
-toast(
-"Enter a valid USDT amount.",
-"warning"
+alert(
+"Please enter the recipient username."
 );
 
 return;
 
 }
 
-if(amount < min){
+if(usernameEquals(
+recipient,
+getPermanentUsername()
+)){
 
-toast(
-"Trade amount is below the minimum.",
-"warning"
+alert(
+"You cannot transfer to your own username."
 );
 
 return;
 
 }
 
-if(
-amount >
-max +
-0.000000001
-){
+if(!Number.isFinite(amount)||amount<=0){
 
-toast(
-"Amount is greater than the available sell order.",
-"warning"
+alert(
+"Please enter a valid USDT amount."
 );
 
 return;
 
 }
 
-const normalizedAmount =
-Number(
-amount.toFixed(6)
-);
+if(amount>currentUSDTBalance){
 
-if(
-!Number.isFinite(
-normalizedAmount
-) ||
-normalizedAmount <= 0
-){
-
-toast(
-"Invalid trade amount.",
-"warning"
+alert(
+"Insufficient USDT balance."
 );
 
 return;
 
 }
 
-if(
-!confirm(
-"Buy this amount of USDT from the seller?"
-)
-){
-
-return;
-
-}
-
-const button =
+const button=
 document.getElementById(
-"tradeSubmitButton"
+"transferSubmitButton"
 );
 
-button.disabled = true;
+button.disabled=true;
+button.textContent="Transferring...";
 
-button.textContent =
-"Creating...";
+const result=
+await supabaseClient.rpc(
+"transfer_usdt_by_username",
+{
+p_recipient_username:recipient,
+p_amount:amount
+}
+);
+
+button.disabled=false;
+button.textContent="Transfer";
+
+if(result.error){
+
+console.error(
+"USDT transfer error:",
+result.error
+);
+
+alert(
+"Could not complete transfer:\n\n"+
+result.error.message
+);
+
+return;
+
+}
+
+document.getElementById(
+"transferAmount"
+).value="";
+
+closeTransfer();
+
+await loadUSDTBalance();
+await loadUSDTHistory();
+
+alert(
+"USDT transfer completed successfully."
+);
+
+}
+
+function updateDepositAddress(){
+
+const network=
+document.getElementById(
+"depositNetwork"
+).value;
+
+const address=
+DEPOSIT_NETWORKS[network]?.address||"";
+
+document.getElementById(
+"depositAddress"
+).textContent=address;
+
+}
+
+function openDeposit(){
+
+updateDepositAddress();
+
+document.getElementById(
+"depositModal"
+).classList.add("show");
+
+}
+
+function closeDeposit(){
+
+document.getElementById(
+"depositModal"
+).classList.remove("show");
+
+}
+
+async function copyDepositAddress(){
+
+const address=
+document.getElementById(
+"depositAddress"
+).textContent.trim();
 
 try{
 
-const {
-error
-} =
-await supabaseClient.rpc(
-"create_p2p_trade",
-{
-p_order_id:
-selectedOffer.id,
+await navigator.clipboard.writeText(address);
 
-p_amount:
-normalizedAmount
-}
-);
-
-if(error){
-
-toast(
-getErrorMessage(error),
-"error"
-);
-
-return;
-
-}
-
-closeModal(
-"tradeModal"
-);
-
-selectedOffer =
-null;
-
-toast(
-"Buy trade created successfully.",
-"success"
-);
-
-await loadSellOrders();
+alert("Deposit address copied.");
 
 }catch(error){
 
-toast(
-getErrorMessage(error),
-"error"
+alert(address);
+
+}
+
+}
+
+function openWithdraw(){
+
+document.getElementById(
+"withdrawBalance"
+).textContent=
+formatNumber(currentUSDTBalance)+
+" USDT";
+
+document.getElementById(
+"withdrawModal"
+).classList.add("show");
+
+}
+
+function closeWithdraw(){
+
+document.getElementById(
+"withdrawModal"
+).classList.remove("show");
+
+}
+
+async function submitWithdrawal(){
+
+if(!currentSession){
+
+showLogin();
+
+return;
+
+}
+
+if(!requirePermanentUsername())return;
+
+const amount=
+Number(
+document.getElementById(
+"withdrawAmount"
+).value
 );
 
-}finally{
+const address=
+document.getElementById(
+"withdrawAddress"
+).value.trim();
 
-button.disabled = false;
+const network=
+document.getElementById(
+"withdrawNetwork"
+).value;
 
-button.textContent =
-"Create Trade";
+const available=
+currentUSDTBalance;
 
-}
+if(!Number.isFinite(amount)||amount<=0){
 
-}
-
-function setupRealtime(){
-
-if(!currentUser)return;
-
-if(realtimeChannel){
-
-supabaseClient.removeChannel(
-realtimeChannel
+alert(
+"Please enter a valid withdrawal amount."
 );
 
-}
-
-realtimeChannel =
-supabaseClient
-.channel(
-"sell-orders-live-" +
-currentUser.id
-)
-
-.on(
-"postgres_changes",
-{
-event:"*",
-schema:"public",
-table:"p2p_orders"
-},
-function(){
-
-loadSellOrders();
+return;
 
 }
-)
 
-.on(
-"postgres_changes",
-{
-event:"*",
-schema:"public",
-table:"p2p_trades"
-},
-function(){
+if(amount>available){
 
-handleTradeRealtime();
-
-}
-)
-
-.subscribe(
-function(status){
-
-console.log(
-"Sell orders realtime:",
-status
+alert(
+"Insufficient USDT balance."
 );
 
+return;
+
 }
+
+if(!address){
+
+alert(
+"Please enter a withdrawal address."
 );
 
+return;
+
 }
 
-async function handleTradeRealtime(){
+if(network==="TON"&&address.length<20){
 
-await loadSellOrders();
-
-const tradeId =
-getTradeIdFromCurrentUrl();
-
-if(tradeId){
-
-await loadTradeForAction(
-tradeId
+alert(
+"Please enter a valid TON address."
 );
 
-}
+return;
 
 }
 
-function getTradeIdFromCurrentUrl(){
+if(!confirm(
+"Submit this withdrawal request?"
+))return;
 
-const params =
-new URLSearchParams(
-window.location.search
+const button=
+document.getElementById(
+"withdrawSubmitButton"
 );
 
-return (
-params.get("trade_id") ||
-params.get("tradeId") ||
-params.get("id") ||
-params.get("order_id") ||
-params.get("orderId") ||
-null
-);
+button.disabled=true;
+button.textContent="Submitting...";
 
-}
+/*
+Existing ledger schema from the current project is used.
+The request is recorded as pending.
+Backend/admin processing is responsible for approval and final settlement.
+*/
 
-async function loadTradeForAction(
-tradeId
-){
-
-if(!tradeId || !currentUser)return;
-
-try{
-
-const {
-data,
-error
-} =
+const {error}=
 await supabaseClient
-.from("p2p_trades")
-.select("*")
-.eq(
-"id",
-tradeId
-)
-.maybeSingle();
+.from("usdt_ledger")
+.insert({
+user_id:currentSession.user.id,
+username:getPermanentUsername(),
+amount:-Math.abs(amount),
+type:"withdrawal",
+status:"pending",
+network:network,
+withdrawal_address:address
+});
+
+button.disabled=false;
+button.textContent="Submit Withdrawal";
 
 if(error){
 
 console.error(
-"TRADE LOAD ERROR:",
+"Withdrawal:",
 error
+);
+
+alert(
+"Could not submit withdrawal:\n\n"+
+error.message
 );
 
 return;
 
 }
 
-if(!data)return;
+document.getElementById(
+"withdrawAmount"
+).value="";
 
-if(
-String(data.buyer_id) !==
-String(currentUser.id) &&
-String(data.seller_id) !==
-String(currentUser.id)
-){
+document.getElementById(
+"withdrawAddress"
+).value="";
 
-return;
+closeWithdraw();
+
+await loadUSDTHistory();
+
+alert(
+"Withdrawal request submitted successfully."
+);
 
 }
 
-selectedTrade =
-data;
+function setHistoryType(type){
 
-}catch(error){
+currentHistoryType=type;
+
+document
+.getElementById("historyTabAll")
+.classList.toggle(
+"active",
+type==="all"
+);
+
+document
+.getElementById("historyTabDeposit")
+.classList.toggle(
+"active",
+type==="deposit"
+);
+
+document
+.getElementById("historyTabWithdrawal")
+.classList.toggle(
+"active",
+type==="withdrawal"
+);
+
+loadUSDTHistory();
+
+}
+
+async function loadUSDTHistory(){
+
+if(!currentSession)return;
+
+const list=
+document.getElementById("historyList");
+
+list.innerHTML=
+'<div class="history-empty">Loading history...</div>';
+
+const {data,error}=
+await supabaseClient
+.from("usdt_ledger")
+.select("*")
+.eq("user_id",currentSession.user.id)
+.order("created_at",{ascending:false});
+
+if(error){
 
 console.error(
+"USDT history:",
 error
 );
 
-}
-
-}
-
-function openModal(id){
-
-const element =
-document.getElementById(id);
-
-if(!element)return;
-
-element.classList.add(
-"show"
-);
-
-setTimeout(
-function(){
-
-const input =
-element.querySelector(
-"input,textarea"
-);
-
-if(input){
-
-input.focus();
-
-}
-
-},
-50
-);
-
-}
-
-function closeModal(id){
-
-const element =
-document.getElementById(id);
-
-if(element){
-
-element.classList.remove(
-"show"
-);
-
-}
-
-}
-
-function openTradeAction(
-action,
-trade
-){
-
-selectedTrade =
-trade;
-
-selectedAction =
-action;
-
-let title =
-"Trade Action";
-
-let text =
-"Confirm this secure trade action.";
-
-if(action === "payment"){
-
-title =
-"💳 Buyer Payment Confirmation";
-
-text =
-"Confirm that you have completed payment. The backend will control the trade state.";
-
-}
-
-if(action === "release"){
-
-title =
-"🔓 Seller Release";
-
-text =
-"Release the USDT only after the buyer payment has been confirmed.";
-
-}
-
-if(action === "cancel"){
-
-title =
-"Cancel Trade";
-
-text =
-"The backend will validate cancellation and unlock reserved USDT when applicable.";
-
-}
-
-document.getElementById(
-"actionTitle"
-).textContent =
-title;
-
-document.getElementById(
-"actionSummary"
-).innerHTML =
-emptyHtml(
-"🔒",
-title,
-text
-);
-
-openModal(
-"actionModal"
-);
-
-}
-
-async function confirmTradeAction(){
-
-if(
-!selectedTrade ||
-!selectedAction
-){
+list.innerHTML=
+'<div class="history-empty">Could not load history.<br><br><small>'+
+escapeHtml(error.message)+
+"</small></div>";
 
 return;
 
 }
 
-const button =
-document.getElementById(
-"actionConfirmButton"
-);
+let rows=data||[];
 
-button.disabled = true;
+if(currentHistoryType==="deposit"){
 
-button.textContent =
-"Processing...";
-
-try{
-
-let result = null;
-
-if(
-selectedAction ===
-"payment"
-){
-
-result =
-await callRpcCandidates(
-[
-"buyer_confirm_payment",
-"confirm_p2p_payment",
-"confirm_trade_payment"
-],
-[
-{
-p_trade_id:
-selectedTrade.id
-},
-{
-trade_id:
-selectedTrade.id
-}
-]
+rows=rows.filter(row=>
+normalizeLedgerType(row.type)==="deposit"
 );
 
 }
 
-if(
-selectedAction ===
-"release"
-){
+if(currentHistoryType==="withdrawal"){
 
-result =
-await callRpcCandidates(
-[
-"seller_release_order",
-"release_p2p_order",
-"release_p2p_trade"
-],
-[
-{
-p_trade_id:
-selectedTrade.id
-},
-{
-trade_id:
-selectedTrade.id
-}
-]
+rows=rows.filter(row=>
+normalizeLedgerType(row.type)==="withdrawal"
 );
 
 }
 
-if(
-selectedAction ===
-"cancel"
-){
+if(!rows.length){
 
-result =
-await callRpcCandidates(
-[
-"cancel_p2p_trade",
-"cancel_p2p_order"
-],
-[
-{
-p_trade_id:
-selectedTrade.id
-},
-{
-trade_id:
-selectedTrade.id
-}
-]
-);
-
-}
-
-if(!result?.ok){
-
-toast(
-result?.message ||
-"Backend action failed.",
-"error"
-);
+list.innerHTML=
+'<div class="history-empty">No records found.</div>';
 
 return;
 
 }
 
-closeModal(
-"actionModal"
-);
+list.innerHTML="";
 
-toast(
-"Action completed successfully.",
-"success"
-);
+rows.forEach(row=>{
 
-selectedTrade =
-null;
+const type=
+normalizeLedgerType(row.type);
 
-selectedAction =
-null;
+const amount=
+Number(row.amount||0);
 
-}catch(error){
+const status=
+String(row.status||"pending");
 
-toast(
-getErrorMessage(error),
-"error"
-);
+const rowElement=
+document.createElement("div");
 
-}finally{
+rowElement.className="history-row";
 
-button.disabled = false;
+let label="USDT";
 
-button.textContent =
-"Confirm";
-
+if(type==="deposit"){
+label="⬇️ Deposit";
 }
 
+else if(type==="withdrawal"){
+label="⬆️ Withdrawal";
 }
 
-function openDispute(){
-
-if(!selectedTrade){
-
-toast(
-"Trade not selected.",
-"warning"
-);
-
-return;
-
+else if(type==="transfer_in"){
+label="💵 Transfer Received";
 }
 
-document.getElementById(
-"disputeReason"
-).value = "";
-
-document.getElementById(
-"disputeSummary"
-).innerHTML =
-emptyHtml(
-"⚠️",
-"Open Trade Dispute",
-"Explain the problem so the backend dispute process can handle the trade."
-);
-
-openModal(
-"disputeModal"
-);
-
+else if(type==="transfer_out"){
+label="💵 Transfer Sent";
 }
 
-async function submitDispute(){
-
-if(!selectedTrade){
-
-return;
-
+else if(type==="referral_bonus"){
+label="🎁 Referral Bonus";
 }
 
-const reason =
-document.getElementById(
-"disputeReason"
-).value.trim();
-
-if(!reason){
-
-toast(
-"Enter a dispute reason.",
-"warning"
-);
-
-return;
-
+else{
+label="💵 "+String(row.type||"Transaction");
 }
 
-const button =
-document.getElementById(
-"disputeSubmitButton"
-);
-
-button.disabled = true;
-
-button.textContent =
-"Opening...";
-
-try{
-
-const result =
-await callRpcCandidates(
-[
-"open_p2p_dispute",
-"dispute_p2p_trade",
-"dispute_p2p_order"
-],
-[
-{
-p_trade_id:
-selectedTrade.id,
-p_reason:
-reason
-},
-{
-trade_id:
-selectedTrade.id,
-reason:
-reason
-}
-]
-);
-
-if(!result.ok){
-
-toast(
-result.message,
-"error"
-);
-
-return;
-
-}
-
-closeModal(
-"disputeModal"
-);
-
-toast(
-"Dispute opened successfully.",
-"success"
-);
-
-selectedTrade =
-null;
-
-}catch(error){
-
-toast(
-getErrorMessage(error),
-"error"
-);
-
-}finally{
-
-button.disabled = false;
-
-button.textContent =
-"Open Dispute";
-
-}
-
-}
-
-function openRating(trade){
-
-selectedTrade =
-trade;
-
-selectedRating =
-0;
-
-document.querySelectorAll(
-"#ratingStars button"
-).forEach(
-button =>
-button.classList.remove(
-"selected"
-)
-);
-
-document.getElementById(
-"ratingComment"
-).value = "";
-
-document.getElementById(
-"ratingSummary"
-).innerHTML =
-emptyHtml(
-"⭐",
-"Rate Completed Trade",
-"Rate the other participant after the trade is completed."
-);
-
-openModal(
-"ratingModal"
-);
-
-}
-
-function selectRating(rating){
-
-selectedRating =
-Number(rating);
-
-document.querySelectorAll(
-"#ratingStars button"
-).forEach(
-button => {
-
-button.classList.toggle(
-"selected",
-Number(
-button.dataset.rating
-) <= selectedRating
-);
-
-}
-);
-
-}
-
-async function submitRating(){
-
-if(
-!selectedTrade ||
-!selectedRating
-){
-
-toast(
-"Select a rating from 1 to 5.",
-"warning"
-);
-
-return;
-
-}
-
-const comment =
-document.getElementById(
-"ratingComment"
-).value.trim();
-
-const button =
-document.getElementById(
-"ratingSubmitButton"
-);
-
-button.disabled = true;
-
-button.textContent =
-"Submitting...";
-
-try{
-
-const result =
-await callRpcCandidates(
-[
-"rate_p2p_trade",
-"submit_trade_rating"
-],
-[
-{
-p_trade_id:
-selectedTrade.id,
-p_rating:
-selectedRating,
-p_comment:
-comment ||
-null
-},
-{
-trade_id:
-selectedTrade.id,
-rating:
-selectedRating,
-comment:
-comment ||
-null
-}
-]
-);
-
-if(!result.ok){
-
-toast(
-result.message,
-"error"
-);
-
-return;
-
-}
-
-closeModal(
-"ratingModal"
-);
-
-toast(
-"Rating submitted successfully.",
-"success"
-);
-
-selectedTrade =
-null;
-
-selectedRating =
-0;
-
-}catch(error){
-
-toast(
-getErrorMessage(error),
-"error"
-);
-
-}finally{
-
-button.disabled = false;
-
-button.textContent =
-"Submit Rating";
-
-}
-
-}
-
-async function callRpcCandidates(
-functionNames,
-payloads
-){
-
-let lastError =
-null;
-
-for(
-const functionName of functionNames
-){
-
-for(
-const payload of payloads
-){
-
-try{
-
-const {
-data,
-error
-} =
-await supabaseClient.rpc(
-functionName,
-payload
-);
-
-if(!error){
-
-return {
-ok:true,
-data:data,
-functionName:functionName
-};
-
-}
-
-lastError =
-error;
-
-}catch(error){
-
-lastError =
-error;
-
-}
-
-}
-
-}
-
-return {
-ok:false,
-message:
-getErrorMessage(lastError)
-};
-
-}
-
-function formatPair(order){
-
-const pair =
-String(
-order?.pair ||
-order?.trading_pair ||
+const amountClass=
+amount>=0?"positive":"negative";
+
+const amountText=
+(amount>=0?"+":"")+
+formatNumber(amount)+
+" USDT";
+
+rowElement.innerHTML=`
+
+<div class="history-row-top">
+
+<div class="history-type">
+${escapeHtml(label)}
+</div>
+
+<div class="history-amount ${amountClass}">
+${escapeHtml(amountText)}
+</div>
+
+</div>
+
+<div class="history-meta">
+
+<span>
+${escapeHtml(
+row.network||
+row.withdrawal_address||
+row.username||
+"USDT"
+)}
+</span>
+
+<span>
+${escapeHtml(
+row.created_at?
+formatTime(row.created_at):
 ""
-);
+)}
+</span>
 
-if(pair.includes("_")){
+</div>
 
-return pair.replace(
-"_",
-" / "
-);
-
-}
-
-return pair ||
-"P2P";
-
-}
-
-function formatAmount(order){
-
-const amount =
-getOfferAvailableAmount(
-order
-);
-
-const parts =
-getPairParts(
-order?.pair ||
-order?.trading_pair ||
+<span class="history-status ${
+status.toLowerCase()==="pending"?
+"pending":
+status.toLowerCase()==="failed"?
+"failed":
 ""
+}">
+${escapeHtml(status)}
+</span>
+
+`;
+
+list.appendChild(rowElement);
+
+});
+
+}
+
+function normalizeLedgerType(type){
+
+const value=
+String(type||"")
+.trim()
+.toLowerCase();
+
+if(value==="deposit")return"deposit";
+if(value==="withdrawal")return"withdrawal";
+
+if(
+value==="transfer_in"||
+value==="transfer-in"||
+value==="received"
+)return"transfer_in";
+
+if(
+value==="transfer_out"||
+value==="transfer-out"||
+value==="sent"||
+value==="transfer"
+)return"transfer_out";
+
+if(
+value==="referral_bonus"||
+value==="referral-bonus"||
+value==="referral"
+)return"referral_bonus";
+
+return value;
+
+}
+
+function openOrderModal(type){
+
+if(!requirePermanentUsername())return;
+
+orderType=
+type==="sell"?
+"sell":
+"buy";
+
+const title=
+document.getElementById(
+"orderModalTitle"
 );
 
-const base =
-parts.base ||
-"USDT";
+const typeBadge=
+document.getElementById(
+"orderModalType"
+);
 
-return amount.toLocaleString(
-undefined,
-{
-maximumFractionDigits:6
+const submitButton=
+document.getElementById(
+"submitOrderButton"
+);
+
+document.getElementById(
+"orderUsername"
+).textContent=
+"@"+getPermanentUsername();
+
+if(orderType==="sell"){
+
+title.textContent=
+"🔴 Create Sell Order";
+
+typeBadge.textContent="SELL";
+
+typeBadge.className=
+"order-modal-type sell";
+
+submitButton.textContent=
+"Create Sell Order";
+
+submitButton.className=
+"order-submit sell-submit";
+
+}else{
+
+title.textContent=
+"🟢 Create Buy Order";
+
+typeBadge.textContent="BUY";
+
+typeBadge.className=
+"order-modal-type buy";
+
+submitButton.textContent=
+"Create Buy Order";
+
+submitButton.className=
+"order-submit";
+
 }
-) +
-" " +
-base;
+
+updatePairOptions();
+updateOrderCurrency();
+updateFeePreview();
+
+document.getElementById(
+"orderModal"
+).classList.add("show");
+
+}
+
+function updatePairOptions(){
+
+const select=
+document.getElementById(
+"orderPair"
+);
+
+const options=[
+
+["USD_USDT","USD / USDT"],
+["EUR_USDT","EUR / USDT"],
+["AED_USDT","AED / USDT"],
+["GBP_USDT","GBP / USDT"],
+["ETB_USDT","ETB / USDT"],
+["NGN_USDT","NGN / USDT"],
+["KES_USDT","KES / USDT"],
+["BRL_USDT","BRL / USDT"],
+["ARS_USDT","ARS / USDT"],
+["MXN_USDT","MXN / USDT"],
+["TRY_USDT","TRY / USDT"],
+["PHP_USDT","PHP / USDT"],
+["AUD_USDT","AUD / USDT"],
+["CAD_USDT","CAD / USDT"],
+["CHF_USDT","CHF / USDT"],
+["SGD_USDT","SGD / USDT"],
+["HKD_USDT","HKD / USDT"],
+["JPY_USDT","JPY / USDT"],
+["KRY_USDT","KRY / USDT"],
+["ZAR_USDT","ZAR / USDT"],
+["INR_USDT","INR / USDT"]
+
+];
+
+select.innerHTML="";
+
+options.forEach(item=>{
+
+const option=
+document.createElement("option");
+
+option.value=item[0];
+option.textContent=item[1];
+
+select.appendChild(option);
+
+});
+
+}
+
+function closeOrderModal(){
+
+document.getElementById(
+"orderModal"
+).classList.remove("show");
 
 }
 
 function getPairParts(pair){
 
-const parts =
-String(
-pair ||
-""
-).split("_");
+const parts=
+String(pair||"").split("_");
 
-return {
+return{
 
-base:
-parts[0] ||
-"",
+base:parts[0]||"USD",
 
-quote:
-parts[1] ||
-""
+quote:parts[1]||"USDT"
 
 };
 
 }
 
-function money(value){
+function updateOrderCurrency(){
 
-const number =
-Number(value);
-
-if(
-!Number.isFinite(number)
-){
-
-return "0.00";
-
-}
-
-return number.toLocaleString(
-undefined,
-{
-minimumFractionDigits:2,
-maximumFractionDigits:6
-}
-);
-
-}
-
-function normalizeStatus(status){
-
-const value =
-String(
-status ||
-"pending"
-)
-.trim()
-.toLowerCase();
-
-return value ||
-"pending";
-
-}
-
-function statusClass(status){
-
-const value =
-normalizeStatus(
-status
-);
-
-if(
-[
-"active",
-"open",
-"pending"
-].includes(value)
-){
-
-return value;
-
-}
-
-if(
-[
-"expired",
-"cancelled",
-"closed"
-].includes(value)
-){
-
-return value;
-
-}
-
-if(
-value ===
-"disputed"
-){
-
-return "disputed";
-
-}
-
-if(
-[
-"completed",
-"released"
-].includes(value)
-){
-
-return value;
-
-}
-
-if(
-value ===
-"paid"
-){
-
-return "active";
-
-}
-
-return "";
-
-}
-
-function detail(
-label,
-value
-){
-
-return `
-
-<div class="detail-row">
-
-<span>
-${escapeHtml(label)}
-</span>
-
-<strong>
-${escapeHtml(
-String(value ?? "")
-)}
-</strong>
-
-</div>
-
-`;
-
-}
-
-function emptyHtml(
-icon,
-title,
-message
-){
-
-return `
-
-<div class="empty">
-
-<div class="empty-icon">
-${escapeHtml(
-icon ||
-"ℹ️"
-)}
-</div>
-
-<strong>
-${escapeHtml(
-title ||
-""
-)}
-</strong>
-
-${
-message
-?
-`
-<div style="margin-top:7px;">
-${escapeHtml(message)}
-</div>
-`
-:
-""
-}
-
-</div>
-
-`;
-
-}
-
-function escapeHtml(value){
-
-return String(
-value ??
-""
-)
-.replace(
-/&/g,
-"&amp;"
-)
-.replace(
-/</g,
-"&lt;"
-)
-.replace(
-/>/g,
-"&gt;"
-)
-.replace(
-/"/g,
-"&quot;"
-)
-.replace(
-/'/g,
-"&#039;"
-);
-
-}
-
-function getErrorMessage(error){
-
-if(!error){
-
-return "Something went wrong.";
-
-}
-
-return (
-error.message ||
-error.details ||
-error.hint ||
-"Something went wrong."
-);
-
-}
-
-function toast(
-message,
-type="normal"
-){
-
-const element =
+const pair=
 document.getElementById(
-"toast"
-);
+"orderPair"
+).value;
 
-if(!element)return;
+const {base}=getPairParts(pair);
 
-clearTimeout(
-toastTimer
-);
+document.getElementById(
+"orderPriceCurrency"
+).textContent=
+base;
 
-element.textContent =
-String(
-message ||
-""
-);
+}
 
-element.classList.remove(
-"success",
-"error",
-"warning"
-);
+function calculatePlatformFee(value){
+
+const number=Number(value);
+
+return Number.isFinite(number)&&number>0?
+number*PLATFORM_FEE_RATE:
+0;
+
+}
+
+function calculateTotalWithFee(value){
+
+const number=Number(value);
+
+return Number.isFinite(number)&&number>0?
+number+
+calculatePlatformFee(number):
+0;
+
+}
+
+function calculatePairValue(amount,price){
+
+const a=Number(amount);
+const p=Number(price);
 
 if(
-[
-"success",
-"error",
-"warning"
-].includes(type)
-){
+!Number.isFinite(a)||
+!Number.isFinite(p)||
+a<=0||
+p<=0
+)return 0;
 
-element.classList.add(
-type
-);
+return a*p;
 
 }
 
-element.classList.add(
-"show"
+function updateFeePreview(){
+
+const amount=
+Number(
+document.getElementById(
+"orderAmount"
+).value
 );
 
-toastTimer =
-setTimeout(
-function(){
-
-element.classList.remove(
-"show"
+const price=
+Number(
+document.getElementById(
+"orderPrice"
+).value
 );
 
-},
-3500
+const pair=
+document.getElementById(
+"orderPair"
+).value;
+
+const {base}=getPairParts(pair);
+
+const tradeValue=
+calculatePairValue(
+amount,
+price
 );
+
+const fee=
+calculatePlatformFee(tradeValue);
+
+const total=
+calculateTotalWithFee(tradeValue);
+
+document.getElementById(
+"orderTradeValue"
+).textContent=
+formatNumber(tradeValue)+
+" "+base;
+
+document.getElementById(
+"orderFee"
+).textContent=
+formatNumber(fee)+
+" "+base;
+
+document.getElementById(
+"orderTotal"
+).textContent=
+formatNumber(total)+
+" "+base;
 
 }
 
-document.addEventListener(
-"click",
-function(event){
+async function createOrder(){
 
-if(
-event.target.classList.contains(
-"modal"
-)
-){
+if(!currentSession){
 
-event.target.classList.remove(
-"show"
-);
-
-}
-
-}
-);
-
-document.addEventListener(
-"keydown",
-function(event){
-
-if(
-event.key !==
-"Escape"
-){
+showLogin();
 
 return;
 
 }
 
-document
-.querySelectorAll(
-".modal.show"
-)
-.forEach(
-modal => {
+if(!requirePermanentUsername())return;
 
-modal.classList.remove(
-"show"
+const username=
+getPermanentUsername();
+
+const pair=
+document.getElementById(
+"orderPair"
+).value;
+
+const amount=
+Number(
+document.getElementById(
+"orderAmount"
+).value
 );
+
+const price=
+Number(
+document.getElementById(
+"orderPrice"
+).value
+);
+
+const payment=
+document.getElementById(
+"orderPayment"
+).value;
+
+if(!pair){
+
+alert(
+"Please select a trading pair."
+);
+
+return;
 
 }
+
+if(!Number.isFinite(amount)||amount<=0){
+
+alert(
+"Please enter a valid USDT amount."
 );
+
+return;
 
 }
+
+if(!Number.isFinite(price)||price<=0){
+
+alert(
+"Please enter a valid price."
 );
 
-setInterval(
-async function(){
+return;
+
+}
+
+if(!payment){
+
+alert(
+"Please select a payment method."
+);
+
+return;
+
+}
 
 if(
-currentUser &&
-document.visibilityState ===
-"visible"
+orderType==="sell"&&
+amount>currentUSDTBalance
 ){
 
-try{
+alert(
+"Insufficient USDT balance for this Sell Order."
+);
 
-await loadSellOrders();
+return;
 
-}catch(error){
+}
+
+const button=
+document.getElementById(
+"submitOrderButton"
+);
+
+button.disabled=true;
+button.textContent="Creating...";
+
+const {data,error}=
+await supabaseClient.rpc(
+"create_p2p_order",
+{
+p_order_type:orderType,
+p_pair:pair,
+p_amount:amount,
+p_price:price,
+p_payment_method:payment,
+p_username:username
+}
+);
+
+button.disabled=false;
+
+button.textContent=
+orderType==="sell"?
+"Create Sell Order":
+"Create Buy Order";
+
+if(error){
 
 console.error(
-"AUTO REFRESH ERROR:",
+"Create order error:",
 error
 );
 
-}
-
-}
-
-},
-30000
+alert(
+"Could not create order:\n\n"+
+error.message
 );
 
-window.addEventListener(
-"beforeunload",
-function(){
+return;
 
-if(realtimeChannel){
+}
 
-supabaseClient.removeChannel(
-realtimeChannel
+document.getElementById(
+"orderAmount"
+).value="";
+
+document.getElementById(
+"orderPrice"
+).value="";
+
+document.getElementById(
+"orderPayment"
+).value="";
+
+updateFeePreview();
+
+closeOrderModal();
+
+alert(
+"Order created successfully."
+);
+
+await loadMyOrders();
+await loadUSDTBalance();
+await loadTradeStats();
+
+}
+
+async function loadMyOrders(){
+
+if(!currentSession)return;
+
+const container=
+document.getElementById(
+"myOrders"
+);
+
+container.innerHTML=
+'<div class="order-empty">Loading orders...</div>';
+
+const {data:orders,error}=
+await supabaseClient
+.from("p2p_orders")
+.select("*")
+.eq(
+"user_id",
+currentSession.user.id
+)
+.order(
+"created_at",
+{ascending:false}
+);
+
+if(error){
+
+console.error(
+"Orders error:",
+error
+);
+
+container.innerHTML=
+'<div class="order-empty">Could not load orders.<br><br><small>'+
+escapeHtml(error.message)+
+"</small></div>";
+
+return;
+
+}
+
+if(!orders?.length){
+
+container.innerHTML=
+'<div class="order-empty">You have no Buy / Sell orders yet.</div>';
+
+return;
+
+}
+
+container.innerHTML="";
+
+orders.forEach(order=>
+renderOrderCard(
+order,
+container
+)
+);
+
+}
+
+function renderOrderCard(order,container){
+
+const type=
+String(
+order.order_type||
+order.type||
+"buy"
+).toLowerCase();
+
+const pair=
+order.pair||
+"USD_USDT";
+
+const {base,quote}=
+getPairParts(pair);
+
+const amount=
+Number(order.amount||0);
+
+const price=
+Number(order.price||0);
+
+const tradeValue=
+calculatePairValue(
+amount,
+price
+);
+
+const status=
+String(
+order.status||"open"
+).toLowerCase();
+
+const statusText=
+status.charAt(0).toUpperCase()+
+status.slice(1);
+
+const payment=
+order.payment_method||
+order.payment||
+"Not specified";
+
+const username=
+order.username||
+getPermanentUsername();
+
+const created=
+order.created_at?
+formatTime(order.created_at):
+"";
+
+const card=
+document.createElement("div");
+
+card.className=
+"order-card "+
+(type==="sell"?"sell":"");
+
+const canCancel=
+[
+"open",
+"active",
+"pending"
+].includes(status);
+
+card.innerHTML=`
+
+<div class="order-card-top">
+
+<div class="order-type">
+${type==="sell"?
+"🔴 Sell USDT":
+"🟢 Buy USDT"}
+</div>
+
+<div class="order-status ${
+type==="sell"?
+"sell-status":
+""
+}">
+${escapeHtml(statusText)}
+</div>
+
+</div>
+
+<div class="order-details">
+
+<div class="order-detail">
+
+<div class="order-detail-label">
+Username
+</div>
+
+<div class="order-detail-value">
+@${escapeHtml(username)}
+</div>
+
+</div>
+
+<div class="order-detail">
+
+<div class="order-detail-label">
+Pair
+</div>
+
+<div class="order-detail-value">
+${escapeHtml(base)} / ${escapeHtml(quote)}
+</div>
+
+</div>
+
+<div class="order-detail">
+
+<div class="order-detail-label">
+Amount
+</div>
+
+<div class="order-detail-value">
+${formatNumber(amount)} USDT
+</div>
+
+</div>
+
+<div class="order-detail">
+
+<div class="order-detail-label">
+Price
+</div>
+
+<div class="order-detail-value">
+${formatNumber(price)} ${escapeHtml(base)}
+</div>
+
+</div>
+
+<div class="order-detail">
+
+<div class="order-detail-label">
+Trade Value
+</div>
+
+<div class="order-detail-value">
+${formatNumber(tradeValue)} ${escapeHtml(base)}
+</div>
+
+</div>
+
+<div class="order-detail">
+
+<div class="order-detail-label">
+Payment
+</div>
+
+<div class="order-detail-value">
+${escapeHtml(payment)}
+</div>
+
+</div>
+
+<div class="order-detail">
+
+<div class="order-detail-label">
+Created
+</div>
+
+<div class="order-detail-value">
+${escapeHtml(created)}
+</div>
+
+</div>
+
+</div>
+
+${
+canCancel?
+`
+<button
+class="cancel-order-btn"
+onclick="cancelOrder('${escapeJs(order.id)}')"
+>
+Cancel Order
+</button>
+`:
+""
+}
+
+`;
+
+container.appendChild(card);
+
+}
+
+async function cancelOrder(orderId){
+
+if(!currentSession)return;
+
+if(!confirm(
+"Cancel this order?"
+))return;
+
+const {error}=
+await supabaseClient.rpc(
+"cancel_p2p_order",
+{
+p_order_id:orderId
+}
+);
+
+if(error){
+
+console.error(
+"Cancel order error:",
+error
+);
+
+alert(
+"Could not cancel order:\n\n"+
+error.message
+);
+
+return;
+
+}
+
+await loadMyOrders();
+await loadUSDTBalance();
+await loadTradeStats();
+
+}
+
+async function createPost(){
+
+if(!currentSession)return;
+
+if(!requirePermanentUsername())return;
+
+const textarea=
+document.getElementById(
+"postContent"
+);
+
+const visibility=
+document.getElementById(
+"postVisibility"
+).value;
+
+const content=
+textarea.value.trim();
+
+if(!content){
+
+alert(
+"Write something first."
+);
+
+return;
+
+}
+
+const button=
+document.getElementById(
+"createPostButton"
+);
+
+button.disabled=true;
+
+const {error}=
+await supabaseClient
+.from("posts")
+.insert({
+user_id:currentSession.user.id,
+username:getPermanentUsername(),
+content:content,
+visibility:visibility
+});
+
+button.disabled=false;
+
+if(error){
+
+console.error(error);
+
+alert(
+"Could not create post:\n\n"+
+error.message
+);
+
+return;
+
+}
+
+textarea.value="";
+
+await loadPosts();
+await loadStats();
+
+}
+
+async function loadPosts(){
+
+if(!currentSession)return;
+
+const feed=
+document.getElementById(
+"postsFeed"
+);
+
+feed.innerHTML=
+'<div class="empty">Loading posts...</div>';
+
+const {data:posts,error}=
+await supabaseClient
+.from("posts")
+.select(
+"id,user_id,username,content,visibility,created_at"
+)
+.eq(
+"user_id",
+currentSession.user.id
+)
+.order(
+"created_at",
+{ascending:false}
+);
+
+if(error){
+
+console.error(error);
+
+feed.innerHTML=
+'<div class="empty">Could not load posts.<br><br><small>'+
+escapeHtml(error.message)+
+"</small></div>";
+
+return;
+
+}
+
+if(!posts?.length){
+
+feed.innerHTML=
+'<div class="empty">You have not created any posts yet.</div>';
+
+return;
+
+}
+
+const postIds=
+posts.map(post=>post.id);
+
+await loadPostProfiles(posts);
+
+const likes=
+await loadLikes(postIds);
+
+const comments=
+await loadComments(postIds);
+
+allComments=comments;
+
+renderPosts(
+posts,
+likes,
+comments
+);
+
+}
+
+async function loadPostProfiles(posts){
+
+const ids=[
+...new Set(
+posts.map(post=>post.user_id)
+)
+];
+
+allProfiles={};
+
+if(!ids.length)return;
+
+const {data,error}=
+await supabaseClient
+.from("profiles")
+.select(
+"id,username,avatar_url"
+)
+.in("id",ids);
+
+if(error){
+
+console.error(error);
+
+return;
+
+}
+
+(data||[]).forEach(
+profile=>
+allProfiles[profile.id]=profile
+);
+
+}
+
+async function loadLikes(postIds){
+
+if(!postIds.length)return[];
+
+const {data,error}=
+await supabaseClient
+.from("post_likes")
+.select(
+"post_id,user_id"
+)
+.in("post_id",postIds);
+
+if(error){
+
+console.error(
+"Likes error:",
+error
+);
+
+return[];
+
+}
+
+return data||[];
+
+}
+
+async function loadComments(postIds){
+
+if(!postIds.length)return[];
+
+const {data,error}=
+await supabaseClient
+.from("post_comments")
+.select(
+"id,post_id,user_id,comment,created_at"
+)
+.in("post_id",postIds)
+.order(
+"created_at",
+{ascending:true}
+);
+
+if(error){
+
+console.error(
+"Comments error:",
+error
+);
+
+return[];
+
+}
+
+const ids=[
+...new Set(
+(data||[]).map(
+comment=>comment.user_id
+)
+)
+];
+
+if(ids.length){
+
+const {data:profiles,error:profileError}=
+await supabaseClient
+.from("profiles")
+.select(
+"id,username,avatar_url"
+)
+.in("id",ids);
+
+if(!profileError){
+
+(profiles||[]).forEach(
+profile=>
+allProfiles[profile.id]=profile
 );
 
 }
 
 }
+
+return data||[];
+
+}
+
+function renderPosts(
+posts,
+likes,
+comments
+){
+
+const feed=
+document.getElementById(
+"postsFeed"
 );
+
+feed.innerHTML="";
+
+posts.forEach(post=>{
+
+const profile=
+allProfiles[post.user_id]||{};
+
+const username=
+post.username||
+profile.username||
+"User";
+
+const avatar=
+profile.avatar_url||
+"";
+
+const initial=
+username
+.charAt(0)
+.toUpperCase();
+
+const postLikes=
+likes.filter(
+like=>
+String(like.post_id)===
+String(post.id)
+);
+
+const liked=
+postLikes.some(
+like=>
+like.user_id===
+currentSession.user.id
+);
+
+const postComments=
+comments.filter(
+comment=>
+String(comment.post_id)===
+String(post.id)
+);
+
+const card=
+document.createElement("article");
+
+card.className="post-card";
+
+card.innerHTML=`
+
+<div class="post-header">
+
+${
+avatar?
+`
+<img
+class="post-avatar"
+src="${escapeHtml(avatar)}"
+alt="Profile"
+>
+`:
+`
+<div class="post-avatar">
+${escapeHtml(initial)}
+</div>
+`
+}
+
+<div class="post-user">
+
+<div class="post-name-row">
+
+<div class="post-name">
+@${escapeHtml(username)}
+</div>
+
+</div>
+
+<div class="post-meta">
+
+${
+post.visibility==="private"?
+"👥 Friends / Private":
+"🌍 Public"
+}
+
+· ${escapeHtml(
+formatTime(post.created_at)
+)}
+
+</div>
+
+</div>
+
+<button
+class="post-menu"
+title="Delete post"
+onclick="deletePost('${escapeJs(post.id)}')"
+>
+⋮
+</button>
+
+</div>
+
+<div class="post-content">
+${escapeHtml(post.content||"")}
+</div>
+
+<div class="post-actions">
+
+<button
+class="post-action ${liked?"liked":""}"
+onclick="likePost('${escapeJs(post.id)}')"
+>
+${liked?"❤️ Liked":"♡ Like"}
+<span>${postLikes.length}</span>
+</button>
+
+<button
+class="post-action"
+onclick="toggleComments('${escapeJs(post.id)}')"
+>
+💬 Comments
+<span>${postComments.length}</span>
+</button>
+
+<button
+class="post-action"
+onclick="sharePost('${escapeJs(post.id)}')"
+>
+↗️ Share
+</button>
+
+</div>
+
+<button
+id="view-comments-${escapeHtml(post.id)}"
+class="view-comments"
+onclick="toggleComments('${escapeJs(post.id)}')"
+>
+💬 View comments
+</button>
+
+<div
+id="comments-${escapeHtml(post.id)}"
+class="comments-box hidden"
+>
+
+${renderComments(postComments)}
+
+<div class="comment-input-row">
+
+<input
+id="comment-input-${escapeHtml(post.id)}"
+class="comment-input"
+maxlength="500"
+placeholder="Write a comment..."
+onkeydown="if(event.key==='Enter'){event.preventDefault();sendComment('${escapeJs(post.id)}')}"
+>
+
+<button
+class="comment-send"
+onclick="sendComment('${escapeJs(post.id)}')"
+>
+Send
+</button>
+
+</div>
+
+</div>
+
+`;
+
+feed.appendChild(card);
+
+});
+
+}
+
+function renderComments(comments){
+
+if(!comments.length){
+
+return `
+<div style="font-size:12px;color:#8a93a1;margin-bottom:8px">
+No comments yet.
+</div>
+`;
+
+}
+
+return comments.map(comment=>{
+
+const profile=
+allProfiles[comment.user_id]||{};
+
+const username=
+profile.username||
+"User";
+
+const avatar=
+profile.avatar_url||
+"";
+
+const initial=
+username
+.charAt(0)
+.toUpperCase();
+
+const isOwner=
+comment.user_id===
+currentSession.user.id;
+
+return `
+
+<div class="comment">
+
+${
+avatar?
+`
+<img
+class="comment-avatar"
+src="${escapeHtml(avatar)}"
+alt="Profile"
+>
+`:
+`
+<div class="comment-avatar">
+${escapeHtml(initial)}
+</div>
+`
+}
+
+<div class="comment-body">
+
+<div class="comment-top">
+
+<div class="comment-name">
+@${escapeHtml(username)}
+</div>
+
+${
+isOwner?
+`
+<button
+class="comment-delete"
+onclick="deleteComment('${escapeJs(comment.id)}')"
+>
+Delete
+</button>
+`:
+""
+}
+
+</div>
+
+<div class="comment-text">
+${escapeHtml(comment.comment||"")}
+</div>
+
+</div>
+
+</div>
+
+`;
+
+}).join("");
+
+}
+
+function toggleComments(postId){
+
+const box=
+document.getElementById(
+"comments-"+postId
+);
+
+const button=
+document.getElementById(
+"view-comments-"+postId
+);
+
+if(!box||!button)return;
+
+const hidden=
+box.classList.toggle("hidden");
+
+button.textContent=
+hidden?
+"💬 View comments":
+"🔽 Hide comments";
+
+}
+
+async function likePost(postId){
+
+if(!currentSession)return;
+
+const userId=
+currentSession.user.id;
+
+const {data:existing,error:checkError}=
+await supabaseClient
+.from("post_likes")
+.select("post_id")
+.eq("post_id",postId)
+.eq("user_id",userId)
+.maybeSingle();
+
+if(checkError){
+
+console.error(checkError);
+
+alert(
+"Could not check like:\n\n"+
+checkError.message
+);
+
+return;
+
+}
+
+if(existing){
+
+const {error}=
+await supabaseClient
+.from("post_likes")
+.delete()
+.eq("post_id",postId)
+.eq("user_id",userId);
+
+if(error){
+
+alert(
+"Could not unlike post:\n\n"+
+error.message
+);
+
+return;
+
+}
+
+}else{
+
+const {error}=
+await supabaseClient
+.from("post_likes")
+.insert({
+post_id:postId,
+user_id:userId,
+username:getPermanentUsername()
+});
+
+if(error){
+
+alert(
+"Could not like post:\n\n"+
+error.message
+);
+
+return;
+
+}
+
+}
+
+await loadPosts();
+await loadStats();
+
+}
+
+async function sendComment(postId){
+
+if(!currentSession)return;
+
+if(!requirePermanentUsername())return;
+
+const input=
+document.getElementById(
+"comment-input-"+postId
+);
+
+if(!input)return;
+
+const comment=
+input.value.trim();
+
+if(!comment)return;
+
+if(comment.length>500){
+
+alert(
+"Comment is too long."
+);
+
+return;
+
+}
+
+const {error}=
+await supabaseClient
+.from("post_comments")
+.insert({
+post_id:postId,
+user_id:currentSession.user.id,
+username:getPermanentUsername(),
+comment:comment
+});
+
+if(error){
+
+console.error(
+"Comment failed:",
+error
+);
+
+alert(
+"Comment failed:\n\n"+
+error.message
+);
+
+return;
+
+}
+
+input.value="";
+
+await loadPosts();
+
+}
+
+async function deleteComment(commentId){
+
+if(!confirm(
+"Delete your comment?"
+))return;
+
+const {error}=
+await supabaseClient
+.from("post_comments")
+.delete()
+.eq("id",commentId)
+.eq(
+"user_id",
+currentSession.user.id
+);
+
+if(error){
+
+console.error(error);
+
+alert(
+"Could not delete comment:\n\n"+
+error.message
+);
+
+return;
+
+}
+
+await loadPosts();
+
+}
+
+async function deletePost(postId){
+
+if(!confirm(
+"Delete this post?"
+))return;
+
+const {error}=
+await supabaseClient
+.from("posts")
+.delete()
+.eq("id",postId)
+.eq(
+"user_id",
+currentSession.user.id
+);
+
+if(error){
+
+console.error(error);
+
+alert(
+"Could not delete post:\n\n"+
+error.message
+);
+
+return;
+
+}
+
+await loadPosts();
+await loadStats();
+
+}
+
+async function sharePost(postId){
+
+const username=
+getPermanentUsername();
+
+const url=
+window.location.origin+
+window.location.pathname+
+"?username="+
+encodeURIComponent(username)+
+"&post="+
+encodeURIComponent(postId);
+
+if(navigator.share){
+
+try{
+
+await navigator.share({
+title:"P2P Social Post",
+text:"Check out this post.",
+url:url
+});
+
+}catch(error){
+
+console.log(error);
+
+}
+
+return;
+
+}
+
+try{
+
+await navigator.clipboard.writeText(url);
+
+alert(
+"Post link copied."
+);
+
+}catch(error){
+
+alert(url);
+
+}
+
+}
+
+async function loadStats(){
+
+if(!currentSession)return;
+
+const userId=
+currentSession.user.id;
+
+const {count:postCount}=
+await supabaseClient
+.from("posts")
+.select(
+"id",
+{
+count:"exact",
+head:true
+}
+)
+.eq("user_id",userId);
+
+document.getElementById(
+"postCount"
+).textContent=
+postCount||0;
+
+const {data:userPosts}=
+await supabaseClient
+.from("posts")
+.select("id")
+.eq("user_id",userId);
+
+let totalLikes=0;
+
+if(userPosts?.length){
+
+const postIds=
+userPosts.map(
+post=>post.id
+);
+
+const {count}=
+await supabaseClient
+.from("post_likes")
+.select(
+"post_id",
+{
+count:"exact",
+head:true
+}
+)
+.in(
+"post_id",
+postIds
+);
+
+totalLikes=count||0;
+
+}
+
+document.getElementById(
+"likeCount"
+).textContent=
+totalLikes;
+
+const {count:followers,error:followersError}=
+await supabaseClient
+.from("followers")
+.select(
+"follower_id",
+{
+count:"exact",
+head:true
+}
+)
+.eq(
+"following_id",
+userId
+);
+
+document.getElementById(
+"followersCount"
+).textContent=
+followersError?
+"0":
+followers||0;
+
+const {count:following,error:followingError}=
+await supabaseClient
+.from("followers")
+.select(
+"following_id",
+{
+count:"exact",
+head:true
+}
+)
+.eq(
+"follower_id",
+userId
+);
+
+document.getElementById(
+"followingCount"
+).textContent=
+followingError?
+"0":
+following||0;
+
+}
+
+async function loadTradeStats(){
+
+if(!currentSession)return;
+
+const userId=
+currentSession.user.id;
+
+const thirtyDaysAgo=
+new Date(
+Date.now()-
+30*24*60*60*1000
+).toISOString();
+
+let totalTrades=0;
+let recentTrades=[];
+
+const {data:trades,error:tradeError}=
+await supabaseClient
+.from("p2p_trades")
+.select("*")
+.or(
+"buyer_id.eq."+userId+
+",seller_id.eq."+userId
+);
+
+if(!tradeError&&trades){
+
+totalTrades=trades.length;
+
+recentTrades=
+trades.filter(
+trade=>
+new Date(
+trade.created_at||
+trade.completed_at||
+trade.updated_at||
+0
+).getTime()>=
+new Date(
+thirtyDaysAgo
+).getTime()
+);
+
+}
+
+if(
+tradeError||
+totalTrades===0
+){
+
+const {data:orders}=
+await supabaseClient
+.from("p2p_orders")
+.select("*")
+.eq(
+"user_id",
+userId
+);
+
+if(orders){
+
+const completedOrders=
+orders.filter(
+order=>
+isCompletedStatus(
+order.status
+)
+);
+
+totalTrades=
+Math.max(
+totalTrades,
+completedOrders.length
+);
+
+recentTrades=
+completedOrders.filter(
+order=>
+new Date(
+order.completed_at||
+order.updated_at||
+order.created_at||
+0
+).getTime()>=
+new Date(
+thirtyDaysAgo
+).getTime()
+);
+
+}
+
+}
+
+const completedRecent=
+recentTrades.filter(
+trade=>
+isCompletedStatus(
+trade.status||
+trade.trade_status||
+trade.order_status
+)
+).length;
+
+const recentTotal=
+recentTrades.length;
+
+const completedRate=
+recentTotal>0?
+(completedRecent/recentTotal)*100:
+0;
+
+document.getElementById(
+"completedRate"
+).textContent=
+completedRate.toLocaleString(
+undefined,
+{
+minimumFractionDigits:0,
+maximumFractionDigits:2
+}
+)+"%";
+
+document.getElementById(
+"thirtyDayTrade"
+).textContent=
+recentTotal;
+
+document.getElementById(
+"totalTrade"
+).textContent=
+totalTrades;
+
+document.getElementById(
+"usernameAge"
+).textContent=
+"Permanent";
+
+}
+
+function isCompletedStatus(status){
+
+return[
+"completed",
+"complete",
+"closed",
+"success",
+"successful",
+"settled",
+"done",
+"finished"
+].includes(
+String(status||"")
+.toLowerCase()
+.trim()
+);
+
+}
+
+function openVerification(){
+
+window.location.href=
+"message.html?username="+
+encodeURIComponent(
+"P2P_Social_Admin"
+)+
+"&subject="+
+encodeURIComponent(
+"Verification Request"
+);
+
+}
+
+function openSupport(){
+
+window.location.href=
+"message.html?username="+
+encodeURIComponent(
+"P2P_Social_Admin"
+)+
+"&subject="+
+encodeURIComponent(
+"Support Request"
+);
+
+}
+
+function openBuy(){
+
+window.location.href=
+"live.html";
+
+}
+
+function openSell(){
+
+window.location.href=
+"wallet.html";
+
+}
+
+function openProfile(){
+
+window.location.href=
+"profile.html";
+
+}
+
+function openMessages(){
+
+window.location.href=
+"message.html?username="+
+encodeURIComponent(
+getPermanentUsername()
+);
+
+}
+
+function openLive(){
+
+window.location.href=
+"live.html";
+
+}
+
+function openWallet(){
+
+window.location.href=
+"wallet.html";
+
+}
+
+function goHome(){
+
+window.location.href=
+"index.html?username="+
+encodeURIComponent(
+getPermanentUsername()
+);
+
+}
+
+async function logout(){
+
+if(!confirm(
+"Do you want to log out?"
+))return;
+
+const {error}=
+await supabaseClient.auth.signOut();
+
+if(error){
+
+alert(
+"Logout failed:\n\n"+
+error.message
+);
+
+return;
+
+}
+
+window.location.href=
+"login.html";
+
+}
+
+function formatNumber(value){
+
+const number=
+Number(value||0);
+
+if(!Number.isFinite(number))
+return"0.00";
+
+return number.toLocaleString(
+undefined,
+{
+minimumFractionDigits:2,
+maximumFractionDigits:8
+}
+);
+
+}
+
+function formatTime(dateString){
+
+const date=
+new Date(dateString);
+
+if(isNaN(date.getTime()))
+return"";
+
+const now=
+new Date();
+
+const seconds=
+Math.floor(
+(now-date)/1000
+);
+
+if(seconds<60)
+return"now";
+
+const minutes=
+Math.floor(seconds/60);
+
+if(minutes<60)
+return minutes+"m";
+
+const hours=
+Math.floor(minutes/60);
+
+if(hours<24)
+return hours+"h";
+
+const days=
+Math.floor(hours/24);
+
+if(days<7)
+return days+"d";
+
+return date.toLocaleDateString();
+
+}
+
+function escapeHtml(text){
+
+const div=
+document.createElement("div");
+
+div.textContent=
+text==null?
+"":
+String(text);
+
+return div.innerHTML;
+
+}
+
+function escapeJs(text){
+
+return String(
+text==null?
+"":
+text
+)
+.replace(/\\/g,"\\\\")
+.replace(/'/g,"\\'")
+.replace(/"/g,'\\"')
+.replace(/\r/g,"\\r")
+.replace(/\n/g,"\\n");
+
+}
+
+supabaseClient.auth.onAuthStateChange(
+(event,session)=>{
+
+currentSession=session;
+
+if(!session){
+
+window.location.href=
+"login.html";
+
+return;
+
+}
+
+if(
+!permanentUsername&&
+session.user.user_metadata?.username
+){
+
+permanentUsername=
+String(
+session.user.user_metadata.username
+).trim();
+
+}
+
+}
+);
+
+startApp();
+
 </script>
 
 </body>

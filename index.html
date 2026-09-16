@@ -259,10 +259,6 @@ display:flex;justify-content:space-between;align-items:center;margin-bottom:15px
 .verify-status{padding:12px;border-radius:12px;background:#f5f7fb;font-size:13px;margin-bottom:14px}
 .verify-status strong{color:#087f73}
 .verify-form{display:flex;flex-direction:column;gap:10px}
-.verify-input,.verify-select{
-width:100%;border:1px solid #dfe4eb;border-radius:10px;
-padding:11px;outline:none;background:white;font-size:13px
-}
 .verify-submit{
 border:none;background:#087f73;color:white;padding:12px;
 border-radius:10px;font-weight:bold;cursor:pointer
@@ -442,13 +438,13 @@ Logged in as:
 <button class="quick-card" onclick="openVerifyIdentity()">
 <div class="quick-card-icon">🪪</div>
 <div class="quick-card-title">Verify identity</div>
-<div class="quick-card-text">Contact @Eccboss in Messages</div>
+<div class="quick-card-text">Contact @P2P_Social_Admin in Messages</div>
 </button>
 
 <button class="quick-card" onclick="openReferral()">
 <div class="quick-card-icon">🎁</div>
 <div class="quick-card-title">Referral 30% commission</div>
-<div class="quick-card-text">View referral bonus in Profile</div>
+<div class="quick-card-text">View referral USDT balance in Profile</div>
 </button>
 
 <button class="quick-card" onclick="openTransfer()">
@@ -460,7 +456,7 @@ Logged in as:
 <button class="quick-card" onclick="openSupport()">
 <div class="quick-card-icon">🛟</div>
 <div class="quick-card-title">Support</div>
-<div class="quick-card-text">Contact @Eccboss in Messages</div>
+<div class="quick-card-text">Contact @P2P_Social_Admin in Messages</div>
 </button>
 
 <button class="quick-card" onclick="openTwoFA()">
@@ -532,7 +528,7 @@ onclick="loadMorePosts()" style="display:none;">
 </div>
 
 <div class="verify-text">
-For identity verification, contact @Eccboss through P2P Social Messages.
+For identity verification, contact @P2P_Social_Admin through P2P Social Messages.
 Your verification request will be handled by the support team.
 </div>
 
@@ -544,7 +540,7 @@ Status:
 <div class="verify-form">
 
 <button class="verify-submit" onclick="openVerificationSupport()">
-💬 Contact @Eccboss
+💬 Contact @P2P_Social_Admin
 </button>
 
 </div>
@@ -572,8 +568,8 @@ Status:
 <div class="referral-percent">30%</div>
 
 <div class="referral-description">
-Your referral bonus and balance are managed from your
-P2P Social Profile.
+Your referral bonus is USDT and is managed securely through
+your P2P Social Profile balance.
 </div>
 
 <div class="referral-code-box">
@@ -590,7 +586,7 @@ Loading...
 class="verify-submit"
 style="width:100%;margin-top:12px"
 onclick="openReferralBalance()">
-👤 Open Profile Balance
+👤 Open Profile USDT Balance
 </button>
 
 </div>
@@ -632,13 +628,13 @@ id="transferAmount"
 class="transfer-input"
 type="number"
 min="0"
-step="0.000001"
+step="0.00000001"
 placeholder="0">
 
 <div class="transfer-note">
-USDT balance belongs to the authenticated user account.
-Transfers use the permanent recipient username.
-The secure backend controls the actual balance.
+The database controls the real USDT balance.
+The transfer checks available balance and prevents
+negative balance and unauthorized balance changes.
 </div>
 
 <button
@@ -672,7 +668,7 @@ Transfer USDT
 
 <div class="support-info">
 
-<div class="support-title">Contact @Eccboss</div>
+<div class="support-title">Contact @P2P_Social_Admin</div>
 
 <div class="support-text">
 Open Messages and contact P2P Social support.
@@ -843,18 +839,19 @@ Profile
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-
-const SUPABASE_URL =
+const SUPABASE_URL=
 "https://mbsvuwrgigqfporxwpfr.supabase.co";
 
-const SUPABASE_PUBLISHABLE_KEY =
+const SUPABASE_PUBLISHABLE_KEY=
 "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
 
-const supabaseClient =
+const supabaseClient=
 window.supabase.createClient(
 SUPABASE_URL,
 SUPABASE_PUBLISHABLE_KEY
 );
+
+const ADMIN_USERNAME="P2P_Social_Admin";
 
 let currentSession=null;
 let currentProfile=null;
@@ -997,7 +994,7 @@ updateVerificationStatus();
 
 function normalizePremiumTier(profile){
 
-if(!profile)return "free";
+if(!profile)return"free";
 
 const values=[
 profile.premium_tier,
@@ -1014,7 +1011,7 @@ v!==undefined&&
 String(v).trim()!==""
 );
 
-if(!value)return "free";
+if(!value)return"free";
 
 value=String(value)
 .toLowerCase()
@@ -1026,7 +1023,7 @@ value==="premiummax"||
 value==="max"||
 value==="premium_max"
 ){
-return "premium_max";
+return"premium_max";
 }
 
 if(
@@ -1035,14 +1032,14 @@ value==="premiumplus"||
 value==="premium_plus"||
 value==="plus"
 ){
-return "premium_plus";
+return"premium_plus";
 }
 
 if(value==="premium"){
-return "premium";
+return"premium";
 }
 
-return "free";
+return"free";
 
 }
 
@@ -1084,13 +1081,15 @@ if(!profile)return false;
 if(profile.is_admin===true)return true;
 
 if(
-String(profile.role||"").toLowerCase()==="admin"
+String(profile.role||"").toLowerCase()==="admin"||
+String(profile.role||"").toLowerCase()==="owner"
 ){
 return true;
 }
 
 if(
-String(profile.account_role||"").toLowerCase()==="admin"
+String(profile.account_role||"").toLowerCase()==="admin"||
+String(profile.account_role||"").toLowerCase()==="owner"
 ){
 return true;
 }
@@ -1308,7 +1307,7 @@ formatStatus(result.data.status);
 
 }else{
 
-statusElement.textContent="Contact @Eccboss";
+statusElement.textContent="Contact @P2P_Social_Admin";
 
 }
 
@@ -1318,7 +1317,7 @@ function openVerificationSupport(){
 
 closeVerifyIdentity();
 
-openSupportContact();
+openAdminMessage("verification");
 
 }
 
@@ -1464,39 +1463,22 @@ return;
 button.disabled=true;
 button.textContent="Processing...";
 
-let result;
-
 try{
 
-result=
+const{error}=
 await supabaseClient.rpc(
-"transfer_usdt",
+"transfer_usdt_by_username",
 {
-p_recipient:recipient,
+p_recipient_username:recipient,
 p_amount:amount
 }
 );
 
-}catch(error){
+if(error){
 
-console.error(error);
+console.error("USDT transfer:",error);
 
-button.disabled=false;
-button.textContent="Transfer USDT";
-
-alert("Transfer could not be processed.");
-return;
-
-}
-
-button.disabled=false;
-button.textContent="Transfer USDT";
-
-if(result.error){
-
-console.error("USDT transfer:",result.error);
-
-alert("Transfer failed: "+result.error.message);
+alert("Transfer failed: "+error.message);
 
 return;
 
@@ -1508,6 +1490,19 @@ document.getElementById("transferRecipient").value="";
 document.getElementById("transferAmount").value="";
 
 closeTransfer();
+
+}catch(error){
+
+console.error("USDT transfer:",error);
+
+alert("Transfer could not be processed.");
+
+}finally{
+
+button.disabled=false;
+button.textContent="Transfer USDT";
+
+}
 
 }
 
@@ -1525,14 +1520,23 @@ document.getElementById("supportModal").style.display="none";
 
 }
 
+function openAdminMessage(type){
+
+if(!requireLogin())return;
+
+window.location.href=
+"./message.html?username="+
+encodeURIComponent(ADMIN_USERNAME)+
+"&support="+
+encodeURIComponent(type||"support");
+
+}
+
 function openSupportContact(){
 
 closeSupport();
 
-window.location.href=
-"./message.html?username="+
-encodeURIComponent("Eccboss")+
-"&support=support";
+openAdminMessage("support");
 
 }
 
@@ -1540,10 +1544,7 @@ function openP2PHelp(){
 
 closeSupport();
 
-window.location.href=
-"./message.html?username="+
-encodeURIComponent("Eccboss")+
-"&support=p2p";
+openAdminMessage("p2p");
 
 }
 
@@ -1551,10 +1552,7 @@ function openSecurityHelp(){
 
 closeSupport();
 
-window.location.href=
-"./message.html?username="+
-encodeURIComponent("Eccboss")+
-"&support=security";
+openAdminMessage("security");
 
 }
 
@@ -2073,7 +2071,7 @@ post.image_url||
 post.video_url||
 "";
 
-if(!mediaUrl)return "";
+if(!mediaUrl)return"";
 
 const type=
 String(
@@ -2133,7 +2131,7 @@ await supabaseClient
 
 if(checkError){
 
-alert("Could not check like.");
+alert("Could not check reaction.");
 return;
 
 }
@@ -2958,20 +2956,20 @@ function notificationIcon(type){
 
 switch(type){
 
-case "message":return "💬";
-case "like":return "❤️";
-case "comment":return "💬";
-case "follow":return "👤";
-case "wallet":return "💵";
-case "deposit":return "💵";
-case "withdraw":return "💵";
-case "transfer":return "💵";
-case "trade":return "🔄";
-case "premium":return "⭐";
-case "live":return "🔴";
-case "verification":return "🪪";
-case "security":return "🔐";
-default:return "🔔";
+case"message":return"💬";
+case"like":return"❤️";
+case"comment":return"💬";
+case"follow":return"👤";
+case"wallet":return"💵";
+case"deposit":return"💵";
+case"withdraw":return"💵";
+case"transfer":return"💵";
+case"trade":return"🔄";
+case"premium":return"⭐";
+case"live":return"🔴";
+case"verification":return"🪪";
+case"security":return"🔐";
+default:return"🔔";
 
 }
 
@@ -2981,11 +2979,18 @@ async function markNotificationRead(id){
 
 if(!currentSession)return;
 
+const{error}=
 await supabaseClient
 .from("notifications")
 .update({is_read:true})
 .eq("id",id)
 .eq("user_id",currentSession.user.id);
+
+if(error){
+
+console.error("Notification read:",error);
+
+}
 
 await loadNotifications();
 
@@ -3043,27 +3048,6 @@ loadNotifications();
 }
 
 }
-
-document.addEventListener("click",event=>{
-
-const panel=
-document.getElementById("notificationPanel");
-
-const button=
-document.getElementById("notificationButton");
-
-if(
-panel&&
-!panel.contains(event.target)&&
-button&&
-!button.contains(event.target)
-){
-
-panel.classList.remove("open");
-
-}
-
-});
 
 function subscribeToNotifications(){
 
@@ -3185,19 +3169,19 @@ return String(value||"")
 
 function formatPostTime(date){
 
-if(!date)return "";
+if(!date)return"";
 
 const d=new Date(date);
 
 if(Number.isNaN(d.getTime())){
-return "";
+return"";
 }
 
 const now=new Date();
 
 const diff=Math.floor((now-d)/1000);
 
-if(diff<60)return "just now";
+if(diff<60)return"just now";
 
 if(diff<3600)return Math.floor(diff/60)+"m ago";
 
@@ -3232,6 +3216,23 @@ return String(value??"")
 }
 
 document.addEventListener("click",event=>{
+
+const panel=
+document.getElementById("notificationPanel");
+
+const button=
+document.getElementById("notificationButton");
+
+if(
+panel&&
+!panel.contains(event.target)&&
+button&&
+!button.contains(event.target)
+){
+
+panel.classList.remove("open");
+
+}
 
 const modalIds=[
 "verifyModal",
@@ -3282,7 +3283,6 @@ modal.style.display="none";
 });
 
 startApp();
-
 </script>
 
 </body>

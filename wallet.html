@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#087f73">
 <title>Sell Orders • P2P Social</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -146,13 +147,20 @@ header{
 }
 
 .view-btn,
-.refresh-btn{
+.refresh-btn,
+.create-btn{
   border:none;
   background:#edf7f5;
   color:#087f73;
-  padding:7px 10px;
+  padding:8px 10px;
   border-radius:8px;
   font-weight:bold
+}
+
+.create-btn{
+  background:#087f73;
+  color:#fff;
+  padding:10px 13px
 }
 
 .offer-list{
@@ -210,6 +218,17 @@ header{
   border-radius:9px;
   background:#087f73;
   color:#fff;
+  font-weight:bold
+}
+
+.offer-secondary{
+  width:100%;
+  margin-top:8px;
+  border:none;
+  padding:10px;
+  border-radius:9px;
+  background:#edf7f5;
+  color:#087f73;
   font-weight:bold
 }
 
@@ -304,18 +323,21 @@ header{
 }
 
 .modal-box input,
-.modal-box textarea{
+.modal-box textarea,
+.modal-box select{
   width:100%;
   border:1px solid #dfe4eb;
   border-radius:10px;
   padding:11px;
   margin-bottom:10px;
   outline:none;
-  font-size:14px
+  font-size:14px;
+  background:#fff
 }
 
 .modal-box input:focus,
-.modal-box textarea:focus{
+.modal-box textarea:focus,
+.modal-box select:focus{
   border-color:#087f73;
   box-shadow:0 0 0 3px rgba(8,127,115,.08)
 }
@@ -347,6 +369,11 @@ header{
 .confirm-btn{
   background:#087f73;
   color:#fff
+}
+
+.danger-btn{
+  background:#fde8ed;
+  color:#d72c50
 }
 
 .details{
@@ -422,6 +449,80 @@ header{
   border-top:1px solid #dce9e7;
   margin-top:5px;
   padding-top:10px
+}
+
+.wallet-info{
+  background:#fff;
+  border:1px solid #dfe7e9;
+  border-radius:15px;
+  padding:15px;
+  margin-bottom:18px
+}
+
+.wallet-title{
+  font-weight:bold;
+  margin-bottom:5px
+}
+
+.wallet-subtitle{
+  color:#7b8790;
+  font-size:12px;
+  margin-bottom:14px
+}
+
+.wallet-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px
+}
+
+.wallet-item{
+  background:#f7fbfa;
+  border:1px solid #d7ebe7;
+  border-radius:11px;
+  padding:12px
+}
+
+.wallet-item span{
+  display:block;
+  color:#71808a;
+  font-size:11px;
+  margin-bottom:5px
+}
+
+.wallet-item strong{
+  color:#087f73;
+  font-size:15px
+}
+
+.my-order-actions{
+  display:flex;
+  gap:7px;
+  margin-top:10px
+}
+
+.my-order-actions button{
+  flex:1;
+  border:none;
+  border-radius:8px;
+  padding:9px 7px;
+  font-weight:bold;
+  font-size:12px
+}
+
+.message-btn{
+  background:#edf7f5;
+  color:#087f73
+}
+
+.cancel-order-btn{
+  background:#fde8ed;
+  color:#d72c50
+}
+
+.profile-btn{
+  background:#edf0f4;
+  color:#172033
 }
 
 .bottom-nav{
@@ -525,6 +626,14 @@ header{
     padding:6px 7px;
     font-size:11px
   }
+
+  .wallet-grid{
+    grid-template-columns:1fr
+  }
+
+  .my-order-actions{
+    flex-wrap:wrap
+  }
 }
 </style>
 </head>
@@ -555,6 +664,40 @@ header{
 
 <main class="container">
 
+  <div class="wallet-info">
+
+    <div class="wallet-title">
+      🔐 Secure USDT Selling
+    </div>
+
+    <div class="wallet-subtitle">
+      Sell orders use backend-controlled balances. Opening an order locks the required USDT.
+    </div>
+
+    <div class="wallet-grid">
+
+      <div class="wallet-item">
+        <span>Available USDT</span>
+        <strong id="availableBalance">••••••</strong>
+      </div>
+
+      <div class="wallet-item">
+        <span>Locked USDT</span>
+        <strong id="lockedBalance">••••••</strong>
+      </div>
+
+    </div>
+
+    <button
+      type="button"
+      class="create-btn"
+      style="width:100%;margin-top:12px"
+      onclick="openCreateSellOrder()">
+      🔴 Create Sell Order
+    </button>
+
+  </div>
+
   <div class="section-title">
 
     <h2>
@@ -575,7 +718,7 @@ header{
       <button
         type="button"
         class="refresh-btn"
-        onclick="loadSellOrders()">
+        onclick="refreshAll()">
         🔃 Refresh
       </button>
 
@@ -588,6 +731,24 @@ header{
     <div class="empty">
       <div class="empty-icon">🔴</div>
       <strong>Loading sell orders...</strong>
+    </div>
+
+  </section>
+
+  <div class="section-title">
+
+    <h2>
+      📋 My Sell Orders
+      (<span id="myOrderCount">0</span>)
+    </h2>
+
+  </div>
+
+  <section id="myOrders" class="offer-list">
+
+    <div class="empty">
+      <div class="empty-icon">📋</div>
+      <strong>Loading your orders...</strong>
     </div>
 
   </section>
@@ -690,6 +851,175 @@ header{
 </div>
 
 <div
+  id="createSellModal"
+  class="modal"
+  role="dialog"
+  aria-modal="true">
+
+  <div class="modal-box">
+
+    <h3>🔴 Create Sell Order</h3>
+
+    <div class="details" style="border:1px solid #dfe7e9;border-radius:12px;margin-bottom:12px">
+
+      <div class="detail-row">
+        <span>Available USDT</span>
+        <strong id="createAvailableText">••••••</strong>
+      </div>
+
+      <div class="detail-row">
+        <span>Locked after opening</span>
+        <strong id="createLockedPreview">0.000000 USDT</strong>
+      </div>
+
+    </div>
+
+    <select id="sellPair">
+
+      <option value="USDT_ETB">
+        USDT / ETB
+      </option>
+
+      <option value="USDT_USD">
+        USDT / USD
+      </option>
+
+      <option value="USDT_EUR">
+        USDT / EUR
+      </option>
+
+      <option value="USDT_GBP">
+        USDT / GBP
+      </option>
+
+      <option value="USDT_BTC">
+        USDT / BTC
+      </option>
+
+      <option value="USDT_ETH">
+        USDT / ETH
+      </option>
+
+    </select>
+
+    <input
+      id="sellAmount"
+      type="number"
+      min="0.000001"
+      step="0.000001"
+      placeholder="USDT amount"
+      oninput="updateSellOrderPreview()">
+
+    <input
+      id="sellPrice"
+      type="number"
+      min="0"
+      step="0.000001"
+      placeholder="Price">
+
+    <input
+      id="sellPayment"
+      type="text"
+      maxlength="100"
+      placeholder="Payment method">
+
+    <input
+      id="sellMinAmount"
+      type="number"
+      min="0.000001"
+      step="0.000001"
+      placeholder="Minimum trade amount">
+
+    <input
+      id="sellMaxAmount"
+      type="number"
+      min="0.000001"
+      step="0.000001"
+      placeholder="Maximum trade amount">
+
+    <textarea
+      id="sellTerms"
+      maxlength="1000"
+      placeholder="Optional trading terms"></textarea>
+
+    <div class="fee-card">
+
+      <div class="fee-row">
+        <span>Order amount</span>
+        <strong id="sellOrderAmountPreview">0.000000 USDT</strong>
+      </div>
+
+      <div class="fee-row">
+        <span>USDT locked</span>
+        <strong id="sellLockedPreview">0.000000 USDT</strong>
+      </div>
+
+      <div class="fee-row fee-total">
+        <span>After opening</span>
+        <strong id="sellAvailableAfterPreview">0.000000 USDT</strong>
+      </div>
+
+    </div>
+
+    <div class="modal-actions">
+
+      <button
+        type="button"
+        class="close-btn"
+        onclick="closeModal('createSellModal')">
+        Cancel
+      </button>
+
+      <button
+        type="button"
+        class="confirm-btn"
+        id="createSellButton"
+        onclick="createSellOrder()">
+        Open Sell Order
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<div
+  id="orderDetailsModal"
+  class="modal"
+  role="dialog"
+  aria-modal="true">
+
+  <div class="modal-box">
+
+    <h3>📋 Sell Order Details</h3>
+
+    <div id="orderDetails"></div>
+
+    <div class="modal-actions">
+
+      <button
+        type="button"
+        class="close-btn"
+        onclick="closeModal('orderDetailsModal')">
+        Close
+      </button>
+
+      <button
+        type="button"
+        class="confirm-btn"
+        id="orderMessageButton"
+        onclick="openOrderConversation()">
+        💬 Messages
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<div
   id="toast"
   class="toast"
   role="status"
@@ -746,13 +1076,21 @@ let currentUser = null;
 let currentUsername = null;
 
 let availableOrders = [];
+let myOrders = [];
+
 let selectedOffer = null;
+let selectedMyOrder = null;
 
 let offersExpanded = false;
 
 let realtimeChannel = null;
 let toastTimer = null;
+
 let isLoading = false;
+let balanceLoading = false;
+
+let availableUSDT = 0;
+let lockedUSDT = 0;
 
 const usernameCache = new Map();
 
@@ -800,7 +1138,11 @@ async function startApp(){
 
     updateFeeRateText();
 
-    await loadSellOrders();
+    await Promise.all([
+      loadUSDTBalance(),
+      loadSellOrders(),
+      loadMyOrders()
+    ]);
 
     setupRealtime();
 
@@ -919,15 +1261,449 @@ async function loadCurrentUsername(){
 
 }
 
+async function loadUSDTBalance(){
+
+  if(!currentUser)return;
+
+  if(balanceLoading)return;
+
+  balanceLoading = true;
+
+  setBalanceLoading();
+
+  try{
+
+    let result =
+      await tryBalanceRPCs();
+
+    if(result.success){
+
+      setBalances(
+        result.available,
+        result.locked
+      );
+
+      return;
+    }
+
+    const fallback =
+      await loadBalanceTable();
+
+    if(fallback.success){
+
+      setBalances(
+        fallback.available,
+        fallback.locked
+      );
+
+      return;
+    }
+
+    console.error(
+      "BALANCE RPC ERROR:",
+      result.error
+    );
+
+    setBalances(
+      0,
+      0
+    );
+
+    toast(
+      "Secure USDT balance is unavailable.",
+      "error"
+    );
+
+  }catch(error){
+
+    console.error(
+      "BALANCE ERROR:",
+      error
+    );
+
+    setBalances(
+      0,
+      0
+    );
+
+  }finally{
+
+    balanceLoading = false;
+
+  }
+
+}
+
+async function tryBalanceRPCs(){
+
+  const attempts = [
+
+    {
+      name:"get_my_usdt_balance",
+      params:{}
+    },
+
+    {
+      name:"get_usdt_balance",
+      params:{}
+    },
+
+    {
+      name:"get_my_wallet_balance",
+      params:{}
+    },
+
+    {
+      name:"get_wallet_balance",
+      params:{}
+    }
+
+  ];
+
+  let lastError = null;
+
+  for(
+    const attempt of attempts
+  ){
+
+    try{
+
+      const {
+        data,
+        error
+      } =
+      await supabaseClient.rpc(
+        attempt.name,
+        attempt.params
+      );
+
+      if(!error){
+
+        const parsed =
+          parseBalanceResult(
+            data
+          );
+
+        if(parsed){
+
+          return {
+            success:true,
+            available:parsed.available,
+            locked:parsed.locked
+          };
+
+        }
+
+      }
+
+      lastError =
+        error;
+
+    }catch(error){
+
+      lastError =
+        error;
+
+    }
+
+  }
+
+  return {
+    success:false,
+    error:lastError
+  };
+
+}
+
+async function loadBalanceTable(){
+
+  const tables = [
+    "usdt_balances",
+    "usdt_ledger"
+  ];
+
+  for(
+    const table of tables
+  ){
+
+    try{
+
+      const {
+        data,
+        error
+      } =
+      await supabaseClient
+        .from(table)
+        .select("*")
+        .eq(
+          "user_id",
+          currentUser.id
+        )
+        .maybeSingle();
+
+      if(error)continue;
+
+      if(data){
+
+        const parsed =
+          parseBalanceResult(
+            data
+          );
+
+        if(parsed){
+
+          return {
+            success:true,
+            available:parsed.available,
+            locked:parsed.locked
+          };
+
+        }
+
+      }
+
+    }catch(error){
+
+      console.error(
+        table,
+        error
+      );
+
+    }
+
+  }
+
+  return {
+    success:false
+  };
+
+}
+
+function parseBalanceResult(data){
+
+  if(!data)return null;
+
+  let row =
+    Array.isArray(data)
+      ? data[0]
+      : data;
+
+  if(
+    typeof row === "number" ||
+    typeof row === "string"
+  ){
+
+    const total =
+      safeNumber(row);
+
+    return {
+      available:total,
+      locked:0
+    };
+
+  }
+
+  if(!row ||
+     typeof row !== "object"){
+
+    return null;
+
+  }
+
+  const available =
+    firstNumber(
+      row.available_usdt,
+      row.available_balance,
+      row.available,
+      row.balance,
+      row.usdt_balance,
+      row.total_balance
+    );
+
+  const locked =
+    firstNumber(
+      row.locked_usdt,
+      row.locked_balance,
+      row.locked,
+      row.reserved_balance
+    );
+
+  if(
+    available === null &&
+    locked === null
+  ){
+
+    return null;
+
+  }
+
+  return {
+    available:
+      Math.max(
+        0,
+        available ?? 0
+      ),
+
+    locked:
+      Math.max(
+        0,
+        locked ?? 0
+      )
+  };
+
+}
+
+function firstNumber(...values){
+
+  for(
+    const value of values
+  ){
+
+    if(
+      value !== null &&
+      value !== undefined &&
+      value !== ""
+    ){
+
+      const number =
+        Number(value);
+
+      if(
+        Number.isFinite(number)
+      ){
+
+        return number;
+
+      }
+
+    }
+
+  }
+
+  return null;
+
+}
+
+function safeNumber(value){
+
+  const number =
+    Number(value);
+
+  return Number.isFinite(number)
+    ? number
+    : 0;
+
+}
+
+function setBalanceLoading(){
+
+  const available =
+    document.getElementById(
+      "availableBalance"
+    );
+
+  const locked =
+    document.getElementById(
+      "lockedBalance"
+    );
+
+  const create =
+    document.getElementById(
+      "createAvailableText"
+    );
+
+  if(available)
+    available.textContent =
+      "••••••";
+
+  if(locked)
+    locked.textContent =
+      "••••••";
+
+  if(create)
+    create.textContent =
+      "••••••";
+
+}
+
+function setBalances(
+  available,
+  locked
+){
+
+  availableUSDT =
+    Math.max(
+      0,
+      safeNumber(available)
+    );
+
+  lockedUSDT =
+    Math.max(
+      0,
+      safeNumber(locked)
+    );
+
+  const availableElement =
+    document.getElementById(
+      "availableBalance"
+    );
+
+  const lockedElement =
+    document.getElementById(
+      "lockedBalance"
+    );
+
+  const createElement =
+    document.getElementById(
+      "createAvailableText"
+    );
+
+  if(availableElement){
+
+    availableElement.textContent =
+      formatUSDT(
+        availableUSDT
+      );
+
+  }
+
+  if(lockedElement){
+
+    lockedElement.textContent =
+      formatUSDT(
+        lockedUSDT
+      );
+
+  }
+
+  if(createElement){
+
+    createElement.textContent =
+      formatUSDT(
+        availableUSDT
+      );
+
+  }
+
+  updateSellOrderPreview();
+
+}
+
 async function loadOrderUsernames(){
 
   const ids =
     [
       ...new Set(
-        availableOrders
+        [
+          ...availableOrders,
+          ...myOrders
+        ]
           .map(
             order =>
-              order.user_id
+              order.user_id ||
+              order.creator_id ||
+              order.seller_id ||
+              order.buyer_id
           )
           .filter(Boolean)
           .map(
@@ -1121,6 +1897,111 @@ async function loadSellOrders(){
 
 }
 
+async function loadMyOrders(){
+
+  if(!currentUser)return;
+
+  const container =
+    document.getElementById(
+      "myOrders"
+    );
+
+  if(container){
+
+    container.innerHTML =
+      '<div class="empty">Loading your orders...</div>';
+
+  }
+
+  try{
+
+    const {
+      data,
+      error
+    } =
+    await supabaseClient
+      .from("p2p_orders")
+      .select("*")
+      .eq(
+        "user_id",
+        currentUser.id
+      )
+      .eq(
+        "order_type",
+        "sell"
+      )
+      .order(
+        "created_at",
+        {
+          ascending:false
+        }
+      );
+
+    if(error){
+
+      console.error(
+        "MY ORDERS ERROR:",
+        error
+      );
+
+      myOrders = [];
+
+      if(container){
+
+        container.innerHTML =
+          emptyHtml(
+            "⚠️",
+            "Could not load your orders.",
+            getErrorMessage(error)
+          );
+
+      }
+
+      return;
+
+    }
+
+    myOrders =
+      data || [];
+
+    await loadOrderUsernames();
+
+    const count =
+      document.getElementById(
+        "myOrderCount"
+      );
+
+    if(count){
+
+      count.textContent =
+        myOrders.length;
+
+    }
+
+    renderMyOrders();
+
+  }catch(error){
+
+    console.error(
+      "MY ORDERS ERROR:",
+      error
+    );
+
+    if(container){
+
+      container.innerHTML =
+        emptyHtml(
+          "⚠️",
+          "Could not load your orders.",
+          getErrorMessage(error)
+        );
+
+    }
+
+  }
+
+}
+
 function renderSellOrders(){
 
   const container =
@@ -1190,16 +2071,12 @@ function renderSellOrders(){
             <div>
 
               <div class="offer-user">
-                🔴 ${escapeHtml(
-                  username
-                )}
+                🔴 ${escapeHtml(username)}
               </div>
 
               <div class="offer-meta">
                 🔴 Selling ·
-                ${escapeHtml(
-                  formatPair(order)
-                )}
+                ${escapeHtml(formatPair(order))}
               </div>
 
             </div>
@@ -1233,25 +2110,19 @@ function renderSellOrders(){
                 class="offer-price"
                 style="text-align:left;margin-top:3px;">
 
-                ${money(
-                  order.price
-                )}
+                ${money(order.price)}
 
                 ${escapeHtml(
                   parts.quote ||
-                  "USDT"
+                  "ETB"
                 )}
 
               </div>
 
             </div>
 
-            <span class="status ${
-              statusClass(status)
-            }">
-
+            <span class="status ${statusClass(status)}">
               ${escapeHtml(status)}
-
             </span>
 
           </div>
@@ -1261,9 +2132,7 @@ function renderSellOrders(){
             Wants to sell:
 
             <strong>
-              ${escapeHtml(
-                formatAmount(order)
-              )}
+              ${escapeHtml(formatAmount(order))}
             </strong>
 
           </div>
@@ -1302,6 +2171,15 @@ function renderSellOrders(){
 
           </button>
 
+          <button
+            type="button"
+            class="offer-secondary"
+            onclick="viewSeller('${escapeJs(order.user_id)}')">
+
+            👤 View Seller
+
+          </button>
+
         </div>
 
       `;
@@ -1317,46 +2195,860 @@ function renderSellOrders(){
 
 }
 
-function updateOfferButton(){
+function renderMyOrders(){
 
-  const button =
+  const container =
     document.getElementById(
-      "offerViewButton"
+      "myOrders"
     );
 
-  if(!button)return;
+  if(!container)return;
 
-  if(
-    availableOrders.length <= 3
-  ){
+  if(!myOrders.length){
 
-    button.style.display =
-      availableOrders.length
-      ? "none"
-      : "block";
-
-    button.textContent =
-      "View All";
+    container.innerHTML =
+      emptyHtml(
+        "📋",
+        "You have no sell orders.",
+        "Create a sell order when you want to offer your USDT."
+      );
 
     return;
+
   }
 
-  button.style.display =
-    "block";
+  container.innerHTML = "";
 
-  button.textContent =
-    offersExpanded
-      ? "Show 3"
-      : "View All";
+  myOrders.forEach(
+    order => {
+
+      const status =
+        normalizeStatus(
+          order.status
+        );
+
+      const card =
+        document.createElement(
+          "div"
+        );
+
+      card.className =
+        "offer-card";
+
+      card.innerHTML = `
+
+        <div class="offer-main">
+
+          <div class="row">
+
+            <div>
+
+              <div class="offer-user">
+                🔴 My Sell Order
+              </div>
+
+              <div class="offer-meta">
+                ${escapeHtml(formatPair(order))}
+              </div>
+
+            </div>
+
+            <span class="status ${statusClass(status)}">
+              ${escapeHtml(status)}
+            </span>
+
+          </div>
+
+          <div
+            style="
+              display:flex;
+              justify-content:space-between;
+              gap:10px;
+              margin-top:12px;
+            ">
+
+            <div>
+
+              <div
+                style="
+                  color:#7b8790;
+                  font-size:12px;
+                ">
+                USDT Amount
+              </div>
+
+              <div class="offer-price" style="text-align:left;margin-top:3px">
+                ${escapeHtml(formatAmount(order))}
+              </div>
+
+            </div>
+
+            <div style="text-align:right">
+
+              <div
+                style="
+                  color:#7b8790;
+                  font-size:12px;
+                ">
+                Price
+              </div>
+
+              <strong style="color:#087f73">
+                ${money(order.price)}
+                ${escapeHtml(
+                  getPairParts(
+                    order.pair ||
+                    order.trading_pair
+                  ).quote ||
+                  "ETB"
+                )}
+              </strong>
+
+            </div>
+
+          </div>
+
+          <div class="my-order-actions">
+
+            <button
+              type="button"
+              class="message-btn"
+              onclick="openMyOrderDetails('${escapeJs(order.id)}')">
+              📋 Details
+            </button>
+
+            <button
+              type="button"
+              class="profile-btn"
+              onclick="openMyOrderProfile()">
+              👤 Profile
+            </button>
+
+            ${
+              canCancelOrder(order)
+              ? `
+                <button
+                  type="button"
+                  class="cancel-order-btn"
+                  onclick="cancelMyOrder('${escapeJs(order.id)}')">
+                  Cancel
+                </button>
+              `
+              : ""
+            }
+
+          </div>
+
+        </div>
+
+      `;
+
+      container.appendChild(
+        card
+      );
+
+    }
+  );
 
 }
 
-function toggleOffers(){
+function canCancelOrder(order){
 
-  offersExpanded =
-    !offersExpanded;
+  const status =
+    normalizeStatus(
+      order?.status
+    );
 
-  renderSellOrders();
+  return [
+    "pending",
+    "open",
+    "active"
+  ].includes(status);
+
+}
+
+function openMyOrderProfile(){
+
+  window.location.href =
+    "profile.html";
+
+}
+
+function openMyOrderDetails(orderId){
+
+  selectedMyOrder =
+    myOrders.find(
+      order =>
+        String(order.id) ===
+        String(orderId)
+    );
+
+  if(!selectedMyOrder){
+
+    toast(
+      "Order not found.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+  const status =
+    normalizeStatus(
+      selectedMyOrder.status
+    );
+
+  const parts =
+    getPairParts(
+      selectedMyOrder.pair ||
+      selectedMyOrder.trading_pair
+    );
+
+  const detailsElement =
+    document.getElementById(
+      "orderDetails"
+    );
+
+  if(detailsElement){
+
+    detailsElement.innerHTML = `
+
+      <div class="details"
+        style="
+          border:1px solid #dfe7e9;
+          border-radius:12px;
+        ">
+
+        ${detail(
+          "Order ID",
+          selectedMyOrder.id
+        )}
+
+        ${detail(
+          "Type",
+          "SELL"
+        )}
+
+        ${detail(
+          "Pair",
+          formatPair(selectedMyOrder)
+        )}
+
+        ${detail(
+          "USDT",
+          formatAmount(selectedMyOrder)
+        )}
+
+        ${detail(
+          "Price",
+          money(selectedMyOrder.price) +
+          " " +
+          (parts.quote || "ETB")
+        )}
+
+        ${detail(
+          "Status",
+          `<span class="status ${statusClass(status)}">${escapeHtml(status)}</span>`
+        )}
+
+        ${detail(
+          "Payment",
+          selectedMyOrder.payment_method ||
+          selectedMyOrder.payment ||
+          "Not specified"
+        )}
+
+        ${detail(
+          "Created",
+          formatDate(
+            selectedMyOrder.created_at
+          )
+        )}
+
+      </div>
+
+    `;
+
+  }
+
+  openModal(
+    "orderDetailsModal"
+  );
+
+}
+
+function openOrderConversation(){
+
+  if(!selectedMyOrder){
+
+    toast(
+      "Order not found.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+  const params =
+    new URLSearchParams();
+
+  params.set(
+    "order_id",
+    selectedMyOrder.id
+  );
+
+  window.location.href =
+    "message.html?" +
+    params.toString();
+
+}
+
+async function cancelMyOrder(orderId){
+
+  const order =
+    myOrders.find(
+      item =>
+        String(item.id) ===
+        String(orderId)
+    );
+
+  if(!order){
+
+    toast(
+      "Order not found.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+  if(!canCancelOrder(order)){
+
+    toast(
+      "This order cannot be cancelled now.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+  if(
+    !confirm(
+      "Cancel this sell order? The backend will unlock the remaining USDT."
+    )
+  ){
+
+    return;
+
+  }
+
+  try{
+
+    const result =
+      await callOrderRPC(
+        [
+          "cancel_p2p_order",
+          "cancel_sell_order",
+          "cancel_order"
+        ],
+        order.id
+      );
+
+    if(!result.success){
+
+      throw result.error ||
+        new Error(
+          "Secure cancellation RPC is unavailable."
+        );
+
+    }
+
+    toast(
+      "Sell order cancelled.",
+      "success"
+    );
+
+    await Promise.all([
+      loadUSDTBalance(),
+      loadSellOrders(),
+      loadMyOrders()
+    ]);
+
+  }catch(error){
+
+    console.error(
+      "CANCEL ORDER ERROR:",
+      error
+    );
+
+    toast(
+      getErrorMessage(error),
+      "error"
+    );
+
+  }
+
+}
+
+function openCreateSellOrder(){
+
+  if(!currentUser){
+
+    showLogin();
+
+    return;
+
+  }
+
+  document.getElementById(
+    "sellAmount"
+  ).value = "";
+
+  document.getElementById(
+    "sellPrice"
+  ).value = "";
+
+  document.getElementById(
+    "sellPayment"
+  ).value = "";
+
+  document.getElementById(
+    "sellMinAmount"
+  ).value = "";
+
+  document.getElementById(
+    "sellMaxAmount"
+  ).value = "";
+
+  document.getElementById(
+    "sellTerms"
+  ).value = "";
+
+  updateSellOrderPreview();
+
+  openModal(
+    "createSellModal"
+  );
+
+}
+
+function updateSellOrderPreview(){
+
+  const amount =
+    Number(
+      document.getElementById(
+        "sellAmount"
+      )?.value
+    ) || 0;
+
+  const availableAfter =
+    Math.max(
+      0,
+      availableUSDT -
+      Math.max(
+        0,
+        amount
+      )
+    );
+
+  const amountElement =
+    document.getElementById(
+      "sellOrderAmountPreview"
+    );
+
+  const lockedElement =
+    document.getElementById(
+      "sellLockedPreview"
+    );
+
+  const afterElement =
+    document.getElementById(
+      "sellAvailableAfterPreview"
+    );
+
+  const topLocked =
+    document.getElementById(
+      "createLockedPreview"
+    );
+
+  if(amountElement){
+
+    amountElement.textContent =
+      formatUSDT(amount) +
+      " USDT";
+
+  }
+
+  if(lockedElement){
+
+    lockedElement.textContent =
+      formatUSDT(amount) +
+      " USDT";
+
+  }
+
+  if(afterElement){
+
+    afterElement.textContent =
+      formatUSDT(availableAfter) +
+      " USDT";
+
+  }
+
+  if(topLocked){
+
+    topLocked.textContent =
+      formatUSDT(amount) +
+      " USDT";
+
+  }
+
+}
+
+async function createSellOrder(){
+
+  if(!currentUser){
+
+    showLogin();
+
+    return;
+
+  }
+
+  const pair =
+    document.getElementById(
+      "sellPair"
+    ).value;
+
+  const amount =
+    Number(
+      document.getElementById(
+        "sellAmount"
+      ).value
+    );
+
+  const price =
+    Number(
+      document.getElementById(
+        "sellPrice"
+      ).value
+    );
+
+  const payment =
+    document.getElementById(
+      "sellPayment"
+    ).value
+    .trim();
+
+  const minAmount =
+    Number(
+      document.getElementById(
+        "sellMinAmount"
+      ).value
+    ) || 0;
+
+  const maxAmount =
+    Number(
+      document.getElementById(
+        "sellMaxAmount"
+      ).value
+    ) || amount;
+
+  const terms =
+    document.getElementById(
+      "sellTerms"
+    ).value
+    .trim();
+
+  if(
+    !Number.isFinite(amount) ||
+    amount <= 0
+  ){
+
+    toast(
+      "Enter a valid USDT amount.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+  if(
+    amount >
+    availableUSDT +
+    0.000000001
+  ){
+
+    toast(
+      "Insufficient available USDT.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+  if(
+    !Number.isFinite(price) ||
+    price <= 0
+  ){
+
+    toast(
+      "Enter a valid price.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+  if(
+    minAmount > amount
+  ){
+
+    toast(
+      "Minimum trade amount cannot exceed order amount.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+  if(
+    maxAmount <= 0
+  ){
+
+    toast(
+      "Enter a valid maximum trade amount.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+  if(
+    maxAmount < minAmount
+  ){
+
+    toast(
+      "Maximum trade amount cannot be below minimum.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+  if(
+    maxAmount > amount
+  ){
+
+    toast(
+      "Maximum trade amount cannot exceed order amount.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+  const button =
+    document.getElementById(
+      "createSellButton"
+    );
+
+  button.disabled = true;
+
+  button.textContent =
+    "Opening...";
+
+  try{
+
+    const result =
+      await createSellOrderRPC({
+        amount:
+          Number(
+            amount.toFixed(6)
+          ),
+
+        price:
+          Number(
+            price.toFixed(6)
+          ),
+
+        pair,
+        payment,
+        minAmount:
+          Number(
+            minAmount.toFixed(6)
+          ),
+
+        maxAmount:
+          Number(
+            maxAmount.toFixed(6)
+          ),
+
+        terms
+      });
+
+    if(!result.success){
+
+      throw result.error ||
+        new Error(
+          "Secure sell-order RPC is unavailable."
+        );
+
+    }
+
+    closeModal(
+      "createSellModal"
+    );
+
+    toast(
+      "Sell order opened. USDT is locked by the backend.",
+      "success"
+    );
+
+    await Promise.all([
+      loadUSDTBalance(),
+      loadSellOrders(),
+      loadMyOrders()
+    ]);
+
+  }catch(error){
+
+    console.error(
+      "CREATE SELL ORDER ERROR:",
+      error
+    );
+
+    toast(
+      getErrorMessage(error),
+      "error"
+    );
+
+  }finally{
+
+    button.disabled = false;
+
+    button.textContent =
+      "Open Sell Order";
+
+  }
+
+}
+
+async function createSellOrderRPC(data){
+
+  const attempts = [
+
+    {
+      name:"create_p2p_order",
+      params:{
+        p_amount:data.amount,
+        p_order_type:"sell",
+        p_pair:data.pair,
+        p_payment_method:data.payment,
+        p_price:data.price,
+        p_username:currentUsername,
+        p_min_trade_amount:data.minAmount,
+        p_max_trade_amount:data.maxAmount,
+        p_terms:data.terms
+      }
+    },
+
+    {
+      name:"create_p2p_order",
+      params:{
+        amount:data.amount,
+        order_type:"sell",
+        pair:data.pair,
+        payment_method:data.payment,
+        price:data.price,
+        username:currentUsername,
+        min_trade_amount:data.minAmount,
+        max_trade_amount:data.maxAmount,
+        terms:data.terms
+      }
+    },
+
+    {
+      name:"create_sell_order",
+      params:{
+        p_amount:data.amount,
+        p_pair:data.pair,
+        p_payment_method:data.payment,
+        p_price:data.price,
+        p_min_trade_amount:data.minAmount,
+        p_max_trade_amount:data.maxAmount,
+        p_terms:data.terms
+      }
+    },
+
+    {
+      name:"create_sell_order",
+      params:{
+        amount:data.amount,
+        pair:data.pair,
+        payment_method:data.payment,
+        price:data.price,
+        min_trade_amount:data.minAmount,
+        max_trade_amount:data.maxAmount,
+        terms:data.terms
+      }
+    }
+
+  ];
+
+  let lastError = null;
+
+  for(
+    const attempt of attempts
+  ){
+
+    try{
+
+      const {
+        data:result,
+        error
+      } =
+      await supabaseClient.rpc(
+        attempt.name,
+        attempt.params
+      );
+
+      if(!error){
+
+        return {
+          success:true,
+          data:result
+        };
+
+      }
+
+      lastError =
+        error;
+
+    }catch(error){
+
+      lastError =
+        error;
+
+    }
+
+  }
+
+  return {
+    success:false,
+    error:lastError
+  };
 
 }
 
@@ -1377,6 +3069,7 @@ function openTrade(orderId){
     );
 
     return;
+
   }
 
   const available =
@@ -1392,6 +3085,7 @@ function openTrade(orderId){
     );
 
     return;
+
   }
 
   const input =
@@ -1443,13 +3137,11 @@ function openTrade(orderId){
 
       ${detail(
         "Selling price",
-        money(
-          selectedOffer.price
-        ) +
+        money(selectedOffer.price) +
         " " +
         (
           parts.quote ||
-          "USDT"
+          "ETB"
         )
       )}
 
@@ -1478,6 +3170,353 @@ function openTrade(orderId){
   openModal(
     "tradeModal"
   );
+
+}
+
+async function submitTrade(){
+
+  if(!currentUser){
+
+    showLogin();
+
+    return;
+  }
+
+  if(!selectedOffer){
+
+    toast(
+      "Select a sell order first.",
+      "warning"
+    );
+
+    return;
+  }
+
+  let freshOffer = null;
+
+  try{
+
+    const {
+      data,
+      error
+    } =
+    await supabaseClient
+      .from("p2p_orders")
+      .select("*")
+      .eq(
+        "id",
+        selectedOffer.id
+      )
+      .maybeSingle();
+
+    if(error){
+
+      toast(
+        getErrorMessage(error),
+        "error"
+      );
+
+      return;
+    }
+
+    if(!data){
+
+      toast(
+        "This sell order is no longer available.",
+        "warning"
+      );
+
+      closeModal(
+        "tradeModal"
+      );
+
+      await loadSellOrders();
+
+      return;
+    }
+
+    freshOffer =
+      data;
+
+  }catch(error){
+
+    toast(
+      getErrorMessage(error),
+      "error"
+    );
+
+    return;
+
+  }
+
+  selectedOffer =
+    freshOffer;
+
+  if(
+    String(
+      selectedOffer.order_type
+    ).toLowerCase() !== "sell"
+  ){
+
+    toast(
+      "This is not a sell order.",
+      "warning"
+    );
+
+    closeModal(
+      "tradeModal"
+    );
+
+    return;
+
+  }
+
+  const status =
+    normalizeStatus(
+      selectedOffer.status
+    );
+
+  if(
+    ![
+      "active",
+      "open",
+      "pending"
+    ].includes(status)
+  ){
+
+    toast(
+      "This sell order is no longer active.",
+      "warning"
+    );
+
+    closeModal(
+      "tradeModal"
+    );
+
+    await loadSellOrders();
+
+    return;
+
+  }
+
+  if(
+    String(
+      selectedOffer.user_id
+    ) ===
+    String(
+      currentUser.id
+    )
+  ){
+
+    toast(
+      "You cannot trade with your own order.",
+      "warning"
+    );
+
+    closeModal(
+      "tradeModal"
+    );
+
+    return;
+
+  }
+
+  const amount =
+    Number(
+      document.getElementById(
+        "tradeAmount"
+      ).value
+    );
+
+  const max =
+    getOfferAvailableAmount(
+      selectedOffer
+    );
+
+  const min =
+    getMinimumTradeAmount(
+      selectedOffer
+    );
+
+  if(
+    !Number.isFinite(amount) ||
+    amount <= 0
+  ){
+
+    toast(
+      "Enter a valid USDT amount.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+  if(amount < min){
+
+    toast(
+      "Trade amount is below the minimum.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+  if(
+    amount >
+    max +
+    0.000000001
+  ){
+
+    toast(
+      "Amount is greater than the available sell order.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+  const normalizedAmount =
+    Number(
+      amount.toFixed(6)
+    );
+
+  if(
+    !Number.isFinite(
+      normalizedAmount
+    ) ||
+    normalizedAmount <= 0
+  ){
+
+    toast(
+      "Invalid trade amount.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+  if(
+    !confirm(
+      "Buy this amount of USDT from the seller?"
+    )
+  ){
+
+    return;
+
+  }
+
+  const button =
+    document.getElementById(
+      "tradeSubmitButton"
+    );
+
+  button.disabled = true;
+
+  button.textContent =
+    "Creating...";
+
+  try{
+
+    const {
+      error
+    } =
+    await supabaseClient.rpc(
+      "create_p2p_trade",
+      {
+        p_order_id:
+          selectedOffer.id,
+
+        p_amount:
+          normalizedAmount
+      }
+    );
+
+    if(error){
+
+      toast(
+        getErrorMessage(error),
+        "error"
+      );
+
+      return;
+
+    }
+
+    closeModal(
+      "tradeModal"
+    );
+
+    selectedOffer =
+      null;
+
+    toast(
+      "Buy trade created successfully.",
+      "success"
+    );
+
+    await Promise.all([
+      loadSellOrders(),
+      loadMyOrders(),
+      loadUSDTBalance()
+    ]);
+
+  }catch(error){
+
+    toast(
+      getErrorMessage(error),
+      "error"
+    );
+
+  }finally{
+
+    button.disabled = false;
+
+    button.textContent =
+      "Create Trade";
+
+  }
+
+}
+
+function viewSeller(userId){
+
+  if(!userId){
+
+    toast(
+      "Seller profile is unavailable.",
+      "warning"
+    );
+
+    return;
+
+  }
+
+  const username =
+    usernameCache.get(
+      String(userId)
+    );
+
+  if(username){
+
+    window.location.href =
+      "profile.html?username=" +
+      encodeURIComponent(
+        username
+      );
+
+    return;
+
+  }
+
+  window.location.href =
+    "profile.html?user_id=" +
+    encodeURIComponent(
+      userId
+    );
 
 }
 
@@ -1612,7 +3651,7 @@ function updateTradeFeePreview(){
 
   const currency =
     parts.quote ||
-    "USDT";
+    "ETB";
 
   const valueElement =
     document.getElementById(
@@ -1680,301 +3719,6 @@ function updateFeeRateText(){
 
 }
 
-async function submitTrade(){
-
-  if(!currentUser){
-
-    showLogin();
-
-    return;
-  }
-
-  if(!selectedOffer){
-
-    toast(
-      "Select a sell order first.",
-      "warning"
-    );
-
-    return;
-  }
-
-  let freshOffer = null;
-
-  try{
-
-    const {
-      data,
-      error
-    } =
-    await supabaseClient
-      .from("p2p_orders")
-      .select("*")
-      .eq(
-        "id",
-        selectedOffer.id
-      )
-      .maybeSingle();
-
-    if(error){
-
-      toast(
-        getErrorMessage(error),
-        "error"
-      );
-
-      return;
-    }
-
-    if(!data){
-
-      toast(
-        "This sell order is no longer available.",
-        "warning"
-      );
-
-      closeModal(
-        "tradeModal"
-      );
-
-      await loadSellOrders();
-
-      return;
-    }
-
-    freshOffer =
-      data;
-
-  }catch(error){
-
-    toast(
-      getErrorMessage(error),
-      "error"
-    );
-
-    return;
-  }
-
-  selectedOffer =
-    freshOffer;
-
-  if(
-    String(
-      selectedOffer.order_type
-    ).toLowerCase() !== "sell"
-  ){
-
-    toast(
-      "This is not a sell order.",
-      "warning"
-    );
-
-    closeModal(
-      "tradeModal"
-    );
-
-    return;
-  }
-
-  const status =
-    normalizeStatus(
-      selectedOffer.status
-    );
-
-  if(
-    ![
-      "active",
-      "open",
-      "pending"
-    ].includes(status)
-  ){
-
-    toast(
-      "This sell order is no longer active.",
-      "warning"
-    );
-
-    closeModal(
-      "tradeModal"
-    );
-
-    await loadSellOrders();
-
-    return;
-  }
-
-  if(
-    String(
-      selectedOffer.user_id
-    ) ===
-    String(
-      currentUser.id
-    )
-  ){
-
-    toast(
-      "You cannot trade with your own order.",
-      "warning"
-    );
-
-    closeModal(
-      "tradeModal"
-    );
-
-    return;
-  }
-
-  const amount =
-    Number(
-      document.getElementById(
-        "tradeAmount"
-      ).value
-    );
-
-  const max =
-    getOfferAvailableAmount(
-      selectedOffer
-    );
-
-  const min =
-    getMinimumTradeAmount(
-      selectedOffer
-    );
-
-  if(
-    !Number.isFinite(amount) ||
-    amount <= 0
-  ){
-
-    toast(
-      "Enter a valid USDT amount.",
-      "warning"
-    );
-
-    return;
-  }
-
-  if(amount < min){
-
-    toast(
-      "Trade amount is below the minimum.",
-      "warning"
-    );
-
-    return;
-  }
-
-  if(
-    amount >
-    max +
-    0.000000001
-  ){
-
-    toast(
-      "Amount is greater than the available sell order.",
-      "warning"
-    );
-
-    return;
-  }
-
-  const normalizedAmount =
-    Number(
-      amount.toFixed(6)
-    );
-
-  if(
-    !Number.isFinite(
-      normalizedAmount
-    ) ||
-    normalizedAmount <= 0
-  ){
-
-    toast(
-      "Invalid trade amount.",
-      "warning"
-    );
-
-    return;
-  }
-
-  if(
-    !confirm(
-      "Buy this amount of USDT from the seller?"
-    )
-  ){
-
-    return;
-  }
-
-  const button =
-    document.getElementById(
-      "tradeSubmitButton"
-    );
-
-  button.disabled = true;
-
-  button.textContent =
-    "Creating...";
-
-  try{
-
-    const {
-      error
-    } =
-    await supabaseClient.rpc(
-      "create_p2p_trade",
-      {
-        p_order_id:
-          selectedOffer.id,
-
-        p_amount:
-          normalizedAmount
-      }
-    );
-
-    if(error){
-
-      toast(
-        getErrorMessage(error),
-        "error"
-      );
-
-      return;
-    }
-
-    closeModal(
-      "tradeModal"
-    );
-
-    selectedOffer =
-      null;
-
-    toast(
-      "Buy trade created successfully.",
-      "success"
-    );
-
-    await loadSellOrders();
-
-  }catch(error){
-
-    toast(
-      getErrorMessage(error),
-      "error"
-    );
-
-  }finally{
-
-    button.disabled = false;
-
-    button.textContent =
-      "Create Trade";
-
-  }
-
-}
-
 function setupRealtime(){
 
   if(!currentUser)return;
@@ -2001,9 +3745,51 @@ function setupRealtime(){
           schema:"public",
           table:"p2p_orders"
         },
-        function(){
+        async function(payload){
 
-          loadSellOrders();
+          const id =
+            payload?.new?.id ||
+            payload?.old?.id;
+
+          if(
+            !id ||
+            availableOrders.some(
+              order =>
+                String(order.id) ===
+                String(id)
+            ) ||
+            myOrders.some(
+              order =>
+                String(order.id) ===
+                String(id)
+            )
+          ){
+
+            await Promise.all([
+              loadSellOrders(),
+              loadMyOrders(),
+              loadUSDTBalance()
+            ]);
+
+          }
+
+        }
+      )
+
+      .on(
+        "postgres_changes",
+        {
+          event:"*",
+          schema:"public",
+          table:"p2p_trades"
+        },
+        async function(){
+
+          await Promise.all([
+            loadSellOrders(),
+            loadMyOrders(),
+            loadUSDTBalance()
+          ]);
 
         }
       )
@@ -2018,6 +3804,131 @@ function setupRealtime(){
 
         }
       );
+
+}
+
+async function callOrderRPC(
+  names,
+  id
+){
+
+  let lastError = null;
+
+  const paramsList = [
+    {
+      p_order_id:id
+    },
+    {
+      order_id:id
+    },
+    {
+      p_trade_id:id
+    },
+    {
+      trade_id:id
+    }
+  ];
+
+  for(
+    const name of names
+  ){
+
+    for(
+      const params of paramsList
+    ){
+
+      try{
+
+        const {
+          data,
+          error
+        } =
+        await supabaseClient.rpc(
+          name,
+          params
+        );
+
+        if(!error){
+
+          return {
+            success:true,
+            data
+          };
+
+        }
+
+        lastError =
+          error;
+
+      }catch(error){
+
+        lastError =
+          error;
+
+      }
+
+    }
+
+  }
+
+  return {
+    success:false,
+    error:lastError
+  };
+
+}
+
+function toggleOffers(){
+
+  offersExpanded =
+    !offersExpanded;
+
+  renderSellOrders();
+
+}
+
+function updateOfferButton(){
+
+  const button =
+    document.getElementById(
+      "offerViewButton"
+    );
+
+  if(!button)return;
+
+  if(
+    availableOrders.length <= 3
+  ){
+
+    button.style.display =
+      availableOrders.length
+      ? "none"
+      : "block";
+
+    button.textContent =
+      "View All";
+
+    return;
+
+  }
+
+  button.style.display =
+    "block";
+
+  button.textContent =
+    offersExpanded
+      ? "Show 3"
+      : "View All";
+
+}
+
+async function refreshAll(){
+
+  await Promise.all([
+    loadUSDTBalance(),
+    loadSellOrders(),
+    loadMyOrders()
+  ]);
 
 }
 
@@ -2037,7 +3948,7 @@ function openModal(id){
 
       const input =
         element.querySelector(
-          "input,textarea"
+          "input,textarea,select"
         );
 
       if(input){
@@ -2111,6 +4022,7 @@ function formatAmount(order){
   return amount.toLocaleString(
     undefined,
     {
+      minimumFractionDigits:0,
       maximumFractionDigits:6
     }
   ) +
@@ -2158,6 +4070,51 @@ function money(value){
       maximumFractionDigits:6
     }
   );
+
+}
+
+function formatUSDT(value){
+
+  const number =
+    Number(value);
+
+  if(
+    !Number.isFinite(number)
+  ){
+
+    return "0.000000";
+
+  }
+
+  return number.toLocaleString(
+    undefined,
+    {
+      minimumFractionDigits:6,
+      maximumFractionDigits:6
+    }
+  );
+
+}
+
+function formatDate(value){
+
+  if(!value)
+    return "Unknown";
+
+  const date =
+    new Date(value);
+
+  if(
+    Number.isNaN(
+      date.getTime()
+    )
+  ){
+
+    return "Unknown";
+
+  }
+
+  return date.toLocaleString();
 
 }
 
@@ -2511,7 +4468,7 @@ setInterval(
 
       try{
 
-        await loadSellOrders();
+        await refreshAll();
 
       }catch(error){
 

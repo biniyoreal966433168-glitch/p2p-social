@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#087f73">
+<title>P2P Order • P2P Social</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
+body{background:#f5f7fb;color:#172033;padding-bottom:85px}
+button,input{font-family:inherit}
+button{cursor:pointer}
+
+header{
+background:linear-gradient(135deg,#075e54,#087f73);
+color:white;
+padding:14px 18px;
+border-radius:0 0 22px 22px
+}
+
+.header-row{
+display:flex;
+align-items:center;
+gap:12px
+}
+
+.back-btn{
+border:none;
+background:rgba(255,255,255,.15);
+color:white;
+width:40px;
+height:40px;
+border-radius:50%;
+font-size:25px;
+flex-shrink:0
+}
+
+.brand-header{
+display:flex;
+align-items:center;
+gap:10px
+}
+
+.brand-icon{
+width:42px;
+height:42px;
+border-radius:13px;
+background:linear-gradient(135deg,#064e46,#10a889);
+position:relative;
+display:flex;
+justify-content:center;
+align-items:center;
+box-shadow:0 5px 14px rgba(0,0,0,.18);
+flex-shrink:0
+}
+
+.brand-p-left{
+position:absolute;
+left:8px;
+top:10px;
+width:12px;
+height:23px;
+border:4px solid white;
+border-right:0;
+border-radius:8px 0 0 8px
+}
+
+.brand-p-right{
+position:absolute;
+right:8px;
+top:10px;
+width:12px;
+height:23px;
+border:4px solid white;
+border-left:0;
+border-radius:0 8px 8px 0
+}
+
+.brand-center{
+width:12px;
+height:12px;
+background:white;
+border-radius:50%;
+position:absolute;
+display:flex;
+justify-content:center;
+align-items:center;
+z-index:5
+}
+
+.brand-dot{
+width:4px;
+height:4px;
+background:#087f73;
+border-radius:50%
+}
+
+.brand-text{
+display:flex;
+flex-direction:column;
+justify-content:center
+}
+
+.brand-text h1{
+font-size:18px;
+line-height:1;
+font-weight:800;
+color:white
+}
+
+.brand-text h1 span{
+color:#b8fff1
+}
+
+.brand-text p{
+margin-top:5px;
+font-size:7px;
+color:rgba(255,255,255,.78);
+letter-spacing:.6px
+}
+
+.section{
+margin:16px
+}
+
+.order-box{
+background:white;
+border-radius:20px;
+padding:18px;
+box-shadow:0 4px 15px rgba(0,0,0,.07)
+}
+
+.order-header{
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:10px;
+margin-bottom:15px
+}
+
+.order-title{
+font-size:20px;
+font-weight:bold
+}
+
+.order-badge{
+padding:6px 10px;
+border-radius:9px;
+background:#fdecec;
+color:#c0392b;
+font-size:11px;
+font-weight:bold
+}
+
+.info-box{
+background:#f5f7fb;
+border-radius:12px;
+padding:13px;
+margin-bottom:12px
+}
+
+.info-label{
+font-size:11px;
+color:#7a8494
+}
+
+.info-value{
+font-size:16px;
+font-weight:bold;
+margin-top:5px;
+word-break:break-word
+}
+
+.details{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+margin-top:12px
+}
+
+.detail{
+background:#f5f7fb;
+border-radius:11px;
+padding:12px
+}
+
+.detail-label{
+font-size:10px;
+color:#7a8494
+}
+
+.detail-value{
+font-size:14px;
+font-weight:bold;
+margin-top:5px;
+word-break:break-word
+}
+
+.status{
+display:inline-block;
+margin-top:5px;
+padding:5px 8px;
+border-radius:8px;
+background:#e8f8f3;
+color:#087f73;
+font-size:11px;
+font-weight:bold
+}
+
+.trade-section{
+margin-top:15px;
+background:white;
+border-radius:20px;
+padding:18px;
+box-shadow:0 4px 15px rgba(0,0,0,.07)
+}
+
+.trade-section h2{
+font-size:18px;
+margin-bottom:12px
+}
+
+.form-label{
+display:block;
+font-size:12px;
+font-weight:bold;
+color:#596579;
+margin:4px 0 6px
+}
+
+input{
+width:100%;
+border:1px solid #dfe4eb;
+border-radius:10px;
+padding:12px;
+outline:none;
+font-size:14px;
+margin-bottom:10px;
+background:white
+}
+
+input:focus{
+border-color:#087f73
+}
+
+.trade-preview{
+background:#f5f7fb;
+border-radius:12px;
+padding:13px;
+margin:4px 0 12px
+}
+
+.preview-row{
+display:flex;
+justify-content:space-between;
+gap:10px;
+font-size:12px;
+margin-bottom:8px
+}
+
+.preview-row:last-child{
+margin-bottom:0;
+padding-top:8px;
+border-top:1px solid #dfe4eb;
+font-weight:bold
+}
+
+.buy-button{
+width:100%;
+border:none;
+background:#087f73;
+color:white;
+padding:13px;
+border-radius:10px;
+font-weight:bold;
+font-size:14px
+}
+
+.buy-button:disabled{
+opacity:.6;
+cursor:not-allowed
+}
+
+.warning{
+background:#fff5df;
+color:#8a6100;
+border-radius:11px;
+padding:11px;
+font-size:11px;
+line-height:1.5;
+margin-top:10px
+}
+
+.success{
+background:#e8f8f3;
+color:#087f73;
+border-radius:11px;
+padding:11px;
+font-size:11px;
+line-height:1.5;
+margin-top:10px;
+display:none
+}
+
+.error{
+background:#fdecec;
+color:#c0392b;
+border-radius:11px;
+padding:11px;
+font-size:11px;
+line-height:1.5;
+margin-top:10px;
+display:none
+}
+
+.empty{
+background:white;
+border-radius:18px;
+padding:25px;
+text-align:center;
+color:#7b8492;
+box-shadow:0 4px 15px rgba(0,0,0,.07)
+}
+
+.bottom-nav{
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+height:68px;
+background:white;
+border-top:1px solid #ddd;
+display:flex;
+justify-content:space-around;
+align-items:center;
+z-index:2000
+}
+
+.nav-item{
+text-align:center;
+color:#777;
+font-size:11px;
+min-width:55px;
+cursor:pointer
+}
+
+.nav-item span{
+display:block;
+font-size:22px;
+margin-bottom:3px
+}
+
+.nav-item.active{
+color:#087f73;
+font-weight:bold
+}
+
+button:disabled{
+opacity:.6;
+cursor:not-allowed
+}
+
+@media(max-width:450px){
+
+header{
+padding:12px
+}
+
+.section{
+margin-left:12px;
+margin-right:12px
+}
+
+.brand-icon{
+width:38px;
+height:38px
+}
+
+.brand-p-left,
+.brand-p-right{
+top:9px;
+height:20px
+}
+
+.brand-p-left{
+left:7px
+}
+
+.brand-p-right{
+right:7px
+}
+
+.brand-center{
+width:10px;
+height:10px
+}
+
+.brand-dot{
+width:3px;
+height:3px
+}
+
+.brand-text h1{
+font-size:15px
+}
+
+.brand-text p{
+font-size:6px
+}
+
+.details{
+grid-template-columns:1fr
+}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<div class="header-row">
+
+<button class="back-btn" onclick="goBack()">‹</button>
+
+<div class="brand-header">
+
+<div class="brand-icon">
+<div class="brand-p-left"></div>
+<div class="brand-p-right"></div>
+<div class="brand-center">
+<div class="brand-dot"></div>
+</div>
+</div>
+
+<div class="brand-text">
+<h1>P2P <span>Social</span></h1>
+<p>CONNECT • TRADE • SHARE</p>
+</div>
+
+</div>
+</div>
+</header>
+
+<section class="section">
+
+<div id="loadingBox" class="empty">
+Loading P2P order...
+</div>
+
+<div id="orderBox" class="order-box" style="display:none">
+
+<div class="order-header">
+
+<div class="order-title">
+🔴 Sell USDT
+</div>
+
+<div id="orderStatus" class="order-badge">
+Loading
+</div>
+
+</div>
+
+<div class="info-box">
+
+<div class="info-label">
+Seller Username
+</div>
+
+<div id="sellerUsername" class="info-value">
+--
+</div>
+
+</div>
+
+<div class="details">
+
+<div class="detail">
+<div class="detail-label">
+Trading Pair
+</div>
+<div id="orderPair" class="detail-value">
+--
+</div>
+</div>
+
+<div class="detail">
+<div class="detail-label">
+USDT Available
+</div>
+<div id="orderAmount" class="detail-value">
+0.00 USDT
+</div>
+</div>
+
+<div class="detail">
+<div class="detail-label">
+Price
+</div>
+<div id="orderPrice" class="detail-value">
+--
+</div>
+</div>
+
+<div class="detail">
+<div class="detail-label">
+Payment Method
+</div>
+<div id="orderPayment" class="detail-value">
+--
+</div>
+</div>
+
+<div class="detail">
+<div class="detail-label">
+Trade Value
+</div>
+<div id="orderTradeValue" class="detail-value">
+--
+</div>
+</div>
+
+<div class="detail">
+<div class="detail-label">
+Created
+</div>
+<div id="orderCreated" class="detail-value">
+--
+</div>
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<section id="tradeSection" class="section" style="display:none">
+
+<div class="trade-section">
+
+<h2>🟢 Buy USDT</h2>
+
+<div class="info-box">
+
+<div class="info-label">
+Seller
+</div>
+
+<div id="tradeSeller" class="info-value">
+--
+</div>
+
+</div>
+
+<label class="form-label">
+Amount (USDT)
+</label>
+
+<input
+id="tradeAmount"
+type="number"
+min="0"
+step="any"
+placeholder="Enter USDT amount"
+oninput="updateTradePreview()"
+>
+
+<div class="trade-preview">
+
+<div class="preview-row">
+<span>USDT Amount</span>
+<span id="previewAmount">0.00 USDT</span>
+</div>
+
+<div class="preview-row">
+<span>Price</span>
+<span id="previewPrice">0.00</span>
+</div>
+
+<div class="preview-row">
+<span>You Pay</span>
+<span id="previewTotal">0.00</span>
+</div>
+
+</div>
+
+<button
+id="buyButton"
+class="buy-button"
+onclick="buyUSDT()"
+>
+Buy USDT
+</button>
+
+<div class="warning">
+Buyer pays the agreed trade value only. There is no buyer platform fee.
+The seller's 1% USDT fee is handled when USDT is released.
+</div>
+
+<div id="tradeSuccess" class="success"></div>
+<div id="tradeError" class="error"></div>
+
+</div>
+
+</section>
+
+<nav class="bottom-nav">
+
+<div class="nav-item" onclick="goHome()">
+<span>🏠</span>
+Home
+</div>
+
+<div class="nav-item active" onclick="openBuy()">
+<span>🟢</span>
+Buy
+</div>
+
+<div class="nav-item" onclick="openSell()">
+<span>🔴</span>
+Sell
+</div>
+
+<div class="nav-item" onclick="openMessages()">
+<span>💬</span>
+Messages
+</div>
+
+<div class="nav-item" onclick="openProfile()">
+<span>👤</span>
+Profile
+</div>
+
+</nav>
+
+<script>
+
+const SUPABASE_URL=
+"https://mbsvuwrgigqfporxwpfr.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY=
+"sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
+
+const supabaseClient=
+window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_PUBLISHABLE_KEY
+);
+
+let currentSession=null;
+let currentOrder=null;
+
+function getOrderId(){
+
+const params=
+new URLSearchParams(window.location.search);
+
+return(
+params.get("id")||
+params.get("order_id")||
+params.get("orderId")||
+params.get("p_order_id")||
+""
+);
+
+}
+
+async function startApp(){
+
+const {data,error}=
+await supabaseClient.auth.getSession();
+
+if(error||!data.session){
+
+window.location.href="login.html";
+return;
+
+}
+
+currentSession=data.session;
+
+const orderId=getOrderId();
+
+if(!orderId){
+
+showError("P2P order was not specified.");
+return;
+
+}
+
+await loadOrder(orderId);
+
+}
+
+async function loadOrder(orderId){
+
+document.getElementById("loadingBox").style.display="block";
+document.getElementById("orderBox").style.display="none";
+document.getElementById("tradeSection").style.display="none";
+
+let query=
+supabaseClient
+.from("p2p_orders")
+.select("*");
+
+if(/^\d+$/.test(String(orderId))){
+
+query=query.eq("id",Number(orderId));
+
+}else{
+
+query=query.eq("id",orderId);
+
+}
+
+const {data,error}=
+await query.maybeSingle();
+
+if(error){
+
+showError(error.message);
+return;
+
+}
+
+if(!data){
+
+showError("P2P order not found.");
+return;
+
+}
+
+currentOrder=data;
+
+renderOrder(data);
+
+}
+
+function renderOrder(order){
+
+document.getElementById("loadingBox").style.display="none";
+document.getElementById("orderBox").style.display="block";
+
+const type=
+String(
+order.order_type||
+order.type||
+"sell"
+).toLowerCase();
+
+if(type!=="sell"){
+
+document.querySelector(".order-title").textContent=
+"🟢 Buy USDT";
+
+document.getElementById("orderStatus").className=
+"order-badge";
+
+}
+
+const username=
+order.username||
+order.seller_username||
+"User";
+
+const pair=
+order.pair||
+"USD_USDT";
+
+const parts=
+String(pair).split("_");
+
+const base=
+parts[0]||"USD";
+
+const quote=
+parts[1]||"USDT";
+
+const amount=
+Number(order.remaining_amount??order.amount??0);
+
+const originalAmount=
+Number(order.amount??amount);
+
+const price=
+Number(order.price||0);
+
+const tradeValue=
+amount*price;
+
+const status=
+String(order.status||"open").toLowerCase();
+
+document.getElementById("sellerUsername").textContent=
+"@"+username;
+
+document.getElementById("tradeSeller").textContent=
+"@"+username;
+
+document.getElementById("orderPair").textContent=
+base+" / "+quote;
+
+document.getElementById("orderAmount").textContent=
+formatNumber(amount)+" USDT";
+
+document.getElementById("orderPrice").textContent=
+formatNumber(price)+" "+base;
+
+document.getElementById("orderPayment").textContent=
+order.payment_method||
+order.payment||
+"Not specified";
+
+document.getElementById("orderTradeValue").textContent=
+formatNumber(tradeValue)+" "+base;
+
+document.getElementById("orderCreated").textContent=
+formatTime(order.created_at);
+
+document.getElementById("orderStatus").textContent=
+status.charAt(0).toUpperCase()+status.slice(1);
+
+document.getElementById("tradeAmount").max=
+String(amount);
+
+document.getElementById("tradeAmount").value="";
+
+document.getElementById("previewAmount").textContent=
+"0.00 USDT";
+
+document.getElementById("previewPrice").textContent=
+formatNumber(price)+" "+base;
+
+document.getElementById("previewTotal").textContent=
+"0.00 "+base;
+
+const available=
+amount>0&&
+["open","active","pending"].includes(status)&&
+type==="sell";
+
+document.getElementById("tradeSection").style.display=
+available?"block":"none";
+
+}
+
+function updateTradePreview(){
+
+if(!currentOrder)return;
+
+const amount=
+Number(
+document.getElementById("tradeAmount").value
+);
+
+const price=
+Number(currentOrder.price||0);
+
+const pair=
+String(
+currentOrder.pair||
+"USD_USDT"
+);
+
+const base=
+pair.split("_")[0]||"USD";
+
+const value=
+Number.isFinite(amount)&&amount>0&&price>0?
+amount*price:
+0;
+
+document.getElementById("previewAmount").textContent=
+formatNumber(
+Number.isFinite(amount)&&amount>0?
+amount:
+0
+)+" USDT";
+
+document.getElementById("previewPrice").textContent=
+formatNumber(price)+" "+base;
+
+document.getElementById("previewTotal").textContent=
+formatNumber(value)+" "+base;
+
+}
+
+async function buyUSDT(){
+
+hideMessages();
+
+if(!currentSession){
+
+window.location.href="login.html";
+return;
+
+}
+
+if(!currentOrder){
+
+showTradeError("P2P order is not available.");
+return;
+
+}
+
+const amount=
+Number(
+document.getElementById("tradeAmount").value
+);
+
+const remaining=
+Number(
+currentOrder.remaining_amount??
+currentOrder.amount??
+0
+);
+
+if(!Number.isFinite(amount)||amount<=0){
+
+showTradeError("Please enter a valid USDT amount.");
+return;
+
+}
+
+if(amount>remaining){
+
+showTradeError(
+"Amount is greater than the available USDT."
+);
+
+return;
+
+}
+
+if(!confirm(
+"Buy "+formatNumber(amount)+" USDT from @"+
+(currentOrder.username||currentOrder.seller_username||"seller")+"?"
+)){
+
+return;
+
+}
+
+const button=
+document.getElementById("buyButton");
+
+button.disabled=true;
+button.textContent="Creating Trade...";
+
+const result=
+await supabaseClient.rpc(
+"create_p2p_trade",
+{
+p_order_id:currentOrder.id,
+p_amount:amount
+}
+);
+
+button.disabled=false;
+button.textContent="Buy USDT";
+
+if(result.error){
+
+showTradeError(
+"Could not create trade:\n\n"+
+result.error.message
+);
+
+return;
+
+}
+
+const tradeId=
+result.data;
+
+showTradeSuccess(
+"Trade created successfully."
+);
+
+setTimeout(()=>{
+
+const params=
+new URLSearchParams();
+
+params.set("trade_id",String(tradeId));
+params.set("order_id",String(currentOrder.id));
+params.set(
+"seller",
+String(
+currentOrder.username||
+currentOrder.seller_username||
+""
+)
+);
+
+window.location.href=
+"create_p2p_trade.html?"+
+params.toString();
+
+},700);
+
+}
+
+function showError(message){
+
+document.getElementById("loadingBox").innerHTML=
+'<div class="empty">'+
+escapeHtml(message)+
+'</div>';
+
+}
+
+function showTradeError(message){
+
+const box=
+document.getElementById("tradeError");
+
+box.textContent=message;
+box.style.display="block";
+
+}
+
+function showTradeSuccess(message){
+
+const box=
+document.getElementById("tradeSuccess");
+
+box.textContent=message;
+box.style.display="block";
+
+}
+
+function hideMessages(){
+
+document.getElementById("tradeError").style.display="none";
+document.getElementById("tradeSuccess").style.display="none";
+
+}
+
+function formatNumber(value){
+
+const number=Number(value||0);
+
+if(!Number.isFinite(number))
+return"0.00";
+
+return number.toLocaleString(
+undefined,
+{
+minimumFractionDigits:2,
+maximumFractionDigits:8
+}
+);
+
+}
+
+function formatTime(value){
+
+if(!value)return"";
+
+const date=new Date(value);
+
+if(isNaN(date.getTime()))
+return"";
+
+const now=new Date();
+
+const seconds=
+Math.floor((now-date)/1000);
+
+if(seconds<60)return"now";
+
+const minutes=
+Math.floor(seconds/60);
+
+if(minutes<60)
+return minutes+"m";
+
+const hours=
+Math.floor(minutes/60);
+
+if(hours<24)
+return hours+"h";
+
+const days=
+Math.floor(hours/24);
+
+if(days<7)
+return days+"d";
+
+return date.toLocaleDateString();
+
+}
+
+function escapeHtml(text){
+
+const div=
+document.createElement("div");
+
+div.textContent=
+text==null?"":String(text);
+
+return div.innerHTML;
+
+}
+
+function goHome(){
+
+window.location.href=
+"index.html";
+
+}
+
+function openBuy(){
+
+window.location.href=
+"live.html";
+
+}
+
+function openSell(){
+
+window.location.href=
+"wallet.html";
+
+}
+
+function openProfile(){
+
+window.location.href=
+"profile.html";
+
+}
+
+function openMessages(){
+
+window.location.href=
+"message.html";
+
+}
+
+function goBack(){
+
+if(document.referrer){
+
+window.history.back();
+
+}else{
+
+window.location.href=
+"live.html";
+
+}
+
+}
+
+supabaseClient.auth.onAuthStateChange(
+(event,session)=>{
+
+currentSession=session;
+
+if(!session){
+
+window.location.href="login.html";
+
+}
+
+}
+);
+
+startApp();
+
+</script>
+
+</body>
+</html>

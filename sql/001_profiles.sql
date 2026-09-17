@@ -1,0 +1,3 @@
+-- P2P Social
+-- 001 Profiles
+-- Existing public.profiles table will be configured here.

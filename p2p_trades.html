@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#087f73">
+<title>P2P Trades • P2P Social</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  font-family:Arial,sans-serif
+}
+
+html{
+  scroll-behavior:smooth
+}
+
+body{
+  background:#f5f7fb;
+  color:#17202a;
+  min-height:100vh;
+  padding-bottom:85px
+}
+
+header{
+  position:sticky;
+  top:0;
+  z-index:100;
+  height:64px;
+  background:#fff;
+  border-bottom:1px solid #e5e9ed;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 16px;
+  box-shadow:0 2px 8px rgba(0,0,0,.05)
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:800;
+  color:#064e46;
+  font-size:18px
+}
+
+.logo{
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  background:linear-gradient(135deg,#064e46,#10a889);
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden
+}
+
+.logo:before,
+.logo:after{
+  content:"";
+  position:absolute;
+  width:8px;
+  height:20px;
+  background:#fff;
+  border-radius:4px
+}
+
+.logo:before{
+  left:8px;
+  transform:skewY(-25deg)
+}
+
+.logo:after{
+  right:8px;
+  transform:skewY(25deg)
+}
+
+.logo-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#fff;
+  position:relative;
+  z-index:2
+}
+
+.refresh{
+  border:0;
+  background:#eef5f4;
+  color:#064e46;
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  font-size:18px;
+  cursor:pointer
+}
+
+.container{
+  width:min(680px,calc(100% - 24px));
+  margin:20px auto
+}
+
+.page-title{
+  font-size:24px;
+  font-weight:800;
+  margin-bottom:5px
+}
+
+.page-subtitle{
+  color:#718096;
+  font-size:14px;
+  margin-bottom:18px
+}
+
+.tabs{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  margin-bottom:16px;
+  padding-bottom:2px
+}
+
+.tab{
+  flex:1;
+  min-width:100px;
+  border:1px solid #dfe7e5;
+  background:#fff;
+  color:#718096;
+  border-radius:12px;
+  padding:11px 10px;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer
+}
+
+.tab.active{
+  background:#087f73;
+  border-color:#087f73;
+  color:#fff
+}
+
+.card{
+  background:#fff;
+  border:1px solid #e5e9ed;
+  border-radius:18px;
+  padding:18px;
+  margin-bottom:14px;
+  box-shadow:0 4px 14px rgba(0,0,0,.04)
+}
+
+.trade-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:15px
+}
+
+.trade-title{
+  font-size:17px;
+  font-weight:800;
+  color:#17202a
+}
+
+.trade-id{
+  color:#8a96a3;
+  font-size:11px;
+  margin-top:4px;
+  word-break:break-all
+}
+
+.status{
+  padding:7px 10px;
+  border-radius:999px;
+  background:#e8f7f3;
+  color:#087f73;
+  font-size:11px;
+  font-weight:800;
+  white-space:nowrap
+}
+
+.status.completed{
+  background:#e8f7f3;
+  color:#087f73
+}
+
+.status.cancelled,
+.status.expired{
+  background:#fff0f0;
+  color:#b42318
+}
+
+.status.disputed{
+  background:#fff7e8;
+  color:#9a6700
+}
+
+.row{
+  display:flex;
+  justify-content:space-between;
+  gap:15px;
+  padding:10px 0;
+  border-bottom:1px solid #edf0f2;
+  font-size:13px
+}
+
+.row:last-child{
+  border-bottom:0
+}
+
+.label{
+  color:#718096
+}
+
+.value{
+  font-weight:700;
+  text-align:right;
+  word-break:break-word
+}
+
+.amount-box{
+  background:#f7faf9;
+  border:1px solid #dceeea;
+  border-radius:14px;
+  padding:14px;
+  margin:15px 0
+}
+
+.amount-label{
+  color:#718096;
+  font-size:12px;
+  margin-bottom:5px
+}
+
+.amount{
+  color:#064e46;
+  font-size:25px;
+  font-weight:800
+}
+
+.actions{
+  display:flex;
+  gap:9px;
+  margin-top:15px
+}
+
+.btn{
+  flex:1;
+  border:0;
+  border-radius:12px;
+  padding:12px;
+  background:linear-gradient(135deg,#064e46,#10a889);
+  color:#fff;
+  font-size:13px;
+  font-weight:800;
+  cursor:pointer
+}
+
+.btn.secondary{
+  background:#eef5f4;
+  color:#064e46
+}
+
+.empty{
+  background:#fff;
+  border:1px solid #e5e9ed;
+  border-radius:18px;
+  padding:40px 20px;
+  text-align:center;
+  color:#718096;
+  font-size:14px
+}
+
+.empty-icon{
+  font-size:35px;
+  margin-bottom:10px
+}
+
+.loading{
+  text-align:center;
+  padding:35px 10px;
+  color:#718096;
+  font-size:14px
+}
+
+.error{
+  display:none;
+  background:#fff0f0;
+  color:#b42318;
+  border:1px solid #ffd6d6;
+  border-radius:12px;
+  padding:13px;
+  margin-bottom:15px;
+  font-size:13px;
+  line-height:1.5
+}
+
+.notice{
+  display:none;
+  background:#eef8f6;
+  color:#28665f;
+  border:1px solid #d7eee9;
+  border-radius:12px;
+  padding:12px;
+  margin-bottom:15px;
+  font-size:13px
+}
+
+.hidden{
+  display:none!important
+}
+
+nav{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  z-index:100;
+  height:70px;
+  background:#fff;
+  border-top:1px solid #e5e9ed;
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+  box-shadow:0 -3px 12px rgba(0,0,0,.05)
+}
+
+nav a{
+  text-decoration:none;
+  color:#718096;
+  font-size:12px;
+  font-weight:700;
+  text-align:center
+}
+
+nav a.active{
+  color:#087f73
+}
+
+.nav-icon{
+  display:block;
+  font-size:20px;
+  margin-bottom:3px
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="brand">
+    <div class="logo">
+      <div class="logo-dot"></div>
+    </div>
+    <span>P2P Social</span>
+  </div>
+
+  <button class="refresh" onclick="loadTrades()">↻</button>
+</header>
+
+<main class="container">
+
+  <div class="page-title">P2P Trades</div>
+  <div class="page-subtitle">Your active and completed trades</div>
+
+  <div id="errorBox" class="error"></div>
+  <div id="noticeBox" class="notice"></div>
+
+  <div class="tabs">
+    <button class="tab active" data-filter="all" onclick="setFilter('all',this)">
+      All
+    </button>
+
+    <button class="tab" data-filter="active" onclick="setFilter('active',this)">
+      Active
+    </button>
+
+    <button class="tab" data-filter="completed" onclick="setFilter('completed',this)">
+      Completed
+    </button>
+
+    <button class="tab" data-filter="cancelled" onclick="setFilter('cancelled',this)">
+      Cancelled
+    </button>
+  </div>
+
+  <div id="loading" class="card loading">
+    Loading trades...
+  </div>
+
+  <div id="tradesList"></div>
+
+</main>
+
+<nav>
+  <a href="index.html">
+    <span class="nav-icon">🏠</span>
+    Home
+  </a>
+
+  <a href="live.html">
+    <span class="nav-icon">🟢</span>
+    Buy
+  </a>
+
+  <a href="wallet.html">
+    <span class="nav-icon">🔴</span>
+    Sell
+  </a>
+
+  <a href="message.html">
+    <span class="nav-icon">💬</span>
+    Messages
+  </a>
+
+  <a href="profile.html" class="active">
+    <span class="nav-icon">👤</span>
+    Profile
+  </a>
+</nav>
+
+<script>
+const SUPABASE_URL =
+  "https://mbsvuwrgigqfporxwpfr.supabase.co";
+
+const SUPABASE_ANON_KEY =
+  "YOUR_SUPABASE_PUBLISHABLE_KEY";
+
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+let currentUser = null;
+let allTrades = [];
+let currentFilter = "all";
+
+const activeStatuses = [
+  "pending",
+  "locked",
+  "payment",
+  "paid",
+  "confirmed",
+  "releasing",
+  "active"
+];
+
+const completedStatuses = [
+  "completed"
+];
+
+const cancelledStatuses = [
+  "cancelled",
+  "expired"
+];
+
+function showError(message){
+  const box = document.getElementById("errorBox");
+  box.textContent = message;
+  box.style.display = "block";
+}
+
+function hideError(){
+  const box = document.getElementById("errorBox");
+  box.style.display = "none";
+}
+
+function showNotice(message){
+  const box = document.getElementById("noticeBox");
+  box.textContent = message;
+  box.style.display = "block";
+}
+
+function money(value){
+  if(
+    value === null ||
+    value === undefined ||
+    value === ""
+  ){
+    return "—";
+  }
+
+  const number = Number(value);
+
+  if(!Number.isFinite(number)){
+    return String(value);
+  }
+
+  return number.toLocaleString(undefined,{
+    maximumFractionDigits:6
+  });
+}
+
+function dateText(value){
+  if(!value) return "—";
+
+  const date = new Date(value);
+
+  if(Number.isNaN(date.getTime())){
+    return String(value);
+  }
+
+  return date.toLocaleString();
+}
+
+function statusText(status){
+  if(!status) return "Pending";
+
+  const value =
+    String(status)
+      .replace(/_/g," ")
+      .trim();
+
+  return value.charAt(0).toUpperCase() +
+         value.slice(1);
+}
+
+function escapeHtml(value){
+  return String(value ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+function getOtherUsername(trade){
+
+  if(!currentUser){
+    return "—";
+  }
+
+  if(trade.buyer_id === currentUser.id){
+    return (
+      trade.seller_username ||
+      trade.seller_name ||
+      trade.seller_id ||
+      "Seller"
+    );
+  }
+
+  return (
+    trade.buyer_username ||
+    trade.buyer_name ||
+    trade.buyer_id ||
+    "Buyer"
+  );
+}
+
+function getRole(trade){
+
+  if(!currentUser){
+    return "";
+  }
+
+  return trade.buyer_id === currentUser.id
+    ? "BUY"
+    : "SELL";
+}
+
+function getTradeValue(trade){
+
+  if(
+    trade.trade_value !== null &&
+    trade.trade_value !== undefined
+  ){
+    return trade.trade_value;
+  }
+
+  if(
+    trade.total_value !== null &&
+    trade.total_value !== undefined
+  ){
+    return trade.total_value;
+  }
+
+  if(
+    trade.etb_amount !== null &&
+    trade.etb_amount !== undefined
+  ){
+    return trade.etb_amount;
+  }
+
+  const price =
+    trade.price ??
+    trade.order_price;
+
+  if(
+    price !== null &&
+    price !== undefined &&
+    trade.amount !== null &&
+    trade.amount !== undefined
+  ){
+    return Number(trade.amount) *
+           Number(price);
+  }
+
+  return null;
+}
+
+function renderTrades(){
+
+  const list =
+    document.getElementById("tradesList");
+
+  let trades = allTrades.slice();
+
+  if(currentFilter === "active"){
+    trades = trades.filter(trade =>
+      activeStatuses.includes(
+        String(trade.status || "pending").toLowerCase()
+      )
+    );
+  }
+
+  if(currentFilter === "completed"){
+    trades = trades.filter(trade =>
+      completedStatuses.includes(
+        String(trade.status || "").toLowerCase()
+      )
+    );
+  }
+
+  if(currentFilter === "cancelled"){
+    trades = trades.filter(trade =>
+      cancelledStatuses.includes(
+        String(trade.status || "").toLowerCase()
+      )
+    );
+  }
+
+  if(!trades.length){
+
+    list.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">📋</div>
+        <div>No trades found.</div>
+      </div>
+    `;
+
+    return;
+  }
+
+  list.innerHTML =
+    trades.map(renderTradeCard).join("");
+}
+
+function renderTradeCard(trade){
+
+  const status =
+    String(trade.status || "pending")
+      .toLowerCase();
+
+  const role = getRole(trade);
+
+  const statusClass =
+    status === "completed"
+      ? "completed"
+      : status === "cancelled" ||
+        status === "expired"
+        ? "cancelled"
+        : status === "disputed"
+          ? "disputed"
+          : "";
+
+  const tradeValue =
+    getTradeValue(trade);
+
+  const payment =
+    trade.payment_method ||
+    trade.paymentMethod ||
+    "—";
+
+  const pair =
+    trade.pair ||
+    trade.order_pair ||
+    "USDT / ETB";
+
+  const amount =
+    money(trade.amount);
+
+  const otherUser =
+    getOtherUsername(trade);
+
+  const canMessage =
+    !["completed","cancelled","expired"]
+      .includes(status);
+
+  return `
+    <div class="card">
+
+      <div class="trade-head">
+
+        <div>
+          <div class="trade-title">
+            ${escapeHtml(role)} • USDT
+          </div>
+
+          <div class="trade-id">
+            Trade #${escapeHtml(trade.id)}
+          </div>
+        </div>
+
+        <div class="status ${statusClass}">
+          ${escape

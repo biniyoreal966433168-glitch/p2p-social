@@ -1365,8 +1365,157 @@ if(!currentSession)return;
 const list=
 document.getElementById("historyList");
 
+if(!list)return;
+
 list.innerHTML=
-'<div class="history-empty">History is managed by the backend.</div>';
+'<div class="history-empty">Loading history...</div>';
+
+if(
+currentHistoryType==="deposit"||
+currentHistoryType==="withdrawal"
+){
+
+list.innerHTML=
+'<div class="history-empty">No history available.</div>';
+
+return;
+
+}
+
+const userId=currentSession.user.id;
+
+const {data,error}=
+await supabaseClient
+.from("usdt_transfers")
+.select(`
+id,
+sender_id,
+recipient_id,
+amount,
+fee,
+recipient_amount,
+status,
+created_at
+`)
+.or(
+"sender_id.eq."+userId+
+",recipient_id.eq."+userId
+)
+.order("created_at",{ascending:false})
+.limit(50);
+
+if(error){
+
+console.error("USDT transfer history error:",error);
+
+list.innerHTML=
+'<div class="history-empty">Could not load transfer history.</div>';
+
+return;
+
+}
+
+if(!data||data.length===0){
+
+list.innerHTML=
+'<div class="history-empty">No transfer history yet.</div>';
+
+return;
+
+}
+
+list.innerHTML="";
+
+data.forEach(item=>{
+
+const sent=
+String(item.sender_id)===String(userId);
+
+const amount=
+Number(item.amount||0);
+
+const fee=
+Number(item.fee||0);
+
+const recipientAmount=
+Number(item.recipient_amount||0);
+
+const row=
+document.createElement("div");
+
+row.className="history-row";
+
+const type=
+sent?
+"USDT Transfer Sent":
+"USDT Transfer Received";
+
+const displayAmount=
+sent?
+"-"+formatNumber(amount)+" USDT":
+"+"+formatNumber(recipientAmount)+" USDT";
+
+const amountClass=
+sent?"negative":"positive";
+
+const date=
+item.created_at?
+new Date(item.created_at).toLocaleString():
+"";
+
+row.innerHTML=`
+
+<div class="history-row-top">
+
+<div class="history-type">
+${escapeHtml(type)}
+</div>
+
+<div class="history-amount ${amountClass}">
+${escapeHtml(displayAmount)}
+</div>
+
+</div>
+
+<div class="history-meta">
+
+<span>
+${sent?
+"Transfer amount: "+formatNumber(amount)+" USDT":
+"Received: "+formatNumber(recipientAmount)+" USDT"
+}
+</span>
+
+<span>
+${escapeHtml(date)}
+</span>
+
+</div>
+
+${
+sent&&fee>0?
+`
+<div class="history-meta">
+<span>Platform Fee: ${formatNumber(fee)} USDT</span>
+<span>1%</span>
+</div>
+`
+:""
+}
+
+<div class="history-status ${
+String(item.status||"").toLowerCase()
+}">
+${escapeHtml(
+String(item.status||"completed").toUpperCase()
+)}
+</div>
+
+`;
+
+list.appendChild(row);
+
+});
 
 }
 

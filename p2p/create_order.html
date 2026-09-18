@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Create P2P Order • P2P Social</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
+body{background:#f4f7f8;color:#172033;padding-bottom:85px}
+header{
+  background:#fff;
+  border-bottom:1px solid #e2e8ea;
+  padding:15px 16px;
+  position:sticky;
+  top:0;
+  z-index:20
+}
+.header-row{display:flex;align-items:center;gap:12px}
+.back{
+  width:40px;height:40px;border:1px solid #dfe7e9;
+  background:#fff;border-radius:12px;font-size:20px;
+  cursor:pointer
+}
+.logo{
+  width:42px;height:42px;border-radius:12px;
+  background:linear-gradient(135deg,#064e46,#10a889);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:900;font-size:19px
+}
+.header-title{font-size:19px;font-weight:800}
+.header-sub{font-size:12px;color:#718096;margin-top:3px}
+
+.container{max-width:650px;margin:0 auto;padding:16px}
+
+.card{
+  background:#fff;
+  border:1px solid #dfe7e9;
+  border-radius:17px;
+  padding:18px;
+  margin-bottom:14px
+}
+
+.balance-card{
+  background:linear-gradient(135deg,#064e46,#087f73);
+  color:#fff;
+  border:none
+}
+.balance-label{font-size:13px;opacity:.85}
+.balance{
+  font-size:30px;
+  font-weight:900;
+  margin-top:7px
+}
+
+.section-title{
+  font-size:17px;
+  font-weight:800;
+  margin-bottom:14px
+}
+
+label{
+  display:block;
+  font-size:13px;
+  font-weight:700;
+  margin-bottom:7px;
+  color:#4a5568
+}
+
+input,select{
+  width:100%;
+  height:48px;
+  border:1px solid #d5dfe2;
+  border-radius:12px;
+  padding:0 13px;
+  font-size:15px;
+  outline:none;
+  background:#fff;
+  color:#172033;
+  margin-bottom:14px
+}
+
+input:focus,select:focus{
+  border-color:#087f73
+}
+
+.type-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-bottom:15px
+}
+
+.type-btn{
+  height:48px;
+  border:1px solid #d5dfe2;
+  background:#fff;
+  border-radius:12px;
+  font-weight:800;
+  cursor:pointer;
+  color:#172033
+}
+.type-btn.active{
+  background:#087f73;
+  border-color:#087f73;
+  color:#fff
+}
+
+.summary{
+  background:#f7fafb;
+  border:1px solid #e1e8ea;
+  border-radius:13px;
+  padding:14px;
+  margin-top:4px
+}
+
+.summary-row{
+  display:flex;
+  justify-content:space-between;
+  gap:15px;
+  padding:7px 0;
+  font-size:14px
+}
+.summary-row span:first-child{color:#718096}
+.summary-row strong{text-align:right}
+
+.primary{
+  width:100%;
+  height:50px;
+  border:0;
+  border-radius:13px;
+  background:#087f73;
+  color:#fff;
+  font-size:15px;
+  font-weight:800;
+  cursor:pointer
+}
+.primary:disabled{
+  opacity:.55;
+  cursor:not-allowed
+}
+
+.note{
+  font-size:12px;
+  line-height:1.5;
+  color:#718096;
+  margin-top:12px
+}
+
+.message{
+  display:none;
+  padding:12px 14px;
+  border-radius:12px;
+  margin-bottom:14px;
+  font-size:13px;
+  line-height:1.45
+}
+.message.error{
+  display:block;
+  background:#fff1f1;
+  border:1px solid #ffd3d3;
+  color:#a42626
+}
+.message.success{
+  display:block;
+  background:#effbf7;
+  border:1px solid #c9eee2;
+  color:#087f73
+}
+
+.loading{
+  text-align:center;
+  padding:35px 10px;
+  color:#718096;
+  font-size:14px
+}
+
+.hidden{display:none!important}
+
+.bottom-nav{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  height:68px;
+  background:#fff;
+  border-top:1px solid #dfe7e9;
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+  z-index:30
+}
+.nav-item{
+  text-decoration:none;
+  color:#718096;
+  font-size:11px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  min-width:55px
+}
+.nav-icon{font-size:20px}
+.nav-item.active{color:#087f73;font-weight:800}
+
+@media(max-width:420px){
+  .container{padding:12px}
+  .card{padding:15px}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="header-row">
+    <button class="back" onclick="goBack()">‹</button>
+    <div class="logo">P</div>
+    <div>
+      <div class="header-title">Create P2P Order</div>
+      <div class="header-sub">Create a secure USDT P2P offer</div>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <div id="loading" class="loading">Loading...</div>
+
+  <div id="app" class="hidden">
+
+    <div id="message" class="message"></div>
+
+    <div class="card balance-card">
+      <div class="balance-label">Your USDT Balance</div>
+      <div class="balance" id="balance">0.000000 USDT</div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Create Order</div>
+
+      <label>Order Type</label>
+
+      <div class="type-row">
+        <button
+          id="buyBtn"
+          class="type-btn active"
+          type="button"
+          onclick="setOrderType('buy')">
+          Buy USDT
+        </button>
+
+        <button
+          id="sellBtn"
+          class="type-btn"
+          type="button"
+          onclick="setOrderType('sell')">
+          Sell USDT
+        </button>
+      </div>
+
+      <label for="pair">Pair</label>
+      <select id="pair">
+        <option value="USDT_ETB">USDT / ETB</option>
+        <option value="USDT_USD">USDT / USD</option>
+      </select>
+
+      <label for="amount">USDT Amount</label>
+      <input
+        id="amount"
+        type="number"
+        min="0.000001"
+        step="0.000001"
+        placeholder="Enter USDT amount"
+        oninput="updateSummary()">
+
+      <label for="price">Price</label>
+      <input
+        id="price"
+        type="number"
+        min="0.000001"
+        step="0.000001"
+        placeholder="Enter price"
+        oninput="updateSummary()">
+
+      <label for="paymentMethod">Payment Method</label>
+      <input
+        id="paymentMethod"
+        type="text"
+        maxlength="100"
+        placeholder="Example: Bank Transfer">
+
+      <div class="summary">
+        <div class="summary-row">
+          <span>Order</span>
+          <strong id="summaryType">BUY USDT</strong>
+        </div>
+
+        <div class="summary-row">
+          <span>Amount</span>
+          <strong id="summaryAmount">0 USDT</strong>
+        </div>
+
+        <div class="summary-row">
+          <span>Price</span>
+          <strong id="summaryPrice">0</strong>
+        </div>
+
+        <div class="summary-row">
+          <span>Total</span>
+          <strong id="summaryTotal">0</strong>
+        </div>
+      </div>
+
+      <br>
+
+      <button
+        id="createBtn"
+        class="primary"
+        type="button"
+        onclick="createOrder()">
+        Create P2P Order
+      </button>
+
+      <div class="note">
+        Your username is taken from your authenticated Supabase profile.
+        The order RPC uses your authenticated account and the database remains
+        authoritative for ownership and balances.
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<nav class="bottom-nav">
+  <a class="nav-item" href="index.html">
+    <span class="nav-icon">⌂</span>
+    <span>Home</span>
+  </a>
+
+  <a class="nav-item" href="live.html">
+    <span class="nav-icon">◉</span>
+    <span>Live</span>
+  </a>
+
+  <a class="nav-item active" href="wallet.html">
+    <span class="nav-icon">🤝</span>
+    <span>P2P</span>
+  </a>
+
+  <a class="nav-item" href="message.html">
+    <span class="nav-icon">✉</span>
+    <span>Messages</span>
+  </a>
+
+  <a class="nav-item" href="profile.html">
+    <span class="nav-icon">●</span>
+    <span>Profile</span>
+  </a>
+</nav>
+
+<script>
+const SUPABASE_URL =
+  "https://mbsvuwrgigqfporxwpfr.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
+
+let currentUser = null;
+let currentProfile = null;
+let currentUsername = "";
+let currentUSDTBalance = 0;
+let orderType = "buy";
+let creating = false;
+
+function $(id){
+  return document.getElementById(id);
+}
+
+function showMessage(text,type="error"){
+  const box = $("message");
+
+  box.className = "message " + type;
+  box.textContent = text;
+  box.style.display = "block";
+}
+
+function hideMessage(){
+  const box = $("message");
+  box.style.display = "none";
+  box.textContent = "";
+  box.className = "message";
+}
+
+function goBack(){
+  window.location.href = "wallet.html";
+}
+
+function setOrderType(type){
+  orderType = type;
+
+  $("buyBtn").classList.toggle("active",type === "buy");
+  $("sellBtn").classList.toggle("active",type === "sell");
+
+  $("summaryType").textContent =
+    type === "buy" ? "BUY USDT" : "SELL USDT";
+
+  updateSummary();
+}
+
+function getUSDTBalance(profile){
+  const fields = [
+    "usdt_balance",
+    "balance_usdt",
+    "usdtBalance",
+    "USDT_balance",
+    "wallet_usdt_balance"
+  ];
+
+  for(const field of fields){
+    if(
+      profile &&
+      profile[field] !== null &&
+      profile[field] !== undefined &&
+      profile[field] !== ""
+    ){
+      const value = Number(profile[field]);
+
+      if(Number.isFinite(value)){
+        return value;
+      }
+    }
+  }
+
+  return 0;
+}
+
+function updateSummary(){
+  const amount = Number($("amount").value) || 0;
+  const price = Number($("price").value) || 0;
+  const total = amount * price;
+
+  $("summaryAmount").textContent =
+    amount.toLocaleString(undefined,{
+      maximumFractionDigits:6
+    }) + " USDT";
+
+  $("summaryPrice").textContent =
+    price.toLocaleString(undefined,{
+      maximumFractionDigits:6
+    });
+
+  $("summaryTotal").textContent =
+    total.toLocaleString(undefined,{
+      maximumFractionDigits:6
+    });
+}
+
+async function loadUser(){
+  const {data:{session},error:sessionError} =
+    await supabaseClient.auth.getSession();
+
+  if(sessionError){
+    throw sessionError;
+  }
+
+  if(!session || !session.user){
+    window.location.href =
+      "login.html?redirect=" +
+      encodeURIComponent("create_p2p_order.html");
+    return false;
+  }
+
+  currentUser = session.user;
+
+  const {data:profile,error:profileError} =
+    await supabaseClient
+      .from("profiles")
+      .select("*")
+      .eq("id",currentUser.id)
+      .maybeSingle();
+
+  if(profileError){
+    throw profileError;
+  }
+
+  if(!profile){
+    throw new Error("Your profile was not found.");
+  }
+
+  currentProfile = profile;
+  currentUsername = String(profile.username || "").trim();
+
+  if(!currentUsername){
+    throw new Error("Your username is not available.");
+  }
+
+  currentUSDTBalance = getUSDTBalance(profile);
+
+  $("balance").textContent =
+    currentUSDTBalance.toLocaleString(undefined,{
+      minimumFractionDigits:2,
+      maximumFractionDigits:6
+    }) + " USDT";
+
+  return true;
+}
+
+function validateForm(){
+  const pair = $("pair").value;
+  const amount = Number($("amount").value);
+  const price = Number($("price").value);
+  const paymentMethod =
+    $("paymentMethod").value.trim();
+
+  if(!pair){
+    throw new Error("Please select a pair.");
+  }
+
+  if(!Number.isFinite(amount) || amount <= 0){
+    throw new Error("Enter a valid USDT amount.");
+  }
+
+  if(!Number.isFinite(price) || price <= 0){
+    throw new Error("Enter a valid price.");
+  }
+
+  if(!paymentMethod){
+    throw new Error("Enter a payment method.");
+  }
+
+  if(paymentMethod.length < 2){
+    throw new Error("Payment method is too short.");
+  }
+
+  if(orderType === "sell" && amount > currentUSDTBalance){
+    throw new Error(
+      "Insufficient USDT balance for this sell order."
+    );
+  }
+
+  return {
+    pair,
+    amount,
+    price,
+    paymentMethod
+  };
+}
+
+async function createOrder(){
+  if(creating) return;
+
+  hideMessage();
+
+  try{
+    const form = validateForm();
+
+    creating = true;
+
+    const button = $("createBtn");
+    button.disabled = true;
+    button.textContent = "Creating...";
+
+    const {data,error} =
+      await supabaseClient.rpc(
+        "create_p2p_order",
+        {
+          p_order_type: orderType,
+          p_pair: form.pair,
+          p_amount: form.amount,
+          p_price: form.price,
+          p_payment_method: form.paymentMethod
+        }
+      );
+
+    if(error){
+      console.error(
+        "create_p2p_order error:",
+        error
+      );
+
+      throw new Error(
+        error.message ||
+        "Could not create P2P order."
+      );
+    }
+
+    showMessage(
+      "P2P order created successfully.",
+      "success"
+    );
+
+    let orderId = null;
+
+    if(data){
+      if(typeof data === "string"){
+        orderId = data;
+      }else if(Array.isArray(data) && data.length){
+        const row = data[0];
+
+        orderId =
+          row?.id ||
+          row?.order_id ||
+          row?.p2p_order_id ||
+          row?.trade_id ||
+          null;
+      }else if(typeof data === "object"){
+        orderId =
+          data.id ||
+          data.order_id ||
+          data.p2p_order_id ||
+          data.trade_id ||
+          null;
+      }
+    }
+
+    setTimeout(()=>{
+      if(orderId){
+        window.location.href =
+          "p2p-order.html?order_id=" +
+          encodeURIComponent(orderId);
+      }else{
+        window.location.href =
+          "wallet.html";
+      }
+    },700);
+
+  }catch(error){
+    console.error(error);
+
+    showMessage(
+      error?.message ||
+      "Could not create P2P order.",
+      "error"
+    );
+
+  }finally{
+    creating = false;
+
+    const button = $("createBtn");
+
+    if(button){
+      button.disabled = false;
+      button.textContent =
+        "Create P2P Order";
+    }
+  }
+}
+
+async function init(){
+  try{
+    const ok = await loadUser();
+
+    if(!ok) return;
+
+    $("loading").classList.add("hidden");
+    $("app").classList.remove("hidden");
+
+    updateSummary();
+
+  }catch(error){
+    console.error(error);
+
+    $("loading").textContent =
+      error?.message ||
+      "Unable to load your account.";
+
+    showMessage(
+      error?.message ||
+      "Unable to load your account.",
+      "error"
+    );
+  }
+}
+
+supabaseClient.auth.onAuthStateChange(
+  (event,session)=>{
+    if(event === "SIGNED_OUT"){
+      window.location.href =
+        "login.html";
+    }
+  }
+);
+
+init();
+</script>
+
+</body>
+</html>

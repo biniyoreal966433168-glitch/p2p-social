@@ -150,6 +150,11 @@ color:#fff;
 font-weight:bold
 }
 
+.offer-trade.own{
+background:#edf0f4;
+color:#596579
+}
+
 .offer-type{
 padding:6px 9px;
 border-radius:8px;
@@ -158,6 +163,11 @@ font-weight:bold;
 white-space:nowrap;
 background:#e2f5ef;
 color:#087f73
+}
+
+.offer-type.own{
+background:#edf0f4;
+color:#596579
 }
 
 .profile-btn{
@@ -981,10 +991,6 @@ error
 await supabaseClient
 .from("p2p_orders")
 .select("*")
-.neq(
-"user_id",
-currentUser.id
-)
 .eq(
 "order_type",
 "sell"
@@ -1086,7 +1092,7 @@ container.innerHTML =
 emptyHtml(
 "🟢",
 "No available sell.",
-"Active sellers from other traders will appear here."
+"Active sellers will appear here."
 );
 
 updateOfferButton();
@@ -1119,13 +1125,21 @@ normalizeStatus(
 offer.status
 );
 
+const isOwnOffer =
+String(
+offer.user_id
+) ===
+String(
+currentUser.id
+);
+
 const username =
 usernameCache.get(
 String(
 offer.user_id
 )
 ) ||
-"Seller";
+(isOwnOffer ? "You" : "Seller");
 
 const card =
 document.createElement(
@@ -1144,7 +1158,7 @@ card.innerHTML = `
 <div>
 
 <div class="offer-user">
-🟢 ${escapeHtml(username)}
+${isOwnOffer ? "🔴" : "🟢"} ${escapeHtml(username)}
 </div>
 
 <div class="offer-meta">
@@ -1156,8 +1170,8 @@ formatPair(offer)
 
 </div>
 
-<span class="offer-type">
-🟢 Buy
+<span class="offer-type ${isOwnOffer ? "own" : ""}">
+${isOwnOffer ? "Your Sell" : "🟢 Buy"}
 </span>
 
 </div>
@@ -1253,6 +1267,20 @@ onclick="viewUser('${escapeJs(offer.user_id)}')"
 👤 View Seller
 </button>
 
+${
+isOwnOffer
+?
+`
+<button
+type="button"
+class="offer-trade own"
+disabled
+>
+🔴 Your Sell Offer
+</button>
+`
+:
+`
 <button
 type="button"
 class="offer-trade"
@@ -1260,6 +1288,8 @@ onclick="openTrade('${escapeJs(offer.id)}')"
 >
 🤝 Buy USDT
 </button>
+`
+}
 
 </div>
 `;
@@ -1409,6 +1439,24 @@ if(!selectedOffer){
 
 toast(
 "This available sell is no longer available. Refresh.",
+"warning"
+);
+
+return;
+
+}
+
+if(
+String(
+selectedOffer.user_id
+) ===
+String(
+currentUser.id
+)
+){
+
+toast(
+"You cannot buy your own sell offer.",
 "warning"
 );
 
@@ -1717,6 +1765,28 @@ if(!selectedOffer){
 toast(
 "Select an available sell first.",
 "warning"
+);
+
+return;
+
+}
+
+if(
+String(
+selectedOffer.user_id
+) ===
+String(
+currentUser.id
+)
+){
+
+toast(
+"You cannot trade with your own sell offer.",
+"warning"
+);
+
+closeModal(
+"tradeModal"
 );
 
 return;

@@ -277,6 +277,12 @@ border-color:#087f73;
 box-shadow:0 0 0 3px rgba(8,127,115,.08)
 }
 
+.modal-box input[readonly]{
+background:#f7fbfa;
+color:#172033;
+font-weight:bold
+}
+
 .modal-box textarea{
 min-height:90px;
 resize:vertical
@@ -506,9 +512,9 @@ aria-modal="true"
 id="tradeAmount"
 type="number"
 min="0"
-step="0.000001"
-placeholder="USDT amount"
-oninput="updateTradeValuePreview()"
+step="0.01"
+placeholder="Available USDT"
+readonly
 >
 
 <div class="trade-value-card">
@@ -1141,6 +1147,11 @@ offer.user_id
 ) ||
 (isOwnOffer ? "You" : "Seller");
 
+const available =
+getOfferAvailableAmount(
+offer
+);
+
 const card =
 document.createElement(
 "div"
@@ -1486,15 +1497,13 @@ document.getElementById(
 );
 
 input.value =
-"";
+available.toFixed(2);
 
 input.min =
-getMinimumTradeAmount(
-selectedOffer
-);
+available.toFixed(2);
 
 input.max =
-available;
+available.toFixed(2);
 
 const parts =
 getPairParts(
@@ -1548,6 +1557,16 @@ ${detail(
 formatAmount(
 selectedOffer
 )
+)}
+
+${detail(
+"Buyer fee",
+"0%"
+)}
+
+${detail(
+"Seller fee",
+"1%"
 )}
 
 ${
@@ -1926,21 +1945,36 @@ return;
 
 }
 
+const available =
+getOfferAvailableAmount(
+selectedOffer
+);
+
+if(
+!Number.isFinite(available) ||
+available <= 0
+){
+
+toast(
+"This available sell has no remaining amount.",
+"warning"
+);
+
+closeModal(
+"tradeModal"
+);
+
+await loadBuyMarket();
+
+return;
+
+}
+
 const amount =
 Number(
 document.getElementById(
 "tradeAmount"
 ).value
-);
-
-const max =
-getOfferAvailableAmount(
-selectedOffer
-);
-
-const min =
-getMinimumTradeAmount(
-selectedOffer
 );
 
 if(
@@ -1949,33 +1983,7 @@ amount <= 0
 ){
 
 toast(
-"Enter a valid USDT amount.",
-"warning"
-);
-
-return;
-
-}
-
-if(amount < min){
-
-toast(
-"Trade amount is below the minimum.",
-"warning"
-);
-
-return;
-
-}
-
-if(
-amount >
-max +
-.000000001
-){
-
-toast(
-"Amount is greater than the available sell.",
+"Invalid available amount.",
 "warning"
 );
 
@@ -1985,7 +1993,7 @@ return;
 
 const normalizedAmount =
 Number(
-amount.toFixed(6)
+available.toFixed(2)
 );
 
 if(
@@ -1996,7 +2004,49 @@ normalizedAmount <= 0
 ){
 
 toast(
-"Invalid trade amount.",
+"Invalid available amount.",
+"warning"
+);
+
+return;
+
+}
+
+if(
+Math.abs(
+amount -
+normalizedAmount
+) >
+0.000001
+){
+
+toast(
+"You must buy the full available amount.",
+"warning"
+);
+
+document.getElementById(
+"tradeAmount"
+).value =
+normalizedAmount.toFixed(2);
+
+updateTradeValuePreview();
+
+return;
+
+}
+
+if(
+available > 0 &&
+Math.abs(
+amount -
+available
+) >
+0.01
+){
+
+toast(
+"You must buy the full available amount.",
 "warning"
 );
 
@@ -2006,7 +2056,7 @@ return;
 
 if(
 !confirm(
-"Buy this amount of USDT from the seller?"
+"Buy the full available amount of USDT from the seller?"
 )
 ){
 
@@ -2041,7 +2091,7 @@ p_order_id:
 selectedOffer.id,
 
 p_amount:
-normalizedAmount
+amount
 }
 );
 

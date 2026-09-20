@@ -569,6 +569,19 @@ async function loadOrderByMessageId(orderId){
 
   if(!t.error&&t.data){
     currentOrder=t.data;
+
+    if(t.data.order_id){
+      const o=await supabaseClient
+        .from("p2p_orders")
+        .select("*")
+        .eq("id",t.data.order_id)
+        .maybeSingle();
+
+      if(!o.error&&o.data){
+        currentOrder={...o.data,...t.data,order_id:t.data.order_id};
+      }
+    }
+
     renderOrder(currentOrder);
     return;
   }
@@ -737,8 +750,11 @@ async function loadConversationOrder(){
 }
 
 function orderAmount(o){
-  if(o?.order_id&&o?.usdt_amount!=null)return o.usdt_amount;
-  return o?.amount??o?.usdt_amount??o?.quantity??o?.crypto_amount??"—";
+  if(o?.usdt_amount!=null)return o.usdt_amount;
+  if(o?.order_amount!=null)return o.order_amount;
+  if(o?.order_id&&o?.amount!=null&&o?.price!=null&&o?.buyer_id)
+    return Number(o.amount)/Number(o.price);
+  return o?.amount??o?.quantity??o?.crypto_amount??"—";
 }
 
 function orderType(o){
@@ -751,6 +767,20 @@ function orderPrice(o){
 
 function orderStatus(o){
   return String(o?.status??"pending");
+}
+
+function orderNumber(o){
+  return o?.order_id??o?.id??"—";
+}
+
+function orderTotalCurrency(o){
+  const amount=Number(orderAmount(o));
+  const price=Number(orderPrice(o));
+
+  if(Number.isFinite(amount)&&Number.isFinite(price))
+    return amount*price;
+
+  return "—";
 }
 
 function renderOrder(o){
@@ -797,35 +827,50 @@ function renderOrder(o){
     buttons='<button class="order-action gray" onclick="finishOrder()">✓ Transaction Completed</button>';
   }
 
+  const usdtAmount=orderAmount(o);
+  const price=orderPrice(o);
+  const totalCurrency=orderTotalCurrency(o);
+  const paymentDetail=o.payment_method??o.bank_detail??o.bank_details??o.payment_details??"—";
   const isTrade=!!o.buyer_id;
 
   c.innerHTML=
     '<div class="order-card">'+
       '<div class="order-line">'+
+        '<span class="order-label">Order Number</span>'+
+        '<span class="order-value">#'+escapeHTML(String(orderNumber(o)))+'</span>'+
+      '</div>'+
+      '<div class="order-line">'+
         '<span class="order-label">Type</span>'+
         '<span class="order-value">'+escapeHTML(orderType(o))+'</span>'+
       '</div>'+
       '<div class="order-line">'+
-        '<span class="order-label">Amount</span>'+
+        '<span class="order-label">USDT Amount</span>'+
         '<span class="order-value">'+
-          escapeHTML(String(orderAmount(o)))+
-          (isTrade?" ETB":" USDT")+
+          escapeHTML(String(usdtAmount))+' USDT'+
         '</span>'+
       '</div>'+
       '<div class="order-line">'+
-        '<span class="order-label">Price</span>'+
-        '<span class="order-value">'+escapeHTML(String(orderPrice(o)))+'</span>'+
+        '<span class="order-label">Currency Price</span>'+
+        '<span class="order-value">'+
+          escapeHTML(String(price))+
+          (o.pair&&String(o.pair).includes("ETB")?" ETB/USDT":"")+
+        '</span>'+
+      '</div>'+
+      '<div class="order-line">'+
+        '<span class="order-label">Total Currency</span>'+
+        '<span class="order-value">'+
+          escapeHTML(String(totalCurrency))+
+          (o.pair&&String(o.pair).includes("ETB")?" ETB":"")+
+        '</span>'+
+      '</div>'+
+      '<div class="order-line">'+
+        '<span class="order-label">Bank / Payment Detail</span>'+
+        '<span class="order-value">'+escapeHTML(String(paymentDetail))+'</span>'+
       '</div>'+
       '<div class="order-line">'+
         '<span class="order-label">Status</span>'+
         '<span class="order-status">'+escapeHTML(s)+'</span>'+
       '</div>'+
-      (o.payment_method?
-        '<div class="order-line">'+
-          '<span class="order-label">Payment</span>'+
-          '<span class="order-value">'+escapeHTML(o.payment_method)+'</span>'+
-        '</div>':
-        "")+
       '<div class="order-actions">'+
         (buttons||'<span class="order-label">No action available.</span>')+
       '</div>'+

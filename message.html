@@ -568,7 +568,7 @@ async function loadOrderByMessageId(orderId){
     .maybeSingle();
 
   if(!t.error&&t.data){
-    currentOrder=t.data;
+    currentOrder={...t.data,_order:null};
 
     if(t.data.order_id){
       const o=await supabaseClient
@@ -578,7 +578,11 @@ async function loadOrderByMessageId(orderId){
         .maybeSingle();
 
       if(!o.error&&o.data){
-        currentOrder={...o.data,...t.data,order_id:t.data.order_id};
+        currentOrder={
+          ...t.data,
+          _order:o.data,
+          order_id:o.data.id
+        };
       }
     }
 
@@ -593,7 +597,10 @@ async function loadOrderByMessageId(orderId){
     .maybeSingle();
 
   if(!o.error&&o.data){
-    currentOrder=o.data;
+    currentOrder={
+      ...o.data,
+      _order:o.data
+    };
     renderOrder(currentOrder);
     return;
   }
@@ -749,20 +756,69 @@ async function loadConversationOrder(){
   renderOrder(null);
 }
 
+function getLinkedOrder(o){
+  return o?._order||null;
+}
+
 function orderAmount(o){
-  if(o?.usdt_amount!=null)return o.usdt_amount;
-  if(o?.order_amount!=null)return o.order_amount;
-  if(o?.order_id&&o?.amount!=null&&o?.price!=null&&o?.buyer_id)
+  const linked=getLinkedOrder(o);
+
+  if(linked?.amount!=null)
+    return linked.amount;
+
+  if(o?.usdt_amount!=null)
+    return o.usdt_amount;
+
+  if(o?.order_amount!=null)
+    return o.order_amount;
+
+  if(o?.buyer_id&&o?.amount!=null&&o?.price!=null&&Number(o.price)>0)
     return Number(o.amount)/Number(o.price);
+
   return o?.amount??o?.quantity??o?.crypto_amount??"—";
 }
 
 function orderType(o){
-  return o?.order_type??o?.type??"P2P";
+  const linked=getLinkedOrder(o);
+  return linked?.order_type??o?.order_type??o?.type??"P2P";
 }
 
 function orderPrice(o){
-  return o?.price??o?.unit_price??o?.rate??"—";
+  const linked=getLinkedOrder(o);
+  return linked?.price??o?.price??o?.unit_price??o?.rate??"—";
+}
+
+function orderPair(o){
+  const linked=getLinkedOrder(o);
+  return String(linked?.pair??o?.pair??"").toUpperCase();
+}
+
+function orderCurrency(o){
+  const pair=orderPair(o);
+
+  if(pair.includes("ETB"))return "ETB";
+  if(pair.includes("NGN"))return "NGN";
+  if(pair.includes("KES"))return "KES";
+  if(pair.includes("AED"))return "AED";
+  if(pair.includes("EUR"))return "EUR";
+  if(pair.includes("GBP"))return "GBP";
+  if(pair.includes("USD"))return "USD";
+  if(pair.includes("BRL"))return "BRL";
+  if(pair.includes("ARS"))return "ARS";
+  if(pair.includes("MXN"))return "MXN";
+  if(pair.includes("TRY"))return "TRY";
+  if(pair.includes("PHP"))return "PHP";
+  if(pair.includes("AUD"))return "AUD";
+  if(pair.includes("CAD"))return "CAD";
+  if(pair.includes("CHF"))return "CHF";
+  if(pair.includes("SGD"))return "SGD";
+  if(pair.includes("HKD"))return "HKD";
+  if(pair.includes("JPY"))return "JPY";
+  if(pair.includes("KRW"))return "KRW";
+  if(pair.includes("ZAR"))return "ZAR";
+  if(pair.includes("INR"))return "INR";
+
+  return "ETB";
 }
 
 function orderStatus(o){
@@ -770,17 +826,58 @@ function orderStatus(o){
 }
 
 function orderNumber(o){
-  return o?.order_id??o?.id??"—";
+  const linked=getLinkedOrder(o);
+  return linked?.id??o?.order_id??o?.id??"—";
 }
 
 function orderTotalCurrency(o){
+  const linked=getLinkedOrder(o);
   const amount=Number(orderAmount(o));
   const price=Number(orderPrice(o));
+
+  if(
+    linked?.amount!=null&&
+    linked?.price!=null&&
+    Number.isFinite(amount)&&
+    Number.isFinite(price)
+  ){
+    return amount*price;
+  }
+
+  if(
+    o?.buyer_id&&
+    o?.amount!=null&&
+    Number.isFinite(Number(o.amount))
+  ){
+    return Number(o.amount);
+  }
 
   if(Number.isFinite(amount)&&Number.isFinite(price))
     return amount*price;
 
   return "—";
+}
+
+function orderPaymentDetail(o){
+  const linked=getLinkedOrder(o);
+
+  return linked?.payment_method??
+         o?.payment_method??
+         o?.bank_detail??
+         o?.bank_details??
+         o?.payment_details??
+         "—";
+}
+
+function formatNumberValue(v,decimals=6){
+  const n=Number(v);
+
+  if(!Number.isFinite(n))
+    return String(v);
+
+  return n.toLocaleString(undefined,{
+    maximumFractionDigits:decimals
+  });
 }
 
 function renderOrder(o){
@@ -830,56 +927,86 @@ function renderOrder(o){
   const usdtAmount=orderAmount(o);
   const price=orderPrice(o);
   const totalCurrency=orderTotalCurrency(o);
-  const paymentDetail=o.payment_method??o.bank_detail??o.bank_details??o.payment_details??"—";
-  const isTrade=!!o.buyer_id;
+  const currency=orderCurrency(o);
+  const paymentDetail=orderPaymentDetail(o);
+  const pair=orderPair(o);
 
   c.innerHTML=
     '<div class="order-card">'+
+
       '<div class="order-line">'+
         '<span class="order-label">Order Number</span>'+
-        '<span class="order-value">#'+escapeHTML(String(orderNumber(o)))+'</span>'+
+        '<span class="order-value">#'+
+          escapeHTML(String(orderNumber(o)))+
+        '</span>'+
       '</div>'+
-      '<div class="order-line">'+
-        '<span class="order-label">Type</span>'+
-        '<span class="order-value">'+escapeHTML(orderType(o))+'</span>'+
-      '</div>'+
+
       '<div class="order-line">'+
         '<span class="order-label">USDT Amount</span>'+
         '<span class="order-value">'+
-          escapeHTML(String(usdtAmount))+' USDT'+
+          escapeHTML(formatNumberValue(usdtAmount,6))+
+          ' USDT'+
         '</span>'+
       '</div>'+
+
       '<div class="order-line">'+
         '<span class="order-label">Currency Price</span>'+
         '<span class="order-value">'+
-          escapeHTML(String(price))+
-          (o.pair&&String(o.pair).includes("ETB")?" ETB/USDT":"")+
+          escapeHTML(formatNumberValue(price,2))+
+          ' '+escapeHTML(currency)+'/USDT'+
         '</span>'+
       '</div>'+
+
       '<div class="order-line">'+
         '<span class="order-label">Total Currency</span>'+
         '<span class="order-value">'+
-          escapeHTML(String(totalCurrency))+
-          (o.pair&&String(o.pair).includes("ETB")?" ETB":"")+
+          escapeHTML(formatNumberValue(totalCurrency,2))+
+          ' '+escapeHTML(currency)+
         '</span>'+
       '</div>'+
+
       '<div class="order-line">'+
         '<span class="order-label">Bank / Payment Detail</span>'+
-        '<span class="order-value">'+escapeHTML(String(paymentDetail))+'</span>'+
+        '<span class="order-value">'+
+          escapeHTML(String(paymentDetail))+
+        '</span>'+
       '</div>'+
+
+      '<div class="order-line">'+
+        '<span class="order-label">Type</span>'+
+        '<span class="order-value">'+
+          escapeHTML(orderType(o))+
+        '</span>'+
+      '</div>'+
+
+      (pair?
+        '<div class="order-line">'+
+          '<span class="order-label">Pair</span>'+
+          '<span class="order-value">'+
+            escapeHTML(pair)+
+          '</span>'+
+        '</div>'
+      :"")+
+
       '<div class="order-line">'+
         '<span class="order-label">Status</span>'+
-        '<span class="order-status">'+escapeHTML(s)+'</span>'+
+        '<span class="order-status">'+
+          escapeHTML(s)+
+        '</span>'+
       '</div>'+
+
       '<div class="order-actions">'+
         (buttons||'<span class="order-label">No action available.</span>')+
       '</div>'+
+
     '</div>';
 }
 
 function openOrderPanel(){
   orderPanel.classList.add("show");
-  if(!currentOrder)loadConversationOrder();
+
+  if(!currentOrder)
+    loadConversationOrder();
 }
 
 function closeOrderPanel(){

@@ -839,6 +839,8 @@ async function loadSellMarket(){
           );
       }
 
+      updateOfferButton();
+
       return;
     }
 
@@ -885,6 +887,8 @@ async function loadSellMarket(){
           getErrorMessage(error)
         );
     }
+
+    updateOfferButton();
 
   }finally{
 
@@ -946,9 +950,6 @@ function renderSellMarket(){
       const payment =
         offer.payment_method ||
         "Bank Transfer";
-
-      const tradeValue =
-        available * price;
 
       const card =
         document.createElement("div");
@@ -1164,19 +1165,6 @@ function updateOfferButton(){
     );
 
   if(!button)return;
-
-  if(availableOffers.length <= 3){
-
-    button.style.display =
-      availableOffers.length
-        ? "none"
-        : "block";
-
-    button.textContent =
-      "View All";
-
-    return;
-  }
 
   button.style.display =
     "block";
@@ -1681,6 +1669,16 @@ async function submitTrade(){
 
     const tradeId =
       extractId(data);
+
+    if(!tradeId){
+
+      toast(
+        "Trade was created but no trade ID was returned.",
+        "error"
+      );
+
+      return;
+    }
 
     const tradeOffer =
       selectedOffer;

@@ -439,7 +439,9 @@ font-size:11px
 <body>
 
 <header>
+
 <div class="brand">
+
 <div class="brand-logo" aria-label="P2P Social logo">
 <div class="p-left"></div>
 <div class="p-right"></div>
@@ -449,16 +451,19 @@ font-size:11px
 <div class="brand-name">
 P2P <span>Social</span>
 </div>
+
 </div>
 
 <div class="security">🟢 Buy Market</div>
+
 </header>
 
 <main class="container">
 
 <div class="section-title">
+
 <h2>
-🟢 Available (<span id="offerCount">0</span>)
+🟢 Available Sell (<span id="offerCount">0</span>)
 </h2>
 
 <div class="section-actions">
@@ -481,18 +486,25 @@ onclick="loadBuyMarket()"
 </button>
 
 </div>
+
 </div>
 
 <section id="offers" class="offer-list">
 
 <div class="empty">
-<div class="empty-icon">🟢</div>
+
+<div class="empty-icon">
+🟢
+</div>
+
 <strong>
 Loading available sell...
 </strong>
+
 </div>
 
 </section>
+
 </main>
 
 <div
@@ -504,7 +516,9 @@ aria-modal="true"
 
 <div class="modal-box">
 
-<h3>🤝 Buy USDT from Seller</h3>
+<h3>
+🤝 Buy USDT from Seller
+</h3>
 
 <div id="tradeSummary"></div>
 
@@ -591,6 +605,7 @@ Start Trade
 </div>
 
 </div>
+
 </div>
 
 <div
@@ -685,6 +700,7 @@ error
 
 showLogin();
 return;
+
 }
 
 currentSession =
@@ -694,6 +710,7 @@ if(!currentSession){
 
 showLogin();
 return;
+
 }
 
 currentUser =
@@ -718,6 +735,7 @@ getErrorMessage(error),
 );
 
 }
+
 }
 
 function showLogin(){
@@ -728,6 +746,7 @@ alert(
 
 window.location.href =
 "login.html";
+
 }
 
 supabaseClient.auth.onAuthStateChange(
@@ -744,6 +763,7 @@ if(!currentUser){
 
 currentUsername =
 null;
+
 }
 
 if(
@@ -775,6 +795,7 @@ null;
 
 window.location.href =
 "login.html";
+
 }
 
 }
@@ -831,6 +852,7 @@ currentUser
 null;
 
 }
+
 }
 
 async function getUsername(userId){
@@ -893,6 +915,7 @@ error
 }
 
 return "User";
+
 }
 
 async function loadOfferUsernames(){
@@ -961,6 +984,7 @@ error
 );
 
 }
+
 }
 
 async function loadBuyMarket(){
@@ -1009,6 +1033,14 @@ await supabaseClient
 "pending"
 ]
 )
+.gt(
+"remaining_amount",
+0
+)
+.neq(
+"user_id",
+currentUser.id
+)
 .order(
 "created_at",
 {
@@ -1037,10 +1069,19 @@ getErrorMessage(error)
 }
 
 return;
+
 }
 
 availableOffers =
-data || [];
+(data || []).filter(
+offer =>
+String(
+offer.user_id
+) !==
+String(
+currentUser.id
+)
+);
 
 await loadOfferUsernames();
 
@@ -1081,6 +1122,7 @@ getErrorMessage(error)
 isLoading = false;
 
 }
+
 }
 
 function renderBuyMarket(){
@@ -1104,6 +1146,7 @@ emptyHtml(
 updateOfferButton();
 
 return;
+
 }
 
 container.innerHTML =
@@ -1111,14 +1154,29 @@ container.innerHTML =
 
 const items =
 offersExpanded
-? availableOffers
-: availableOffers.slice(
+?
+availableOffers
+:
+availableOffers.slice(
 0,
 3
 );
 
 items.forEach(
 offer => {
+
+if(
+String(
+offer.user_id
+) ===
+String(
+currentUser.id
+)
+){
+
+return;
+
+}
 
 const parts =
 getPairParts(
@@ -1131,21 +1189,13 @@ normalizeStatus(
 offer.status
 );
 
-const isOwnOffer =
-String(
-offer.user_id
-) ===
-String(
-currentUser.id
-);
-
 const username =
 usernameCache.get(
 String(
 offer.user_id
 )
 ) ||
-(isOwnOffer ? "You" : "Seller");
+"Seller";
 
 const card =
 document.createElement(
@@ -1164,7 +1214,7 @@ card.innerHTML = `
 <div>
 
 <div class="offer-user">
-${isOwnOffer ? "🔴" : "🟢"} ${escapeHtml(username)}
+🟢 ${escapeHtml(username)}
 </div>
 
 <div class="offer-meta">
@@ -1176,8 +1226,8 @@ formatPair(offer)
 
 </div>
 
-<span class="offer-type ${isOwnOffer ? "own" : ""}">
-${isOwnOffer ? "Your Sell" : "🟢 Buy"}
+<span class="offer-type">
+🟢 Buy
 </span>
 
 </div>
@@ -1273,20 +1323,6 @@ onclick="viewUser('${escapeJs(offer.user_id)}')"
 👤 View Seller
 </button>
 
-${
-isOwnOffer
-?
-`
-<button
-type="button"
-class="offer-trade own"
-disabled
->
-🔴 Your Sell Offer
-</button>
-`
-:
-`
 <button
 type="button"
 class="offer-trade"
@@ -1294,8 +1330,6 @@ onclick="openTrade('${escapeJs(offer.id)}')"
 >
 🤝 Buy USDT
 </button>
-`
-}
 
 </div>
 `;
@@ -1397,8 +1431,10 @@ availableOffers.length <= 3
 
 button.style.display =
 availableOffers.length
-? "none"
-: "block";
+?
+"none"
+:
+"block";
 
 button.textContent =
 "View All";
@@ -1412,8 +1448,10 @@ button.style.display =
 
 button.textContent =
 offersExpanded
-? "Show 3"
-: "View All";
+?
+"Show 3"
+:
+"View All";
 
 }
 
@@ -1556,7 +1594,7 @@ selectedOffer
 
 ${detail(
 "Buyer fee",
-"0%"
+"1%"
 )}
 
 ${detail(
@@ -1632,8 +1670,10 @@ offer.amount
 
 return Number.isFinite(n) &&
 n >= 0
-? n
-: 0;
+?
+n
+:
+0;
 
 }
 
@@ -1890,6 +1930,28 @@ return;
 
 }
 
+if(
+String(
+selectedOffer.user_id
+) ===
+String(
+currentUser.id
+)
+){
+
+toast(
+"You cannot trade with your own entry.",
+"warning"
+);
+
+closeModal(
+"tradeModal"
+);
+
+return;
+
+}
+
 const status =
 normalizeStatus(
 selectedOffer.status
@@ -1913,28 +1975,6 @@ closeModal(
 );
 
 await loadBuyMarket();
-
-return;
-
-}
-
-if(
-String(
-selectedOffer.user_id
-) ===
-String(
-currentUser.id
-)
-){
-
-toast(
-"You cannot trade with your own entry.",
-"warning"
-);
-
-closeModal(
-"tradeModal"
-);
 
 return;
 
@@ -2371,16 +2411,19 @@ function getPairParts(pair){
 
 const parts =
 String(
-pair || ""
+pair ||
+""
 ).split("_");
 
 return {
 
 base:
-parts[0] || "",
+parts[0] ||
+"",
 
 quote:
-parts[1] || ""
+parts[1] ||
+""
 
 };
 
@@ -2496,15 +2539,7 @@ ${escapeHtml(label)}
 </span>
 
 <strong>
-${
-rendered.includes(
-'class="status'
-)
-? rendered
-: escapeHtml(
-rendered
-)
-}
+${escapeHtml(rendered)}
 </strong>
 
 </div>
@@ -2645,7 +2680,8 @@ toastTimer
 
 e.textContent =
 String(
-message || ""
+message ||
+""
 );
 
 e.classList.remove(

@@ -462,25 +462,15 @@ header{
   <section id="offers" class="offer-list">
 
     <div class="empty">
-
       <div class="empty-icon">🔴</div>
-
-      <strong>
-        Loading Available Buy...
-      </strong>
-
+      <strong>Loading Available Buy...</strong>
     </div>
 
   </section>
 
 </main>
 
-<div
-  id="tradeModal"
-  class="modal"
-  role="dialog"
-  aria-modal="true"
->
+<div id="tradeModal" class="modal" role="dialog" aria-modal="true">
 
   <div class="modal-box">
 
@@ -522,12 +512,7 @@ header{
 
 </div>
 
-<div
-  id="toast"
-  class="toast"
-  role="status"
-  aria-live="polite"
-></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <nav class="bottom-nav">
 
@@ -606,12 +591,7 @@ async function startApp(){
     await supabaseClient.auth.getSession();
 
     if(error){
-
-      console.error(
-        "SESSION ERROR:",
-        error
-      );
-
+      console.error("SESSION ERROR:",error);
       showLogin();
       return;
     }
@@ -620,7 +600,6 @@ async function startApp(){
       data.session;
 
     if(!currentSession){
-
       showLogin();
       return;
     }
@@ -629,17 +608,13 @@ async function startApp(){
       currentSession.user;
 
     await loadCurrentUsername();
-
     await loadSellMarket();
 
     setupRealtime();
 
   }catch(error){
 
-    console.error(
-      "START ERROR:",
-      error
-    );
+    console.error("START ERROR:",error);
 
     toast(
       getErrorMessage(error),
@@ -650,9 +625,7 @@ async function startApp(){
 
 function showLogin(){
 
-  alert(
-    "Please login first."
-  );
+  alert("Please login first.");
 
   window.location.href =
     "login.html";
@@ -669,34 +642,23 @@ supabaseClient.auth.onAuthStateChange(
       null;
 
     if(!currentUser){
-
-      currentUsername =
-        null;
+      currentUsername = null;
     }
 
-    if(
-      event ===
-      "SIGNED_OUT"
-    ){
+    if(event === "SIGNED_OUT"){
 
       if(realtimeChannel){
-
         supabaseClient.removeChannel(
           realtimeChannel
         );
-
-        realtimeChannel =
-          null;
+        realtimeChannel = null;
       }
 
       if(tradeRealtimeChannel){
-
         supabaseClient.removeChannel(
           tradeRealtimeChannel
         );
-
-        tradeRealtimeChannel =
-          null;
+        tradeRealtimeChannel = null;
       }
 
       window.location.href =
@@ -718,19 +680,14 @@ async function loadCurrentUsername(){
     await supabaseClient
       .from("profiles")
       .select("username")
-      .eq(
-        "id",
-        currentUser.id
-      )
+      .eq("id",currentUser.id)
       .maybeSingle();
 
     if(error)throw error;
 
     currentUsername =
       data?.username ||
-      currentUser
-        .user_metadata
-        ?.username ||
+      currentUser.user_metadata?.username ||
       null;
 
     if(currentUsername){
@@ -749,9 +706,7 @@ async function loadCurrentUsername(){
     );
 
     currentUsername =
-      currentUser
-        .user_metadata
-        ?.username ||
+      currentUser.user_metadata?.username ||
       null;
   }
 }
@@ -761,10 +716,7 @@ async function loadOfferUsernames(){
   const ids = [
     ...new Set(
       availableOffers
-        .map(
-          offer =>
-            offer.user_id
-        )
+        .map(offer => offer.user_id)
         .filter(Boolean)
         .map(String)
     )
@@ -772,8 +724,7 @@ async function loadOfferUsernames(){
 
   const missing =
     ids.filter(
-      id =>
-        !usernameCache.has(id)
+      id => !usernameCache.has(id)
     );
 
   if(!missing.length)return;
@@ -786,13 +737,8 @@ async function loadOfferUsernames(){
     } =
     await supabaseClient
       .from("profiles")
-      .select(
-        "id,username"
-      )
-      .in(
-        "id",
-        missing
-      );
+      .select("id,username")
+      .in("id",missing);
 
     if(error)throw error;
 
@@ -824,7 +770,6 @@ async function loadOfferUsernames(){
 async function loadSellMarket(){
 
   if(!currentUser){
-
     showLogin();
     return;
   }
@@ -834,9 +779,7 @@ async function loadSellMarket(){
   isLoading = true;
 
   const container =
-    document.getElementById(
-      "offers"
-    );
+    document.getElementById("offers");
 
   if(container){
 
@@ -852,10 +795,8 @@ async function loadSellMarket(){
     } =
     await supabaseClient
       .from("p2p_orders")
-      .select("*")
-      .neq(
-        "user_id",
-        currentUser.id
+      .select(
+        "id,user_id,username,order_type,pair,amount,price,payment_method,status,remaining_amount,created_at,updated_at"
       )
       .eq(
         "order_type",
@@ -868,6 +809,14 @@ async function loadSellMarket(){
           "open",
           "pending"
         ]
+      )
+      .gt(
+        "remaining_amount",
+        0
+      )
+      .neq(
+        "user_id",
+        currentUser.id
       )
       .order(
         "created_at",
@@ -909,7 +858,6 @@ async function loadSellMarket(){
       );
 
     if(count){
-
       count.textContent =
         availableOffers.length;
     }
@@ -942,9 +890,7 @@ async function loadSellMarket(){
 function renderSellMarket(){
 
   const container =
-    document.getElementById(
-      "offers"
-    );
+    document.getElementById("offers");
 
   if(!container)return;
 
@@ -962,36 +908,25 @@ function renderSellMarket(){
     return;
   }
 
-  container.innerHTML =
-    "";
+  container.innerHTML = "";
 
   const items =
     offersExpanded
       ? availableOffers
-      : availableOffers.slice(
-          0,
-          3
-        );
+      : availableOffers.slice(0,3);
 
   items.forEach(
     offer => {
 
       const parts =
         getPairParts(
-          offer.pair ||
-          offer.trading_pair
-        );
-
-      const status =
-        normalizeStatus(
-          offer.status
+          offer.pair
         );
 
       const username =
+        offer.username ||
         usernameCache.get(
-          String(
-            offer.user_id
-          )
+          String(offer.user_id)
         ) ||
         "Buyer";
 
@@ -1001,14 +936,14 @@ function renderSellMarket(){
         );
 
       const price =
-        Number(
-          offer.price
-        ) || 0;
+        Number(offer.price) || 0;
+
+      const payment =
+        offer.payment_method ||
+        "Bank";
 
       const card =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
       card.className =
         "offer-card";
@@ -1026,7 +961,7 @@ function renderSellMarket(){
               </div>
 
               <div class="offer-meta">
-                Seller
+                Buyer
               </div>
 
             </div>
@@ -1037,7 +972,10 @@ function renderSellMarket(){
 
           </div>
 
-          <div class="details" style="margin-top:12px;border-top:0;">
+          <div
+            class="details"
+            style="margin-top:12px;border-top:0;"
+          >
 
             ${detail(
               "Seller",
@@ -1065,23 +1003,9 @@ function renderSellMarket(){
             )}
 
             ${detail(
-              "Buyer fee",
-              "1%"
+              "Payment",
+              payment
             )}
-
-            ${detail(
-              "Seller fee",
-              "1%"
-            )}
-
-            ${offer.payment_method || offer.payment
-              ? detail(
-                  "Payment",
-                  offer.payment_method ||
-                  offer.payment
-                )
-              : ""
-            }
 
           </div>
 
@@ -1149,9 +1073,7 @@ function renderSellMarket(){
         </div>
       `;
 
-      container.appendChild(
-        card
-      );
+      container.appendChild(card);
     }
   );
 
@@ -1164,9 +1086,7 @@ function viewUser(userId){
 
   window.location.href =
     "profile.html?user_id=" +
-    encodeURIComponent(
-      userId
-    );
+    encodeURIComponent(userId);
 }
 
 function openMessagesForTrade(
@@ -1178,7 +1098,6 @@ function openMessagesForTrade(
     new URLSearchParams();
 
   if(tradeId){
-
     params.set(
       "trade_id",
       String(tradeId)
@@ -1186,7 +1105,6 @@ function openMessagesForTrade(
   }
 
   if(offer?.id){
-
     params.set(
       "order_id",
       String(offer.id)
@@ -1225,20 +1143,14 @@ function openMessagesForTrade(
 async function getUsername(userId){
 
   if(!userId){
-
     return "User";
   }
 
   const key =
     String(userId);
 
-  if(
-    usernameCache.has(key)
-  ){
-
-    return usernameCache.get(
-      key
-    );
+  if(usernameCache.has(key)){
+    return usernameCache.get(key);
   }
 
   try{
@@ -1250,10 +1162,7 @@ async function getUsername(userId){
     await supabaseClient
       .from("profiles")
       .select("username")
-      .eq(
-        "id",
-        userId
-      )
+      .eq("id",userId)
       .maybeSingle();
 
     if(
@@ -1289,9 +1198,7 @@ function updateOfferButton(){
 
   if(!button)return;
 
-  if(
-    availableOffers.length <= 3
-  ){
+  if(availableOffers.length <= 3){
 
     button.style.display =
       availableOffers.length
@@ -1328,12 +1235,8 @@ function openTrade(
   selectedOffer =
     availableOffers.find(
       offer =>
-        String(
-          offer.id
-        ) ===
-        String(
-          offerId
-        )
+        String(offer.id) ===
+        String(offerId)
     );
 
   if(!selectedOffer){
@@ -1377,11 +1280,11 @@ function openTrade(
 
   const parts =
     getPairParts(
-      selectedOffer.pair ||
-      selectedOffer.trading_pair
+      selectedOffer.pair
     );
 
   const username =
+    selectedOffer.username ||
     usernameCache.get(
       String(
         selectedOffer.user_id
@@ -1413,9 +1316,7 @@ function openTrade(
 
       ${detail(
         "Pair",
-        formatPair(
-          selectedOffer
-        )
+        formatPair(selectedOffer)
       )}
 
       ${detail(
@@ -1430,33 +1331,14 @@ function openTrade(
 
       ${detail(
         "Amount",
-        formatTradeAmount(
-          available
-        )
+        formatTradeAmount(available)
       )}
 
       ${detail(
-        "Buyer fee",
-        "1%"
-      )}
-
-      ${detail(
-        "Seller fee",
-        "1%"
-      )}
-
-      ${
+        "Payment",
         selectedOffer.payment_method ||
-        selectedOffer.payment
-        ?
-        detail(
-          "Payment",
-          selectedOffer.payment_method ||
-          selectedOffer.payment
-        )
-        :
-        ""
-      }
+        "Bank"
+      )}
 
       <div class="trade-value">
 
@@ -1466,9 +1348,7 @@ function openTrade(
 
         ${detail(
           "USDT amount",
-          formatTradeAmount(
-            available
-          )
+          formatTradeAmount(available)
         )}
 
         ${detail(
@@ -1513,41 +1393,26 @@ function getOfferAvailableAmount(
 
   if(!offer)return 0;
 
-  for(
-    const value of [
-      offer.remaining_amount,
-      offer.available_amount,
-      offer.remaining
-    ]
+  const remaining =
+    Number(
+      offer.remaining_amount
+    );
+
+  if(
+    Number.isFinite(remaining) &&
+    remaining >= 0
   ){
-
-    if(
-      value !== null &&
-      value !== undefined &&
-      value !== ""
-    ){
-
-      const n =
-        Number(value);
-
-      if(
-        Number.isFinite(n) &&
-        n >= 0
-      ){
-
-        return n;
-      }
-    }
+    return remaining;
   }
 
-  const n =
+  const amount =
     Number(
       offer.amount
     );
 
-  return Number.isFinite(n) &&
-    n >= 0
-      ? n
+  return Number.isFinite(amount) &&
+    amount >= 0
+      ? amount
       : 0;
 }
 
@@ -1571,8 +1436,7 @@ async function submitTrade(){
     return;
   }
 
-  let freshOffer =
-    null;
+  let freshOffer = null;
 
   try{
 
@@ -1582,7 +1446,9 @@ async function submitTrade(){
     } =
     await supabaseClient
       .from("p2p_orders")
-      .select("*")
+      .select(
+        "id,user_id,username,order_type,pair,amount,price,payment_method,status,remaining_amount,created_at,updated_at"
+      )
       .eq(
         "id",
         selectedOffer.id
@@ -1606,9 +1472,7 @@ async function submitTrade(){
         "warning"
       );
 
-      closeModal(
-        "tradeModal"
-      );
+      closeModal("tradeModal");
 
       await loadSellMarket();
 
@@ -1643,9 +1507,7 @@ async function submitTrade(){
       "warning"
     );
 
-    closeModal(
-      "tradeModal"
-    );
+    closeModal("tradeModal");
 
     return;
   }
@@ -1668,9 +1530,26 @@ async function submitTrade(){
       "warning"
     );
 
-    closeModal(
-      "tradeModal"
+    closeModal("tradeModal");
+
+    await loadSellMarket();
+
+    return;
+  }
+
+  const max =
+    getOfferAvailableAmount(
+      selectedOffer
     );
+
+  if(max <= 0){
+
+    toast(
+      "This Available Buy has no remaining amount.",
+      "warning"
+    );
+
+    closeModal("tradeModal");
 
     await loadSellMarket();
 
@@ -1691,9 +1570,7 @@ async function submitTrade(){
       "warning"
     );
 
-    closeModal(
-      "tradeModal"
-    );
+    closeModal("tradeModal");
 
     return;
   }
@@ -1703,11 +1580,6 @@ async function submitTrade(){
       document.getElementById(
         "tradeAmount"
       ).value
-    );
-
-  const max =
-    getOfferAvailableAmount(
-      selectedOffer
     );
 
   if(
@@ -1763,7 +1635,6 @@ async function submitTrade(){
       "Sell this amount of USDT to the buyer?"
     )
   ){
-
     return;
   }
 
@@ -1772,14 +1643,10 @@ async function submitTrade(){
       "tradeSubmitButton"
     );
 
-  actionLoading =
-    true;
+  actionLoading = true;
 
-  button.disabled =
-    true;
-
-  button.textContent =
-    "Starting...";
+  button.disabled = true;
+  button.textContent = "Starting...";
 
   try{
 
@@ -1792,7 +1659,6 @@ async function submitTrade(){
       {
         p_order_id:
           selectedOffer.id,
-
         p_amount:
           normalizedAmount
       }
@@ -1823,8 +1689,7 @@ async function submitTrade(){
       "success"
     );
 
-    selectedOffer =
-      null;
+    selectedOffer = null;
 
     await loadSellMarket();
 
@@ -1842,14 +1707,10 @@ async function submitTrade(){
 
   }finally{
 
-    actionLoading =
-      false;
+    actionLoading = false;
 
-    button.disabled =
-      false;
-
-    button.textContent =
-      "Start Trade";
+    button.disabled = false;
+    button.textContent = "Start Trade";
   }
 }
 
@@ -1857,18 +1718,11 @@ function extractId(data){
 
   if(!data)return null;
 
-  if(
-    typeof data ===
-    "string"
-  ){
-
+  if(typeof data === "string"){
     return data;
   }
 
-  if(
-    typeof data ===
-    "object"
-  ){
+  if(typeof data === "object"){
 
     return (
       data.id ||
@@ -1909,13 +1763,11 @@ function setupRealtime(){
           table:"p2p_orders"
         },
         () => {
-
           loadSellMarket();
         }
       )
       .subscribe(
         status => {
-
           console.log(
             "Sell market realtime:",
             status
@@ -1944,13 +1796,11 @@ function setupRealtime(){
           table:"p2p_trades"
         },
         () => {
-
           loadSellMarket();
         }
       )
       .subscribe(
         status => {
-
           console.log(
             "Sell trades realtime:",
             status
@@ -1962,29 +1812,20 @@ function setupRealtime(){
 function openModal(id){
 
   const e =
-    document.getElementById(
-      id
-    );
+    document.getElementById(id);
 
   if(!e)return;
 
-  e.classList.add(
-    "show"
-  );
+  e.classList.add("show");
 }
 
 function closeModal(id){
 
   const e =
-    document.getElementById(
-      id
-    );
+    document.getElementById(id);
 
   if(e){
-
-    e.classList.remove(
-      "show"
-    );
+    e.classList.remove("show");
   }
 }
 
@@ -1993,13 +1834,10 @@ function formatPair(offer){
   const pair =
     String(
       offer?.pair ||
-      offer?.trading_pair ||
       ""
     );
 
-  if(
-    pair.includes("_")
-  ){
+  if(pair.includes("_")){
 
     return pair.replace(
       "_",
@@ -2007,8 +1845,7 @@ function formatPair(offer){
     );
   }
 
-  return pair ||
-    "P2P";
+  return pair || "P2P";
 }
 
 function formatAmount(offer){
@@ -2018,15 +1855,10 @@ function formatAmount(offer){
       offer
     );
 
-  const parts =
-    getPairParts(
-      offer?.pair ||
-      offer?.trading_pair ||
-      ""
-    );
-
-  return formatTradeAmount(
-    amount
+  return (
+    formatTradeAmount(
+      amount
+    )
   );
 }
 
@@ -2040,7 +1872,6 @@ function formatTradeAmount(
   if(
     !Number.isFinite(number)
   ){
-
     return "0.000000 USDT";
   }
 
@@ -2062,10 +1893,8 @@ function getPairParts(pair){
     ).split("_");
 
   return {
-
     base:
       parts[0] || "",
-
     quote:
       parts[1] || ""
   };
@@ -2079,7 +1908,6 @@ function money(value){
   if(
     !Number.isFinite(number)
   ){
-
     return "0.00";
   }
 
@@ -2103,58 +1931,6 @@ function normalizeStatus(status){
   "pending";
 }
 
-function statusClass(status){
-
-  const value =
-    normalizeStatus(
-      status
-    );
-
-  if(
-    [
-      "active",
-      "open",
-      "pending",
-      "paid",
-      "payment_confirmed"
-    ].includes(value)
-  ){
-
-    return value;
-  }
-
-  if(
-    [
-      "expired",
-      "cancelled",
-      "closed"
-    ].includes(value)
-  ){
-
-    return value;
-  }
-
-  if(
-    value ===
-    "disputed"
-  ){
-
-    return "disputed";
-  }
-
-  if(
-    [
-      "completed",
-      "released"
-    ].includes(value)
-  ){
-
-    return value;
-  }
-
-  return "";
-}
-
 function detail(
   label,
   value
@@ -2173,9 +1949,7 @@ function detail(
       </span>
 
       <strong>
-        ${escapeHtml(
-          rendered
-        )}
+        ${escapeHtml(rendered)}
       </strong>
 
     </div>
@@ -2193,15 +1967,13 @@ function emptyHtml(
 
       <div class="empty-icon">
         ${escapeHtml(
-          icon ||
-          "ℹ️"
+          icon || "ℹ️"
         )}
       </div>
 
       <strong>
         ${escapeHtml(
-          title ||
-          ""
+          title || ""
         )}
       </strong>
 
@@ -2210,9 +1982,7 @@ function emptyHtml(
         ?
         `
           <div style="margin-top:7px;">
-            ${escapeHtml(
-              message
-            )}
+            ${escapeHtml(message)}
           </div>
         `
         :
@@ -2228,26 +1998,11 @@ function escapeHtml(value){
   return String(
     value ?? ""
   )
-  .replace(
-    /&/g,
-    "&amp;"
-  )
-  .replace(
-    /</g,
-    "&lt;"
-  )
-  .replace(
-    />/g,
-    "&gt;"
-  )
-  .replace(
-    /"/g,
-    "&quot;"
-  )
-  .replace(
-    /'/g,
-    "&#039;"
-  );
+  .replace(/&/g,"&amp;")
+  .replace(/</g,"&lt;")
+  .replace(/>/g,"&gt;")
+  .replace(/"/g,"&quot;")
+  .replace(/'/g,"&#039;");
 }
 
 function escapeJs(value){
@@ -2255,32 +2010,16 @@ function escapeJs(value){
   return String(
     value ?? ""
   )
-  .replace(
-    /\\/g,
-    "\\\\"
-  )
-  .replace(
-    /'/g,
-    "\\'"
-  )
-  .replace(
-    /"/g,
-    '\\"'
-  )
-  .replace(
-    /\r/g,
-    "\\r"
-  )
-  .replace(
-    /\n/g,
-    "\\n"
-  );
+  .replace(/\\/g,"\\\\")
+  .replace(/'/g,"\\'")
+  .replace(/"/g,'\\"')
+  .replace(/\r/g,"\\r")
+  .replace(/\n/g,"\\n");
 }
 
 function getErrorMessage(error){
 
   if(!error){
-
     return "Something went wrong.";
   }
 
@@ -2327,23 +2066,15 @@ function toast(
     ].includes(type)
   ){
 
-    e.classList.add(
-      type
-    );
+    e.classList.add(type);
   }
 
-  e.classList.add(
-    "show"
-  );
+  e.classList.add("show");
 
   toastTimer =
     setTimeout(
       () => {
-
-        e.classList.remove(
-          "show"
-        );
-
+        e.classList.remove("show");
       },
       3500
     );
@@ -2370,10 +2101,7 @@ document.addEventListener(
   "keydown",
   event => {
 
-    if(
-      event.key ===
-      "Escape"
-    ){
+    if(event.key === "Escape"){
 
       document
         .querySelectorAll(
@@ -2399,11 +2127,8 @@ setInterval(
     ){
 
       try{
-
         await loadSellMarket();
-
       }catch(error){
-
         console.error(
           "AUTO REFRESH ERROR:",
           error

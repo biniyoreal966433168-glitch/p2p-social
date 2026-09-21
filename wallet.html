@@ -444,7 +444,7 @@ header{
 
   <div class="section-title">
     <h2>
-      🔴 Available (<span id="offerCount">0</span>)
+      🔴 Available Sell (<span id="offerCount">0</span>)
     </h2>
 
     <div class="section-actions">
@@ -472,13 +472,8 @@ header{
   <section id="offers" class="offer-list">
 
     <div class="empty">
-
       <div class="empty-icon">🔴</div>
-
-      <strong>
-        Loading available buy...
-      </strong>
-
+      <strong>Loading available sell...</strong>
     </div>
 
   </section>
@@ -939,7 +934,7 @@ async function loadOfferUsernames(){
   }catch(error){
 
     console.error(
-      "BUY USERNAMES ERROR:",
+      "SELL USERNAMES ERROR:",
       error
     );
   }
@@ -965,7 +960,7 @@ async function loadSellMarket(){
   if(container){
 
     container.innerHTML =
-      '<div class="empty">Loading available buy...</div>';
+      '<div class="empty">Loading available sell...</div>';
   }
 
   try{
@@ -993,6 +988,10 @@ async function loadSellMarket(){
           "pending"
         ]
       )
+      .gt(
+        "remaining_amount",
+        0
+      )
       .order(
         "created_at",
         {
@@ -1014,7 +1013,7 @@ async function loadSellMarket(){
         container.innerHTML =
           emptyHtml(
             "⚠️",
-            "Could not load available buy.",
+            "Could not load available sell.",
             getErrorMessage(error)
           );
       }
@@ -1052,7 +1051,7 @@ async function loadSellMarket(){
       container.innerHTML =
         emptyHtml(
           "⚠️",
-          "Could not load available buy.",
+          "Could not load available sell.",
           getErrorMessage(error)
         );
     }
@@ -1077,7 +1076,7 @@ function renderSellMarket(){
     container.innerHTML =
       emptyHtml(
         "🔴",
-        "No available buy.",
+        "No available sell.",
         "Active buyers from other traders will appear here."
       );
 
@@ -1106,18 +1105,36 @@ function renderSellMarket(){
           offer.trading_pair
         );
 
-      const status =
-        normalizeStatus(
-          offer.status
-        );
-
       const username =
+        offer.username ||
         usernameCache.get(
           String(
             offer.user_id
           )
         ) ||
-        "Buyer";
+        "User";
+
+      const available =
+        getOfferAvailableAmount(
+          offer
+        );
+
+      const price =
+        Number(
+          offer.price
+        ) || 0;
+
+      const quote =
+        parts.quote ||
+        "ETB";
+
+      const base =
+        parts.base ||
+        "USDT";
+
+      const tradeValue =
+        available *
+        price;
 
       const card =
         document.createElement(
@@ -1140,10 +1157,7 @@ function renderSellMarket(){
               </div>
 
               <div class="offer-meta">
-                🔴  ·
-                ${escapeHtml(
-                  formatPair(offer)
-                )}
+                🔴 · ${escapeHtml(formatPair(offer))}
               </div>
 
             </div>
@@ -1154,88 +1168,80 @@ function renderSellMarket(){
 
           </div>
 
+          <div class="details" style="margin:12px -16px 0;">
+
+            ${detail(
+              "Seller",
+              username
+            )}
+
+            ${detail(
+              "Pair",
+              formatPair(offer)
+            )}
+
+            ${detail(
+              "Selling price",
+              money(price) +
+              " " +
+              quote
+            )}
+
+            ${detail(
+              "Available",
+              formatAmount(offer)
+            )}
+
+            ${detail(
+              "Payment",
+              offer.payment_method ||
+              offer.payment ||
+              "—"
+            )}
+
+          </div>
+
           <div
+            class="details"
             style="
-              display:flex;
-              justify-content:space-between;
-              align-items:center;
-              gap:10px;
-              margin-top:12px;
+              margin:0 -16px;
+              border-top:1px solid #e5ebec;
             "
           >
 
-            <div>
-
-              <div
-                style="
-                  color:#7b8790;
-                  font-size:12px;
-                "
-              >
-                Buying price
-              </div>
-
-              <div
-                class="offer-price"
-                style="
-                  text-align:left;
-                  margin-top:3px;
-                "
-              >
-                ${money(offer.price)}
-                ${escapeHtml(
-                  parts.quote ||
-                  "ETB"
-                )}
-              </div>
-
+            <div
+              style="
+                font-weight:bold;
+                margin-bottom:12px;
+              "
+            >
+              💰 Trade Value
             </div>
 
-            <span class="status ${statusClass(status)}">
-              ${escapeHtml(status)}
-            </span>
+            ${detail(
+              "USDT amount",
+              Number(
+                available
+              ).toFixed(6) +
+              " " +
+              base
+            )}
+
+            ${detail(
+              "Trade value",
+              money(tradeValue) +
+              " " +
+              quote
+            )}
+
+            ${detail(
+              "You pay",
+              money(tradeValue) +
+              " " +
+              quote
+            )}
 
           </div>
-
-          <div class="offer-amount">
-
-            Wants:
-
-            <strong>
-              ${escapeHtml(
-                formatAmount(offer)
-              )}
-            </strong>
-
-          </div>
-
-          ${
-            offer.payment_method ||
-            offer.payment
-            ?
-            `
-              <div
-                style="
-                  margin-top:8px;
-                  color:#596579;
-                  font-size:13px;
-                "
-              >
-
-                💳 Payment:
-
-                <strong>
-                  ${escapeHtml(
-                    offer.payment_method ||
-                    offer.payment
-                  )}
-                </strong>
-
-              </div>
-            `
-            :
-            ""
-          }
 
           <button
             type="button"
@@ -1301,6 +1307,28 @@ function openMessagesForTrade(
   }
 
   if(offer?.user_id){
+
+    const username =
+      offer.username ||
+      usernameCache.get(
+        String(
+          offer.user_id
+        )
+      );
+
+    if(username){
+
+      params.set(
+        "username",
+        username
+      );
+
+      window.location.href =
+        "message.html?" +
+        params.toString();
+
+      return;
+    }
 
     getUsername(
       offer.user_id
@@ -1388,7 +1416,7 @@ function openTrade(
   if(!selectedOffer){
 
     toast(
-      "This available buy is no longer available. Refresh.",
+      "This available sell is no longer available. Refresh.",
       "warning"
     );
 
@@ -1403,7 +1431,7 @@ function openTrade(
   if(available <= 0){
 
     toast(
-      "This available buy has no remaining amount.",
+      "This available sell has no remaining amount.",
       "warning"
     );
 
@@ -1433,12 +1461,13 @@ function openTrade(
     );
 
   const username =
+    selectedOffer.username ||
     usernameCache.get(
       String(
         selectedOffer.user_id
       )
     ) ||
-    "Buyer";
+    "User";
 
   document.getElementById(
     "tradeSummary"
@@ -1450,7 +1479,7 @@ function openTrade(
     >
 
       ${detail(
-        "Buyer",
+        "Seller",
         username
       )}
 
@@ -1462,7 +1491,7 @@ function openTrade(
       )}
 
       ${detail(
-        "Buying price",
+        "Selling price",
         money(
           selectedOffer.price
         ) +
@@ -1689,7 +1718,7 @@ async function submitTrade(){
   if(!selectedOffer){
 
     toast(
-      "Select an available buy first.",
+      "Select an available sell first.",
       "warning"
     );
 
@@ -1727,7 +1756,7 @@ async function submitTrade(){
     if(!data){
 
       toast(
-        "This available buy is no longer available.",
+        "This available sell is no longer available.",
         "warning"
       );
 
@@ -1764,7 +1793,7 @@ async function submitTrade(){
   ){
 
     toast(
-      "This is not a buy market entry.",
+      "This is not a sell market entry.",
       "warning"
     );
 
@@ -1789,7 +1818,7 @@ async function submitTrade(){
   ){
 
     toast(
-      "This available buy is no longer active.",
+      "This available sell is no longer active.",
       "warning"
     );
 
@@ -1870,7 +1899,7 @@ async function submitTrade(){
   ){
 
     toast(
-      "Amount is greater than the available buy.",
+      "Amount is greater than the available sell.",
       "warning"
     );
 
@@ -2313,15 +2342,9 @@ function detail(
       </span>
 
       <strong>
-        ${
-          rendered.includes(
-            'class="status'
-          )
-          ? rendered
-          : escapeHtml(
-              rendered
-            )
-        }
+        ${escapeHtml(
+          rendered
+        )}
       </strong>
 
     </div>

@@ -327,13 +327,8 @@ header{
   margin-bottom:10px
 }
 
-.trade-value .detail-row{
-  margin-bottom:8px
-}
-
-.trade-value .detail-row:last-child{
-  margin-bottom:0
-}
+.trade-value .detail-row{margin-bottom:8px}
+.trade-value .detail-row:last-child{margin-bottom:0}
 
 .trade-value .receive-row strong{
   color:#087f73;
@@ -474,7 +469,7 @@ header{
 
   <div class="modal-box">
 
-    <h3>🤝 Sell USDT to Buyer</h3>
+    <h3>🤝 Sell USDT</h3>
 
     <div id="tradeSummary"></div>
 
@@ -784,7 +779,7 @@ async function loadSellMarket(){
   if(container){
 
     container.innerHTML =
-      '<div class="empty">Loading Available Buy...</div>';
+      '<div class="empty"><div class="empty-icon">🔴</div><strong>Loading Available Buy...</strong></div>';
   }
 
   try{
@@ -848,7 +843,15 @@ async function loadSellMarket(){
     }
 
     availableOffers =
-      data || [];
+      (data || []).filter(
+        offer =>
+          String(
+            offer.user_id
+          ) !==
+          String(
+            currentUser.id
+          )
+      );
 
     await loadOfferUsernames();
 
@@ -870,6 +873,8 @@ async function loadSellMarket(){
       "SELL MARKET ERROR:",
       error
     );
+
+    availableOffers = [];
 
     if(container){
 
@@ -940,7 +945,10 @@ function renderSellMarket(){
 
       const payment =
         offer.payment_method ||
-        "Bank";
+        "Bank Transfer";
+
+      const tradeValue =
+        available * price;
 
       const card =
         document.createElement("div");
@@ -961,7 +969,7 @@ function renderSellMarket(){
               </div>
 
               <div class="offer-meta">
-                Buyer
+                🔴 · ${escapeHtml(formatPair(offer))}
               </div>
 
             </div>
@@ -978,16 +986,6 @@ function renderSellMarket(){
           >
 
             ${detail(
-              "Seller",
-              username
-            )}
-
-            ${detail(
-              "Pair",
-              formatPair(offer)
-            )}
-
-            ${detail(
               "Selling price",
               money(price) +
               " " +
@@ -996,6 +994,20 @@ function renderSellMarket(){
                 "ETB"
               )
             )}
+
+            <div class="detail-row">
+
+              <span>
+                Status
+              </span>
+
+              <strong>
+                <span class="status ${escapeHtml(normalizeStatus(offer.status))}">
+                  ${escapeHtml(normalizeStatus(offer.status))}
+                </span>
+              </strong>
+
+            </div>
 
             ${detail(
               "Available",
@@ -1006,51 +1018,6 @@ function renderSellMarket(){
               "Payment",
               payment
             )}
-
-          </div>
-
-          <div class="trade-value">
-
-            <div class="trade-value-title">
-              💰 Trade Value
-            </div>
-
-            ${detail(
-              "USDT amount",
-              formatTradeAmount(
-                available
-              )
-            )}
-
-            ${detail(
-              "Trade value",
-              money(
-                available * price
-              ) +
-              " " +
-              (
-                parts.quote ||
-                "ETB"
-              )
-            )}
-
-            <div class="detail-row receive-row">
-
-              <span>
-                You receive
-              </span>
-
-              <strong>
-                ${money(
-                  available * price
-                )}
-                ${escapeHtml(
-                  parts.quote ||
-                  "ETB"
-                )}
-              </strong>
-
-            </div>
 
           </div>
 
@@ -1249,6 +1216,44 @@ function openTrade(
     return;
   }
 
+  if(
+    String(
+      selectedOffer.user_id
+    ) ===
+    String(
+      currentUser?.id
+    )
+  ){
+
+    toast(
+      "You cannot trade with your own entry.",
+      "warning"
+    );
+
+    return;
+  }
+
+  const status =
+    normalizeStatus(
+      selectedOffer.status
+    );
+
+  if(
+    ![
+      "active",
+      "open",
+      "pending"
+    ].includes(status)
+  ){
+
+    toast(
+      "This Available Buy is no longer active.",
+      "warning"
+    );
+
+    return;
+  }
+
   const available =
     getOfferAvailableAmount(
       selectedOffer
@@ -1337,7 +1342,7 @@ function openTrade(
       ${detail(
         "Payment",
         selectedOffer.payment_method ||
-        "Bank"
+        "Bank Transfer"
       )}
 
       <div class="trade-value">
@@ -1719,6 +1724,10 @@ function extractId(data){
   if(!data)return null;
 
   if(typeof data === "string"){
+    return data;
+  }
+
+  if(typeof data === "number"){
     return data;
   }
 

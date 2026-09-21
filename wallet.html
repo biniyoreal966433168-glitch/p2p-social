@@ -267,6 +267,12 @@ header{
   box-shadow:0 0 0 3px rgba(8,127,115,.08)
 }
 
+.modal-box input[readonly]{
+  background:#f5f7f8;
+  color:#172033;
+  font-weight:bold
+}
+
 .modal-box textarea{
   min-height:90px;
   resize:vertical
@@ -306,49 +312,6 @@ header{
 .detail-row:last-child{margin-bottom:0}
 .detail-row span:first-child{color:#7a8790}
 .detail-row strong{text-align:right;overflow-wrap:anywhere}
-
-.fee-card{
-  margin-top:4px;
-  margin-bottom:12px;
-  background:#f7fbfa;
-  border:1px solid #d7ebe7;
-  border-radius:13px;
-  padding:14px
-}
-
-.fee-title{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:10px
-}
-
-.fee-badge{
-  background:#e2f5ef;
-  color:#087f73;
-  border-radius:7px;
-  padding:5px 8px;
-  font-size:11px;
-  font-weight:bold
-}
-
-.fee-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  padding:6px 0;
-  font-size:13px
-}
-
-.fee-row span:first-child{color:#71808a}
-.fee-row strong{text-align:right}
-
-.fee-total{
-  border-top:1px solid #dce9e7;
-  margin-top:5px;
-  padding-top:10px
-}
 
 .bottom-nav{
   position:fixed;
@@ -444,7 +407,7 @@ header{
 
   <div class="section-title">
     <h2>
-      🔴 Available Sell (<span id="offerCount">0</span>)
+      🔴 Available Buy (<span id="offerCount">0</span>)
     </h2>
 
     <div class="section-actions">
@@ -472,8 +435,13 @@ header{
   <section id="offers" class="offer-list">
 
     <div class="empty">
+
       <div class="empty-icon">🔴</div>
-      <strong>Loading available sell...</strong>
+
+      <strong>
+        Loading Available Buy...
+      </strong>
+
     </div>
 
   </section>
@@ -499,60 +467,8 @@ header{
       min="0"
       step="0.000001"
       placeholder="USDT amount"
-      oninput="updateTradeFeePreview()"
+      readonly
     >
-
-    <div class="fee-card">
-
-      <div class="fee-title">
-
-        <strong>
-          💸 Platform Fee
-        </strong>
-
-        <span class="fee-badge">
-          <span id="tradeFeeRateText">1%</span>
-        </span>
-
-      </div>
-
-      <div class="fee-row">
-
-        <span>
-          Trade value
-        </span>
-
-        <strong id="tradeValuePreview">
-          0.00
-        </strong>
-
-      </div>
-
-      <div class="fee-row">
-
-        <span>
-          Platform fee
-        </span>
-
-        <strong id="tradeFeePreviewAmount">
-          0.00
-        </strong>
-
-      </div>
-
-      <div class="fee-row fee-total">
-
-        <span>
-          Total
-        </span>
-
-        <strong id="tradeTotalPreview">
-          0.00
-        </strong>
-
-      </div>
-
-    </div>
 
     <div class="modal-actions">
 
@@ -629,8 +545,6 @@ window.supabase.createClient(
   SUPABASE_PUBLISHABLE_KEY
 );
 
-const PLATFORM_FEE_RATE = .01;
-
 let currentSession = null;
 let currentUser = null;
 let currentUsername = null;
@@ -688,8 +602,6 @@ async function startApp(){
       currentSession.user;
 
     await loadCurrentUsername();
-
-    updateFeeRateText();
 
     await loadSellMarket();
 
@@ -934,7 +846,7 @@ async function loadOfferUsernames(){
   }catch(error){
 
     console.error(
-      "SELL USERNAMES ERROR:",
+      "BUY USERNAMES ERROR:",
       error
     );
   }
@@ -960,7 +872,7 @@ async function loadSellMarket(){
   if(container){
 
     container.innerHTML =
-      '<div class="empty">Loading available sell...</div>';
+      '<div class="empty">Loading Available Buy...</div>';
   }
 
   try{
@@ -988,10 +900,6 @@ async function loadSellMarket(){
           "pending"
         ]
       )
-      .gt(
-        "remaining_amount",
-        0
-      )
       .order(
         "created_at",
         {
@@ -1013,7 +921,7 @@ async function loadSellMarket(){
         container.innerHTML =
           emptyHtml(
             "⚠️",
-            "Could not load available sell.",
+            "Could not load Available Buy.",
             getErrorMessage(error)
           );
       }
@@ -1051,7 +959,7 @@ async function loadSellMarket(){
       container.innerHTML =
         emptyHtml(
           "⚠️",
-          "Could not load available sell.",
+          "Could not load Available Buy.",
           getErrorMessage(error)
         );
     }
@@ -1076,7 +984,7 @@ function renderSellMarket(){
     container.innerHTML =
       emptyHtml(
         "🔴",
-        "No available sell.",
+        "No Available Buy.",
         "Active buyers from other traders will appear here."
       );
 
@@ -1105,36 +1013,18 @@ function renderSellMarket(){
           offer.trading_pair
         );
 
+      const status =
+        normalizeStatus(
+          offer.status
+        );
+
       const username =
-        offer.username ||
         usernameCache.get(
           String(
             offer.user_id
           )
         ) ||
-        "User";
-
-      const available =
-        getOfferAvailableAmount(
-          offer
-        );
-
-      const price =
-        Number(
-          offer.price
-        ) || 0;
-
-      const quote =
-        parts.quote ||
-        "ETB";
-
-      const base =
-        parts.base ||
-        "USDT";
-
-      const tradeValue =
-        available *
-        price;
+        "Buyer";
 
       const card =
         document.createElement(
@@ -1157,7 +1047,9 @@ function renderSellMarket(){
               </div>
 
               <div class="offer-meta">
-                🔴 · ${escapeHtml(formatPair(offer))}
+                ${escapeHtml(
+                  formatPair(offer)
+                )}
               </div>
 
             </div>
@@ -1168,80 +1060,88 @@ function renderSellMarket(){
 
           </div>
 
-          <div class="details" style="margin:12px -16px 0;">
-
-            ${detail(
-              "Seller",
-              username
-            )}
-
-            ${detail(
-              "Pair",
-              formatPair(offer)
-            )}
-
-            ${detail(
-              "Selling price",
-              money(price) +
-              " " +
-              quote
-            )}
-
-            ${detail(
-              "Available",
-              formatAmount(offer)
-            )}
-
-            ${detail(
-              "Payment",
-              offer.payment_method ||
-              offer.payment ||
-              "—"
-            )}
-
-          </div>
-
           <div
-            class="details"
             style="
-              margin:0 -16px;
-              border-top:1px solid #e5ebec;
+              display:flex;
+              justify-content:space-between;
+              align-items:center;
+              gap:10px;
+              margin-top:12px;
             "
           >
 
-            <div
-              style="
-                font-weight:bold;
-                margin-bottom:12px;
-              "
-            >
-              💰 Trade Value
+            <div>
+
+              <div
+                style="
+                  color:#7b8790;
+                  font-size:12px;
+                "
+              >
+                Buying price
+              </div>
+
+              <div
+                class="offer-price"
+                style="
+                  text-align:left;
+                  margin-top:3px;
+                "
+              >
+                ${money(offer.price)}
+                ${escapeHtml(
+                  parts.quote ||
+                  "ETB"
+                )}
+              </div>
+
             </div>
 
-            ${detail(
-              "USDT amount",
-              Number(
-                available
-              ).toFixed(6) +
-              " " +
-              base
-            )}
-
-            ${detail(
-              "Trade value",
-              money(tradeValue) +
-              " " +
-              quote
-            )}
-
-            ${detail(
-              "You pay",
-              money(tradeValue) +
-              " " +
-              quote
-            )}
+            <span class="status ${statusClass(status)}">
+              ${escapeHtml(status)}
+            </span>
 
           </div>
+
+          <div class="offer-amount">
+
+            Wants:
+
+            <strong>
+              ${escapeHtml(
+                formatAmount(offer)
+              )}
+            </strong>
+
+          </div>
+
+          ${
+            offer.payment_method ||
+            offer.payment
+            ?
+            `
+              <div
+                style="
+                  margin-top:8px;
+                  color:#596579;
+                  font-size:13px;
+                "
+              >
+
+                💳 Payment:
+
+                <strong>
+                  ${escapeHtml(
+                    offer.payment_method ||
+                    offer.payment
+                  )}
+                </strong>
+
+              </div>
+            `
+            :
+            ""
+          }
 
           <button
             type="button"
@@ -1307,28 +1207,6 @@ function openMessagesForTrade(
   }
 
   if(offer?.user_id){
-
-    const username =
-      offer.username ||
-      usernameCache.get(
-        String(
-          offer.user_id
-        )
-      );
-
-    if(username){
-
-      params.set(
-        "username",
-        username
-      );
-
-      window.location.href =
-        "message.html?" +
-        params.toString();
-
-      return;
-    }
 
     getUsername(
       offer.user_id
@@ -1416,7 +1294,7 @@ function openTrade(
   if(!selectedOffer){
 
     toast(
-      "This available sell is no longer available. Refresh.",
+      "This Available Buy is no longer available. Refresh.",
       "warning"
     );
 
@@ -1431,7 +1309,7 @@ function openTrade(
   if(available <= 0){
 
     toast(
-      "This available sell has no remaining amount.",
+      "This Available Buy has no remaining amount.",
       "warning"
     );
 
@@ -1444,12 +1322,10 @@ function openTrade(
     );
 
   input.value =
-    "";
+    available;
 
   input.min =
-    getMinimumTradeAmount(
-      selectedOffer
-    );
+    available;
 
   input.max =
     available;
@@ -1461,13 +1337,12 @@ function openTrade(
     );
 
   const username =
-    selectedOffer.username ||
     usernameCache.get(
       String(
         selectedOffer.user_id
       )
     ) ||
-    "User";
+    "Buyer";
 
   document.getElementById(
     "tradeSummary"
@@ -1479,7 +1354,7 @@ function openTrade(
     >
 
       ${detail(
-        "Seller",
+        "Buyer",
         username
       )}
 
@@ -1491,7 +1366,7 @@ function openTrade(
       )}
 
       ${detail(
-        "Selling price",
+        "Buying price",
         money(
           selectedOffer.price
         ) +
@@ -1503,7 +1378,7 @@ function openTrade(
       )}
 
       ${detail(
-        "Available",
+        "Amount",
         formatAmount(
           selectedOffer
         )
@@ -1524,8 +1399,6 @@ function openTrade(
 
     </div>
   `;
-
-  updateTradeFeePreview();
 
   openModal(
     "tradeModal"
@@ -1576,135 +1449,6 @@ function getOfferAvailableAmount(
       : 0;
 }
 
-function getMinimumTradeAmount(
-  offer
-){
-
-  if(!offer)return .000001;
-
-  for(
-    const value of [
-      offer.min_trade_amount,
-      offer.minimum_amount,
-      offer.min_amount
-    ]
-  ){
-
-    const n =
-      Number(value);
-
-    if(
-      Number.isFinite(n) &&
-      n > 0
-    ){
-
-      return n;
-    }
-  }
-
-  return .000001;
-}
-
-function getTradeValue(){
-
-  if(!selectedOffer)return 0;
-
-  const amount =
-    Number(
-      document.getElementById(
-        "tradeAmount"
-      )?.value
-    ) || 0;
-
-  const price =
-    Number(
-      selectedOffer.price
-    ) || 0;
-
-  return amount * price;
-}
-
-function updateTradeFeePreview(){
-
-  const value =
-    getTradeValue();
-
-  const fee =
-    value *
-    PLATFORM_FEE_RATE;
-
-  const total =
-    value +
-    fee;
-
-  const parts =
-    getPairParts(
-      selectedOffer?.pair ||
-      selectedOffer?.trading_pair
-    );
-
-  const currency =
-    parts.quote ||
-    "ETB";
-
-  const a =
-    document.getElementById(
-      "tradeValuePreview"
-    );
-
-  const b =
-    document.getElementById(
-      "tradeFeePreviewAmount"
-    );
-
-  const c =
-    document.getElementById(
-      "tradeTotalPreview"
-    );
-
-  if(a){
-
-    a.textContent =
-      money(value) +
-      " " +
-      currency;
-  }
-
-  if(b){
-
-    b.textContent =
-      money(fee) +
-      " " +
-      currency;
-  }
-
-  if(c){
-
-    c.textContent =
-      money(total) +
-      " " +
-      currency;
-  }
-}
-
-function updateFeeRateText(){
-
-  const e =
-    document.getElementById(
-      "tradeFeeRateText"
-    );
-
-  if(e){
-
-    e.textContent =
-      (
-        PLATFORM_FEE_RATE *
-        100
-      ) +
-      "%";
-  }
-}
-
 async function submitTrade(){
 
   if(actionLoading)return;
@@ -1718,7 +1462,7 @@ async function submitTrade(){
   if(!selectedOffer){
 
     toast(
-      "Select an available sell first.",
+      "Select an Available Buy first.",
       "warning"
     );
 
@@ -1756,7 +1500,7 @@ async function submitTrade(){
     if(!data){
 
       toast(
-        "This available sell is no longer available.",
+        "This Available Buy is no longer available.",
         "warning"
       );
 
@@ -1793,7 +1537,7 @@ async function submitTrade(){
   ){
 
     toast(
-      "This is not a sell market entry.",
+      "This is not a Buy Market entry.",
       "warning"
     );
 
@@ -1818,7 +1562,7 @@ async function submitTrade(){
   ){
 
     toast(
-      "This available sell is no longer active.",
+      "This Available Buy is no longer active.",
       "warning"
     );
 
@@ -1864,28 +1608,13 @@ async function submitTrade(){
       selectedOffer
     );
 
-  const min =
-    getMinimumTradeAmount(
-      selectedOffer
-    );
-
   if(
     !Number.isFinite(amount) ||
     amount <= 0
   ){
 
     toast(
-      "Enter a valid USDT amount.",
-      "warning"
-    );
-
-    return;
-  }
-
-  if(amount < min){
-
-    toast(
-      "Trade amount is below the minimum.",
+      "Invalid USDT amount.",
       "warning"
     );
 
@@ -1893,13 +1622,14 @@ async function submitTrade(){
   }
 
   if(
-    amount >
-    max +
+    Math.abs(
+      amount - max
+    ) >
     .000000001
   ){
 
     toast(
-      "Amount is greater than the available sell.",
+      "The sell amount must match the Available Buy amount.",
       "warning"
     );
 
@@ -1919,7 +1649,7 @@ async function submitTrade(){
   ){
 
     toast(
-      "Invalid trade amount.",
+      "Invalid USDT amount.",
       "warning"
     );
 
@@ -1979,6 +1709,16 @@ async function submitTrade(){
     const tradeId =
       extractId(data);
 
+    if(!tradeId){
+
+      toast(
+        "Trade was created but no trade ID was returned.",
+        "error"
+      );
+
+      return;
+    }
+
     const tradeOffer =
       selectedOffer;
 
@@ -2035,16 +1775,22 @@ function extractId(data){
 
   if(
     typeof data ===
+    "number"
+  ){
+
+    return data;
+  }
+
+  if(
+    typeof data ===
     "object"
   ){
 
     return (
       data.id ||
       data.trade_id ||
-      data.order_id ||
       data[0]?.id ||
       data[0]?.trade_id ||
-      data[0]?.order_id ||
       null
     );
   }
@@ -2138,23 +1884,6 @@ function openModal(id){
 
   e.classList.add(
     "show"
-  );
-
-  setTimeout(
-    () => {
-
-      const input =
-        e.querySelector(
-          "input,textarea"
-        );
-
-      if(input){
-
-        input.focus();
-      }
-
-    },
-    50
   );
 }
 

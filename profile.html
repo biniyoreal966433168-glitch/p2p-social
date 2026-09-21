@@ -58,6 +58,9 @@ header{background:linear-gradient(135deg,#075e54,#087f73);color:white;padding:14
 .section-title h2{font-size:19px}
 .section-title-actions{display:flex;align-items:center;gap:7px}
 .collapse-btn{border:none;background:#edf7f5;color:#087f73;width:32px;height:30px;border-radius:9px;font-size:15px;font-weight:bold}
+.list-controls{display:flex;align-items:center;gap:7px}
+.list-control-btn{border:none;background:#edf7f5;color:#087f73;padding:7px 10px;border-radius:9px;font-size:11px;font-weight:bold}
+.list-control-btn.refreshing{opacity:.6}
 .collapsible-content{display:block}
 .collapsible-content.collapsed{display:none}
 
@@ -296,7 +299,10 @@ header{padding:12px}
 <div class="section-title">
 <h2>📜 USDT History</h2>
 <div class="section-title-actions">
-<button class="view-comments" onclick="loadUSDTHistory()">Refresh</button>
+<div class="list-controls">
+<button id="historyViewButton" class="list-control-btn" onclick="toggleHistoryView()">Show 3</button>
+<button id="historyRefreshButton" class="list-control-btn" onclick="refreshHistory()">🔃 Refresh</button>
+</div>
 <button id="historyCollapseButton" class="collapse-btn" onclick="toggleSection('historyContent','historyCollapseButton')" aria-label="Minimize USDT History">⌃</button>
 </div>
 </div>
@@ -319,7 +325,6 @@ header{padding:12px}
 <section class="order-section">
 <div class="section-title">
 <h2>🔄 P2P Orders</h2>
-<button class="view-comments" onclick="loadMyOrders()">Refresh</button>
 </div>
 
 <div class="order-box">
@@ -332,7 +337,10 @@ header{padding:12px}
 <div class="section-title">
 <h2>📋 My Orders</h2>
 <div class="section-title-actions">
-<button class="view-comments" onclick="loadMyOrders()">Refresh</button>
+<div class="list-controls">
+<button id="ordersViewButton" class="list-control-btn" onclick="toggleOrdersView()">Show 3</button>
+<button id="ordersRefreshButton" class="list-control-btn" onclick="refreshOrders()">🔃 Refresh</button>
+</div>
 <button id="ordersCollapseButton" class="collapse-btn" onclick="toggleSection('ordersContent','ordersCollapseButton')" aria-label="Minimize My Orders">⌃</button>
 </div>
 </div>
@@ -365,7 +373,10 @@ header{padding:12px}
 <div class="section-title">
 <h2>📄 Your Posts</h2>
 <div class="section-title-actions">
-<button class="view-comments" onclick="loadPosts()">Refresh</button>
+<div class="list-controls">
+<button id="postsViewButton" class="list-control-btn" onclick="togglePostsView()">Show 3</button>
+<button id="postsRefreshButton" class="list-control-btn" onclick="refreshPosts()">🔃 Refresh</button>
+</div>
 <button id="postsCollapseButton" class="collapse-btn" onclick="toggleSection('postsContent','postsCollapseButton')" aria-label="Minimize Your Posts">⌃</button>
 </div>
 </div>
@@ -608,6 +619,10 @@ let permanentUsername="";
 let balanceChannel=null;
 let currentHistoryType="all";
 
+let showAllHistory=false;
+let showAllOrders=false;
+let showAllPosts=false;
+
 const PLATFORM_FEE_RATE=0.01;
 
 const DEPOSIT_NETWORKS={
@@ -633,6 +648,113 @@ button.setAttribute(
 "aria-label",
 collapsed?"Expand section":"Minimize section"
 );
+
+}
+
+function updateListViewButton(buttonId,showAll){
+
+const button=document.getElementById(buttonId);
+
+if(!button)return;
+
+button.textContent=
+showAll?"View All":"Show 3";
+
+}
+
+function toggleHistoryView(){
+
+showAllHistory=!showAllHistory;
+
+updateListViewButton(
+"historyViewButton",
+showAllHistory
+);
+
+loadUSDTHistory();
+
+}
+
+function toggleOrdersView(){
+
+showAllOrders=!showAllOrders;
+
+updateListViewButton(
+"ordersViewButton",
+showAllOrders
+);
+
+loadMyOrders();
+
+}
+
+function togglePostsView(){
+
+showAllPosts=!showAllPosts;
+
+updateListViewButton(
+"postsViewButton",
+showAllPosts
+);
+
+loadPosts();
+
+}
+
+async function refreshHistory(){
+
+const button=
+document.getElementById("historyRefreshButton");
+
+if(button){
+button.disabled=true;
+button.classList.add("refreshing");
+}
+
+await loadUSDTHistory();
+
+if(button){
+button.disabled=false;
+button.classList.remove("refreshing");
+}
+
+}
+
+async function refreshOrders(){
+
+const button=
+document.getElementById("ordersRefreshButton");
+
+if(button){
+button.disabled=true;
+button.classList.add("refreshing");
+}
+
+await loadMyOrders();
+
+if(button){
+button.disabled=false;
+button.classList.remove("refreshing");
+}
+
+}
+
+async function refreshPosts(){
+
+const button=
+document.getElementById("postsRefreshButton");
+
+if(button){
+button.disabled=true;
+button.classList.add("refreshing");
+}
+
+await loadPosts();
+
+if(button){
+button.disabled=false;
+button.classList.remove("refreshing");
+}
 
 }
 
@@ -771,13 +893,6 @@ Number(data?.usdt_balance ?? 0);
 if(!Number.isFinite(currentUSDTBalance))
 currentUSDTBalance=0;
 
-/*
-  Locked USDT is represented by the remaining amount
-  of the user's active Sell Orders.
-
-  The balance table contains the available balance only,
-  so no invented locked_usdt column is used.
-*/
 const {data:lockedOrders,error:lockedError}=
 await supabaseClient
 .from("p2p_orders")
@@ -1635,7 +1750,7 @@ created_at
 ",recipient_id.eq."+userId
 )
 .order("created_at",{ascending:false})
-.limit(50);
+.limit(showAllHistory?50:3);
 
 if(error){
 
@@ -2062,7 +2177,8 @@ await supabaseClient
 .from("p2p_orders")
 .select("*")
 .eq("user_id",currentSession.user.id)
-.order("created_at",{ascending:false});
+.order("created_at",{ascending:false})
+.limit(showAllOrders?50:3);
 
 if(error){
 
@@ -2331,7 +2447,8 @@ await supabaseClient
 "id,user_id,username,content,visibility,created_at"
 )
 .eq("user_id",currentSession.user.id)
-.order("created_at",{ascending:false});
+.order("created_at",{ascending:false})
+.limit(showAllPosts?50:3);
 
 if(error){
 

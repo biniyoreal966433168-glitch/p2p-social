@@ -1471,8 +1471,12 @@ offerId
 selectedOffer =
 availableOffers.find(
 offer =>
-String(offer.id) ===
-String(offerId)
+String(
+offer.id
+) ===
+String(
+offerId
+)
 );
 
 if(!selectedOffer){
@@ -1585,6 +1589,7 @@ ${detail(
 "Available",
 formatAmount(
 selectedOffer
+)
 )}
 
 ${detail(
@@ -1669,6 +1674,38 @@ n >= 0
 n
 :
 0;
+
+}
+
+function getMinimumTradeAmount(
+offer
+){
+
+if(!offer)return .000001;
+
+for(
+const value of [
+offer.min_trade_amount,
+offer.minimum_amount,
+offer.min_amount
+]
+){
+
+const n =
+Number(value);
+
+if(
+Number.isFinite(n) &&
+n > 0
+){
+
+return n;
+
+}
+
+}
+
+return .000001;
 
 }
 
@@ -1810,7 +1847,8 @@ return;
 
 }
 
-let freshOffer = null;
+let freshOffer =
+null;
 
 try{
 
@@ -2034,6 +2072,7 @@ return;
 }
 
 if(
+available > 0 &&
 Math.abs(
 amount -
 available
@@ -2085,6 +2124,7 @@ await supabaseClient.rpc(
 {
 p_order_id:
 selectedOffer.id,
+
 p_amount:
 amount
 }
@@ -2277,6 +2317,24 @@ e.classList.add(
 "show"
 );
 
+setTimeout(
+() => {
+
+const input =
+e.querySelector(
+"input,textarea"
+);
+
+if(input){
+
+input.focus();
+
+}
+
+},
+50
+);
+
 }
 
 function closeModal(id){
@@ -2358,12 +2416,15 @@ pair ||
 ).split("_");
 
 return {
+
 base:
 parts[0] ||
 "",
+
 quote:
 parts[1] ||
 ""
+
 };
 
 }

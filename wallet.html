@@ -313,6 +313,33 @@ header{
 .detail-row span:first-child{color:#7a8790}
 .detail-row strong{text-align:right;overflow-wrap:anywhere}
 
+.trade-value{
+  margin-top:12px;
+  padding:13px;
+  border-radius:12px;
+  background:#edf7f5;
+  border:1px solid #d7ebe7
+}
+
+.trade-value-title{
+  font-weight:bold;
+  color:#087f73;
+  margin-bottom:10px
+}
+
+.trade-value .detail-row{
+  margin-bottom:8px
+}
+
+.trade-value .detail-row:last-child{
+  margin-bottom:0
+}
+
+.trade-value .pay-row strong{
+  color:#ef3155;
+  font-size:15px
+}
+
 .bottom-nav{
   position:fixed;
   left:0;
@@ -729,64 +756,6 @@ async function loadCurrentUsername(){
   }
 }
 
-async function getUsername(userId){
-
-  if(!userId){
-
-    return "User";
-  }
-
-  const key =
-    String(userId);
-
-  if(
-    usernameCache.has(key)
-  ){
-
-    return usernameCache.get(
-      key
-    );
-  }
-
-  try{
-
-    const {
-      data,
-      error
-    } =
-    await supabaseClient
-      .from("profiles")
-      .select("username")
-      .eq(
-        "id",
-        userId
-      )
-      .maybeSingle();
-
-    if(
-      !error &&
-      data?.username
-    ){
-
-      usernameCache.set(
-        key,
-        data.username
-      );
-
-      return data.username;
-    }
-
-  }catch(error){
-
-    console.error(
-      "PROFILE USERNAME ERROR:",
-      error
-    );
-  }
-
-  return "User";
-}
-
 async function loadOfferUsernames(){
 
   const ids = [
@@ -1026,6 +995,16 @@ function renderSellMarket(){
         ) ||
         "Buyer";
 
+      const available =
+        getOfferAvailableAmount(
+          offer
+        );
+
+      const price =
+        Number(
+          offer.price
+        ) || 0;
+
       const card =
         document.createElement(
           "div"
@@ -1047,9 +1026,7 @@ function renderSellMarket(){
               </div>
 
               <div class="offer-meta">
-                ${escapeHtml(
-                  formatPair(offer)
-                )}
+                Seller
               </div>
 
             </div>
@@ -1060,88 +1037,98 @@ function renderSellMarket(){
 
           </div>
 
-          <div
-            style="
-              display:flex;
-              justify-content:space-between;
-              align-items:center;
-              gap:10px;
-              margin-top:12px;
-            "
-          >
+          <div class="details" style="margin-top:12px;border-top:0;">
 
-            <div>
+            ${detail(
+              "Seller",
+              username
+            )}
 
-              <div
-                style="
-                  color:#7b8790;
-                  font-size:12px;
-                "
-              >
-                Buying price
-              </div>
+            ${detail(
+              "Pair",
+              formatPair(offer)
+            )}
 
-              <div
-                class="offer-price"
-                style="
-                  text-align:left;
-                  margin-top:3px;
-                "
-              >
-                ${money(offer.price)}
+            ${detail(
+              "Selling price",
+              money(price) +
+              " " +
+              (
+                parts.quote ||
+                "ETB"
+              )
+            )}
+
+            ${detail(
+              "Available",
+              formatAmount(offer)
+            )}
+
+            ${detail(
+              "Buyer fee",
+              "1%"
+            )}
+
+            ${detail(
+              "Seller fee",
+              "1%"
+            )}
+
+            ${offer.payment_method || offer.payment
+              ? detail(
+                  "Payment",
+                  offer.payment_method ||
+                  offer.payment
+                )
+              : ""
+            }
+
+          </div>
+
+          <div class="trade-value">
+
+            <div class="trade-value-title">
+              💰 Trade Value
+            </div>
+
+            ${detail(
+              "USDT amount",
+              formatTradeAmount(
+                available
+              )
+            )}
+
+            ${detail(
+              "Trade value",
+              money(
+                available * price
+              ) +
+              " " +
+              (
+                parts.quote ||
+                "ETB"
+              )
+            )}
+
+            <div class="detail-row pay-row">
+
+              <span>
+                You pay
+              </span>
+
+              <strong>
+                ${money(
+                  available * price
+                )}
                 ${escapeHtml(
                   parts.quote ||
                   "ETB"
                 )}
-              </div>
+              </strong>
 
             </div>
 
-            <span class="status ${statusClass(status)}">
-              ${escapeHtml(status)}
-            </span>
-
           </div>
-
-          <div class="offer-amount">
-
-            Wants:
-
-            <strong>
-              ${escapeHtml(
-                formatAmount(offer)
-              )}
-            </strong>
-
-          </div>
-
-          ${
-            offer.payment_method ||
-            offer.payment
-            ?
-            `
-              <div
-                style="
-                  margin-top:8px;
-                  color:#596579;
-                  font-size:13px;
-                "
-              >
-
-                💳 Payment:
-
-                <strong>
-                  ${escapeHtml(
-                    offer.payment_method ||
-                    offer.payment
-                  )}
-                </strong>
-
-              </div>
-            `
-            :
-            ""
-          }
 
           <button
             type="button"
@@ -1233,6 +1220,64 @@ function openMessagesForTrade(
   window.location.href =
     "message.html?" +
     params.toString();
+}
+
+async function getUsername(userId){
+
+  if(!userId){
+
+    return "User";
+  }
+
+  const key =
+    String(userId);
+
+  if(
+    usernameCache.has(key)
+  ){
+
+    return usernameCache.get(
+      key
+    );
+  }
+
+  try{
+
+    const {
+      data,
+      error
+    } =
+    await supabaseClient
+      .from("profiles")
+      .select("username")
+      .eq(
+        "id",
+        userId
+      )
+      .maybeSingle();
+
+    if(
+      !error &&
+      data?.username
+    ){
+
+      usernameCache.set(
+        key,
+        data.username
+      );
+
+      return data.username;
+    }
+
+  }catch(error){
+
+    console.error(
+      "PROFILE USERNAME ERROR:",
+      error
+    );
+  }
+
+  return "User";
 }
 
 function updateOfferButton(){
@@ -1344,6 +1389,14 @@ function openTrade(
     ) ||
     "Buyer";
 
+  const price =
+    Number(
+      selectedOffer.price
+    ) || 0;
+
+  const tradeValue =
+    available * price;
+
   document.getElementById(
     "tradeSummary"
   ).innerHTML = `
@@ -1367,9 +1420,7 @@ function openTrade(
 
       ${detail(
         "Buying price",
-        money(
-          selectedOffer.price
-        ) +
+        money(price) +
         " " +
         (
           parts.quote ||
@@ -1379,9 +1430,19 @@ function openTrade(
 
       ${detail(
         "Amount",
-        formatAmount(
-          selectedOffer
+        formatTradeAmount(
+          available
         )
+      )}
+
+      ${detail(
+        "Buyer fee",
+        "1%"
+      )}
+
+      ${detail(
+        "Seller fee",
+        "1%"
       )}
 
       ${
@@ -1396,6 +1457,47 @@ function openTrade(
         :
         ""
       }
+
+      <div class="trade-value">
+
+        <div class="trade-value-title">
+          💰 Trade Value
+        </div>
+
+        ${detail(
+          "USDT amount",
+          formatTradeAmount(
+            available
+          )
+        )}
+
+        ${detail(
+          "Trade value",
+          money(tradeValue) +
+          " " +
+          (
+            parts.quote ||
+            "ETB"
+          )
+        )}
+
+        <div class="detail-row pay-row">
+
+          <span>
+            You pay
+          </span>
+
+          <strong>
+            ${money(tradeValue)}
+            ${escapeHtml(
+              parts.quote ||
+              "ETB"
+            )}
+          </strong>
+
+        </div>
+
+      </div>
 
     </div>
   `;
@@ -1709,16 +1811,6 @@ async function submitTrade(){
     const tradeId =
       extractId(data);
 
-    if(!tradeId){
-
-      toast(
-        "Trade was created but no trade ID was returned.",
-        "error"
-      );
-
-      return;
-    }
-
     const tradeOffer =
       selectedOffer;
 
@@ -1775,22 +1867,16 @@ function extractId(data){
 
   if(
     typeof data ===
-    "number"
-  ){
-
-    return data;
-  }
-
-  if(
-    typeof data ===
     "object"
   ){
 
     return (
       data.id ||
       data.trade_id ||
+      data.order_id ||
       data[0]?.id ||
       data[0]?.trade_id ||
+      data[0]?.order_id ||
       null
     );
   }
@@ -1939,17 +2025,33 @@ function formatAmount(offer){
       ""
     );
 
-  return amount.toLocaleString(
+  return formatTradeAmount(
+    amount
+  );
+}
+
+function formatTradeAmount(
+  amount
+){
+
+  const number =
+    Number(amount);
+
+  if(
+    !Number.isFinite(number)
+  ){
+
+    return "0.000000 USDT";
+  }
+
+  return number.toLocaleString(
     undefined,
     {
+      minimumFractionDigits:6,
       maximumFractionDigits:6
     }
   ) +
-  " " +
-  (
-    parts.base ||
-    "USDT"
-  );
+  " USDT";
 }
 
 function getPairParts(pair){

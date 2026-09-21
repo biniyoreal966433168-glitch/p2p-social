@@ -771,11 +771,49 @@ Number(data?.usdt_balance ?? 0);
 if(!Number.isFinite(currentUSDTBalance))
 currentUSDTBalance=0;
 
+/*
+  Locked USDT is represented by the remaining amount
+  of the user's active Sell Orders.
+
+  The balance table contains the available balance only,
+  so no invented locked_usdt column is used.
+*/
+const {data:lockedOrders,error:lockedError}=
+await supabaseClient
+.from("p2p_orders")
+.select("remaining_amount,order_type,status")
+.eq("user_id",userId)
+.eq("order_type","sell")
+.in("status",["open","active","pending"]);
+
+if(lockedError){
+
+console.error("Locked USDT load failed:",lockedError);
 currentLockedUSDT=0;
+
+}else{
+
+currentLockedUSDT=
+(lockedOrders||[]).reduce(
+(total,order)=>{
+const amount=Number(order.remaining_amount||0);
+return total+(Number.isFinite(amount)&&amount>0?amount:0);
+},
+0
+);
+
+}
 
 renderUSDTBalance();
 
 return currentUSDTBalance;
+
+}
+
+async function refreshWallet(){
+
+await loadUSDTBalance();
+await loadMyOrders();
 
 }
 
@@ -801,17 +839,24 @@ schema:"public",
 table:"usdt_balances",
 filter:"user_id=eq."+currentSession.user.id
 },
-payload=>{
+async()=>{
 
-const balance=
-Number(payload.new?.usdt_balance);
+await loadUSDTBalance();
 
-currentUSDTBalance=
-Number.isFinite(balance)?balance:0;
+}
+)
 
-currentLockedUSDT=0;
+.on(
+"postgres_changes",
+{
+event:"*",
+schema:"public",
+table:"p2p_orders",
+filter:"user_id=eq."+currentSession.user.id
+},
+async()=>{
 
-renderUSDTBalance();
+await loadUSDTBalance();
 
 }
 )
@@ -1738,7 +1783,6 @@ submitButton.className="order-submit sell-submit";
 
 title.textContent="🟢 Create Buy Order";
 typeBadge.textContent="BUY";
-typeBadge.className="order-modal-type buy";
 submitButton.textContent="Create Buy Order";
 submitButton.className="order-submit";
 
@@ -1939,10 +1983,10 @@ return;
 
 }
 
-if(orderType==="buy"&&totalUSDT>currentUSDTBalance){
+if(orderType==="buy"&&fee>currentUSDTBalance){
 
 alert(
-"Insufficient USDT balance for the 1% buyer platform fee.\n\n"+
+"Insufficient USDT balance for the 1% buyer creation fee.\n\n"+
 "Buy amount: "+formatNumber(amount)+" USDT\n"+
 "Platform Fee: "+formatNumber(fee)+" USDT\n"+
 "Required fee balance: "+formatNumber(fee)+" USDT"
@@ -1995,11 +2039,11 @@ document.getElementById("orderPayment").value="";
 updateFeePreview();
 closeOrderModal();
 
-alert("Order created successfully.");
-
 await loadMyOrders();
 await loadUSDTBalance();
 await loadTradeStats();
+
+alert("Order created successfully.");
 
 }
 
@@ -2058,10 +2102,14 @@ const pair=order.pair||"USDT_ETB";
 const {base,quote}=getPairParts(pair);
 
 const amount=Number(order.amount||0);
+const remaining=Number(order.remaining_amount||0);
 const price=Number(order.price||0);
 
 const tradeValue=
 calculatePairValue(amount,price);
+
+const remainingValue=
+calculatePairValue(remaining,price);
 
 const status=
 String(order.status||"open").toLowerCase();
@@ -2089,7 +2137,9 @@ card.className=
 "order-card "+(type==="sell"?"sell":"");
 
 const canCancel=
-["open","active","pending"].includes(status);
+type==="sell"&&
+["open","active"].includes(status)&&
+remaining>0;
 
 card.innerHTML=`
 
@@ -2123,6 +2173,11 @@ ${escapeHtml(statusText)}
 </div>
 
 <div class="order-detail">
+<div class="order-detail-label">Remaining / Locked</div>
+<div class="order-detail-value">${formatNumber(remaining)} USDT</div>
+</div>
+
+<div class="order-detail">
 <div class="order-detail-label">Price</div>
 <div class="order-detail-value">${formatNumber(price)} ${escapeHtml(quote)}</div>
 </div>
@@ -2130,6 +2185,11 @@ ${escapeHtml(statusText)}
 <div class="order-detail">
 <div class="order-detail-label">Trade Value</div>
 <div class="order-detail-value">${formatNumber(tradeValue)} ${escapeHtml(quote)}</div>
+</div>
+
+<div class="order-detail">
+<div class="order-detail-label">Remaining Value</div>
+<div class="order-detail-value">${formatNumber(remainingValue)} ${escapeHtml(quote)}</div>
 </div>
 
 <div class="order-detail">
@@ -2171,7 +2231,7 @@ async function cancelOrder(orderId){
 
 if(!currentSession)return;
 
-if(!confirm("Cancel this order?"))return;
+if(!confirm("Cancel this Sell Order and return the locked USDT to your available balance?"))return;
 
 const {error}=
 await supabaseClient.rpc(

@@ -345,13 +345,13 @@ P2P identity
 <option value="CBE">🏦 CBE</option>
 </select><div class="fee-preview"><div class="fee-row">
 <span>Trade Value</span>
-<span id="orderTradeValue">0.00</span>
+<span id="orderTradeValue">0.00 ETB</span>
 </div><div class="fee-row">
 <span>Platform Fee (1%)</span>
-<span id="orderFee">0.00</span>
+<span id="orderFee">0.00 USDT</span>
 </div><div class="fee-row">
-<span>Total</span>
-<span id="orderTotal">0.00</span>
+<span>Total USDT</span>
+<span id="orderTotal">0.00 USDT</span>
 </div></div><div class="modal-buttons">
 <button class="cancel-btn" onclick="closeOrderModal()">Cancel</button>
 <button id="submitOrderButton" class="order-submit" onclick="createOrder()">Create Buy Order</button>
@@ -1606,9 +1606,6 @@ function calculatePlatformFee(value){
 
 const number=Number(value);
 
-if(orderType!=="sell")
-return 0;
-
 return Number.isFinite(number)&&number>0?
 number*PLATFORM_FEE_RATE:
 0;
@@ -1655,19 +1652,19 @@ const tradeValue=
 calculatePairValue(amount,price);
 
 const fee=
-calculatePlatformFee(tradeValue);
+calculatePlatformFee(amount);
 
 const total=
-calculateTotalWithFee(tradeValue);
+calculateTotalWithFee(amount);
 
 document.getElementById("orderTradeValue").textContent=
 formatNumber(tradeValue)+" "+quote;
 
 document.getElementById("orderFee").textContent=
-formatNumber(fee)+" "+quote;
+formatNumber(fee)+" USDT";
 
 document.getElementById("orderTotal").textContent=
-formatNumber(total)+" "+quote;
+formatNumber(total)+" USDT";
 
 }
 
@@ -1720,9 +1717,34 @@ return;
 
 }
 
-if(orderType==="sell"&&amount>currentUSDTBalance){
+const fee=
+calculatePlatformFee(amount);
 
-alert("Insufficient USDT balance for this Sell Order.");
+const totalUSDT=
+calculateTotalWithFee(amount);
+
+if(orderType==="sell"&&totalUSDT>currentUSDTBalance){
+
+alert(
+"Insufficient USDT balance.\n\n"+
+"Order: "+formatNumber(amount)+" USDT\n"+
+"Platform Fee: "+formatNumber(fee)+" USDT\n"+
+"Required: "+formatNumber(totalUSDT)+" USDT"
+);
+
+return;
+
+}
+
+if(orderType==="buy"&&totalUSDT>currentUSDTBalance){
+
+alert(
+"Insufficient USDT balance for the 1% buyer platform fee.\n\n"+
+"Buy amount: "+formatNumber(amount)+" USDT\n"+
+"Platform Fee: "+formatNumber(fee)+" USDT\n"+
+"Required fee balance: "+formatNumber(fee)+" USDT"
+);
+
 return;
 
 }
@@ -1905,6 +1927,11 @@ ${escapeHtml(statusText)}
 <div class="order-detail">
 <div class="order-detail-label">Trade Value</div>
 <div class="order-detail-value">${formatNumber(tradeValue)} ${escapeHtml(quote)}</div>
+</div>
+
+<div class="order-detail">
+<div class="order-detail-label">Platform Fee</div>
+<div class="order-detail-value">${formatNumber(calculatePlatformFee(amount))} USDT</div>
 </div>
 
 <div class="order-detail">

@@ -267,6 +267,12 @@ header{
   box-shadow:0 0 0 3px rgba(8,127,115,.08)
 }
 
+.modal-box input[readonly]{
+  background:#f5f7f8;
+  color:#172033;
+  font-weight:bold
+}
+
 .modal-box textarea{
   min-height:90px;
   resize:vertical
@@ -306,49 +312,6 @@ header{
 .detail-row:last-child{margin-bottom:0}
 .detail-row span:first-child{color:#7a8790}
 .detail-row strong{text-align:right;overflow-wrap:anywhere}
-
-.fee-card{
-  margin-top:4px;
-  margin-bottom:12px;
-  background:#f7fbfa;
-  border:1px solid #d7ebe7;
-  border-radius:13px;
-  padding:14px
-}
-
-.fee-title{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:10px
-}
-
-.fee-badge{
-  background:#e2f5ef;
-  color:#087f73;
-  border-radius:7px;
-  padding:5px 8px;
-  font-size:11px;
-  font-weight:bold
-}
-
-.fee-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  padding:6px 0;
-  font-size:13px
-}
-
-.fee-row span:first-child{color:#71808a}
-.fee-row strong{text-align:right}
-
-.fee-total{
-  border-top:1px solid #dce9e7;
-  margin-top:5px;
-  padding-top:10px
-}
 
 .bottom-nav{
   position:fixed;
@@ -504,60 +467,8 @@ header{
       min="0"
       step="0.000001"
       placeholder="USDT amount"
-      oninput="updateTradeFeePreview()"
+      readonly
     >
-
-    <div class="fee-card">
-
-      <div class="fee-title">
-
-        <strong>
-          💸 Platform Fee
-        </strong>
-
-        <span class="fee-badge">
-          <span id="tradeFeeRateText">1%</span>
-        </span>
-
-      </div>
-
-      <div class="fee-row">
-
-        <span>
-          Trade value
-        </span>
-
-        <strong id="tradeValuePreview">
-          0.00
-        </strong>
-
-      </div>
-
-      <div class="fee-row">
-
-        <span>
-          Platform fee
-        </span>
-
-        <strong id="tradeFeePreviewAmount">
-          0.00
-        </strong>
-
-      </div>
-
-      <div class="fee-row fee-total">
-
-        <span>
-          Total
-        </span>
-
-        <strong id="tradeTotalPreview">
-          0.00
-        </strong>
-
-      </div>
-
-    </div>
 
     <div class="modal-actions">
 
@@ -634,8 +545,6 @@ window.supabase.createClient(
   SUPABASE_PUBLISHABLE_KEY
 );
 
-const PLATFORM_FEE_RATE = .01;
-
 let currentSession = null;
 let currentUser = null;
 let currentUsername = null;
@@ -693,8 +602,6 @@ async function startApp(){
       currentSession.user;
 
     await loadCurrentUsername();
-
-    updateFeeRateText();
 
     await loadSellMarket();
 
@@ -1140,7 +1047,6 @@ function renderSellMarket(){
               </div>
 
               <div class="offer-meta">
-                🔴 ·
                 ${escapeHtml(
                   formatPair(offer)
                 )}
@@ -1416,12 +1322,10 @@ function openTrade(
     );
 
   input.value =
-    "";
+    available;
 
   input.min =
-    getMinimumTradeAmount(
-      selectedOffer
-    );
+    available;
 
   input.max =
     available;
@@ -1474,7 +1378,7 @@ function openTrade(
       )}
 
       ${detail(
-        "Available",
+        "Amount",
         formatAmount(
           selectedOffer
         )
@@ -1495,8 +1399,6 @@ function openTrade(
 
     </div>
   `;
-
-  updateTradeFeePreview();
 
   openModal(
     "tradeModal"
@@ -1545,135 +1447,6 @@ function getOfferAvailableAmount(
     n >= 0
       ? n
       : 0;
-}
-
-function getMinimumTradeAmount(
-  offer
-){
-
-  if(!offer)return .000001;
-
-  for(
-    const value of [
-      offer.min_trade_amount,
-      offer.minimum_amount,
-      offer.min_amount
-    ]
-  ){
-
-    const n =
-      Number(value);
-
-    if(
-      Number.isFinite(n) &&
-      n > 0
-    ){
-
-      return n;
-    }
-  }
-
-  return .000001;
-}
-
-function getTradeValue(){
-
-  if(!selectedOffer)return 0;
-
-  const amount =
-    Number(
-      document.getElementById(
-        "tradeAmount"
-      )?.value
-    ) || 0;
-
-  const price =
-    Number(
-      selectedOffer.price
-    ) || 0;
-
-  return amount * price;
-}
-
-function updateTradeFeePreview(){
-
-  const value =
-    getTradeValue();
-
-  const fee =
-    value *
-    PLATFORM_FEE_RATE;
-
-  const total =
-    value +
-    fee;
-
-  const parts =
-    getPairParts(
-      selectedOffer?.pair ||
-      selectedOffer?.trading_pair
-    );
-
-  const currency =
-    parts.quote ||
-    "ETB";
-
-  const a =
-    document.getElementById(
-      "tradeValuePreview"
-    );
-
-  const b =
-    document.getElementById(
-      "tradeFeePreviewAmount"
-    );
-
-  const c =
-    document.getElementById(
-      "tradeTotalPreview"
-    );
-
-  if(a){
-
-    a.textContent =
-      money(value) +
-      " " +
-      currency;
-  }
-
-  if(b){
-
-    b.textContent =
-      money(fee) +
-      " " +
-      currency;
-  }
-
-  if(c){
-
-    c.textContent =
-      money(total) +
-      " " +
-      currency;
-  }
-}
-
-function updateFeeRateText(){
-
-  const e =
-    document.getElementById(
-      "tradeFeeRateText"
-    );
-
-  if(e){
-
-    e.textContent =
-      (
-        PLATFORM_FEE_RATE *
-        100
-      ) +
-      "%";
-  }
 }
 
 async function submitTrade(){
@@ -1835,28 +1608,13 @@ async function submitTrade(){
       selectedOffer
     );
 
-  const min =
-    getMinimumTradeAmount(
-      selectedOffer
-    );
-
   if(
     !Number.isFinite(amount) ||
     amount <= 0
   ){
 
     toast(
-      "Enter a valid USDT amount.",
-      "warning"
-    );
-
-    return;
-  }
-
-  if(amount < min){
-
-    toast(
-      "Trade amount is below the minimum.",
+      "Invalid USDT amount.",
       "warning"
     );
 
@@ -1864,13 +1622,14 @@ async function submitTrade(){
   }
 
   if(
-    amount >
-    max +
+    Math.abs(
+      amount - max
+    ) >
     .000000001
   ){
 
     toast(
-      "Amount is greater than the Available Buy.",
+      "The sell amount must match the Available Buy amount.",
       "warning"
     );
 
@@ -1890,7 +1649,7 @@ async function submitTrade(){
   ){
 
     toast(
-      "Invalid trade amount.",
+      "Invalid USDT amount.",
       "warning"
     );
 
@@ -2110,23 +1869,6 @@ function openModal(id){
   e.classList.add(
     "show"
   );
-
-  setTimeout(
-    () => {
-
-      const input =
-        e.querySelector(
-          "input,textarea"
-        );
-
-      if(input){
-
-        input.focus();
-      }
-
-    },
-    50
-  );
 }
 
 function closeModal(id){
@@ -2313,15 +2055,9 @@ function detail(
       </span>
 
       <strong>
-        ${
-          rendered.includes(
-            'class="status'
-          )
-          ? rendered
-          : escapeHtml(
-              rendered
-            )
-        }
+        ${escapeHtml(
+          rendered
+        )}
       </strong>
 
     </div>

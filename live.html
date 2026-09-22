@@ -1365,38 +1365,239 @@ userId
 
 }
 
-function openMessagesForTrade(
+async function openMessagesForTrade(
 tradeId,
 offer
 ){
 
+if(
+!tradeId ||
+!offer ||
+!offer.user_id
+){
+
+toast(
+"Trade started, but seller information is missing.",
+"error"
+);
+
+return;
+
+}
+
+if(!currentUser){
+
+showLogin();
+return;
+
+}
+
+try{
+
+const sellerId =
+offer.user_id;
+
+let conversation =
+null;
+
+let {
+data,
+error
+} =
+await supabaseClient
+.from("conversations")
+.select("id")
+.eq(
+"user_one",
+currentUser.id
+)
+.eq(
+"user_two",
+sellerId
+)
+.maybeSingle();
+
+if(error)throw error;
+
+conversation =
+data;
+
+if(!conversation){
+
+const reverseResult =
+await supabaseClient
+.from("conversations")
+.select("id")
+.eq(
+"user_one",
+sellerId
+)
+.eq(
+"user_two",
+currentUser.id
+)
+.maybeSingle();
+
+if(
+reverseResult.error
+)throw reverseResult.error;
+
+conversation =
+reverseResult.data;
+
+}
+
+if(!conversation){
+
+const createResult =
+await supabaseClient
+.from("conversations")
+.insert({
+user_one:
+currentUser.id,
+
+user_two:
+sellerId
+})
+.select("id")
+.single();
+
+if(
+createResult.error
+){
+
+const retryResult =
+await supabaseClient
+.from("conversations")
+.select("id")
+.eq(
+"user_one",
+sellerId
+)
+.eq(
+"user_two",
+currentUser.id
+)
+.maybeSingle();
+
+if(
+retryResult.error
+)throw createResult.error;
+
+conversation =
+retryResult.data;
+
+if(!conversation){
+
+throw createResult.error;
+
+}
+
+}else{
+
+conversation =
+createResult.data;
+
+}
+
+}
+
+if(
+!conversation ||
+!conversation.id
+){
+
+throw new Error(
+"Conversation could not be created."
+);
+
+}
+
+const orderMessage =
+"🟢 P2P Buy started. Please complete the payment for this order.";
+
+const {
+data:existingMessage,
+error:existingMessageError
+} =
+await supabaseClient
+.from("messages")
+.select("id")
+.eq(
+"conversation_id",
+conversation.id
+)
+.eq(
+"sender_id",
+currentUser.id
+)
+.eq(
+"message_type",
+"order"
+)
+.eq(
+"order_id",
+tradeId
+)
+.maybeSingle();
+
+if(
+existingMessageError
+){
+
+throw existingMessageError;
+
+}
+
+if(!existingMessage){
+
+const {
+error:messageError
+} =
+await supabaseClient
+.from("messages")
+.insert({
+conversation_id:
+conversation.id,
+
+sender_id:
+currentUser.id,
+
+content:
+orderMessage,
+
+message_type:
+"order",
+
+order_id:
+tradeId
+});
+
+if(messageError){
+
+throw messageError;
+
+}
+
+}
+
+const username =
+await getUsername(
+sellerId
+);
+
 const params =
 new URLSearchParams();
-
-if(tradeId){
 
 params.set(
 "trade_id",
 String(tradeId)
 );
 
-}
-
-if(offer?.id){
-
 params.set(
 "order_id",
-String(offer.id)
+String(tradeId)
 );
-
-}
-
-if(offer?.user_id){
-
-getUsername(
-offer.user_id
-).then(
-username => {
 
 if(username){
 
@@ -1411,16 +1612,20 @@ window.location.href =
 "message.html?" +
 params.toString();
 
-}
+}catch(error){
+
+console.error(
+"P2P MESSAGE ERROR:",
+error
 );
 
-return;
+toast(
+"Trade started, but the P2P order message could not be created: " +
+getErrorMessage(error),
+"error"
+);
 
 }
-
-window.location.href =
-"message.html?" +
-params.toString();
 
 }
 
@@ -2216,7 +2421,7 @@ null;
 
 await loadBuyMarket();
 
-openMessagesForTrade(
+await openMessagesForTrade(
 tradeId,
 tradeOffer
 );

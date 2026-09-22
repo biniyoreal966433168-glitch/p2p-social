@@ -193,7 +193,6 @@ text-transform:capitalize
 }
 
 .status.active,
-.status.pending,
 .status.open{
 background:#e2f5ef;
 color:#087f73
@@ -1029,8 +1028,7 @@ await supabaseClient
 "status",
 [
 "active",
-"open",
-"pending"
+"open"
 ]
 )
 .gt(
@@ -1081,6 +1079,16 @@ offer.user_id
 String(
 currentUser.id
 )
+&&
+["active","open"].includes(
+normalizeStatus(
+offer.status
+)
+)
+&&
+getOfferAvailableAmount(
+offer
+) > 0
 );
 
 await loadOfferUsernames();
@@ -1508,6 +1516,23 @@ return;
 
 }
 
+if(
+!["active","open"].includes(
+normalizeStatus(
+selectedOffer.status
+)
+)
+){
+
+toast(
+"This available sell is no longer available. Refresh.",
+"warning"
+);
+
+return;
+
+}
+
 const available =
 getOfferAvailableAmount(
 selectedOffer
@@ -1681,7 +1706,7 @@ function getMinimumTradeAmount(
 offer
 ){
 
-if(!offer)return .000001;
+if(!offer)return 50;
 
 for(
 const value of [
@@ -1705,7 +1730,7 @@ return n;
 
 }
 
-return .000001;
+return 50;
 
 }
 
@@ -1960,8 +1985,7 @@ selectedOffer.status
 if(
 ![
 "active",
-"open",
-"pending"
+"open"
 ].includes(status)
 ){
 
@@ -2019,6 +2043,26 @@ amount <= 0
 
 toast(
 "Invalid available amount.",
+"warning"
+);
+
+return;
+
+}
+
+const minimumTrade =
+getMinimumTradeAmount(
+selectedOffer
+);
+
+if(
+amount < minimumTrade
+){
+
+toast(
+"Trade amount must be at least " +
+minimumTrade +
+" USDT.",
 "warning"
 );
 
@@ -2144,6 +2188,17 @@ return;
 const tradeId =
 extractId(data);
 
+if(!tradeId){
+
+toast(
+"Trade started, but the trade ID was not returned.",
+"error"
+);
+
+return;
+
+}
+
 const tradeOffer =
 selectedOffer;
 
@@ -2190,11 +2245,20 @@ button.textContent =
 
 function extractId(data){
 
-if(!data)return null;
+if(
+data === null ||
+data === undefined
+){
+
+return null;
+
+}
 
 if(
 typeof data ===
-"string"
+"string" ||
+typeof data ===
+"number"
 ){
 
 return data;
@@ -2456,11 +2520,10 @@ function normalizeStatus(status){
 
 return String(
 status ||
-"pending"
+""
 )
 .trim()
-.toLowerCase() ||
-"pending";
+.toLowerCase();
 
 }
 
@@ -2475,7 +2538,6 @@ if(
 [
 "active",
 "open",
-"pending",
 "paid",
 "payment_confirmed"
 ].includes(value)

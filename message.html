@@ -986,6 +986,50 @@ async function sendMessage(){
   showActionNotification(true,"Message sent");
 }
 
+async function sendTradeSystemMessage(content){
+  if(!currentConversation||!currentUser||!content)
+    return false;
+
+  const{data:existing,error:checkError}=await supabaseClient
+    .from("messages")
+    .select("id,content,created_at")
+    .eq("conversation_id",currentConversation.id)
+    .eq("sender_id",currentUser.id)
+    .eq("content",content)
+    .order("created_at",{ascending:false})
+    .limit(1);
+
+  if(checkError){
+    console.error(checkError);
+  }
+
+  if(existing?.length)
+    return true;
+
+  const{error}=await supabaseClient
+    .from("messages")
+    .insert({
+      conversation_id:currentConversation.id,
+      sender_id:currentUser.id,
+      content,
+      message_type:"text"
+    });
+
+  if(error){
+    console.error(error);
+    return false;
+  }
+
+  await supabaseClient
+    .from("conversations")
+    .update({
+      updated_at:new Date().toISOString()
+    })
+    .eq("id",currentConversation.id);
+
+  return true;
+}
+
 async function loadConversationOrder(){
   if(!currentConversation)return;
 
@@ -1362,13 +1406,24 @@ async function confirmPayment(){
     return;
   }
 
-  showActionNotification(
-    true,
-    data?.message||"Payment confirmed"
-  );
+  const messageSent=
+    await sendTradeSystemMessage("✅ Paid");
+
+  if(!messageSent){
+    showActionNotification(
+      false,
+      "Payment confirmed but message could not be sent"
+    );
+  }else{
+    showActionNotification(
+      true,
+      "Payment confirmed"
+    );
+  }
 
   await loadConversationOrder();
   await loadMessages();
+  await updateUnreadCount();
 }
 
 async function releaseOrder(){
@@ -1406,10 +1461,20 @@ async function releaseOrder(){
     return;
   }
 
-  showActionNotification(
-    true,
-    "USDT released • Transaction completed"
-  );
+  const messageSent=
+    await sendTradeSystemMessage("Payment Completed");
+
+  if(!messageSent){
+    showActionNotification(
+      false,
+      "USDT released but message could not be sent"
+    );
+  }else{
+    showActionNotification(
+      true,
+      "Payment Completed"
+    );
+  }
 
   await loadConversationOrder();
   await loadMessages();
@@ -2669,7 +2734,7 @@ function formatFileSize(b){
   return(
     b/1048576
   ).toFixed(1)+
-  " MB";
+    " MB";
 }
 
 function getFileExtension(n){

@@ -126,7 +126,7 @@ header{background:linear-gradient(135deg,#075e54,#087f73);color:white;padding:14
 
 <script>
 const SUPABASE_URL="https://mbsvuwrgigqfporxwpfr.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY="sb_publishable_iclqtQHDw5KIEve0cNjrgQ_CdUDCuBa";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 const MESSAGE_MEDIA_BUCKET="message-media";
 const DEFAULT_AVATAR="images/profile.png";
@@ -151,9 +151,6 @@ let mediaRecorder=null;
 let audioChunks=[];
 let recordingStartedAt=null;
 let recordingTimer=null;
-
-let lastNotifiedTradeStatus=null;
-let lastNotifiedOrderStatus=null;
 
 function runOnce(action){
   if(actionLock)return;
@@ -222,8 +219,7 @@ async function startApp(){
   subscribeGlobalRealtime();
   subscribeNotificationRealtime();
 
-  await openUsernameConversationFromUrl();
-  await openTradeFromUrl();
+  openUsernameConversationFromUrl();
 }
 
 async function loadCurrentUserProfile(){
@@ -331,7 +327,7 @@ async function createConversationItem(c,otherId,list){
   if(l){
     if(l.message_type==="photo")lt="📷 Photo";
     else if(l.message_type==="voice")lt="🎤 Voice message";
-    else if(l.message_type==="order")lt="🛡️ P2P Order";
+    else if(l.message_type==="order")lt="🛡️ P2P order";
     else lt=l.content||"Message";
   }
 
@@ -524,9 +520,6 @@ async function openConversation(c,p){
   clearPhoto();
   closeOrderPanel();
 
-  lastNotifiedTradeStatus=null;
-  lastNotifiedOrderStatus=null;
-
   await loadMessages();
   await markConversationAsRead();
   await loadConversationOrder();
@@ -552,9 +545,9 @@ function openUserProfileByUsername(u){
 async function openUsernameConversationFromUrl(){
   if(!currentUser)return;
 
-  const params=new URLSearchParams(location.search);
-
-  const u=normalizeUsername(params.get("username"));
+  const u=normalizeUsername(
+    new URLSearchParams(location.search).get("username")
+  );
 
   if(!u)return;
 
@@ -573,231 +566,10 @@ async function openUsernameConversationFromUrl(){
 
   await startConversation(p);
 
-  const tradeId=params.get("trade_id");
-  const orderId=params.get("order_id");
-
-  if(!tradeId&&!orderId){
-    history.replaceState(
-      {},
-      document.title,
-      "message.html"
-    );
-  }
-}
-
-async function openTradeFromUrl(){
-  if(!currentUser)return;
-
-  const params=new URLSearchParams(location.search);
-
-  const tradeId=params.get("trade_id");
-  const orderId=params.get("order_id");
-
-  if(!tradeId&&!orderId)return;
-
-  let trade=null;
-
-  if(tradeId){
-    const{data,error}=await supabaseClient
-      .from("p2p_trades")
-      .select("*")
-      .eq("id",tradeId)
-      .maybeSingle();
-
-    if(error){
-      showActionNotification(false,"Could not load P2P trade");
-      return;
-    }
-
-    trade=data;
-  }
-
-  if(!trade&&orderId){
-    const{data:o,error}=await supabaseClient
-      .from("p2p_orders")
-      .select("*")
-      .eq("id",orderId)
-      .maybeSingle();
-
-    if(error||!o){
-      showActionNotification(false,"P2P order not found");
-      return;
-    }
-
-    const{data:t}=await supabaseClient
-      .from("p2p_trades")
-      .select("*")
-      .eq("order_id",o.id)
-      .order("created_at",{ascending:false})
-      .limit(1)
-      .maybeSingle();
-
-    trade=t||null;
-
-    if(!trade){
-      showActionNotification(false,"P2P trade not found");
-      return;
-    }
-  }
-
-  if(!trade)return;
-
-  const otherId=
-    String(trade.buyer_id)===String(currentUser.id)?
-    trade.seller_id:
-    trade.buyer_id;
-
-  if(!otherId){
-    showActionNotification(false,"Trade participant not found");
-    return;
-  }
-
-  const{data:p}=await supabaseClient
-    .from("profiles")
-    .select("id,username,avatar_url")
-    .eq("id",otherId)
-    .maybeSingle();
-
-  if(!p){
-    showActionNotification(false,"Trade participant not found");
-    return;
-  }
-
-  const a=currentUser.id<p.id?
-    currentUser.id:
-    p.id;
-
-  const b=currentUser.id<p.id?
-    p.id:
-    currentUser.id;
-
-  let{data:c,error:cError}=await supabaseClient
-    .from("conversations")
-    .select("*")
-    .eq("user_one",a)
-    .eq("user_two",b)
-    .maybeSingle();
-
-  if(cError){
-    showActionNotification(false,"Could not open trade conversation");
-    return;
-  }
-
-  if(!c){
-    const r=await supabaseClient
-      .from("conversations")
-      .insert({
-        user_one:a,
-        user_two:b
-      })
-      .select()
-      .single();
-
-    if(r.error){
-      showActionNotification(false,"Could not create trade conversation");
-      return;
-    }
-
-    c=r.data;
-  }
-
-  await openConversation(c,{
-    id:p.id,
-    username:normalizeUsername(p.username)||"User",
-    avatar_url:p.avatar_url||DEFAULT_AVATAR
-  });
-
-  await attachP2POrderMessage(trade);
-
-  await loadMessages();
-  await loadConversationOrder();
-  await markConversationAsRead();
-
   history.replaceState(
     {},
     document.title,
     "message.html"
-  );
-}
-
-async function attachP2POrderMessage(trade){
-  if(!currentUser||!currentConversation||!trade)return;
-
-  const tradeId=trade.id;
-
-  const{data:existing,error:existingError}=await supabaseClient
-    .from("messages")
-    .select("id")
-    .eq("conversation_id",currentConversation.id)
-    .eq("message_type","order")
-    .eq("order_id",tradeId)
-    .limit(1);
-
-  if(existingError){
-    console.error(existingError);
-    return;
-  }
-
-  if(existing?.length)return;
-
-  const linkedOrder=trade.order_id?
-    (await supabaseClient
-      .from("p2p_orders")
-      .select("*")
-      .eq("id",trade.order_id)
-      .maybeSingle()).data:
-    null;
-
-  const type=String(
-    linkedOrder?.order_type||
-    trade.order_type||
-    ""
-  ).toLowerCase();
-
-  let message="";
-
-  if(type==="buy"){
-    message=
-      "🟢 P2P Buy started. Please complete the payment for this order.";
-  }else if(type==="sell"){
-    message=
-      "🔴 P2P Sell started. Please wait for the buyer to complete the payment.";
-  }else{
-    const isBuyer=
-      String(trade.buyer_id)===
-      String(currentUser.id);
-
-    message=isBuyer?
-      "🟢 P2P Buy started. Please complete the payment for this order.":
-      "🔴 P2P Sell started. Please wait for the buyer to complete the payment.";
-  }
-
-  const{error}=await supabaseClient
-    .from("messages")
-    .insert({
-      conversation_id:currentConversation.id,
-      sender_id:currentUser.id,
-      content:message,
-      message_type:"order",
-      order_id:tradeId
-    });
-
-  if(error){
-    console.error(error);
-    showActionNotification(false,"P2P order notification failed");
-    return;
-  }
-
-  await supabaseClient
-    .from("conversations")
-    .update({
-      updated_at:new Date().toISOString()
-    })
-    .eq("id",currentConversation.id);
-
-  showActionNotification(
-    true,
-    "P2P order started"
   );
 }
 
@@ -912,10 +684,7 @@ function renderMessage(m){
 
       openOrderPanel();
 
-      showActionNotification(
-        true,
-        "P2P order opened"
-      );
+      showActionNotification(true,"P2P order opened");
     };
 
     card.onclick=()=>{
@@ -1481,12 +1250,14 @@ function renderOrder(o){
 
   c.innerHTML=
     '<div class="order-card">'+
+
       '<div class="order-line">'+
         '<span class="order-label">Order Number</span>'+
         '<span class="order-value">#'+
           escapeHTML(String(orderNumber(o)))+
         '</span>'+
       '</div>'+
+
       '<div class="order-line">'+
         '<span class="order-label">USDT Amount</span>'+
         '<span class="order-value">'+
@@ -1494,6 +1265,7 @@ function renderOrder(o){
           ' USDT'+
         '</span>'+
       '</div>'+
+
       '<div class="order-line">'+
         '<span class="order-label">Currency Price</span>'+
         '<span class="order-value">'+
@@ -1502,6 +1274,7 @@ function renderOrder(o){
           '/USDT'+
         '</span>'+
       '</div>'+
+
       '<div class="order-line">'+
         '<span class="order-label">Total Currency</span>'+
         '<span class="order-value">'+
@@ -1509,18 +1282,21 @@ function renderOrder(o){
           ' '+escapeHTML(currency)+
         '</span>'+
       '</div>'+
+
       '<div class="order-line">'+
         '<span class="order-label">Bank / Payment Detail</span>'+
         '<span class="order-value">'+
           escapeHTML(String(paymentDetail))+
         '</span>'+
       '</div>'+
+
       '<div class="order-line">'+
         '<span class="order-label">Type</span>'+
         '<span class="order-value">'+
           escapeHTML(orderType(o))+
         '</span>'+
       '</div>'+
+
       (pair?
         '<div class="order-line">'+
           '<span class="order-label">Pair</span>'+
@@ -1529,18 +1305,21 @@ function renderOrder(o){
           '</span>'+
         '</div>'
       :"")+
+
       '<div class="order-line">'+
         '<span class="order-label">Status</span>'+
         '<span class="order-status">'+
           escapeHTML(s)+
         '</span>'+
       '</div>'+
+
       '<div class="order-actions">'+
         (
           buttons||
           '<span class="order-label">No action available.</span>'
         )+
       '</div>'+
+
     '</div>';
 }
 
@@ -1786,12 +1565,7 @@ function subscribeOrderRealtime(){
           const status=
             payload?.new?.status;
 
-          if(
-            status&&
-            status!==lastNotifiedTradeStatus
-          ){
-            lastNotifiedTradeStatus=status;
-
+          if(status){
             showActionNotification(
               true,
               "Trade status: "+status
@@ -1814,12 +1588,7 @@ function subscribeOrderRealtime(){
           const status=
             payload?.new?.status;
 
-          if(
-            status&&
-            status!==lastNotifiedOrderStatus
-          ){
-            lastNotifiedOrderStatus=status;
-
+          if(status){
             showActionNotification(
               true,
               "Order status: "+status
@@ -2125,11 +1894,6 @@ function stopVoiceRecording(){
     mediaRecorder.stop();
 
   stopRecordingTimer();
-
-  showActionNotification(
-    true,
-    "Voice recording stopped"
-  );
 }
 
 function showRecordingBar(){
@@ -2288,19 +2052,10 @@ function subscribeRealtime(){
           payload?.new?.sender_id!==
           currentUser.id
         ){
-          if(
-            payload?.new?.message_type==="order"
-          ){
-            showActionNotification(
-              true,
-              "🛡️ New P2P order"
-            );
-          }else{
-            showActionNotification(
-              true,
-              "New message received"
-            );
-          }
+          showActionNotification(
+            true,
+            "New message received"
+          );
         }
       }
     )
@@ -2348,17 +2103,10 @@ function subscribeGlobalRealtime(){
         await updateUnreadCount();
         await loadConversations();
 
-        if(p.new.message_type==="order"){
-          showActionNotification(
-            true,
-            "🛡️ New P2P order notification"
-          );
-        }else{
-          showActionNotification(
-            true,
-            "New message received"
-          );
-        }
+        showActionNotification(
+          true,
+          "New message received"
+        );
       }
     )
     .subscribe();
@@ -2569,11 +2317,6 @@ async function renderNotification(n,list){
             username:"User",
             avatar_url:DEFAULT_AVATAR
           }
-        );
-
-        showActionNotification(
-          true,
-          "Notification opened"
         );
       }
     }
@@ -2926,7 +2669,7 @@ function formatFileSize(b){
   return(
     b/1048576
   ).toFixed(1)+
-    " MB";
+  " MB";
 }
 
 function getFileExtension(n){

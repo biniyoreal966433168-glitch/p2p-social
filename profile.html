@@ -78,6 +78,14 @@ header{background:linear-gradient(135deg,#075e54,#087f73);color:white;padding:14
 .withdraw-btn{background:#c0392b}
 .transfer-btn{background:#087f73}
 
+.bank-transfer-box{background:white;border-radius:18px;padding:16px;box-shadow:0 4px 15px rgba(0,0,0,.07)}
+.bank-transfer-info{background:#f5f7fb;border-radius:12px;padding:12px}
+.bank-transfer-row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #e7ebf0}
+.bank-transfer-row:last-child{border-bottom:none}
+.bank-transfer-label{color:#7a8494;font-size:11px}
+.bank-transfer-value{font-size:13px;font-weight:bold;text-align:right;word-break:break-word}
+.bank-transfer-button{width:100%;border:none;background:#087f73;color:white;padding:12px;border-radius:10px;font-weight:bold;margin-top:10px}
+
 .history-box{background:white;border-radius:18px;padding:15px;box-shadow:0 4px 15px rgba(0,0,0,.07)}
 .history-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}
 .history-tab{border:none;background:#f1f4f8;color:#596579;padding:9px 5px;border-radius:9px;font-size:11px;font-weight:bold}
@@ -173,6 +181,7 @@ header{background:linear-gradient(135deg,#075e54,#087f73);color:white;padding:14
 .fee-row:last-child{margin-bottom:0;padding-top:7px;border-top:1px solid #dfe4eb;font-weight:bold}
 .order-submit{width:100%;border:none;background:#087f73;color:white;padding:12px;border-radius:10px;font-weight:bold}
 .order-submit.sell-submit{background:#c0392b}
+.bank-modal-note{background:#f5f7fb;border-radius:11px;padding:11px;margin-bottom:12px;color:#596579;font-size:12px;line-height:1.5}
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:68px;background:white;border-top:1px solid #ddd;display:flex;justify-content:space-around;align-items:center;z-index:2000}
 .nav-item{text-align:center;color:#777;font-size:11px;min-width:55px;cursor:pointer}
 .nav-item span{display:block;font-size:22px;margin-bottom:3px}
@@ -292,6 +301,33 @@ header{padding:12px}
 <button class="wallet-action withdraw-btn" onclick="openWithdraw()">⬆️ Withdrawal</button>
 <button class="wallet-action transfer-btn" onclick="openTransfer()">💵 Transfer USDT</button>
 </div>
+</div>
+</section>
+
+<section class="section">
+<div class="section-title">
+<h2>🏦 Bank Transfer</h2>
+</div>
+
+<div class="bank-transfer-box">
+<div class="bank-transfer-info">
+<div class="bank-transfer-row">
+<div class="bank-transfer-label">Bank Name</div>
+<div id="bankNameDisplay" class="bank-transfer-value">Not added</div>
+</div>
+
+<div class="bank-transfer-row">
+<div class="bank-transfer-label">Account Name</div>
+<div id="accountNameDisplay" class="bank-transfer-value">Not added</div>
+</div>
+
+<div class="bank-transfer-row">
+<div class="bank-transfer-label">Account Number</div>
+<div id="accountNumberDisplay" class="bank-transfer-value">Not added</div>
+</div>
+</div>
+
+<button class="bank-transfer-button" onclick="openBankTransfer()">🏦 Add / Edit Bank Transfer</button>
 </div>
 </section>
 
@@ -468,6 +504,45 @@ Transfer using permanent username
 </div>
 </div>
 
+<div id="bankTransferModal" class="modal">
+<div class="modal-box">
+<h3>🏦 Bank Transfer</h3>
+
+<div class="bank-modal-note">
+Add your bank account information for P2P Bank Transfer payments.
+</div>
+
+<label class="form-label">Bank Name</label>
+<input
+id="bankNameInput"
+type="text"
+maxlength="150"
+placeholder="Enter bank name"
+>
+
+<label class="form-label">Account Name</label>
+<input
+id="accountNameInput"
+type="text"
+maxlength="150"
+placeholder="Enter account name"
+>
+
+<label class="form-label">Account Number</label>
+<input
+id="accountNumberInput"
+type="text"
+maxlength="100"
+placeholder="Enter account number"
+>
+
+<div class="modal-buttons">
+<button class="cancel-btn" onclick="closeBankTransfer()">Cancel</button>
+<button id="bankTransferSaveButton" class="save-btn" onclick="saveBankTransfer()">Save</button>
+</div>
+</div>
+</div>
+
 <div id="orderModal" class="modal">
 <div class="modal-box">
 
@@ -559,10 +634,10 @@ Your username is your permanent identity and cannot be changed.
 <button class="settings-item" onclick="openTransfer();closeSettings()">💵 Transfer USDT</button>
 <button class="settings-item" onclick="openDeposit();closeSettings()">⬇️ Deposit USDT</button>
 <button class="settings-item" onclick="openWithdraw();closeSettings()">⬆️ Withdrawal USDT</button>
+<button class="settings-item" onclick="openBankTransfer();closeSettings()">🏦 Bank Transfer</button>
 <button class="settings-item" onclick="openMessages()">💬 Messages</button>
 <button class="settings-item" onclick="openVerification()">✅ Verification → @P2P_Social_Admin</button>
 <button class="settings-item" onclick="openSupport()">🆘 Support → @P2P_Social_Admin</button>
-<button class="settings-item" onclick="openLive()">🔴 Live</button>
 <button class="settings-item logout" onclick="logout()">🚪 Logout</button>
 <button class="cancel-btn" style="width:100%;padding:11px;border:none;border-radius:10px" onclick="closeSettings()">Close</button>
 </div>
@@ -622,6 +697,8 @@ let currentHistoryType="all";
 let showAllHistory=false;
 let showAllOrders=false;
 let showAllPosts=false;
+
+let currentBankTransferDetails=null;
 
 const PLATFORM_FEE_RATE=0.01;
 
@@ -815,6 +892,7 @@ await loadProfile();
 await loadPosts();
 await loadMyOrders();
 await loadUSDTHistory();
+await loadBankTransferDetails();
 
 setupUSDTBalanceRealtime();
 
@@ -1438,6 +1516,173 @@ document.getElementById("settingsModal").classList.remove("show");
 
 }
 
+async function loadBankTransferDetails(){
+
+if(!currentSession)return;
+
+const result=
+await supabaseClient.rpc(
+"get_my_bank_transfer_details"
+);
+
+if(result.error){
+
+console.error(
+"Bank transfer details load failed:",
+result.error
+);
+
+currentBankTransferDetails=null;
+renderBankTransferDetails();
+
+return;
+
+}
+
+currentBankTransferDetails=
+result.data||null;
+
+renderBankTransferDetails();
+
+}
+
+function renderBankTransferDetails(){
+
+const bankName=
+document.getElementById("bankNameDisplay");
+
+const accountName=
+document.getElementById("accountNameDisplay");
+
+const accountNumber=
+document.getElementById("accountNumberDisplay");
+
+if(!bankName||!accountName||!accountNumber)return;
+
+const details=
+currentBankTransferDetails||{};
+
+bankName.textContent=
+details.bank_name||"Not added";
+
+accountName.textContent=
+details.account_name||"Not added";
+
+accountNumber.textContent=
+details.account_number||"Not added";
+
+}
+
+function openBankTransfer(){
+
+if(!currentSession){
+showLogin();
+return;
+}
+
+const details=
+currentBankTransferDetails||{};
+
+document.getElementById("bankNameInput").value=
+details.bank_name||"";
+
+document.getElementById("accountNameInput").value=
+details.account_name||"";
+
+document.getElementById("accountNumberInput").value=
+details.account_number||"";
+
+document.getElementById("bankTransferModal").classList.add("show");
+
+}
+
+function closeBankTransfer(){
+
+document.getElementById("bankTransferModal").classList.remove("show");
+
+}
+
+async function saveBankTransfer(){
+
+if(!currentSession){
+showLogin();
+return;
+}
+
+const bankName=
+document.getElementById("bankNameInput").value.trim();
+
+const accountName=
+document.getElementById("accountNameInput").value.trim();
+
+const accountNumber=
+document.getElementById("accountNumberInput").value.trim();
+
+if(!bankName){
+
+alert("Please enter your bank name.");
+return;
+
+}
+
+if(!accountName){
+
+alert("Please enter the account name.");
+return;
+
+}
+
+if(!accountNumber){
+
+alert("Please enter the account number.");
+return;
+
+}
+
+const button=
+document.getElementById("bankTransferSaveButton");
+
+button.disabled=true;
+button.textContent="Saving...";
+
+const result=
+await supabaseClient.rpc(
+"save_my_bank_transfer_details",
+{
+p_bank_name:bankName,
+p_account_name:accountName,
+p_account_number:accountNumber
+}
+);
+
+button.disabled=false;
+button.textContent="Save";
+
+if(result.error){
+
+alert(
+"Could not save bank transfer details:\n\n"+
+result.error.message
+);
+
+return;
+
+}
+
+currentBankTransferDetails={
+bank_name:bankName,
+account_name:accountName,
+account_number:accountNumber
+};
+
+renderBankTransferDetails();
+
+closeBankTransfer();
+
+alert("Bank transfer details saved successfully.");
+
+}
+
 function openTransfer(){
 
 if(!requirePermanentUsername())return;
@@ -1918,8 +2163,7 @@ const select=
 document.getElementById("orderPair");
 
 const options=[
-["USDT_ETB","USDT / ETB"],
-["ETB_ETB","ETB / ETB"]
+["USDT_ETB","USDT / ETB"]
 ];
 
 select.innerHTML="";
@@ -3265,10 +3509,6 @@ window.location.href=
 "message.html?username="+
 encodeURIComponent(getPermanentUsername());
 
-}
-
-function openLive(){
-window.location.href="live.html";
 }
 
 function openWallet(){

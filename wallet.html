@@ -183,10 +183,14 @@ header{
 }
 
 .status.active,
-.status.pending,
 .status.open{
   background:#e2f5ef;
   color:#087f73
+}
+
+.status.pending{
+  background:#fff2d9;
+  color:#a56a00
 }
 
 .status.expired,
@@ -202,11 +206,7 @@ header{
 }
 
 .status.completed,
-.status.released{
-  background:#e9f7eb;
-  color:#159447
-}
-
+.status.released,
 .status.paid,
 .status.payment_confirmed{
   background:#e9f7eb;
@@ -609,7 +609,10 @@ async function startApp(){
 
   }catch(error){
 
-    console.error("START ERROR:",error);
+    console.error(
+      "START ERROR:",
+      error
+    );
 
     toast(
       getErrorMessage(error),
@@ -801,8 +804,7 @@ async function loadSellMarket(){
         "status",
         [
           "active",
-          "open",
-          "pending"
+          "open"
         ]
       )
       .gt(
@@ -852,7 +854,18 @@ async function loadSellMarket(){
           ) !==
           String(
             currentUser.id
-          )
+          ) &&
+          [
+            "active",
+            "open"
+          ].includes(
+            normalizeStatus(
+              offer.status
+            )
+          ) &&
+          getOfferAvailableAmount(
+            offer
+          ) > 0
       );
 
     await loadOfferUsernames();
@@ -966,11 +979,11 @@ function renderSellMarket(){
             <div>
 
               <div class="offer-user">
-                🔴 ${escapeHtml(username)}
+                👤 ${escapeHtml(username)}
               </div>
 
               <div class="offer-meta">
-                🔴 · ${escapeHtml(formatPair(offer))}
+                🔵 Buyer · ${escapeHtml(formatPair(offer))}
               </div>
 
             </div>
@@ -987,7 +1000,7 @@ function renderSellMarket(){
           >
 
             ${detail(
-              "Selling price",
+              "Buying price",
               money(price) +
               " " +
               (
@@ -1057,7 +1070,7 @@ function viewUser(userId){
     encodeURIComponent(userId);
 }
 
-function openMessagesForTrade(
+async function openMessagesForTrade(
   tradeId,
   offer
 ){
@@ -1081,26 +1094,18 @@ function openMessagesForTrade(
 
   if(offer?.user_id){
 
-    getUsername(
-      offer.user_id
-    ).then(
-      username => {
+    const username =
+      await getUsername(
+        offer.user_id
+      );
 
-        if(username){
+    if(username){
 
-          params.set(
-            "username",
-            username
-          );
-        }
-
-        window.location.href =
-          "message.html?" +
-          params.toString();
-      }
-    );
-
-    return;
+      params.set(
+        "username",
+        username
+      );
+    }
   }
 
   window.location.href =
@@ -1167,7 +1172,9 @@ function updateOfferButton(){
   if(!button)return;
 
   button.style.display =
-    "block";
+    availableOffers.length > 3
+      ? "block"
+      : "none";
 
   button.textContent =
     offersExpanded
@@ -1229,8 +1236,7 @@ function openTrade(
   if(
     ![
       "active",
-      "open",
-      "pending"
+      "open"
     ].includes(status)
   ){
 
@@ -1293,6 +1299,15 @@ function openTrade(
   const tradeValue =
     available * price;
 
+  const sellerFee =
+    tradeValue * 0.01;
+
+  const buyerFee =
+    tradeValue * 0.01;
+
+  const sellerReceives =
+    tradeValue - sellerFee;
+
   document.getElementById(
     "tradeSummary"
   ).innerHTML = `
@@ -1354,6 +1369,26 @@ function openTrade(
           )
         )}
 
+        ${detail(
+          "Buyer fee 1%",
+          money(buyerFee) +
+          " " +
+          (
+            parts.quote ||
+            "ETB"
+          )
+        )}
+
+        ${detail(
+          "Seller fee 1%",
+          money(sellerFee) +
+          " " +
+          (
+            parts.quote ||
+            "ETB"
+          )
+        )}
+
         <div class="detail-row receive-row">
 
           <span>
@@ -1361,7 +1396,7 @@ function openTrade(
           </span>
 
           <strong>
-            ${money(tradeValue)}
+            ${money(sellerReceives)}
             ${escapeHtml(
               parts.quote ||
               "ETB"
@@ -1513,8 +1548,7 @@ async function submitTrade(){
   if(
     ![
       "active",
-      "open",
-      "pending"
+      "open"
     ].includes(status)
   ){
 
@@ -1568,6 +1602,18 @@ async function submitTrade(){
     return;
   }
 
+  if(max < 50){
+
+    toast(
+      "Trade amount must be at least 50 USDT.",
+      "warning"
+    );
+
+    closeModal("tradeModal");
+
+    return;
+  }
+
   const amount =
     Number(
       document.getElementById(
@@ -1582,6 +1628,18 @@ async function submitTrade(){
 
     toast(
       "Invalid USDT amount.",
+      "warning"
+    );
+
+    return;
+  }
+
+  if(
+    amount < 50
+  ){
+
+    toast(
+      "Trade amount must be at least 50 USDT.",
       "warning"
     );
 
@@ -1696,7 +1754,7 @@ async function submitTrade(){
 
     await loadSellMarket();
 
-    openMessagesForTrade(
+    await openMessagesForTrade(
       tradeId,
       tradeOffer
     );

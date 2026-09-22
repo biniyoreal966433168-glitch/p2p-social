@@ -36,6 +36,7 @@ header{background:linear-gradient(135deg,#075e54,#087f73);color:white;padding:14
 .toast{position:fixed;left:50%;bottom:85px;transform:translateX(-50%) translateY(20px);background:#172033;color:white;padding:10px 15px;border-radius:10px;font-size:12px;opacity:0;pointer-events:none;transition:.25s;z-index:20000;max-width:90%;text-align:center}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #photoInput{display:none}
 .order-panel{display:none;position:absolute;left:8px;right:8px;top:73px;background:white;border:1px solid #dfe4eb;border-radius:14px;z-index:100;box-shadow:0 7px 25px rgba(0,0,0,.15);padding:12px}.order-panel.show{display:block}.order-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}.order-head strong{font-size:13px}.order-close{border:0;background:none;font-size:20px;cursor:pointer}.order-card{border:1px solid #e2e7ec;border-radius:12px;padding:12px;margin-bottom:8px}.order-line{display:flex;justify-content:space-between;gap:8px;margin-bottom:6px;font-size:12px}.order-line:last-child{margin-bottom:0}.order-label{color:#7a8494}.order-value{font-weight:bold;text-align:right}.order-status{display:inline-flex;padding:4px 8px;border-radius:20px;background:#edf4f3;color:#087f73;font-size:10px}.order-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.order-action{border:0;border-radius:8px;padding:8px 10px;font-size:11px;font-weight:bold;cursor:pointer;background:#087f73;color:white}.order-action.red{background:#e74c3c}.order-action.gray{background:#edf0f2;color:#172033}.order-empty{text-align:center;padding:12px;color:#89919d;font-size:12px}
+.payment-details{margin-top:12px;padding:12px;border:1px solid #d9e9e5;border-radius:11px;background:#f4fbf9}.payment-details-title{font-size:12px;font-weight:800;color:#064e46;margin-bottom:9px}.payment-line{display:flex;justify-content:space-between;gap:10px;margin-bottom:7px;font-size:11px}.payment-line:last-child{margin-bottom:0}.payment-label{color:#7a8494}.payment-value{font-weight:bold;text-align:right;word-break:break-word}.payment-copy{border:0;background:#edf4f3;color:#087f73;border-radius:7px;padding:4px 7px;font-size:9px;font-weight:bold;cursor:pointer;margin-left:5px}
 @media(max-width:450px){header{padding:12px}.brand{font-size:17px}.auth-btn{padding:7px 7px;font-size:9px}.messages-page{padding:16px 12px}.message-bubble{max-width:85%}.message-photo{max-width:220px}.voice-message,.voice-message audio{width:200px;min-width:200px}}
 </style>
 </head>
@@ -136,6 +137,7 @@ let currentUserProfile=null;
 let currentConversation=null;
 let currentOtherUser=null;
 let currentOrder=null;
+let sellerPaymentDetails=[];
 
 let realtimeChannel=null;
 let unreadChannel=null;
@@ -781,6 +783,7 @@ function renderMessage(m){
 
 async function loadOrderByMessageId(orderId){
   currentOrder=null;
+  sellerPaymentDetails=[];
 
   const t=await supabaseClient
     .from("p2p_trades")
@@ -810,6 +813,8 @@ async function loadOrderByMessageId(orderId){
       }
     }
 
+    await loadSellerPaymentDetails();
+
     renderOrder(currentOrder);
     return;
   }
@@ -826,11 +831,188 @@ async function loadOrderByMessageId(orderId){
       _order:o.data
     };
 
+    await loadSellerPaymentDetails();
+
     renderOrder(currentOrder);
     return;
   }
 
   renderOrder(null);
+}
+
+async function loadSellerPaymentDetails(){
+  sellerPaymentDetails=[];
+
+  if(!currentOrder)return;
+
+  const sellerId=currentOrder.seller_id;
+
+  if(!sellerId)return;
+
+  const{data:profile,error:profileError}=await supabaseClient
+    .from("profiles")
+    .select("payment_country_id")
+    .eq("id",sellerId)
+    .maybeSingle();
+
+  if(profileError){
+    console.error(profileError);
+    return;
+  }
+
+  let query=supabaseClient
+    .from("p2p_user_payment_methods")
+    .select("id,country_id,payment_method,bank_name,account_name,account_number,transfer_info,bank_slot,is_active")
+    .eq("user_id",sellerId)
+    .eq("payment_method","bank_transfer")
+    .eq("is_active",true)
+    .order("bank_slot",{ascending:true});
+
+  if(profile?.payment_country_id){
+    query=query.eq(
+      "country_id",
+      profile.payment_country_id
+    );
+  }
+
+  const{data,error}=await query;
+
+  if(error){
+    console.error("Seller payment details:",error);
+    return;
+  }
+
+  sellerPaymentDetails=data||[];
+}
+
+async function copyPaymentValue(value){
+  if(!value)return;
+
+  try{
+    await navigator.clipboard.writeText(String(value));
+  }catch{
+    const a=document.createElement("textarea");
+
+    a.value=String(value);
+
+    document.body.appendChild(a);
+
+    a.select();
+
+    document.execCommand("copy");
+
+    a.remove();
+  }
+
+  showActionNotification(true,"Payment detail copied");
+}
+
+async function copyPaymentFromButton(button){
+  const value=button.dataset.value||"";
+  await copyPaymentValue(value);
+}
+
+async function copyPaymentInfo(value){
+  await copyPaymentValue(value);
+}
+
+async function copyPaymentDetail(){
+  if(!sellerPaymentDetails?.length){
+    showActionNotification(false,"Seller bank detail not available");
+    return;
+  }
+
+  const p=sellerPaymentDetails[0];
+
+  const text=[
+    p.bank_name?"Bank Name: "+p.bank_name:"",
+    p.account_name?"Account Name: "+p.account_name:"",
+    p.account_number?"Account Number: "+p.account_number:"",
+    p.transfer_info?"Transfer Info: "+p.transfer_info:""
+  ].filter(Boolean).join("\n");
+
+  await copyPaymentValue(text);
+}
+
+async function copyPaymentField(value){
+  await copyPaymentValue(value);
+}
+
+function renderSellerPaymentDetails(){
+  if(!sellerPaymentDetails?.length)
+    return "";
+
+  let html=
+    '<div class="payment-details">'+
+      '<div class="payment-details-title">🏦 Seller Bank Details</div>';
+
+  sellerPaymentDetails.forEach((p,index)=>{
+    if(p.bank_name){
+      html+=
+        '<div class="payment-line">'+
+          '<span class="payment-label">Bank Name</span>'+
+          '<span class="payment-value">'+
+            escapeHTML(p.bank_name)+
+            '<button class="payment-copy" data-value="'+
+            escapeHTML(p.bank_name)+
+            '" onclick="copyPaymentFromButton(this)">Copy</button>'+
+          '</span>'+
+        '</div>';
+    }
+
+    if(p.account_name){
+      html+=
+        '<div class="payment-line">'+
+          '<span class="payment-label">Account Name</span>'+
+          '<span class="payment-value">'+
+            escapeHTML(p.account_name)+
+            '<button class="payment-copy" data-value="'+
+            escapeHTML(p.account_name)+
+            '" onclick="copyPaymentFromButton(this)">Copy</button>'+
+          '</span>'+
+        '</div>';
+    }
+
+    if(p.account_number){
+      html+=
+        '<div class="payment-line">'+
+          '<span class="payment-label">Account Number</span>'+
+          '<span class="payment-value">'+
+            escapeHTML(p.account_number)+
+            '<button class="payment-copy" data-value="'+
+            escapeHTML(p.account_number)+
+            '" onclick="copyPaymentFromButton(this)">Copy</button>'+
+          '</span>'+
+        '</div>';
+    }
+
+    if(p.transfer_info){
+      html+=
+        '<div class="payment-line">'+
+          '<span class="payment-label">Transfer Info</span>'+
+          '<span class="payment-value">'+
+            escapeHTML(p.transfer_info)+
+            '<button class="payment-copy" data-value="'+
+            escapeHTML(p.transfer_info)+
+            '" onclick="copyPaymentFromButton(this)">Copy</button>'+
+          '</span>'+
+        '</div>';
+    }
+
+    if(
+      index<
+      sellerPaymentDetails.length-1
+    ){
+      html+=
+        '<div style="border-top:1px solid #dfeae7;margin:10px 0"></div>';
+    }
+  });
+
+  html+=
+      '<button class="order-action" style="width:100%;margin-top:10px" onclick="copyPaymentDetail()">📋 Copy Bank Details</button>'+
+    '</div>';
+
+  return html;
 }
 
 async function copyText(t){
@@ -1034,6 +1216,7 @@ async function loadConversationOrder(){
   if(!currentConversation)return;
 
   currentOrder=null;
+  sellerPaymentDetails=[];
 
   const{data:om,error:messageError}=await supabaseClient
     .from("messages")
@@ -1328,11 +1511,15 @@ function renderOrder(o){
       '</div>'+
 
       '<div class="order-line">'+
-        '<span class="order-label">Bank / Payment Detail</span>'+
+        '<span class="order-label">Payment Method</span>'+
         '<span class="order-value">'+
           escapeHTML(String(paymentDetail))+
         '</span>'+
       '</div>'+
+
+      (sellerPaymentDetails.length?
+        renderSellerPaymentDetails():
+        "")+
 
       '<div class="order-line">'+
         '<span class="order-label">Type</span>'+
@@ -2534,6 +2721,7 @@ function closeChat(){
   currentConversation=null;
   currentOtherUser=null;
   currentOrder=null;
+  sellerPaymentDetails=[];
 
   cancelEdit();
   clearPhoto();

@@ -1075,42 +1075,253 @@ async function openMessagesForTrade(
   offer
 ){
 
-  const params =
-    new URLSearchParams();
+  if(!currentUser){
+    showLogin();
+    return;
+  }
 
-  if(tradeId){
+  if(!tradeId){
+    toast(
+      "Trade ID is missing.",
+      "error"
+    );
+    return;
+  }
+
+  if(!offer?.user_id){
+    toast(
+      "Buyer information is missing.",
+      "error"
+    );
+    return;
+  }
+
+  try{
+
+    const buyerId =
+      String(
+        offer.user_id
+      );
+
+    let conversation = null;
+
+    let conversationError = null;
+
+    const firstConversation =
+      await supabaseClient
+        .from("conversations")
+        .select(
+          "id,user_one,user_two"
+        )
+        .eq(
+          "user_one",
+          currentUser.id
+        )
+        .eq(
+          "user_two",
+          buyerId
+        )
+        .maybeSingle();
+
+    conversation =
+      firstConversation.data;
+
+    conversationError =
+      firstConversation.error;
+
+    if(conversationError){
+      throw conversationError;
+    }
+
+    if(!conversation){
+
+      const secondConversation =
+        await supabaseClient
+          .from("conversations")
+          .select(
+            "id,user_one,user_two"
+          )
+          .eq(
+            "user_one",
+            buyerId
+          )
+          .eq(
+            "user_two",
+            currentUser.id
+          )
+          .maybeSingle();
+
+      conversation =
+        secondConversation.data;
+
+      conversationError =
+        secondConversation.error;
+
+      if(conversationError){
+        throw conversationError;
+      }
+    }
+
+    if(!conversation){
+
+      const createdConversation =
+        await supabaseClient
+          .from("conversations")
+          .insert({
+            user_one:
+              currentUser.id,
+            user_two:
+              buyerId
+          })
+          .select(
+            "id,user_one,user_two"
+          )
+          .single();
+
+      if(
+        createdConversation.error
+      ){
+
+        const retryConversation =
+          await supabaseClient
+            .from("conversations")
+            .select(
+              "id,user_one,user_two"
+            )
+            .eq(
+              "user_one",
+              buyerId
+            )
+            .eq(
+              "user_two",
+              currentUser.id
+            )
+            .maybeSingle();
+
+        if(
+          retryConversation.error ||
+          !retryConversation.data
+        ){
+
+          throw createdConversation.error;
+        }
+
+        conversation =
+          retryConversation.data;
+
+      }else{
+
+        conversation =
+          createdConversation.data;
+      }
+    }
+
+    if(!conversation?.id){
+
+      throw new Error(
+        "Could not create the conversation."
+      );
+    }
+
+    const orderMessage =
+      "🟢 P2P Sell started. Please complete the payment for this trade.";
+
+    const existingMessage =
+      await supabaseClient
+        .from("messages")
+        .select(
+          "id,conversation_id,order_id"
+        )
+        .eq(
+          "conversation_id",
+          conversation.id
+        )
+        .eq(
+          "sender_id",
+          currentUser.id
+        )
+        .eq(
+          "message_type",
+          "order"
+        )
+        .eq(
+          "order_id",
+          tradeId
+        )
+        .limit(1)
+        .maybeSingle();
+
+    if(
+      existingMessage.error
+    ){
+      throw existingMessage.error;
+    }
+
+    if(!existingMessage.data){
+
+      const {
+        error:messageError
+      } =
+      await supabaseClient
+        .from("messages")
+        .insert({
+          conversation_id:
+            conversation.id,
+          sender_id:
+            currentUser.id,
+          content:
+            orderMessage,
+          message_type:
+            "order",
+          order_id:
+            tradeId
+        });
+
+      if(messageError){
+        throw messageError;
+      }
+    }
+
+    const username =
+      await getUsername(
+        buyerId
+      );
+
+    const params =
+      new URLSearchParams();
+
     params.set(
       "trade_id",
       String(tradeId)
     );
-  }
 
-  if(offer?.id){
     params.set(
       "order_id",
-      String(offer.id)
+      String(tradeId)
+    );
+
+    params.set(
+      "username",
+      username || "User"
+    );
+
+    window.location.href =
+      "message.html?" +
+      params.toString();
+
+  }catch(error){
+
+    console.error(
+      "OPEN TRADE MESSAGE ERROR:",
+      error
+    );
+
+    toast(
+      "Trade started, but the P2P message could not be created: " +
+      getErrorMessage(error),
+      "error"
     );
   }
-
-  if(offer?.user_id){
-
-    const username =
-      await getUsername(
-        offer.user_id
-      );
-
-    if(username){
-
-      params.set(
-        "username",
-        username
-      );
-    }
-  }
-
-  window.location.href =
-    "message.html?" +
-    params.toString();
 }
 
 async function getUsername(userId){
@@ -1743,11 +1954,6 @@ async function submitTrade(){
 
     closeModal(
       "tradeModal"
-    );
-
-    toast(
-      "Sell trade started successfully.",
-      "success"
     );
 
     selectedOffer = null;

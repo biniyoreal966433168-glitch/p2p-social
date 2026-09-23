@@ -184,7 +184,7 @@ function showToast(message){
 }
 
 function showActionNotification(success,message){
-  showToast(message);
+  showToast((success?"":"")+message);
 }
 
 async function startApp(){
@@ -2265,7 +2265,6 @@ async function loadNotifications(){
     .from("notifications")
     .select("*")
     .eq("user_id",currentUser.id)
-    .or("is_read.eq.false,is_read.is.null")
     .order("created_at",{ascending:false})
     .limit(50);
 
@@ -2282,7 +2281,7 @@ async function loadNotifications(){
   if(!data?.length){
     notificationList.innerHTML=
       '<div class="notification-empty">'+
-      '🔔<br><br>No unread notifications.'+
+      '🔔<br><br>No notifications yet.'+
       '</div>';
 
     updateNotificationBadge([]);
@@ -2317,7 +2316,9 @@ async function renderNotification(n,list){
 
   const x=document.createElement("div");
 
-  x.className="notification-item unread";
+  x.className=
+    "notification-item"+
+    (!n.is_read?" unread":"");
 
   x.innerHTML=
     '<img class="notification-avatar" src="'+
@@ -2343,7 +2344,6 @@ async function renderNotification(n,list){
           ""
         )+
         escapeHTML(
-          n.body||
           n.message||
           "You have a new notification."
         )+

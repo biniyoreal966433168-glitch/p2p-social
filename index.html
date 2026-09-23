@@ -259,9 +259,7 @@ display:flex;justify-content:space-between;align-items:center;margin-bottom:15px
 .verify-status{padding:12px;border-radius:12px;background:#f5f7fb;font-size:13px;margin-bottom:14px}
 .verify-status strong{color:#087f73}
 .verify-form{display:flex;flex-direction:column;gap:10px}
-.verify-note{
-font-size:11px;color:#7a8494;line-height:1.4
-}
+.verify-note{font-size:11px;color:#7a8494;line-height:1.4}
 .verify-submit{
 border:none;background:#087f73;color:white;padding:12px;
 border-radius:10px;font-weight:bold;cursor:pointer
@@ -1306,40 +1304,42 @@ document.getElementById("verificationStatus");
 
 if(!statusElement)return;
 
-const profileStatus=
-getFirstValue(
-currentProfile,
-[
-"verification_status"
-]
-);
+const button=
+document.getElementById("verificationRequestBtn");
 
-if(profileStatus){
+const profileStatus=
+String(
+currentProfile?.verification_status||""
+)
+.toLowerCase()
+.trim();
+
+if(
+profileStatus==="verified"||
+profileStatus==="verified_plus"
+){
 
 statusElement.textContent=
 formatVerificationStatus(profileStatus);
 
-if(
-String(profileStatus).toLowerCase()==="verified"||
-String(profileStatus).toLowerCase()==="verified_plus"
-){
-const button=
-document.getElementById("verificationRequestBtn");
-
 if(button){
 button.disabled=true;
 button.textContent="Already Verified";
-}
 }
 
 return;
 
 }
 
+if(button){
+button.disabled=true;
+button.textContent="Checking...";
+}
+
 const{data,error}=
 await supabaseClient
 .from("verification_requests")
-.select("status,created_at")
+.select("id,status,created_at")
 .eq("requester_id",currentSession.user.id)
 .order("created_at",{ascending:false})
 .limit(1)
@@ -1353,6 +1353,12 @@ error
 );
 
 statusElement.textContent="Unverified";
+
+if(button){
+button.disabled=false;
+button.textContent="Send Verification Request";
+}
+
 return;
 
 }
@@ -1360,6 +1366,12 @@ return;
 if(!data){
 
 statusElement.textContent="Unverified";
+
+if(button){
+button.disabled=false;
+button.textContent="Send Verification Request";
+}
+
 return;
 
 }
@@ -1370,9 +1382,6 @@ String(data.status||"").toLowerCase();
 if(status==="pending"){
 
 statusElement.textContent="Verification Pending";
-
-const button=
-document.getElementById("verificationRequestBtn");
 
 if(button){
 button.disabled=true;
@@ -1387,9 +1396,6 @@ if(status==="approved"){
 
 statusElement.textContent="Verified";
 
-const button=
-document.getElementById("verificationRequestBtn");
-
 if(button){
 button.disabled=true;
 button.textContent="Already Verified";
@@ -1403,9 +1409,6 @@ if(status==="rejected"){
 
 statusElement.textContent="Unverified";
 
-const button=
-document.getElementById("verificationRequestBtn");
-
 if(button){
 button.disabled=false;
 button.textContent="Send New Verification Request";
@@ -1416,6 +1419,11 @@ return;
 }
 
 statusElement.textContent="Unverified";
+
+if(button){
+button.disabled=false;
+button.textContent="Send Verification Request";
+}
 
 }
 
@@ -1435,7 +1443,8 @@ const profileStatus=
 String(
 currentProfile?.verification_status||""
 )
-.toLowerCase();
+.toLowerCase()
+.trim();
 
 if(
 profileStatus==="verified"||
@@ -1472,8 +1481,6 @@ return;
 }
 
 if(existing){
-
-alert("You already have a pending verification request.");
 
 window.location.href=
 "./message.html?username="+

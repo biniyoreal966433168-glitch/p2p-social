@@ -1555,6 +1555,106 @@ offer?.payment_details?.accountNumber ||
 
 }
 
+async function getSellerBankTransferDetails(
+sellerId,
+offer = null
+){
+
+const result = {
+
+bankName:
+getOfferBankName(
+offer
+),
+
+accountName:
+getOfferAccountName(
+offer
+),
+
+accountNumber:
+getOfferAccountNumber(
+offer
+)
+
+};
+
+if(
+result.bankName &&
+result.accountNumber
+){
+
+return result;
+
+}
+
+if(!sellerId){
+
+return result;
+
+}
+
+try{
+
+const {
+data,
+error
+} =
+await supabaseClient
+.rpc(
+"get_user_bank_transfer_details",
+{
+p_user_id:
+sellerId
+}
+);
+
+if(!error && data){
+
+const row =
+Array.isArray(data)
+?
+data[0]
+:
+data;
+
+if(row){
+
+result.bankName =
+result.bankName ||
+row.bank_name ||
+row.bankName ||
+"";
+
+result.accountName =
+result.accountName ||
+row.account_name ||
+row.accountName ||
+"";
+
+result.accountNumber =
+result.accountNumber ||
+row.account_number ||
+row.accountNumber ||
+"";
+
+}
+
+}
+
+}catch(error){
+
+console.warn(
+"SELLER BANK RPC:",
+error
+);
+
+}
+
+return result;
+
+}
+
 function viewUser(userId){
 
 if(!userId)return;
@@ -1598,6 +1698,12 @@ try{
 
 const sellerId =
 offer.user_id;
+
+const bankDetails =
+await getSellerBankTransferDetails(
+sellerId,
+offer
+);
 
 let conversation =
 null;
@@ -1810,6 +1916,39 @@ username
 
 }
 
+if(
+bankDetails.bankName
+){
+
+params.set(
+"bank_name",
+bankDetails.bankName
+);
+
+}
+
+if(
+bankDetails.accountName
+){
+
+params.set(
+"account_name",
+bankDetails.accountName
+);
+
+}
+
+if(
+bankDetails.accountNumber
+){
+
+params.set(
+"account_number",
+bankDetails.accountNumber
+);
+
+}
+
 window.location.href =
 "message.html?" +
 params.toString();
@@ -1879,7 +2018,7 @@ renderBuyMarket();
 
 }
 
-function openTrade(
+async function openTrade(
 offerId
 ){
 
@@ -1990,18 +2129,9 @@ selectedOffer,
 parts.quote
 );
 
-const bankName =
-getOfferBankName(
-selectedOffer
-);
-
-const accountName =
-getOfferAccountName(
-selectedOffer
-);
-
-const accountNumber =
-getOfferAccountNumber(
+const bankDetails =
+await getSellerBankTransferDetails(
+selectedOffer.user_id,
 selectedOffer
 );
 
@@ -2075,36 +2205,42 @@ margin-bottom:9px;
 </div>
 
 ${
-bankName
+bankDetails.bankName
 ?
 detail(
 "Bank Name",
-bankName
+bankDetails.bankName
 )
 :
-""
+detail(
+"Bank Name",
+"Not provided"
+)
 }
 
 ${
-accountName
+bankDetails.accountName
 ?
 detail(
 "Account Name",
-accountName
+bankDetails.accountName
 )
 :
 ""
 }
 
 ${
-accountNumber
+bankDetails.accountNumber
 ?
 detail(
 "Account Number",
-accountNumber
+bankDetails.accountNumber
 )
 :
-""
+detail(
+"Account Number",
+"Not provided"
+)
 }
 
 </div>

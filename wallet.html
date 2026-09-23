@@ -476,7 +476,7 @@ header{
     <input
       id="tradeAmount"
       type="number"
-      min="0"
+      min="1"
       step="0.000001"
       placeholder="USDT amount"
       readonly
@@ -1464,10 +1464,10 @@ function openTrade(
       selectedOffer
     );
 
-  if(available <= 0){
+  if(available < 1){
 
     toast(
-      "This Available Buy has no remaining amount.",
+      "This Available Buy must have at least 1 USDT available.",
       "warning"
     );
 
@@ -1483,7 +1483,7 @@ function openTrade(
     available;
 
   input.min =
-    available;
+    1;
 
   input.max =
     available;
@@ -1509,15 +1509,6 @@ function openTrade(
 
   const tradeValue =
     available * price;
-
-  const sellerFee =
-    tradeValue * 0.01;
-
-  const buyerFee =
-    tradeValue * 0.01;
-
-  const sellerReceives =
-    tradeValue - sellerFee;
 
   document.getElementById(
     "tradeSummary"
@@ -1580,26 +1571,6 @@ function openTrade(
           )
         )}
 
-        ${detail(
-          "Buyer fee 1%",
-          money(buyerFee) +
-          " " +
-          (
-            parts.quote ||
-            "ETB"
-          )
-        )}
-
-        ${detail(
-          "Seller fee 1%",
-          money(sellerFee) +
-          " " +
-          (
-            parts.quote ||
-            "ETB"
-          )
-        )}
-
         <div class="detail-row receive-row">
 
           <span>
@@ -1607,7 +1578,7 @@ function openTrade(
           </span>
 
           <strong>
-            ${money(sellerReceives)}
+            ${money(tradeValue)}
             ${escapeHtml(
               parts.quote ||
               "ETB"
@@ -1780,10 +1751,10 @@ async function submitTrade(){
       selectedOffer
     );
 
-  if(max <= 0){
+  if(max < 1){
 
     toast(
-      "This Available Buy has no remaining amount.",
+      "This Available Buy has less than 1 USDT available.",
       "warning"
     );
 
@@ -1813,18 +1784,6 @@ async function submitTrade(){
     return;
   }
 
-  if(max < 50){
-
-    toast(
-      "Trade amount must be at least 50 USDT.",
-      "warning"
-    );
-
-    closeModal("tradeModal");
-
-    return;
-  }
-
   const amount =
     Number(
       document.getElementById(
@@ -1834,23 +1793,11 @@ async function submitTrade(){
 
   if(
     !Number.isFinite(amount) ||
-    amount <= 0
+    amount < 1
   ){
 
     toast(
-      "Invalid USDT amount.",
-      "warning"
-    );
-
-    return;
-  }
-
-  if(
-    amount < 50
-  ){
-
-    toast(
-      "Trade amount must be at least 50 USDT.",
+      "Trade amount must be at least 1 USDT.",
       "warning"
     );
 
@@ -1881,11 +1828,11 @@ async function submitTrade(){
     !Number.isFinite(
       normalizedAmount
     ) ||
-    normalizedAmount <= 0
+    normalizedAmount < 1
   ){
 
     toast(
-      "Invalid USDT amount.",
+      "Trade amount must be at least 1 USDT.",
       "warning"
     );
 

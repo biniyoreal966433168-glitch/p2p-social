@@ -184,7 +184,7 @@ function showToast(message){
 }
 
 function showActionNotification(success,message){
-  showToast((success?"✅ ":"❌ ")+message);
+  showToast((success?"":"")+message);
 }
 
 async function startApp(){
@@ -212,7 +212,7 @@ async function startApp(){
   subscribeGlobalRealtime();
   subscribeNotificationRealtime();
 
-  openUsernameConversationFromUrl();
+  await openConversationFromUrl();
 }
 
 async function loadCurrentUserProfile(){
@@ -413,11 +413,11 @@ function searchUsers(){
             '<div class="search-name">@'+
               escapeHTML(u)+
             '</div>'+
-            '<div class="search-id">View user • Send message</div>'+
+            '<div class="search-id">View user detail • Send message</div>'+
           '</div>';
 
         x.onclick=()=>{
-          runOnce(()=>startConversation(p));
+          runOnce(()=>openSearchUser(p));
         };
 
         searchResults.appendChild(x);
@@ -426,6 +426,17 @@ function searchUsers(){
 
     searchResults.style.display="block";
   },300);
+}
+
+function openSearchUser(p){
+  if(!p?.id)return;
+
+  searchInput.value="";
+  searchResults.style.display="none";
+
+  location.href=
+    "profile.html?user_id="+
+    encodeURIComponent(p.id);
 }
 
 async function startConversation(p){
@@ -474,7 +485,6 @@ async function startConversation(p){
     }
 
     c=r.data;
-    showActionNotification(true,"Conversation created");
   }
 
   searchInput.value="";
@@ -523,42 +533,107 @@ async function openConversation(c,p){
   showActionNotification(true,"Conversation opened");
 }
 
-function openUserProfileByUsername(u){
-  const c=normalizeUsername(u);
-  if(c)
-    location.href=
-      "profile.html?username="+encodeURIComponent(c);
-}
-
-async function openUsernameConversationFromUrl(){
+async function openConversationFromUrl(){
   if(!currentUser)return;
 
-  const u=normalizeUsername(
-    new URLSearchParams(location.search).get("username")
-  );
+  const params=new URLSearchParams(location.search);
 
-  if(!u)return;
+  const conversationId=params.get("conversation_id");
+  const userId=params.get("user_id");
+  const username=normalizeUsername(params.get("username"));
 
-  const{data:p}=await supabaseClient
-    .from("profiles")
-    .select("id,username,avatar_url")
-    .eq("username",u)
-    .maybeSingle();
+  if(conversationId){
+    const{data:c,error}=await supabaseClient
+      .from("conversations")
+      .select("*")
+      .eq("id",conversationId)
+      .maybeSingle();
 
-  if(!p){
-    showActionNotification(false,"User not found");
+    if(error||!c){
+      showActionNotification(false,"Conversation not found");
+      return;
+    }
+
+    if(
+      c.user_one!==currentUser.id&&
+      c.user_two!==currentUser.id
+    ){
+      showActionNotification(false,"Conversation not available");
+      return;
+    }
+
+    const otherId=
+      c.user_one===currentUser.id?
+      c.user_two:
+      c.user_one;
+
+    const{data:p}=await supabaseClient
+      .from("profiles")
+      .select("id,username,avatar_url")
+      .eq("id",otherId)
+      .maybeSingle();
+
+    await openConversation(
+      c,
+      p||{
+        id:otherId,
+        username:"User",
+        avatar_url:DEFAULT_AVATAR
+      }
+    );
+
+    history.replaceState({},document.title,"message.html");
     return;
   }
 
-  if(p.id===currentUser.id)return;
+  if(userId){
+    if(userId===currentUser.id)return;
 
-  await startConversation(p);
+    const{data:p}=await supabaseClient
+      .from("profiles")
+      .select("id,username,avatar_url")
+      .eq("id",userId)
+      .maybeSingle();
 
-  history.replaceState(
-    {},
-    document.title,
-    "message.html"
-  );
+    if(!p){
+      showActionNotification(false,"User not found");
+      return;
+    }
+
+    await startConversation(p);
+
+    history.replaceState({},document.title,"message.html");
+    return;
+  }
+
+  if(username){
+    if(username===normalizeUsername(currentUserProfile?.username))
+      return;
+
+    const{data:p}=await supabaseClient
+      .from("profiles")
+      .select("id,username,avatar_url")
+      .eq("username",username)
+      .maybeSingle();
+
+    if(!p){
+      showActionNotification(false,"User not found");
+      return;
+    }
+
+    await startConversation(p);
+
+    history.replaceState({},document.title,"message.html");
+  }
+}
+
+function openUserProfileByUsername(u){
+  const c=normalizeUsername(u);
+
+  if(c)
+    location.href=
+      "profile.html?username="+
+      encodeURIComponent(c);
 }
 
 async function loadMessages(){
@@ -604,6 +679,7 @@ function renderMessage(m){
 
   if(type==="photo"){
     const i=document.createElement("img");
+
     i.className="message-photo";
     i.src=m.media_url||"";
     i.alt="Photo";
@@ -638,13 +714,14 @@ function renderMessage(m){
 
   else if(type==="order"){
     const card=document.createElement("div");
+
     card.className="order-message-card";
     card.setAttribute("role","button");
     card.setAttribute("tabindex","0");
 
     const title=document.createElement("div");
     title.className="order-message-title";
-    title.textContent="🛡️ P2P Order";
+    title.textContent="P2P Order";
 
     const text=document.createElement("div");
     text.className="order-message-text";
@@ -666,7 +743,6 @@ function renderMessage(m){
       }
 
       openOrderPanel();
-      showActionNotification(true,"P2P order opened");
     };
 
     card.onclick=()=>{
@@ -1196,7 +1272,7 @@ function renderOrder(o){
     buttons+=
       '<button class="order-action" '+
       'onclick="confirmPayment()">'+
-      '✅ I Have Paid</button>';
+      'I Have Paid</button>';
   }
 
   if(
@@ -1207,7 +1283,7 @@ function renderOrder(o){
     buttons+=
       '<button class="order-action" '+
       'onclick="releaseOrder()">'+
-      '🔓 Release USDT</button>';
+      'Release USDT</button>';
   }
 
   if(
@@ -1221,17 +1297,17 @@ function renderOrder(o){
     buttons+=
       '<button class="order-action red" '+
       'onclick="cancelOrder()">'+
-      '✕ Cancel</button>'+
+      'Cancel</button>'+
       '<button class="order-action gray" '+
       'onclick="disputeOrder()">'+
-      '⚠️ Dispute</button>';
+      'Dispute</button>';
   }
 
   if(s==="disputed"){
     buttons=
       '<button class="order-action gray" '+
       'onclick="openDisputeInfo()">'+
-      '⚠️ Disputed — Admin Review</button>';
+      'Disputed — Admin Review</button>';
   }
 
   if(
@@ -1240,7 +1316,7 @@ function renderOrder(o){
     buttons=
       '<button class="order-action gray" '+
       'onclick="finishOrder()">'+
-      '✓ Transaction Completed</button>';
+      'Transaction Completed</button>';
   }
 
   const usdtAmount=orderAmount(o);
@@ -1320,8 +1396,6 @@ function openOrderPanel(){
 
   if(!currentOrder)
     loadConversationOrder();
-
-  showActionNotification(true,"Trade status opened");
 }
 
 function hideOrderPanel(){
@@ -1334,13 +1408,10 @@ async function confirmPayment(){
     return;
   }
 
-  const confirmed=confirm(
-    "Confirm that you have sent the payment?"
-  );
+  if(!confirm("Confirm that you have sent the payment?"))
+    return;
 
-  if(!confirmed)return;
-
-  showToast("⏳ Confirming payment...");
+  showToast("Confirming payment...");
 
   const{data,error}=await supabaseClient.rpc(
     "confirm_p2p_payment",
@@ -1355,7 +1426,9 @@ async function confirmPayment(){
   }
 
   const messageSent=
-    await sendTradeSystemMessage("✅ Payment Sent — Awaiting Confirmation");
+    await sendTradeSystemMessage(
+      "Payment Sent — Awaiting Confirmation"
+    );
 
   if(!messageSent){
     showActionNotification(
@@ -1383,7 +1456,7 @@ async function releaseOrder(){
   if(!confirm("Release USDT to the buyer?"))
     return;
 
-  showToast("⏳ Releasing USDT...");
+  showToast("Releasing USDT...");
 
   const{data,error}=await supabaseClient.rpc(
     "p2p_release_trade",
@@ -1410,7 +1483,9 @@ async function releaseOrder(){
   }
 
   const messageSent=
-    await sendTradeSystemMessage("✅ Payment Completed — USDT Released");
+    await sendTradeSystemMessage(
+      "Payment Completed — USDT Released"
+    );
 
   if(!messageSent){
     showActionNotification(
@@ -1438,7 +1513,7 @@ async function cancelOrder(){
   if(!confirm("Cancel this P2P order?"))
     return;
 
-  showToast("⏳ Cancelling trade...");
+  showToast("Cancelling trade...");
 
   const{data,error}=await supabaseClient.rpc(
     "p2p_cancel_trade",
@@ -1481,13 +1556,11 @@ async function disputeOrder(){
     return;
   }
 
-  const reason=prompt(
-    "Enter dispute reason:"
-  );
+  const reason=prompt("Enter dispute reason:");
 
   if(!reason?.trim())return;
 
-  showToast("⏳ Opening dispute...");
+  showToast("Opening dispute...");
 
   const{data,error}=await supabaseClient.rpc(
     "p2p_open_dispute",
@@ -1697,7 +1770,7 @@ async function sendPhotoMessage(){
 
   btn.disabled=true;
 
-  showToast("⏳ Uploading photo...");
+  showToast("Uploading photo...");
 
   try{
     const ext=
@@ -1947,7 +2020,7 @@ async function sendVoiceMessage(blob,duration){
 
   sendMessageButton.disabled=true;
 
-  showToast("⏳ Uploading voice message...");
+  showToast("Uploading voice message...");
 
   try{
     const ext=
@@ -2506,11 +2579,6 @@ function showAll(){
     .forEach(
       x=>x.style.display="flex"
     );
-
-  showActionNotification(
-    true,
-    "Showing all conversations"
-  );
 }
 
 function showUnread(){
@@ -2525,11 +2593,6 @@ function showUnread(){
           "none";
       }
     );
-
-  showActionNotification(
-    true,
-    "Showing unread conversations"
-  );
 }
 
 function goHome(){
@@ -2566,7 +2629,7 @@ async function logout(){
   if(!confirm("Do you want to log out?"))
     return;
 
-  showToast("⏳ Logging out...");
+  showToast("Logging out...");
 
   for(const c of [
     realtimeChannel,
@@ -2757,14 +2820,8 @@ chatHeaderInfo.onclick=()=>{
   const u=
     chatHeaderInfo.dataset.username;
 
-  if(u){
-    showActionNotification(
-      true,
-      "Opening profile"
-    );
-
+  if(u)
     openUserProfileByUsername(u);
-  }
 };
 
 chatMore.onclick=

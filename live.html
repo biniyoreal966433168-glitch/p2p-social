@@ -675,42 +675,6 @@ let actionLoading = false;
 
 const usernameCache = new Map();
 
-const COUNTRY_BY_CURRENCY = {
-ETB:"Ethiopia",
-NGN:"Nigeria",
-KES:"Kenya",
-UGX:"Uganda",
-TZS:"Tanzania",
-GHS:"Ghana",
-ZAR:"South Africa",
-EGP:"Egypt",
-MAD:"Morocco",
-AED:"United Arab Emirates",
-SAR:"Saudi Arabia",
-INR:"India",
-PKR:"Pakistan",
-BDT:"Bangladesh",
-IDR:"Indonesia",
-MYR:"Malaysia",
-THB:"Thailand",
-PHP:"Philippines",
-VND:"Vietnam",
-TRY:"Türkiye",
-USD:"United States",
-CAD:"Canada",
-GBP:"United Kingdom",
-AUD:"Australia",
-NZD:"New Zealand",
-BRL:"Brazil",
-MXN:"Mexico",
-ARS:"Argentina",
-COP:"Colombia",
-JPY:"Japan",
-KRW:"South Korea",
-SGD:"Singapore",
-CHF:"Switzerland"
-};
-
 document.addEventListener(
 "DOMContentLoaded",
 startApp
@@ -1127,6 +1091,85 @@ offer
 ) > 0
 );
 
+availableOffers.sort(
+(a,b) => {
+
+const pairA =
+getPairSortKey(a);
+
+const pairB =
+getPairSortKey(b);
+
+if(pairA < pairB)return -1;
+if(pairA > pairB)return 1;
+
+const priceA =
+Number(a?.price);
+
+const priceB =
+Number(b?.price);
+
+if(
+Number.isFinite(priceA) &&
+Number.isFinite(priceB)
+){
+
+if(priceA !== priceB){
+
+return priceA - priceB;
+
+}
+
+}
+
+if(
+Number.isFinite(priceA) &&
+!Number.isFinite(priceB)
+){
+
+return -1;
+
+}
+
+if(
+!Number.isFinite(priceA) &&
+Number.isFinite(priceB)
+){
+
+return 1;
+
+}
+
+const timeA =
+Date.parse(
+a?.created_at ||
+""
+);
+
+const timeB =
+Date.parse(
+b?.created_at ||
+""
+);
+
+return (
+Number.isFinite(timeB)
+?
+timeB
+:
+0
+) -
+(
+Number.isFinite(timeA)
+?
+timeA
+:
+0
+);
+
+}
+);
+
 await loadOfferUsernames();
 
 const count =
@@ -1273,7 +1316,10 @@ card.innerHTML = `
 </div>
 
 <div class="offer-meta">
-🌍 ${escapeHtml(country)}
+${country ? "🌍 " + escapeHtml(country) + " · " : ""}
+${escapeHtml(
+formatPair(offer)
+)}
 </div>
 
 </div>
@@ -1302,42 +1348,6 @@ color:#7b8790;
 font-size:12px;
 "
 >
-Pair
-</div>
-
-<div
-style="
-color:#172033;
-font-size:15px;
-font-weight:bold;
-margin-top:3px;
-"
->
-${escapeHtml(
-formatPair(offer)
-)}
-</div>
-
-</div>
-
-<span class="status ${statusClass(status)}">
-${escapeHtml(status)}
-</span>
-
-</div>
-
-<div
-style="
-margin-top:10px;
-"
->
-
-<div
-style="
-color:#7b8790;
-font-size:12px;
-"
->
 Selling price
 </div>
 
@@ -1357,6 +1367,12 @@ parts.quote ||
 
 </div>
 
+<span class="status ${statusClass(status)}">
+${escapeHtml(status)}
+</span>
+
+</div>
+
 <div class="offer-amount">
 
 Available:
@@ -1371,7 +1387,7 @@ formatAmount(offer)
 
 <div
 style="
-margin-top:8px;
+margin-top:9px;
 color:#596579;
 font-size:13px;
 "
@@ -1379,9 +1395,17 @@ font-size:13px;
 
 🏦 Bank Transfer
 
+${
+bankName
+?
+`
 <strong>
-→ ${escapeHtml(bankName)}
+· ${escapeHtml(bankName)}
 </strong>
+`
+:
+""
+}
 
 </div>
 
@@ -1415,6 +1439,21 @@ updateOfferButton();
 
 }
 
+function getPairSortKey(offer){
+
+const pair =
+String(
+offer?.pair ||
+offer?.trading_pair ||
+""
+)
+.trim()
+.toUpperCase();
+
+return pair || "USDT_ETB";
+
+}
+
 function getOfferCountry(
 offer,
 quoteCurrency
@@ -1423,10 +1462,8 @@ quoteCurrency
 const direct =
 offer?.country_name ||
 offer?.country ||
-offer?.payment_country_name ||
-offer?.payment_country ||
 offer?.countryName ||
-"";
+offer?.payment_country_name;
 
 if(direct){
 
@@ -1434,32 +1471,87 @@ return String(direct);
 
 }
 
-const currency =
+const countries = {
+
+ETB:"Ethiopia",
+NGN:"Nigeria",
+KES:"Kenya",
+UGX:"Uganda",
+TZS:"Tanzania",
+GHS:"Ghana",
+ZAR:"South Africa",
+EGP:"Egypt",
+MAD:"Morocco",
+AED:"United Arab Emirates",
+SAR:"Saudi Arabia",
+INR:"India",
+PKR:"Pakistan",
+BDT:"Bangladesh",
+IDR:"Indonesia",
+MYR:"Malaysia",
+THB:"Thailand",
+PHP:"Philippines",
+VND:"Vietnam",
+TRY:"Türkiye",
+USD:"United States",
+CAD:"Canada",
+GBP:"United Kingdom",
+AUD:"Australia",
+NZD:"New Zealand",
+BRL:"Brazil",
+MXN:"Mexico",
+ARS:"Argentina",
+COP:"Colombia",
+JPY:"Japan",
+KRW:"South Korea",
+SGD:"Singapore",
+CHF:"Switzerland"
+
+};
+
+return countries[
 String(
 quoteCurrency ||
 ""
-)
-.trim()
-.toUpperCase();
-
-return COUNTRY_BY_CURRENCY[currency] ||
-"Country";
+).toUpperCase()
+] ||
+"";
 
 }
 
 function getOfferBankName(offer){
 
-const value =
+return (
 offer?.bank_name ||
 offer?.bankName ||
-offer?.bank ||
-offer?.account_bank_name ||
-offer?.payment_bank_name ||
 offer?.payment_details?.bank_name ||
 offer?.payment_details?.bankName ||
-"Bank name";
+""
+);
 
-return String(value);
+}
+
+function getOfferAccountName(offer){
+
+return (
+offer?.account_name ||
+offer?.accountName ||
+offer?.payment_details?.account_name ||
+offer?.payment_details?.accountName ||
+""
+);
+
+}
+
+function getOfferAccountNumber(offer){
+
+return (
+offer?.account_number ||
+offer?.accountNumber ||
+offer?.payment_details?.account_number ||
+offer?.payment_details?.accountNumber ||
+""
+);
 
 }
 
@@ -1903,6 +1995,16 @@ getOfferBankName(
 selectedOffer
 );
 
+const accountName =
+getOfferAccountName(
+selectedOffer
+);
+
+const accountNumber =
+getOfferAccountNumber(
+selectedOffer
+);
+
 document.getElementById(
 "tradeSummary"
 ).innerHTML = `
@@ -1917,10 +2019,16 @@ ${detail(
 username
 )}
 
-${detail(
+${
+country
+?
+detail(
 "Country",
 country
-)}
+)
+:
+""
+}
 
 ${detail(
 "Pair",
@@ -1948,11 +2056,58 @@ selectedOffer
 )
 )}
 
-${detail(
-"Payment",
-"🏦 Bank Transfer → " +
+<div
+style="
+margin-top:12px;
+padding-top:12px;
+border-top:1px solid #e5ebec;
+"
+>
+
+<div
+style="
+font-weight:bold;
+color:#087f73;
+margin-bottom:9px;
+"
+>
+🏦 Bank Transfer
+</div>
+
+${
 bankName
-)}
+?
+detail(
+"Bank Name",
+bankName
+)
+:
+""
+}
+
+${
+accountName
+?
+detail(
+"Account Name",
+accountName
+)
+:
+""
+}
+
+${
+accountNumber
+?
+detail(
+"Account Number",
+accountNumber
+)
+:
+""
+}
+
+</div>
 
 </div>
 
@@ -2756,18 +2911,12 @@ if(
 pair.includes("/")
 ){
 
-return pair
-.split("/")
-.map(
-part =>
-part.trim()
-)
-.join(" / ");
+return pair;
 
 }
 
 return pair ||
-"USDT / ETB";
+"P2P";
 
 }
 
@@ -2801,48 +2950,30 @@ parts.base ||
 
 function getPairParts(pair){
 
-const raw =
+const normalized =
 String(
 pair ||
 ""
-).trim();
+)
+.trim()
+.toUpperCase()
+.replace(
+"/",
+"_"
+);
 
-let parts;
-
-if(
-raw.includes("_")
-){
-
-parts =
-raw.split("_");
-
-}else if(
-raw.includes("/")
-){
-
-parts =
-raw.split("/");
-
-}else{
-
-parts =
-["USDT","ETB"];
-
-}
+const parts =
+normalized.split("_");
 
 return {
 
 base:
-String(
 parts[0] ||
-"USDT"
-).trim().toUpperCase(),
+"USDT",
 
 quote:
-String(
 parts[1] ||
 "ETB"
-).trim().toUpperCase()
 
 };
 

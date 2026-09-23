@@ -259,6 +259,14 @@ display:flex;justify-content:space-between;align-items:center;margin-bottom:15px
 .verify-status{padding:12px;border-radius:12px;background:#f5f7fb;font-size:13px;margin-bottom:14px}
 .verify-status strong{color:#087f73}
 .verify-form{display:flex;flex-direction:column;gap:10px}
+.verify-label{font-size:12px;font-weight:bold}
+.verify-input{
+width:100%;border:1px solid #dfe4eb;border-radius:10px;
+padding:12px;outline:none;font-size:14px
+}
+.verify-note{
+font-size:11px;color:#7a8494;line-height:1.4
+}
 .verify-submit{
 border:none;background:#087f73;color:white;padding:12px;
 border-radius:10px;font-weight:bold;cursor:pointer
@@ -438,7 +446,7 @@ Logged in as:
 <button class="quick-card" onclick="openVerifyIdentity()">
 <div class="quick-card-icon">🪪</div>
 <div class="quick-card-title">Verify identity</div>
-<div class="quick-card-text">Contact @P2P_Social_Admin in Messages</div>
+<div class="quick-card-text">Send verification request through Messages</div>
 </button>
 
 <button class="quick-card" onclick="openReferral()">
@@ -497,7 +505,7 @@ Logged in as:
 
 <span class="see-all" onclick="loadPosts(true)">🔃 Refresh</span>
 
-<button class="create-post-btn" onclick="openCreatePost()">
+<button class="create-post-btn" onclick="openCreatePost">
 Post
 </button>
 
@@ -528,19 +536,39 @@ onclick="loadMorePosts()" style="display:none;">
 </div>
 
 <div class="verify-text">
-For identity verification, contact @P2P_Social_Admin through P2P Social Messages.
-Your verification request will be handled by the support team.
+Choose the P2P Social user who will receive your verification request.
+The request will be sent to that user's Messages conversation.
 </div>
 
 <div class="verify-status">
-Status:
-<strong id="verificationStatus">Contact support</strong>
+Your status:
+<strong id="verificationStatus">Unverified</strong>
 </div>
 
 <div class="verify-form">
 
-<button class="verify-submit" onclick="openVerificationSupport()">
-💬 Contact @P2P_Social_Admin
+<label class="verify-label">
+User to verify you
+</label>
+
+<input
+id="verificationUsername"
+class="verify-input"
+type="text"
+maxlength="50"
+autocomplete="off"
+placeholder="@username">
+
+<div class="verify-note">
+The selected user will receive your verification request in Messages
+and can approve or reject it.
+</div>
+
+<button
+id="verificationRequestBtn"
+class="verify-submit"
+onclick="sendVerificationRequest()">
+Send Verification Request
 </button>
 
 </div>
@@ -1256,6 +1284,8 @@ if(!requireLogin())return;
 
 document.getElementById("verifyModal").style.display="flex";
 
+document.getElementById("verificationUsername").value="";
+
 updateVerificationStatus();
 
 }
@@ -1307,17 +1337,188 @@ formatStatus(result.data.status);
 
 }else{
 
-statusElement.textContent="Contact @P2P_Social_Admin";
+statusElement.textContent="Unverified";
 
 }
 
 }
 
-function openVerificationSupport(){
+async function sendVerificationRequest(){
 
-closeVerifyIdentity();
+if(!requireLogin())return;
 
-openAdminMessage("verification");
+const input=
+document.getElementById("verificationUsername");
+
+const button=
+document.getElementById("verificationRequestBtn");
+
+let username=
+String(input?.value||"")
+.trim()
+.replace(/^@/,"")
+.trim();
+
+if(!username){
+
+alert("Enter the username.");
+return;
+
+}
+
+const myUsername=
+String(
+currentProfile?.username||
+currentSession.user.user_metadata?.username||
+""
+)
+.trim()
+.replace(/^@/,"");
+
+if(
+myUsername&&
+username.toLowerCase()===myUsername.toLowerCase()
+){
+
+alert("You cannot send a verification request to yourself.");
+return;
+
+}
+
+button.disabled=true;
+button.textContent="Sending...";
+
+try{
+
+const{data:selectedUser,error:selectedUserError}=
+await supabaseClient
+.from("profiles")
+.select("id,username")
+.ilike("username",username)
+.maybeSingle();
+
+if(selectedUserError){
+
+console.error(
+"Verification user:",
+selectedUserError
+);
+
+alert(
+"Could not find the selected user: "+
+selectedUserError.message
+);
+
+return;
+
+}
+
+if(!selectedUser){
+
+alert("User not found.");
+return;
+
+}
+
+if(
+selectedUser.id===
+currentSession.user.id
+){
+
+alert("You cannot send a verification request to yourself.");
+return;
+
+}
+
+const{data:existing,error:existingError}=
+await supabaseClient
+.from("verification_requests")
+.select("id,status")
+.eq("requester_id",currentSession.user.id)
+.eq("selected_user_id",selectedUser.id)
+.eq("status","pending")
+.maybeSingle();
+
+if(existingError){
+
+console.error(
+"Verification request check:",
+existingError
+);
+
+alert(
+"Could not check existing verification request: "+
+existingError.message
+);
+
+return;
+
+}
+
+if(existing){
+
+window.location.href=
+"./message.html?user_id="+
+encodeURIComponent(selectedUser.id);
+
+return;
+
+}
+
+const{data:request,error:requestError}=
+await supabaseClient
+.from("verification_requests")
+.insert({
+requester_id:currentSession.user.id,
+selected_user_id:selectedUser.id
+})
+.select("id")
+.single();
+
+if(requestError){
+
+console.error(
+"Verification request:",
+requestError
+);
+
+alert(
+"Could not send verification request: "+
+requestError.message
+);
+
+return;
+
+}
+
+if(!request){
+
+alert("Verification request could not be created.");
+return;
+
+}
+
+window.location.href=
+"./message.html?user_id="+
+encodeURIComponent(selectedUser.id)+
+"&verification_request="+
+encodeURIComponent(request.id);
+
+}catch(error){
+
+console.error(
+"Verification request:",
+error
+);
+
+alert("Verification request could not be sent.");
+
+}finally{
+
+button.disabled=false;
+button.textContent="Send Verification Request";
+
+}
 
 }
 

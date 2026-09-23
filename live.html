@@ -675,7 +675,41 @@ let actionLoading = false;
 
 const usernameCache = new Map();
 
-const SUPPORTED_PAYMENT_METHOD = "bank_transfer";
+const COUNTRY_BY_CURRENCY = {
+ETB:"Ethiopia",
+NGN:"Nigeria",
+KES:"Kenya",
+UGX:"Uganda",
+TZS:"Tanzania",
+GHS:"Ghana",
+ZAR:"South Africa",
+EGP:"Egypt",
+MAD:"Morocco",
+AED:"United Arab Emirates",
+SAR:"Saudi Arabia",
+INR:"India",
+PKR:"Pakistan",
+BDT:"Bangladesh",
+IDR:"Indonesia",
+MYR:"Malaysia",
+THB:"Thailand",
+PHP:"Philippines",
+VND:"Vietnam",
+TRY:"Türkiye",
+USD:"United States",
+CAD:"Canada",
+GBP:"United Kingdom",
+AUD:"Australia",
+NZD:"New Zealand",
+BRL:"Brazil",
+MXN:"Mexico",
+ARS:"Argentina",
+COP:"Colombia",
+JPY:"Japan",
+KRW:"South Korea",
+SGD:"Singapore",
+CHF:"Switzerland"
+};
 
 document.addEventListener(
 "DOMContentLoaded",
@@ -988,32 +1022,6 @@ error
 
 }
 
-function isBankTransfer(offer){
-
-const value =
-String(
-offer?.payment_method ||
-offer?.payment ||
-""
-)
-.trim()
-.toLowerCase()
-.replace(
-/[\s-]+/g,
-"_"
-);
-
-return value ===
-SUPPORTED_PAYMENT_METHOD;
-
-}
-
-function getPaymentMethod(){
-
-return "Bank Transfer";
-
-}
-
 async function loadBuyMarket(){
 
 if(!currentUser){
@@ -1056,8 +1064,7 @@ await supabaseClient
 "status",
 [
 "active",
-"open",
-"pending"
+"open"
 ]
 )
 .gt(
@@ -1109,11 +1116,7 @@ String(
 currentUser.id
 )
 &&
-[
-"active",
-"open",
-"pending"
-].includes(
+["active","open"].includes(
 normalizeStatus(
 offer.status
 )
@@ -1122,10 +1125,6 @@ offer.status
 getOfferAvailableAmount(
 offer
 ) > 0
-&&
-isBankTransfer(
-offer
-)
 );
 
 await loadOfferUsernames();
@@ -1185,7 +1184,7 @@ container.innerHTML =
 emptyHtml(
 "🟢",
 "No available sell.",
-"Active Bank Transfer sellers will appear here."
+"Active sellers will appear here."
 );
 
 updateOfferButton();
@@ -1242,6 +1241,17 @@ offer.user_id
 ) ||
 "Seller";
 
+const country =
+getOfferCountry(
+offer,
+parts.quote
+);
+
+const bankName =
+getOfferBankName(
+offer
+);
+
 const card =
 document.createElement(
 "div"
@@ -1263,16 +1273,13 @@ card.innerHTML = `
 </div>
 
 <div class="offer-meta">
-🟢 ·
-${escapeHtml(
-formatPair(offer)
-)}
+🌍 ${escapeHtml(country)}
 </div>
 
 </div>
 
 <span class="offer-type">
-🟢 Sell
+🟢 Buy
 </span>
 
 </div>
@@ -1288,6 +1295,42 @@ margin-top:12px;
 >
 
 <div>
+
+<div
+style="
+color:#7b8790;
+font-size:12px;
+"
+>
+Pair
+</div>
+
+<div
+style="
+color:#172033;
+font-size:15px;
+font-weight:bold;
+margin-top:3px;
+"
+>
+${escapeHtml(
+formatPair(offer)
+)}
+</div>
+
+</div>
+
+<span class="status ${statusClass(status)}">
+${escapeHtml(status)}
+</span>
+
+</div>
+
+<div
+style="
+margin-top:10px;
+"
+>
 
 <div
 style="
@@ -1314,12 +1357,6 @@ parts.quote ||
 
 </div>
 
-<span class="status ${statusClass(status)}">
-${escapeHtml(status)}
-</span>
-
-</div>
-
 <div class="offer-amount">
 
 Available:
@@ -1340,10 +1377,10 @@ font-size:13px;
 "
 >
 
-💳 Payment:
+🏦 Bank Transfer
 
 <strong>
-Bank Transfer
+→ ${escapeHtml(bankName)}
 </strong>
 
 </div>
@@ -1375,6 +1412,54 @@ card
 );
 
 updateOfferButton();
+
+}
+
+function getOfferCountry(
+offer,
+quoteCurrency
+){
+
+const direct =
+offer?.country_name ||
+offer?.country ||
+offer?.payment_country_name ||
+offer?.payment_country ||
+offer?.countryName ||
+"";
+
+if(direct){
+
+return String(direct);
+
+}
+
+const currency =
+String(
+quoteCurrency ||
+""
+)
+.trim()
+.toUpperCase();
+
+return COUNTRY_BY_CURRENCY[currency] ||
+"Country";
+
+}
+
+function getOfferBankName(offer){
+
+const value =
+offer?.bank_name ||
+offer?.bankName ||
+offer?.bank ||
+offer?.account_bank_name ||
+offer?.payment_bank_name ||
+offer?.payment_details?.bank_name ||
+offer?.payment_details?.bankName ||
+"Bank name";
+
+return String(value);
 
 }
 
@@ -1539,7 +1624,7 @@ throw new Error(
 }
 
 const orderMessage =
-"🟢 P2P Buy started. Please complete the payment for this trade.";
+"🟢 P2P Buy started. Please complete the payment for this order.";
 
 const {
 data:existingMessage,
@@ -1624,11 +1709,6 @@ params.set(
 String(tradeId)
 );
 
-params.set(
-"user_id",
-String(sellerId)
-);
-
 if(username){
 
 params.set(
@@ -1650,7 +1730,7 @@ error
 );
 
 toast(
-"Trade started, but the P2P trade message could not be created: " +
+"Trade started, but the P2P order message could not be created: " +
 getErrorMessage(error),
 "error"
 );
@@ -1752,26 +1832,7 @@ return;
 }
 
 if(
-!isBankTransfer(
-selectedOffer
-)
-){
-
-toast(
-"Only Bank Transfer is supported.",
-"warning"
-);
-
-return;
-
-}
-
-if(
-![
-"active",
-"open",
-"pending"
-].includes(
+!["active","open"].includes(
 normalizeStatus(
 selectedOffer.status
 )
@@ -1831,6 +1892,17 @@ selectedOffer.user_id
 ) ||
 "Seller";
 
+const country =
+getOfferCountry(
+selectedOffer,
+parts.quote
+);
+
+const bankName =
+getOfferBankName(
+selectedOffer
+);
+
 document.getElementById(
 "tradeSummary"
 ).innerHTML = `
@@ -1843,6 +1915,11 @@ style="margin-bottom:12px;"
 ${detail(
 "Seller",
 username
+)}
+
+${detail(
+"Country",
+country
 )}
 
 ${detail(
@@ -1873,7 +1950,8 @@ selectedOffer
 
 ${detail(
 "Payment",
-"Bank Transfer"
+"🏦 Bank Transfer → " +
+bankName
 )}
 
 </div>
@@ -2108,21 +2186,6 @@ return;
 
 }
 
-if(
-!isBankTransfer(
-selectedOffer
-)
-){
-
-toast(
-"Only Bank Transfer is supported.",
-"warning"
-);
-
-return;
-
-}
-
 let freshOffer =
 null;
 
@@ -2207,25 +2270,6 @@ return;
 }
 
 if(
-!isBankTransfer(
-selectedOffer
-)
-){
-
-toast(
-"Only Bank Transfer is supported.",
-"warning"
-);
-
-closeModal(
-"tradeModal"
-);
-
-return;
-
-}
-
-if(
 String(
 selectedOffer.user_id
 ) ===
@@ -2255,8 +2299,7 @@ selectedOffer.status
 if(
 ![
 "active",
-"open",
-"pending"
+"open"
 ].includes(status)
 ){
 
@@ -2713,7 +2756,13 @@ if(
 pair.includes("/")
 ){
 
-return pair;
+return pair
+.split("/")
+.map(
+part =>
+part.trim()
+)
+.join(" / ");
 
 }
 
@@ -2752,30 +2801,48 @@ parts.base ||
 
 function getPairParts(pair){
 
-const value =
+const raw =
 String(
 pair ||
 ""
-)
-.trim()
-.toUpperCase()
-.replace(
-"/",
-"_"
-);
+).trim();
 
-const parts =
-value.split("_");
+let parts;
+
+if(
+raw.includes("_")
+){
+
+parts =
+raw.split("_");
+
+}else if(
+raw.includes("/")
+){
+
+parts =
+raw.split("/");
+
+}else{
+
+parts =
+["USDT","ETB"];
+
+}
 
 return {
 
 base:
+String(
 parts[0] ||
-"USDT",
+"USDT"
+).trim().toUpperCase(),
 
 quote:
+String(
 parts[1] ||
 "ETB"
+).trim().toUpperCase()
 
 };
 
@@ -2827,8 +2894,7 @@ if(
 "active",
 "open",
 "paid",
-"payment_confirmed",
-"pending"
+"payment_confirmed"
 ].includes(value)
 ){
 

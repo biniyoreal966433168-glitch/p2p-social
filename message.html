@@ -154,12 +154,9 @@ let recordingTimer=null;
 
 function runOnce(action){
   if(actionLock)return;
-
   actionLock=true;
-
   try{
     const r=action();
-
     if(r&&typeof r.finally==="function"){
       r.finally(()=>{
         setTimeout(()=>{
@@ -171,7 +168,6 @@ function runOnce(action){
   }catch(e){
     console.error(e);
   }
-
   setTimeout(()=>{
     actionLock=false;
   },350);
@@ -179,12 +175,9 @@ function runOnce(action){
 
 function showToast(message){
   const t=document.getElementById("toast");
-
   t.textContent=message;
   t.classList.add("show");
-
   clearTimeout(showToast.timer);
-
   showToast.timer=setTimeout(()=>{
     t.classList.remove("show");
   },2500);
@@ -395,9 +388,7 @@ function searchUsers(){
     if(error){
       searchResults.innerHTML=
         '<div class="loading">Search failed.</div>';
-
       searchResults.style.display="block";
-
       showActionNotification(false,"User search failed");
       return;
     }
@@ -410,7 +401,6 @@ function searchUsers(){
     }else{
       data.forEach(p=>{
         const u=normalizeUsername(p.username)||"User";
-
         const x=document.createElement("div");
 
         x.className="search-user";
@@ -484,7 +474,6 @@ async function startConversation(p){
     }
 
     c=r.data;
-
     showActionNotification(true,"Conversation created");
   }
 
@@ -518,7 +507,7 @@ async function openConversation(c,p){
   closeNotificationPanel();
   cancelEdit();
   clearPhoto();
-  closeOrderPanel();
+  hideOrderPanel();
 
   await loadMessages();
   await markConversationAsRead();
@@ -536,7 +525,6 @@ async function openConversation(c,p){
 
 function openUserProfileByUsername(u){
   const c=normalizeUsername(u);
-
   if(c)
     location.href=
       "profile.html?username="+encodeURIComponent(c);
@@ -616,7 +604,6 @@ function renderMessage(m){
 
   if(type==="photo"){
     const i=document.createElement("img");
-
     i.className="message-photo";
     i.src=m.media_url||"";
     i.alt="Photo";
@@ -630,10 +617,8 @@ function renderMessage(m){
 
     if(m.content){
       const c=document.createElement("div");
-
       c.style.marginTop="7px";
       c.textContent=m.content;
-
       b.appendChild(c);
     }
   }
@@ -643,7 +628,6 @@ function renderMessage(m){
     v.className="voice-message";
 
     const a=document.createElement("audio");
-
     a.controls=true;
     a.preload="metadata";
     a.src=m.media_url||"";
@@ -654,7 +638,6 @@ function renderMessage(m){
 
   else if(type==="order"){
     const card=document.createElement("div");
-
     card.className="order-message-card";
     card.setAttribute("role","button");
     card.setAttribute("tabindex","0");
@@ -683,7 +666,6 @@ function renderMessage(m){
       }
 
       openOrderPanel();
-
       showActionNotification(true,"P2P order opened");
     };
 
@@ -703,9 +685,7 @@ function renderMessage(m){
 
   else{
     const t=document.createElement("div");
-
     t.textContent=m.content||"";
-
     b.appendChild(t);
   }
 
@@ -720,10 +700,8 @@ function renderMessage(m){
 
   if(m.edited_at){
     const e=document.createElement("span");
-
     e.className="message-edited";
     e.textContent="edited";
-
     tm.appendChild(e);
   }
 
@@ -731,11 +709,9 @@ function renderMessage(m){
 
   if(type!=="voice"&&type!=="order"){
     const ac=document.createElement("div");
-
     ac.className="message-actions";
 
     const cp=document.createElement("button");
-
     cp.className="message-action";
     cp.textContent="📋 Copy";
 
@@ -748,7 +724,6 @@ function renderMessage(m){
 
     if(m.sender_id===currentUser.id&&type==="text"){
       const ed=document.createElement("button");
-
       ed.className="message-action";
       ed.textContent="✏️ Edit";
 
@@ -760,7 +735,6 @@ function renderMessage(m){
       ac.appendChild(ed);
 
       const dl=document.createElement("button");
-
       dl.className="message-action";
       dl.textContent="🗑️ Delete";
 
@@ -840,15 +814,10 @@ async function copyText(t){
     await navigator.clipboard.writeText(t);
   }catch{
     const a=document.createElement("textarea");
-
     a.value=t;
-
     document.body.appendChild(a);
-
     a.select();
-
     document.execCommand("copy");
-
     a.remove();
   }
 
@@ -857,11 +826,8 @@ async function copyText(t){
 
 function beginEdit(m){
   editingMessageId=m.id;
-
   messageInput.value=m.content||"";
-
   editBar.classList.add("show");
-
   messageInput.focus();
 
   messageInput.setSelectionRange(
@@ -902,13 +868,10 @@ async function updateMessage(){
   }
 
   messageInput.value="";
-
   cancelEdit();
-
   await loadMessages();
 
   showActionNotification(true,"Message edited");
-
   return true;
 }
 
@@ -929,7 +892,6 @@ async function deleteMessage(id){
   }
 
   await loadMessages();
-
   showActionNotification(true,"Message deleted");
 }
 
@@ -980,7 +942,6 @@ async function sendMessage(){
 
   await loadMessages();
   await updateUnreadCount();
-
   scrollMessages();
 
   showActionNotification(true,"Message sent");
@@ -999,9 +960,8 @@ async function sendTradeSystemMessage(content){
     .order("created_at",{ascending:false})
     .limit(1);
 
-  if(checkError){
+  if(checkError)
     console.error(checkError);
-  }
 
   if(existing?.length)
     return true;
@@ -1159,17 +1119,15 @@ function orderTotalCurrency(o){
     linked?.price!=null&&
     Number.isFinite(amount)&&
     Number.isFinite(price)
-  ){
+  )
     return amount*price;
-  }
 
   if(
     o?.buyer_id&&
     o?.amount!=null&&
     Number.isFinite(Number(o.amount))
-  ){
+  )
     return Number(o.amount);
-  }
 
   if(
     Number.isFinite(amount)&&
@@ -1294,14 +1252,12 @@ function renderOrder(o){
 
   c.innerHTML=
     '<div class="order-card">'+
-
       '<div class="order-line">'+
         '<span class="order-label">Order Number</span>'+
         '<span class="order-value">#'+
           escapeHTML(String(orderNumber(o)))+
         '</span>'+
       '</div>'+
-
       '<div class="order-line">'+
         '<span class="order-label">USDT Amount</span>'+
         '<span class="order-value">'+
@@ -1309,7 +1265,6 @@ function renderOrder(o){
           ' USDT'+
         '</span>'+
       '</div>'+
-
       '<div class="order-line">'+
         '<span class="order-label">Currency Price</span>'+
         '<span class="order-value">'+
@@ -1318,7 +1273,6 @@ function renderOrder(o){
           '/USDT'+
         '</span>'+
       '</div>'+
-
       '<div class="order-line">'+
         '<span class="order-label">Total Currency</span>'+
         '<span class="order-value">'+
@@ -1326,21 +1280,18 @@ function renderOrder(o){
           ' '+escapeHTML(currency)+
         '</span>'+
       '</div>'+
-
       '<div class="order-line">'+
         '<span class="order-label">Bank / Payment Detail</span>'+
         '<span class="order-value">'+
           escapeHTML(String(paymentDetail))+
         '</span>'+
       '</div>'+
-
       '<div class="order-line">'+
         '<span class="order-label">Type</span>'+
         '<span class="order-value">'+
           escapeHTML(orderType(o))+
         '</span>'+
       '</div>'+
-
       (pair?
         '<div class="order-line">'+
           '<span class="order-label">Pair</span>'+
@@ -1349,21 +1300,18 @@ function renderOrder(o){
           '</span>'+
         '</div>'
       :"")+
-
       '<div class="order-line">'+
         '<span class="order-label">Status</span>'+
         '<span class="order-status">'+
           escapeHTML(s)+
         '</span>'+
       '</div>'+
-
       '<div class="order-actions">'+
         (
           buttons||
           '<span class="order-label">No action available.</span>'
         )+
       '</div>'+
-
     '</div>';
 }
 
@@ -1376,7 +1324,7 @@ function openOrderPanel(){
   showActionNotification(true,"Trade status opened");
 }
 
-function closeOrderPanel(){
+function hideOrderPanel(){
   orderPanel.classList.remove("show");
 }
 
@@ -1605,9 +1553,8 @@ function openDisputeInfo(){
 function subscribeOrderRealtime(){
   if(!currentConversation)return;
 
-  if(orderChannel){
+  if(orderChannel)
     supabaseClient.removeChannel(orderChannel);
-  }
 
   orderChannel=supabaseClient
     .channel(
@@ -1627,8 +1574,7 @@ function subscribeOrderRealtime(){
         await loadConversationOrder();
 
         if(payload?.eventType==="UPDATE"){
-          const status=
-            payload?.new?.status;
+          const status=payload?.new?.status;
 
           if(status){
             showActionNotification(
@@ -1650,8 +1596,7 @@ function subscribeOrderRealtime(){
         await loadConversationOrder();
 
         if(payload?.eventType==="UPDATE"){
-          const status=
-            payload?.new?.status;
+          const status=payload?.new?.status;
 
           if(status){
             showActionNotification(
@@ -1701,7 +1646,6 @@ function handlePhotoSelected(e){
       false,
       "Please select an image"
     );
-
     e.target.value="";
     return;
   }
@@ -1711,7 +1655,6 @@ function handlePhotoSelected(e){
       false,
       "Photo must be 10 MB or smaller"
     );
-
     e.target.value="";
     return;
   }
@@ -1737,11 +1680,8 @@ function handlePhotoSelected(e){
 
 function clearPhoto(){
   selectedPhoto=null;
-
   photoInput.value="";
-
   mediaPreview.classList.remove("show");
-
   previewImage.src="";
 }
 
@@ -1808,7 +1748,6 @@ async function sendPhotoMessage(){
     if(error)throw error;
 
     messageInput.value="";
-
     clearPhoto();
 
     await loadMessages();
@@ -2213,7 +2152,6 @@ function updateUnreadUI(n){
   if(v){
     titleUnread.textContent=t;
     titleUnread.style.display="inline-flex";
-
     messagesNavBadge.textContent=t;
     messagesNavBadge.style.display="inline-flex";
   }else{
@@ -2262,7 +2200,6 @@ async function loadNotifications(){
       '<div class="notification-empty">'+
       'Could not load notifications.'+
       '</div>';
-
     return;
   }
 
@@ -2275,7 +2212,6 @@ async function loadNotifications(){
       '</div>';
 
     updateNotificationBadge([]);
-
     return;
   }
 
@@ -2303,9 +2239,7 @@ async function renderNotification(n,list){
     ).data;
   }
 
-  const u=normalizeUsername(
-    p?.username
-  );
+  const u=normalizeUsername(p?.username);
 
   const x=document.createElement("div");
 
@@ -2671,7 +2605,6 @@ function messageKey(e){
     !e.shiftKey
   ){
     e.preventDefault();
-
     runOnce(sendMessage);
   }
 }
@@ -2838,7 +2771,7 @@ chatMore.onclick=
   ()=>runOnce(openOrderPanel);
 
 closeOrderPanel.onclick=
-  closeOrderPanel;
+  hideOrderPanel;
 
 sendMessageButton.onclick=
   ()=>runOnce(sendMessage);

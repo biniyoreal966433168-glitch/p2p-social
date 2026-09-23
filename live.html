@@ -675,6 +675,8 @@ let actionLoading = false;
 
 const usernameCache = new Map();
 
+const SUPPORTED_PAYMENT_METHOD = "bank_transfer";
+
 document.addEventListener(
 "DOMContentLoaded",
 startApp
@@ -986,6 +988,32 @@ error
 
 }
 
+function isBankTransfer(offer){
+
+const value =
+String(
+offer?.payment_method ||
+offer?.payment ||
+""
+)
+.trim()
+.toLowerCase()
+.replace(
+/[\s-]+/g,
+"_"
+);
+
+return value ===
+SUPPORTED_PAYMENT_METHOD;
+
+}
+
+function getPaymentMethod(){
+
+return "Bank Transfer";
+
+}
+
 async function loadBuyMarket(){
 
 if(!currentUser){
@@ -1028,7 +1056,8 @@ await supabaseClient
 "status",
 [
 "active",
-"open"
+"open",
+"pending"
 ]
 )
 .gt(
@@ -1080,7 +1109,11 @@ String(
 currentUser.id
 )
 &&
-["active","open"].includes(
+[
+"active",
+"open",
+"pending"
+].includes(
 normalizeStatus(
 offer.status
 )
@@ -1089,6 +1122,10 @@ offer.status
 getOfferAvailableAmount(
 offer
 ) > 0
+&&
+isBankTransfer(
+offer
+)
 );
 
 await loadOfferUsernames();
@@ -1148,7 +1185,7 @@ container.innerHTML =
 emptyHtml(
 "🟢",
 "No available sell.",
-"Active sellers will appear here."
+"Active Bank Transfer sellers will appear here."
 );
 
 updateOfferButton();
@@ -1235,7 +1272,7 @@ formatPair(offer)
 </div>
 
 <span class="offer-type">
-🟢 Buy
+🟢 Sell
 </span>
 
 </div>
@@ -1295,11 +1332,6 @@ formatAmount(offer)
 
 </div>
 
-${
-offer.payment_method ||
-offer.payment
-?
-`
 <div
 style="
 margin-top:8px;
@@ -1311,17 +1343,10 @@ font-size:13px;
 💳 Payment:
 
 <strong>
-${escapeHtml(
-offer.payment_method ||
-offer.payment
-)}
+Bank Transfer
 </strong>
 
 </div>
-`
-:
-""
-}
 
 <button
 type="button"
@@ -1514,7 +1539,7 @@ throw new Error(
 }
 
 const orderMessage =
-"🟢 P2P Buy started. Please complete the payment for this order.";
+"🟢 P2P Buy started. Please complete the payment for this trade.";
 
 const {
 data:existingMessage,
@@ -1599,6 +1624,11 @@ params.set(
 String(tradeId)
 );
 
+params.set(
+"user_id",
+String(sellerId)
+);
+
 if(username){
 
 params.set(
@@ -1620,7 +1650,7 @@ error
 );
 
 toast(
-"Trade started, but the P2P order message could not be created: " +
+"Trade started, but the P2P trade message could not be created: " +
 getErrorMessage(error),
 "error"
 );
@@ -1722,7 +1752,26 @@ return;
 }
 
 if(
-!["active","open"].includes(
+!isBankTransfer(
+selectedOffer
+)
+){
+
+toast(
+"Only Bank Transfer is supported.",
+"warning"
+);
+
+return;
+
+}
+
+if(
+![
+"active",
+"open",
+"pending"
+].includes(
 normalizeStatus(
 selectedOffer.status
 )
@@ -1822,18 +1871,10 @@ selectedOffer
 )
 )}
 
-${
-selectedOffer.payment_method ||
-selectedOffer.payment
-?
-detail(
+${detail(
 "Payment",
-selectedOffer.payment_method ||
-selectedOffer.payment
-)
-:
-""
-}
+"Bank Transfer"
+)}
 
 </div>
 
@@ -2067,6 +2108,21 @@ return;
 
 }
 
+if(
+!isBankTransfer(
+selectedOffer
+)
+){
+
+toast(
+"Only Bank Transfer is supported.",
+"warning"
+);
+
+return;
+
+}
+
 let freshOffer =
 null;
 
@@ -2151,6 +2207,25 @@ return;
 }
 
 if(
+!isBankTransfer(
+selectedOffer
+)
+){
+
+toast(
+"Only Bank Transfer is supported.",
+"warning"
+);
+
+closeModal(
+"tradeModal"
+);
+
+return;
+
+}
+
+if(
 String(
 selectedOffer.user_id
 ) ===
@@ -2180,7 +2255,8 @@ selectedOffer.status
 if(
 ![
 "active",
-"open"
+"open",
+"pending"
 ].includes(status)
 ){
 
@@ -2633,8 +2709,16 @@ return pair.replace(
 
 }
 
+if(
+pair.includes("/")
+){
+
+return pair;
+
+}
+
 return pair ||
-"P2P";
+"USDT / ETB";
 
 }
 
@@ -2668,21 +2752,30 @@ parts.base ||
 
 function getPairParts(pair){
 
-const parts =
+const value =
 String(
 pair ||
 ""
-).split("_");
+)
+.trim()
+.toUpperCase()
+.replace(
+"/",
+"_"
+);
+
+const parts =
+value.split("_");
 
 return {
 
 base:
 parts[0] ||
-"",
+"USDT",
 
 quote:
 parts[1] ||
-""
+"ETB"
 
 };
 
@@ -2734,7 +2827,8 @@ if(
 "active",
 "open",
 "paid",
-"payment_confirmed"
+"payment_confirmed",
+"pending"
 ].includes(value)
 ){
 

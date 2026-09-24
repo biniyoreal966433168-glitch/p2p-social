@@ -818,7 +818,8 @@ async function loadSellMarket(){
       .order(
         "price",
         {
-          ascending:true
+          ascending:false,
+          nullsFirst:false
         }
       )
       .order(
@@ -853,26 +854,32 @@ async function loadSellMarket(){
     }
 
     availableOffers =
-      (data || []).filter(
-        offer =>
-          String(
-            offer.user_id
-          ) !==
-          String(
-            currentUser.id
-          ) &&
-          [
-            "active",
-            "open"
-          ].includes(
-            normalizeStatus(
-              offer.status
-            )
-          ) &&
-          getOfferAvailableAmount(
-            offer
-          ) > 0
-      );
+      (data || [])
+        .filter(
+          offer =>
+            String(
+              offer.user_id
+            ) !==
+            String(
+              currentUser.id
+            ) &&
+            [
+              "active",
+              "open"
+            ].includes(
+              normalizeStatus(
+                offer.status
+              )
+            ) &&
+            getOfferAvailableAmount(
+              offer
+            ) > 0
+        )
+        .sort(
+          (a,b) =>
+            (Number(b.price) || 0) -
+            (Number(a.price) || 0)
+        );
 
     await loadOfferUsernames();
 

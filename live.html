@@ -84,6 +84,28 @@ margin:auto;
 padding:18px
 }
 
+.search-box{
+background:#fff;
+border:1px solid #dfe7e9;
+border-radius:13px;
+padding:12px;
+margin-top:4px
+}
+
+.search-box input{
+width:100%;
+border:1px solid #dfe4eb;
+border-radius:10px;
+padding:11px;
+outline:none;
+font-size:14px
+}
+
+.search-box input:focus{
+border-color:#087f73;
+box-shadow:0 0 0 3px rgba(8,127,115,.08)
+}
+
 .section-title{
 display:flex;
 justify-content:space-between;
@@ -459,6 +481,20 @@ P2P <span>Social</span>
 
 <main class="container">
 
+<div class="search-box">
+
+<input
+id="usdtSearch"
+type="number"
+min="0"
+step="0.01"
+inputmode="decimal"
+placeholder="Search USDT Amount"
+oninput="searchUSDTAmount()"
+>
+
+</div>
+
 <div class="section-title">
 
 <h2>
@@ -662,6 +698,7 @@ let currentUser = null;
 let currentUsername = null;
 
 let availableOffers = [];
+let filteredOffers = [];
 let selectedOffer = null;
 
 let offersExpanded = false;
@@ -1054,6 +1091,7 @@ error
 );
 
 availableOffers = [];
+filteredOffers = [];
 
 if(container){
 
@@ -1091,7 +1129,6 @@ offer
 ) > 0
 );
 
-/* USDT PRICE: LOWEST → HIGHEST */
 availableOffers.sort(
 (a,b) => {
 
@@ -1166,19 +1203,7 @@ timeA
 
 await loadOfferUsernames();
 
-const count =
-document.getElementById(
-"offerCount"
-);
-
-if(count){
-
-count.textContent =
-availableOffers.length;
-
-}
-
-renderBuyMarket();
+searchUSDTAmount();
 
 }catch(error){
 
@@ -1206,6 +1231,58 @@ isLoading = false;
 
 }
 
+function searchUSDTAmount(){
+
+const input =
+document.getElementById(
+"usdtSearch"
+);
+
+const value =
+Number(
+input?.value
+);
+
+if(
+input &&
+input.value.trim() !== "" &&
+Number.isFinite(value) &&
+value > 0
+){
+
+filteredOffers =
+availableOffers.filter(
+offer =>
+getOfferAvailableAmount(
+offer
+) >= value
+);
+
+}else{
+
+filteredOffers =
+[...availableOffers];
+
+}
+
+offersExpanded = false;
+
+const count =
+document.getElementById(
+"offerCount"
+);
+
+if(count){
+
+count.textContent =
+filteredOffers.length;
+
+}
+
+renderBuyMarket();
+
+}
+
 function renderBuyMarket(){
 
 const container =
@@ -1215,7 +1292,23 @@ document.getElementById(
 
 if(!container)return;
 
-if(!availableOffers.length){
+if(!filteredOffers.length){
+
+const searchValue =
+document.getElementById(
+"usdtSearch"
+)?.value.trim();
+
+if(searchValue){
+
+container.innerHTML =
+emptyHtml(
+"🔎",
+"No sell available for this USDT amount.",
+"Try a smaller USDT amount."
+);
+
+}else{
 
 container.innerHTML =
 emptyHtml(
@@ -1223,6 +1316,8 @@ emptyHtml(
 "No available sell.",
 "Active sellers will appear here."
 );
+
+}
 
 updateOfferButton();
 
@@ -1236,9 +1331,9 @@ container.innerHTML =
 const items =
 offersExpanded
 ?
-availableOffers
+filteredOffers
 :
-availableOffers.slice(
+filteredOffers.slice(
 0,
 3
 );
@@ -1835,11 +1930,11 @@ document.getElementById(
 if(!button)return;
 
 if(
-availableOffers.length <= 3
+filteredOffers.length <= 3
 ){
 
 button.style.display =
-availableOffers.length
+filteredOffers.length
 ?
 "none"
 :

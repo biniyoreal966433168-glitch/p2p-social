@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Profile • P2P Social</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
@@ -80,6 +81,12 @@ header{background:linear-gradient(135deg,#075e54,#087f73);color:white;padding:14
 .deposit-btn{background:#16a085}
 .withdraw-btn{background:#c0392b}
 .transfer-btn{background:#087f73}
+
+.ton-wallet-box{background:rgba(255,255,255,.08);border-radius:12px;padding:12px;margin-top:12px}
+.ton-wallet-title{font-size:12px;font-weight:bold}
+.ton-wallet-address{font-size:11px;margin-top:7px;word-break:break-all;color:#b8fff1}
+.ton-wallet-status{font-size:11px;margin-top:7px;color:rgba(255,255,255,.72)}
+#ton-connect{margin-top:10px}
 
 .deposit-bonus-box{background:rgba(255,255,255,.08);border-radius:12px;padding:12px;margin-top:12px}
 .deposit-bonus-title{font-size:12px;font-weight:bold;margin-bottom:8px}
@@ -203,6 +210,7 @@ header{background:linear-gradient(135deg,#075e54,#087f73);color:white;padding:14
 .order-submit{width:100%;border:none;background:#087f73;color:white;padding:12px;border-radius:10px;font-weight:bold}
 .order-submit.sell-submit{background:#c0392b}
 .bank-modal-note{background:#f5f7fb;border-radius:11px;padding:11px;margin-bottom:12px;color:#596579;font-size:12px;line-height:1.5}
+.transfer-wallet-note{background:#e8f8f3;color:#087f73;border-radius:11px;padding:11px;margin-bottom:12px;font-size:12px;line-height:1.5}
 
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:68px;background:white;border-top:1px solid #ddd;display:flex;justify-content:space-around;align-items:center;z-index:2000}
 .nav-item{text-align:center;color:#777;font-size:11px;min-width:55px;cursor:pointer}
@@ -357,7 +365,7 @@ onchange="changeProfilePhoto(event)"
 <div class="wallet-header">
 
 <div class="wallet-label">
-USDT Balance • Username Account
+<span id="walletBalanceLabel">USDT Balance • Username Account</span>
 </div>
 
 <button
@@ -370,10 +378,28 @@ onclick="toggleBalanceVisibility()"
 
 </div>
 
+<div class="ton-wallet-box">
+
+<div class="ton-wallet-title">
+🔗 TON Wallet
+</div>
+
+<div id="ton-connect"></div>
+
+<div id="tonWalletStatus" class="ton-wallet-status">
+Wallet disconnected
+</div>
+
+<div id="tonWalletAddress" class="ton-wallet-address">
+No TON wallet connected
+</div>
+
+</div>
+
 <div class="wallet-balances">
 
 <div class="balance-box">
-<div class="balance-title">Available USDT</div>
+<div id="availableBalanceTitle" class="balance-title">Available USDT</div>
 <div id="usdtBalance" class="balance-value">Loading...</div>
 </div>
 
@@ -790,7 +816,7 @@ Close
 
 <div class="money-modal-info">
 
-Available USDT
+Available P2P USDT
 
 <div id="withdrawBalance" class="money-balance">
 0.00 USDT
@@ -862,6 +888,10 @@ Transfer using permanent username
 Loading username...
 </div>
 
+</div>
+
+<div id="transferWalletNote" class="transfer-wallet-note">
+Disconnected → Disconnected uses P2P Social internal USDT balance.
 </div>
 
 <label class="form-label">Recipient Username</label>
@@ -1216,9 +1246,22 @@ SUPABASE_URL,
 SUPABASE_PUBLISHABLE_KEY
 );
 
+const USDT_TON_MASTER=
+"EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs";
+
+const USDT_TON_DECIMALS=6;
+
+const TON_CONNECT_MANIFEST=
+"https://p2p-social.vercel.app/tonconnect-manifest.json";
+
+let tonConnectUI=null;
+let connectedTonWalletAddress="";
+let connectedWalletUSDTBalance=0;
+
 let currentSession=null;
 let currentProfile=null;
 
+let internalUSDTBalance=0;
 let currentUSDTBalance=0;
 let currentLockedUSDT=0;
 
@@ -1453,7 +1496,455 @@ String(b||"").trim().toLowerCase();
 
 }
 
+function shortenTonAddress(address){
+
+const value=
+String(address||"").trim();
+
+if(!value)return"";
+
+if(value.length<=20)return value;
+
+return value.slice(0,10)+
+"..."+
+value.slice(-8);
+
+}
+
+function getConnectedTonAddress(){
+
+if(
+tonConnectUI?.account?.address
+)
+return String(
+tonConnectUI.account.address
+).trim();
+
+if(connectedTonWalletAddress)
+return connectedTonWalletAddress;
+
+return"";
+
+}
+
+function isTonWalletConnected(){
+
+return Boolean(
+getConnectedTonAddress()
+);
+
+}
+
+async function initTonConnect(){
+
+if(
+tonConnectUI||
+!window.TON_CONNECT_UI||
+!window.TON_CONNECT_UI.TonConnectUI
+)
+return;
+
+try{
+
+tonConnectUI=
+new window.TON_CONNECT_UI.TonConnectUI({
+manifestUrl:
+TON_CONNECT_MANIFEST,
+buttonRootId:
+"ton-connect"
+});
+
+if(
+window.TON_CONNECT_UI.CHAIN?.MAINNET&&
+tonConnectUI.setConnectionNetwork
+){
+
+tonConnectUI.setConnectionNetwork(
+window.TON_CONNECT_UI.CHAIN.MAINNET
+);
+
+}
+
+tonConnectUI.onStatusChange(
+async wallet=>{
+
+if(wallet?.account?.address){
+
+connectedTonWalletAddress=
+String(
+wallet.account.address
+).trim();
+
+updateTonWalletUI();
+
+if(currentSession){
+
+await saveTonWalletAddress(
+connectedTonWalletAddress
+);
+
+}
+
+await loadConnectedWalletUSDTBalance();
+
+}else{
+
+const oldAddress=
+connectedTonWalletAddress;
+
+connectedTonWalletAddress="";
+connectedWalletUSDTBalance=0;
+
+updateTonWalletUI();
+renderUSDTBalance();
+
+if(
+currentSession&&
+oldAddress
+){
+
+await clearTonWalletAddress();
+
+}
+
+}
+
+}
+);
+
+if(tonConnectUI.account?.address){
+
+connectedTonWalletAddress=
+String(
+tonConnectUI.account.address
+).trim();
+
+}
+
+updateTonWalletUI();
+
+}catch(error){
+
+console.error(
+"TON Connect initialization failed:",
+error
+);
+
+const status=
+document.getElementById(
+"tonWalletStatus"
+);
+
+if(status)
+status.textContent=
+"TON wallet connection unavailable.";
+
+}
+
+}
+
+function updateTonWalletUI(){
+
+const status=
+document.getElementById(
+"tonWalletStatus"
+);
+
+const address=
+document.getElementById(
+"tonWalletAddress"
+);
+
+const label=
+document.getElementById(
+"walletBalanceLabel"
+);
+
+const balanceTitle=
+document.getElementById(
+"availableBalanceTitle"
+);
+
+if(!status||!address)return;
+
+const walletAddress=
+getConnectedTonAddress();
+
+if(walletAddress){
+
+status.textContent=
+"Tonkeeper connected • TON Mainnet";
+
+address.textContent=
+shortenTonAddress(
+walletAddress
+);
+
+if(label)
+label.textContent=
+"USDT Balance • Connected TON Wallet";
+
+if(balanceTitle)
+balanceTitle.textContent=
+"Available USDT • TON Wallet";
+
+}else{
+
+status.textContent=
+"Wallet disconnected";
+
+address.textContent=
+"No TON wallet connected";
+
+if(label)
+label.textContent=
+"USDT Balance • Username Account";
+
+if(balanceTitle)
+balanceTitle.textContent=
+"Available USDT";
+
+}
+
+}
+
+async function saveTonWalletAddress(address){
+
+if(
+!currentSession||
+!address
+)
+return false;
+
+let {error}=
+await supabaseClient
+.from("profiles")
+.update({
+ton_wallet_address:address
+})
+.eq(
+"id",
+currentSession.user.id
+);
+
+if(error){
+
+const fallback=
+await supabaseClient
+.from("profiles")
+.update({
+ton_wallet_address:address
+})
+.eq(
+"user_id",
+currentSession.user.id
+);
+
+error=
+fallback.error;
+
+}
+
+if(error){
+
+console.error(
+"TON wallet address save failed:",
+error
+);
+
+return false;
+
+}
+
+if(currentProfile)
+currentProfile.ton_wallet_address=
+address;
+
+return true;
+
+}
+
+async function clearTonWalletAddress(){
+
+if(!currentSession)
+return false;
+
+let {error}=
+await supabaseClient
+.from("profiles")
+.update({
+ton_wallet_address:null
+})
+.eq(
+"id",
+currentSession.user.id
+);
+
+if(error){
+
+const fallback=
+await supabaseClient
+.from("profiles")
+.update({
+ton_wallet_address:null
+})
+.eq(
+"user_id",
+currentSession.user.id
+);
+
+error=
+fallback.error;
+
+}
+
+if(error){
+
+console.error(
+"TON wallet address clear failed:",
+error
+);
+
+return false;
+
+}
+
+if(currentProfile)
+currentProfile.ton_wallet_address=null;
+
+return true;
+
+}
+
+function parseUSDTBalanceFromTonApi(data){
+
+if(!data)
+return 0;
+
+if(
+data.balance!==undefined&&
+data.balance!==null
+){
+
+const value=
+Number(data.balance)/(
+10**USDT_TON_DECIMALS
+);
+
+return Number.isFinite(value)?
+value:
+0;
+
+}
+
+const balances=
+Array.isArray(data.balances)?
+data.balances:
+[];
+
+const item=
+balances.find(
+entry=>{
+
+const address=
+String(
+entry?.jetton?.address||
+entry?.jetton?.master||
+entry?.jetton?.metadata?.address||
+""
+).trim();
+
+return address===
+USDT_TON_MASTER||
+address.toLowerCase()===
+USDT_TON_MASTER.toLowerCase();
+
+}
+);
+
+if(!item)
+return 0;
+
+const value=
+Number(item.balance||0)/(
+10**USDT_TON_DECIMALS
+);
+
+return Number.isFinite(value)?
+value:
+0;
+
+}
+
+async function loadConnectedWalletUSDTBalance(){
+
+const address=
+getConnectedTonAddress();
+
+if(!address){
+
+connectedWalletUSDTBalance=0;
+renderUSDTBalance();
+return 0;
+
+}
+
+try{
+
+const endpoint=
+"https://tonapi.io/v2/accounts/"+
+encodeURIComponent(address)+
+"/jettons/"+
+encodeURIComponent(USDT_TON_MASTER);
+
+const response=
+await fetch(
+endpoint,
+{
+method:"GET",
+headers:{
+"Accept":"application/json"
+}
+}
+);
+
+if(!response.ok){
+
+throw new Error(
+"TON API HTTP "+
+response.status
+);
+
+}
+
+const data=
+await response.json();
+
+connectedWalletUSDTBalance=
+parseUSDTBalanceFromTonApi(
+data
+);
+
+}catch(error){
+
+console.error(
+"Connected TON USDT balance load failed:",
+error
+);
+
+connectedWalletUSDTBalance=0;
+
+}
+
+renderUSDTBalance();
+
+return connectedWalletUSDTBalance;
+
+}
+
 async function startApp(){
+
+await initTonConnect();
 
 const {data,error}=
 await supabaseClient.auth.getSession();
@@ -1486,6 +1977,8 @@ await loadPosts();
 await loadMyOrders();
 await loadUSDTHistory();
 
+await loadConnectedWalletUSDTBalance();
+
 setupUSDTBalanceRealtime();
 
 }
@@ -1516,7 +2009,9 @@ currentProfile.verification_status==="verified"
 function updateVerificationUI(){
 
 const badge=
-document.getElementById("verificationBadge");
+document.getElementById(
+"verificationBadge"
+);
 
 if(!badge)return;
 
@@ -1535,7 +2030,6 @@ badge.className=
 
 }
 
-/* Available USDT → usdt_balances.usdt_balance */
 async function loadUSDTBalance(){
 
 if(!currentSession)return 0;
@@ -1557,23 +2051,26 @@ console.error(
 error
 );
 
-currentUSDTBalance=0;
+internalUSDTBalance=0;
 
-renderUSDTBalance();
+}else{
 
-return 0;
+internalUSDTBalance=
+Number(data?.usdt_balance||0);
+
+if(!Number.isFinite(internalUSDTBalance))
+internalUSDTBalance=0;
 
 }
 
 currentUSDTBalance=
-Number(data?.usdt_balance||0);
-
-if(!Number.isFinite(currentUSDTBalance))
-currentUSDTBalance=0;
+isTonWalletConnected()?
+connectedWalletUSDTBalance:
+internalUSDTBalance;
 
 renderUSDTBalance();
 
-return currentUSDTBalance;
+return internalUSDTBalance;
 
 }
 
@@ -1645,6 +2142,7 @@ renderUSDTBalance();
 async function refreshWallet(){
 
 await loadUSDTBalance();
+await loadConnectedWalletUSDTBalance();
 await loadLockedUSDTFromOrders();
 await loadMyOrders();
 
@@ -1817,6 +2315,20 @@ document.getElementById(
 
 }
 
+if(
+currentProfile.ton_wallet_address&&
+!connectedTonWalletAddress
+){
+
+connectedTonWalletAddress=
+String(
+currentProfile.ton_wallet_address
+).trim();
+
+}
+
+updateTonWalletUI();
+
 await loadUSDTBalance();
 await loadLockedUSDTFromOrders();
 
@@ -1867,6 +2379,14 @@ document.getElementById(
 if(!availableElement||
 !lockedElement)return;
 
+const displayBalance=
+isTonWalletConnected()?
+connectedWalletUSDTBalance:
+internalUSDTBalance;
+
+currentUSDTBalance=
+displayBalance;
+
 if(!balanceVisible){
 
 availableElement.textContent=
@@ -1879,7 +2399,7 @@ lockedElement.textContent=
 
 availableElement.textContent=
 formatNumber(
-currentUSDTBalance
+displayBalance
 )+
 " USDT";
 
@@ -1900,7 +2420,7 @@ if(withdrawBalance){
 
 withdrawBalance.textContent=
 formatNumber(
-currentUSDTBalance
+internalUSDTBalance
 )+
 " USDT";
 
@@ -2904,6 +3424,32 @@ alert(
 
 }
 
+function updateTransferModalMode(){
+
+const note=
+document.getElementById(
+"transferWalletNote"
+);
+
+const sender=
+getConnectedTonAddress();
+
+if(!note)return;
+
+if(sender){
+
+note.textContent=
+"Connected → recipient must also be connected. Transfer is sent as TON USDT through Tonkeeper.";
+
+}else{
+
+note.textContent=
+"Disconnected → recipient must also be disconnected. Transfer uses P2P Social internal USDT balance.";
+
+}
+
+}
+
 function openTransfer(){
 
 if(!requirePermanentUsername())
@@ -2923,6 +3469,8 @@ document.getElementById(
 "transferAmount"
 ).value="";
 
+updateTransferModalMode();
+
 document.getElementById(
 "transferModal"
 ).classList.add("show");
@@ -2934,6 +3482,130 @@ function closeTransfer(){
 document.getElementById(
 "transferModal"
 ).classList.remove("show");
+
+}
+
+async function getRecipientProfileByUsername(username){
+
+const result=
+await supabaseClient
+.from("profiles")
+.select(
+"id,username,ton_wallet_address"
+)
+.ilike(
+"username",
+username
+)
+.maybeSingle();
+
+if(result.error){
+
+console.error(
+"Recipient lookup failed:",
+result.error
+);
+
+return{
+profile:null,
+error:result.error
+};
+
+}
+
+return{
+profile:result.data||null,
+error:null
+};
+
+}
+
+function decimalUSDTToUnits(amount){
+
+const value=
+Number(amount);
+
+if(
+!Number.isFinite(value)||
+value<=0
+)
+return null;
+
+const scaled=
+Math.round(
+value*
+(10**USDT_TON_DECIMALS)
+);
+
+if(
+!Number.isSafeInteger(scaled)||
+scaled<=0
+)
+return null;
+
+return String(scaled);
+
+}
+
+async function sendConnectedUSDT(
+senderAddress,
+recipientAddress,
+amount
+){
+
+if(
+!tonConnectUI||
+!tonConnectUI.account
+){
+
+throw new Error(
+"TON wallet is not connected."
+);
+
+}
+
+const amountUnits=
+decimalUSDTToUnits(amount);
+
+if(!amountUnits){
+
+throw new Error(
+"Invalid USDT amount."
+);
+
+}
+
+const result=
+await tonConnectUI.sendTransaction({
+
+validUntil:
+Math.floor(
+Date.now()/1000
+)+600,
+
+network:"-239",
+
+items:[
+{
+type:"jetton",
+master:
+USDT_TON_MASTER,
+destination:
+recipientAddress,
+amount:
+amountUnits,
+responseDestination:
+senderAddress,
+attachAmount:
+"50000000",
+forwardAmount:
+"1"
+}
+]
+
+});
+
+return result;
 
 }
 
@@ -3000,10 +3672,69 @@ return;
 
 }
 
-if(amount>currentUSDTBalance){
+const senderWallet=
+getConnectedTonAddress();
+
+const recipientResult=
+await getRecipientProfileByUsername(
+recipient
+);
+
+if(recipientResult.error){
 
 alert(
-"Insufficient USDT balance."
+"Could not find recipient:\n\n"+
+recipientResult.error.message
+);
+
+return;
+
+}
+
+const recipientProfile=
+recipientResult.profile;
+
+if(!recipientProfile){
+
+alert(
+"Recipient username not found."
+);
+
+return;
+
+}
+
+const recipientWallet=
+String(
+recipientProfile.ton_wallet_address||""
+).trim();
+
+const senderConnected=
+Boolean(senderWallet);
+
+const recipientConnected=
+Boolean(recipientWallet);
+
+if(
+senderConnected&&
+!recipientConnected
+){
+
+alert(
+"Transfer blocked.\n\nConnected wallet → disconnected user is not allowed."
+);
+
+return;
+
+}
+
+if(
+!senderConnected&&
+recipientConnected
+){
+
+alert(
+"Transfer blocked.\n\nDisconnected user → connected wallet is not allowed."
 );
 
 return;
@@ -3019,6 +3750,66 @@ button.disabled=true;
 button.textContent=
 "Transferring...";
 
+try{
+
+if(
+senderConnected&&
+recipientConnected
+){
+
+if(
+amount>
+connectedWalletUSDTBalance
+){
+
+throw new Error(
+"Insufficient USDT in your connected TON wallet."
+);
+
+}
+
+await sendConnectedUSDT(
+senderWallet,
+recipientWallet,
+amount
+);
+
+button.disabled=false;
+button.textContent=
+"Transfer";
+
+document.getElementById(
+"transferAmount"
+).value="";
+
+closeTransfer();
+
+await loadConnectedWalletUSDTBalance();
+
+alert(
+"USDT transfer request sent to Tonkeeper."
+);
+
+return;
+
+}
+
+if(
+!senderConnected&&
+!recipientConnected
+){
+
+if(
+amount>
+internalUSDTBalance
+){
+
+throw new Error(
+"Insufficient P2P Social USDT balance."
+);
+
+}
+
 const result=
 await supabaseClient.rpc(
 "transfer_usdt_by_username",
@@ -3029,20 +3820,15 @@ p_amount:amount
 }
 );
 
+if(result.error){
+
+throw result.error;
+
+}
+
 button.disabled=false;
 button.textContent=
 "Transfer";
-
-if(result.error){
-
-alert(
-"Could not complete transfer:\n\n"+
-result.error.message
-);
-
-return;
-
-}
 
 document.getElementById(
 "transferAmount"
@@ -3056,6 +3842,35 @@ await loadUSDTHistory();
 alert(
 "USDT transfer completed successfully."
 );
+
+return;
+
+}
+
+throw new Error(
+"Both users must use the same transfer mode."
+);
+
+}catch(error){
+
+console.error(
+"USDT transfer failed:",
+error
+);
+
+alert(
+"Could not complete transfer:\n\n"+
+(
+error?.message||
+"Transfer failed."
+)
+);
+
+}
+
+button.disabled=false;
+button.textContent=
+"Transfer";
 
 }
 
@@ -3131,7 +3946,7 @@ document.getElementById(
 "withdrawBalance"
 ).textContent=
 formatNumber(
-currentUSDTBalance
+internalUSDTBalance
 )+
 " USDT";
 
@@ -3194,10 +4009,10 @@ return;
 
 }
 
-if(amount>currentUSDTBalance){
+if(amount>internalUSDTBalance){
 
 alert(
-"Insufficient USDT balance."
+"Insufficient P2P Social USDT balance."
 );
 
 return;
@@ -4122,7 +4937,7 @@ calculateTotalWithFee(amount);
 
 if(
 orderType==="sell"&&
-totalUSDT>currentUSDTBalance
+totalUSDT>internalUSDTBalance
 ){
 
 alert(
@@ -4144,7 +4959,7 @@ return;
 
 if(
 orderType==="buy"&&
-fee>currentUSDTBalance
+fee>internalUSDTBalance
 ){
 
 alert(

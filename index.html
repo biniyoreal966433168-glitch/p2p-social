@@ -117,6 +117,35 @@ display:flex;align-items:center;gap:5px;margin-top:12px;font-size:13px
 }
 .premium-user-badge{font-size:13px;font-weight:bold}
 
+.ton-wallet{
+margin-top:12px;
+padding:10px;
+background:rgba(255,255,255,.10);
+border-radius:12px;
+}
+.ton-wallet-title{
+font-size:12px;
+font-weight:bold;
+margin-bottom:8px;
+}
+#ton-connect{
+min-height:40px;
+}
+#ton-connect button{
+border-radius:9px!important;
+}
+
+.ton-wallet-info{
+display:none;
+margin-top:8px;
+font-size:11px;
+color:#fff;
+word-break:break-all;
+}
+.ton-wallet-info strong{
+font-weight:bold;
+}
+
 .quick-section{padding:16px 18px 5px}
 .quick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .quick-card{
@@ -426,6 +455,21 @@ Mark all read
 Logged in as:
 <strong id="usernameDisplay">User</strong>
 <span id="headerPremiumBadge" class="premium-user-badge"></span>
+</div>
+
+<div class="ton-wallet">
+
+<div class="ton-wallet-title">
+🌐 TON / Tonkeeper Wallet
+</div>
+
+<div id="ton-connect"></div>
+
+<div id="ton-wallet-info" class="ton-wallet-info">
+Wallet:
+<strong id="ton-wallet-address"></strong>
+</div>
+
 </div>
 
 </header>
@@ -853,6 +897,8 @@ Profile
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+
 <script>
 
 const SUPABASE_URL=
@@ -880,7 +926,122 @@ let displayedPostCount=10;
 let commentsOpen={};
 let notificationChannel=null;
 
+let tonConnectUI=null;
+let connectedTonWallet=null;
+
 const INITIAL_POST_LIMIT=10;
+
+function initializeTonConnect(){
+
+if(typeof TON_CONNECT_UI==="undefined"){
+
+console.error("TON Connect UI failed to load.");
+
+return;
+
+}
+
+const buttonRoot=
+document.getElementById("ton-connect");
+
+if(!buttonRoot){
+
+console.error("TON Connect button container not found.");
+
+return;
+
+}
+
+try{
+
+tonConnectUI=
+new TON_CONNECT_UI.TonConnectUI({
+
+manifestUrl:
+window.location.origin+
+"/tonconnect-manifest.json",
+
+buttonRootId:"ton-connect"
+
+});
+
+tonConnectUI.onStatusChange(wallet=>{
+
+connectedTonWallet=
+wallet||null;
+
+const walletInfo=
+document.getElementById("ton-wallet-info");
+
+const address=
+document.getElementById("ton-wallet-address");
+
+if(!wallet){
+
+walletInfo.style.display="none";
+address.textContent="";
+
+return;
+
+}
+
+const rawAddress=
+wallet.account?.address||"";
+
+address.textContent=
+shortenTonAddress(rawAddress);
+
+walletInfo.style.display=
+rawAddress
+?"block"
+:"none";
+
+console.log(
+"TON wallet connected:",
+rawAddress
+);
+
+});
+
+}catch(error){
+
+console.error(
+"TON Connect initialization failed:",
+error
+);
+
+}
+
+}
+
+function shortenTonAddress(address){
+
+if(!address)return"";
+
+if(address.length<=20)return address;
+
+return address.slice(0,8)+"…"+address.slice(-8);
+
+}
+
+async function disconnectTonWallet(){
+
+if(!tonConnectUI)return;
+
+try{
+
+await tonConnectUI.disconnect();
+
+}catch(error){
+
+console.error(
+"TON wallet disconnect:",
+error
+);
+
+}
+
+}
 
 async function startApp(){
 
@@ -890,14 +1051,18 @@ const{data,error}=
 await supabaseClient.auth.getSession();
 
 if(error){
+
 console.error(error);
 redirectToLogin();
 return;
+
 }
 
 if(!data||!data.session){
+
 redirectToLogin();
 return;
+
 }
 
 currentSession=data.session;
@@ -905,11 +1070,17 @@ currentSession=data.session;
 document.getElementById("checkingAuth").style.display="none";
 document.getElementById("app").style.display="block";
 
+initializeTonConnect();
+
 await initializeDashboard();
 
 }catch(error){
 
-console.error("Authentication error:",error);
+console.error(
+"Authentication error:",
+error
+);
+
 redirectToLogin();
 
 }
@@ -917,7 +1088,9 @@ redirectToLogin();
 }
 
 function redirectToLogin(){
+
 window.location.replace("./login.html");
+
 }
 
 supabaseClient.auth.onAuthStateChange(
@@ -932,7 +1105,9 @@ return;
 }
 
 if(event==="SIGNED_IN"&&session){
+
 currentSession=session;
+
 }
 
 });
@@ -940,16 +1115,20 @@ currentSession=session;
 async function initializeDashboard(){
 
 if(!currentSession){
+
 redirectToLogin();
 return;
+
 }
 
 await updateUserUI();
 
 await Promise.allSettled([
+
 loadNotifications(),
 loadPosts(false),
 loadLiveRate()
+
 ]);
 
 subscribeToNotifications();
@@ -959,8 +1138,10 @@ subscribeToNotifications();
 async function updateUserUI(){
 
 if(!currentSession){
+
 redirectToLogin();
 return;
+
 }
 
 const user=currentSession.user;
@@ -980,7 +1161,12 @@ await supabaseClient
 .maybeSingle();
 
 if(error){
-console.log("Profile:",error.message);
+
+console.log(
+"Profile:",
+error.message
+);
+
 }
 
 profile=data||null;
@@ -989,11 +1175,18 @@ currentProfile=profile||{};
 
 if(profile){
 
-username=profile.username||username;
+username=
+profile.username||
+username;
 
-currentPremiumTier=normalizePremiumTier(profile);
-currentLevel=getUserLevel(profile);
-isAdmin=detectAdmin(profile);
+currentPremiumTier=
+normalizePremiumTier(profile);
+
+currentLevel=
+getUserLevel(profile);
+
+isAdmin=
+detectAdmin(profile);
 
 }else{
 
@@ -1003,7 +1196,9 @@ isAdmin=false;
 
 }
 
-document.getElementById("usernameDisplay").textContent=username;
+document.getElementById(
+"usernameDisplay"
+).textContent=username;
 
 updatePremiumBadge();
 updateVerificationStatus();
@@ -1015,23 +1210,28 @@ function normalizePremiumTier(profile){
 if(!profile)return"free";
 
 const values=[
+
 profile.premium_tier,
 profile.subscription_tier,
 profile.membership,
 profile.plan,
 profile.premium_plan,
 profile.account_tier
+
 ];
 
-let value=values.find(
-v=>v!==null&&
+let value=
+values.find(
+v=>
+v!==null&&
 v!==undefined&&
 String(v).trim()!==""
 );
 
 if(!value)return"free";
 
-value=String(value)
+value=
+String(value)
 .toLowerCase()
 .trim()
 .replace(/\s+/g,"");
@@ -1041,7 +1241,9 @@ value==="premiummax"||
 value==="max"||
 value==="premium_max"
 ){
+
 return"premium_max";
+
 }
 
 if(
@@ -1050,11 +1252,15 @@ value==="premiumplus"||
 value==="premium_plus"||
 value==="plus"
 ){
+
 return"premium_plus";
+
 }
 
 if(value==="premium"){
+
 return"premium";
+
 }
 
 return"free";
@@ -1064,10 +1270,12 @@ return"free";
 function getUserLevel(profile){
 
 const values=[
+
 profile.level,
 profile.user_level,
 profile.account_level,
 profile.rank_level
+
 ];
 
 for(const value of values){
@@ -1078,10 +1286,13 @@ value!==undefined&&
 value!==""
 ){
 
-const number=Number(value);
+const number=
+Number(value);
 
 if(!Number.isNaN(number)){
+
 return number;
+
 }
 
 }
@@ -1102,14 +1313,18 @@ if(
 String(profile.role||"").toLowerCase()==="admin"||
 String(profile.role||"").toLowerCase()==="owner"
 ){
+
 return true;
+
 }
 
 if(
 String(profile.account_role||"").toLowerCase()==="admin"||
 String(profile.account_role||"").toLowerCase()==="owner"
 ){
+
 return true;
+
 }
 
 return false;
@@ -1136,17 +1351,23 @@ return[
 }
 
 function canPostImage(){
+
 return hasPremium();
+
 }
 
 function canPostVideo(){
+
 return hasPremiumPlus();
+
 }
 
 function updatePremiumBadge(){
 
 const header=
-document.getElementById("headerPremiumBadge");
+document.getElementById(
+"headerPremiumBadge"
+);
 
 if(!header)return;
 
@@ -1173,13 +1394,19 @@ header.textContent="";
 async function loadLiveRate(){
 
 const valueElement=
-document.getElementById("liveRateValue");
+document.getElementById(
+"liveRateValue"
+);
 
 const unitElement=
-document.getElementById("liveRateUnit");
+document.getElementById(
+"liveRateUnit"
+);
 
 const changeElement=
-document.getElementById("liveRateChange");
+document.getElementById(
+"liveRateChange"
+);
 
 try{
 
@@ -1194,7 +1421,9 @@ await supabaseClient
 .maybeSingle();
 
 if(!result.error&&result.data){
+
 data=result.data;
+
 }
 
 if(!data){
@@ -1208,7 +1437,9 @@ await supabaseClient
 .maybeSingle();
 
 if(!fallback.error&&fallback.data){
+
 data=fallback.data;
+
 }
 
 }
@@ -1223,7 +1454,8 @@ return;
 
 }
 
-const rate=getFirstValue(
+const rate=
+getFirstValue(
 data,
 [
 "rate",
@@ -1235,7 +1467,8 @@ data,
 ]
 );
 
-const change=getFirstValue(
+const change=
+getFirstValue(
 data,
 [
 "change_percent",
@@ -1245,7 +1478,11 @@ data,
 );
 
 valueElement.textContent=
-rate!==null?formatNumber(rate):"—";
+rate!==null
+?
+formatNumber(rate)
+:
+"—";
 
 unitElement.textContent="USDT";
 
@@ -1262,7 +1499,10 @@ String(change)+"%"
 
 }catch(error){
 
-console.error("Live rate:",error);
+console.error(
+"Live rate:",
+error
+);
 
 valueElement.textContent="—";
 unitElement.textContent="USDT unavailable";
@@ -1274,9 +1514,13 @@ changeElement.textContent="Offline";
 
 function openLiveRate(){
 
-document.querySelector(".rate-box")?.scrollIntoView({
+document.querySelector(
+".rate-box"
+)?.scrollIntoView({
+
 behavior:"smooth",
 block:"center"
+
 });
 
 loadLiveRate();
@@ -1287,7 +1531,9 @@ function openVerifyIdentity(){
 
 if(!requireLogin())return;
 
-document.getElementById("verifyModal").style.display="flex";
+document.getElementById(
+"verifyModal"
+).style.display="flex";
 
 updateVerificationStatus();
 
@@ -1295,7 +1541,9 @@ updateVerificationStatus();
 
 function closeVerifyIdentity(){
 
-document.getElementById("verifyModal").style.display="none";
+document.getElementById(
+"verifyModal"
+).style.display="none";
 
 }
 
@@ -1307,11 +1555,15 @@ String(value||"")
 .trim();
 
 if(status==="verified_plus"){
+
 return"Verified+";
+
 }
 
 if(status==="verified"){
+
 return"Verified";
+
 }
 
 return"Unverified";
@@ -1323,12 +1575,16 @@ async function updateVerificationStatus(){
 if(!currentSession)return;
 
 const statusElement=
-document.getElementById("verificationStatus");
+document.getElementById(
+"verificationStatus"
+);
 
 if(!statusElement)return;
 
 const button=
-document.getElementById("verificationRequestBtn");
+document.getElementById(
+"verificationRequestBtn"
+);
 
 const profileStatus=
 String(
@@ -1343,11 +1599,15 @@ profileStatus==="verified_plus"
 ){
 
 statusElement.textContent=
-formatVerificationStatus(profileStatus);
+formatVerificationStatus(
+profileStatus
+);
 
 if(button){
+
 button.disabled=true;
 button.textContent="Already Verified";
+
 }
 
 return;
@@ -1365,8 +1625,14 @@ const{data,error}=
 await supabaseClient
 .from("verification_requests")
 .select("id,status,created_at")
-.eq("requester_id",currentSession.user.id)
-.order("created_at",{ascending:false})
+.eq(
+"requester_id",
+currentSession.user.id
+)
+.order(
+"created_at",
+{ascending:false}
+)
 .limit(1)
 .maybeSingle();
 
@@ -1382,7 +1648,8 @@ statusElement.textContent="Unverified";
 if(button){
 
 button.disabled=false;
-button.textContent="Send Verification Request";
+button.textContent=
+"Send Verification Request";
 
 }
 
@@ -1397,7 +1664,8 @@ statusElement.textContent="Unverified";
 if(button){
 
 button.disabled=false;
-button.textContent="Send Verification Request";
+button.textContent=
+"Send Verification Request";
 
 }
 
@@ -1406,16 +1674,19 @@ return;
 }
 
 const status=
-String(data.status||"").toLowerCase();
+String(data.status||"")
+.toLowerCase();
 
 if(status==="pending"){
 
-statusElement.textContent="Verification Pending";
+statusElement.textContent=
+"Verification Pending";
 
 if(button){
 
 button.disabled=true;
-button.textContent="Verification Pending";
+button.textContent=
+"Verification Pending";
 
 }
 
@@ -1430,7 +1701,8 @@ statusElement.textContent="Verified";
 if(button){
 
 button.disabled=true;
-button.textContent="Already Verified";
+button.textContent=
+"Already Verified";
 
 }
 
@@ -1445,7 +1717,8 @@ statusElement.textContent="Unverified";
 if(button){
 
 button.disabled=false;
-button.textContent="Send New Verification Request";
+button.textContent=
+"Send New Verification Request";
 
 }
 
@@ -1458,7 +1731,8 @@ statusElement.textContent="Unverified";
 if(button){
 
 button.disabled=false;
-button.textContent="Send Verification Request";
+button.textContent=
+"Send Verification Request";
 
 }
 
@@ -1469,7 +1743,9 @@ async function sendVerificationRequest(){
 if(!requireLogin())return;
 
 const button=
-document.getElementById("verificationRequestBtn");
+document.getElementById(
+"verificationRequestBtn"
+);
 
 button.disabled=true;
 button.textContent="Checking...";
@@ -1488,17 +1764,29 @@ profileStatus==="verified"||
 profileStatus==="verified_plus"
 ){
 
-alert("Your account is already verified.");
+alert(
+"Your account is already verified."
+);
+
 return;
 
 }
 
-const{data:existing,error:existingError}=
+const{
+data:existing,
+error:existingError
+}=
 await supabaseClient
 .from("verification_requests")
 .select("id,status")
-.eq("requester_id",currentSession.user.id)
-.eq("status","pending")
+.eq(
+"requester_id",
+currentSession.user.id
+)
+.eq(
+"status",
+"pending"
+)
 .maybeSingle();
 
 if(existingError){
@@ -1521,9 +1809,13 @@ if(existing){
 
 window.location.href=
 "./message.html?username="+
-encodeURIComponent(ADMIN_USERNAME)+
+encodeURIComponent(
+ADMIN_USERNAME
+)+
 "&verification_request="+
-encodeURIComponent(existing.id);
+encodeURIComponent(
+existing.id
+);
 
 return;
 
@@ -1531,7 +1823,10 @@ return;
 
 button.textContent="Sending...";
 
-const{data:requestId,error:requestError}=
+const{
+data:requestId,
+error:requestError
+}=
 await supabaseClient.rpc(
 "create_verification_request"
 );
@@ -1554,7 +1849,10 @@ return;
 
 if(!requestId){
 
-alert("Verification request could not be created.");
+alert(
+"Verification request could not be created."
+);
+
 return;
 
 }
@@ -1563,9 +1861,13 @@ closeVerifyIdentity();
 
 window.location.href=
 "./message.html?username="+
-encodeURIComponent(ADMIN_USERNAME)+
+encodeURIComponent(
+ADMIN_USERNAME
+)+
 "&verification_request="+
-encodeURIComponent(requestId);
+encodeURIComponent(
+requestId
+);
 
 }catch(error){
 
@@ -1574,12 +1876,15 @@ console.error(
 error
 );
 
-alert("Verification request could not be sent.");
+alert(
+"Verification request could not be sent."
+);
 
 }finally{
 
 button.disabled=false;
-button.textContent="Send Verification Request";
+button.textContent=
+"Send Verification Request";
 
 }
 
@@ -1589,7 +1894,9 @@ function openReferral(){
 
 if(!requireLogin())return;
 
-document.getElementById("referralModal").style.display="flex";
+document.getElementById(
+"referralModal"
+).style.display="flex";
 
 loadReferral();
 
@@ -1597,16 +1904,21 @@ loadReferral();
 
 function closeReferral(){
 
-document.getElementById("referralModal").style.display="none";
+document.getElementById(
+"referralModal"
+).style.display="none";
 
 }
 
 async function loadReferral(){
 
 const element=
-document.getElementById("referralCode");
+document.getElementById(
+"referralCode"
+);
 
-const user=currentSession.user;
+const user=
+currentSession.user;
 
 let username=
 currentProfile?.username||
@@ -1615,35 +1927,50 @@ user.user_metadata?.username||
 
 if(!username){
 
-username=user.email?.split("@")[0]||"User";
+username=
+user.email?.split("@")[0]||
+"User";
 
 }
 
 const referralUrl=
 window.location.origin+
 "/register.html?ref="+
-encodeURIComponent(username);
+encodeURIComponent(
+username
+);
 
-element.textContent=referralUrl;
+element.textContent=
+referralUrl;
 
 }
 
 async function copyReferralCode(){
 
 const element=
-document.getElementById("referralCode");
+document.getElementById(
+"referralCode"
+);
 
-const value=element.textContent;
+const value=
+element.textContent;
 
 try{
 
-await navigator.clipboard.writeText(value);
+await navigator.clipboard.writeText(
+value
+);
 
-alert("Referral link copied.");
+alert(
+"Referral link copied."
+);
 
 }catch(error){
 
-prompt("Copy referral link:",value);
+prompt(
+"Copy referral link:",
+value
+);
 
 }
 
@@ -1655,7 +1982,8 @@ closeReferral();
 
 if(!requireLogin())return;
 
-window.location.href="./profile.html?referral=balance";
+window.location.href=
+"./profile.html?referral=balance";
 
 }
 
@@ -1663,13 +1991,17 @@ function openTransfer(){
 
 if(!requireLogin())return;
 
-document.getElementById("transferModal").style.display="flex";
+document.getElementById(
+"transferModal"
+).style.display="flex";
 
 }
 
 function closeTransfer(){
 
-document.getElementById("transferModal").style.display="none";
+document.getElementById(
+"transferModal"
+).style.display="none";
 
 }
 
@@ -1678,19 +2010,33 @@ async function submitUSDTTransfer(){
 if(!requireLogin())return;
 
 let recipient=
-document.getElementById("transferRecipient").value.trim();
+document.getElementById(
+"transferRecipient"
+).value.trim();
 
 const amount=
-Number(document.getElementById("transferAmount").value);
+Number(
+document.getElementById(
+"transferAmount"
+).value
+);
 
 const button=
-document.getElementById("transferSubmitBtn");
+document.getElementById(
+"transferSubmitBtn"
+);
 
-recipient=recipient.replace(/^@/,"").trim();
+recipient=
+recipient
+.replace(/^@/,"")
+.trim();
 
 if(!recipient){
 
-alert("Enter the recipient username.");
+alert(
+"Enter the recipient username."
+);
+
 return;
 
 }
@@ -1700,7 +2046,10 @@ if(
 amount<=0
 ){
 
-alert("Enter a valid USDT amount.");
+alert(
+"Enter a valid USDT amount."
+);
+
 return;
 
 }
@@ -1719,7 +2068,10 @@ myUsername&&
 recipient.toLowerCase()===myUsername
 ){
 
-alert("You cannot transfer USDT to yourself.");
+alert(
+"You cannot transfer USDT to yourself."
+);
+
 return;
 
 }
@@ -1740,31 +2092,50 @@ p_amount:amount
 
 if(error){
 
-console.error("USDT transfer:",error);
+console.error(
+"USDT transfer:",
+error
+);
 
-alert("Transfer failed: "+error.message);
+alert(
+"Transfer failed: "+
+error.message
+);
 
 return;
 
 }
 
-alert("USDT transfer completed.");
+alert(
+"USDT transfer completed."
+);
 
-document.getElementById("transferRecipient").value="";
-document.getElementById("transferAmount").value="";
+document.getElementById(
+"transferRecipient"
+).value="";
+
+document.getElementById(
+"transferAmount"
+).value="";
 
 closeTransfer();
 
 }catch(error){
 
-console.error("USDT transfer:",error);
+console.error(
+"USDT transfer:",
+error
+);
 
-alert("Transfer could not be processed.");
+alert(
+"Transfer could not be processed."
+);
 
 }finally{
 
 button.disabled=false;
-button.textContent="Transfer USDT";
+button.textContent=
+"Transfer USDT";
 
 }
 
@@ -1774,13 +2145,17 @@ function openSupport(){
 
 if(!requireLogin())return;
 
-document.getElementById("supportModal").style.display="flex";
+document.getElementById(
+"supportModal"
+).style.display="flex";
 
 }
 
 function closeSupport(){
 
-document.getElementById("supportModal").style.display="none";
+document.getElementById(
+"supportModal"
+).style.display="none";
 
 }
 
@@ -1790,9 +2165,13 @@ if(!requireLogin())return;
 
 window.location.href=
 "./message.html?username="+
-encodeURIComponent(ADMIN_USERNAME)+
+encodeURIComponent(
+ADMIN_USERNAME
+)+
 "&support="+
-encodeURIComponent(type||"support");
+encodeURIComponent(
+type||"support"
+);
 
 }
 
@@ -1824,13 +2203,17 @@ function openTwoFA(){
 
 if(!requireLogin())return;
 
-document.getElementById("twoFAModal").style.display="flex";
+document.getElementById(
+"twoFAModal"
+).style.display="flex";
 
 }
 
 function closeTwoFA(){
 
-document.getElementById("twoFAModal").style.display="none";
+document.getElementById(
+"twoFAModal"
+).style.display="none";
 
 }
 
@@ -1839,21 +2222,26 @@ async function enableTwoFA(){
 if(!requireLogin())return;
 
 const button=
-document.getElementById("twoFAButton");
+document.getElementById(
+"twoFAButton"
+);
 
 button.disabled=true;
-button.textContent="Opening security settings...";
+button.textContent=
+"Opening security settings...";
 
 try{
 
-window.location.href="./profile.html?security=2fa";
+window.location.href=
+"./profile.html?security=2fa";
 
 }catch(error){
 
 console.error(error);
 
 button.disabled=false;
-button.textContent="Enable 2FA";
+button.textContent=
+"Enable 2FA";
 
 }
 
@@ -1878,8 +2266,10 @@ function goHome(){
 if(!requireLogin())return;
 
 window.scrollTo({
+
 top:0,
 behavior:"smooth"
+
 });
 
 }
@@ -1888,7 +2278,8 @@ function openBuy(){
 
 if(!requireLogin())return;
 
-window.location.href="./live.html";
+window.location.href=
+"./live.html";
 
 }
 
@@ -1896,7 +2287,8 @@ function openSell(){
 
 if(!requireLogin())return;
 
-window.location.href="./wallet.html";
+window.location.href=
+"./wallet.html";
 
 }
 
@@ -1904,7 +2296,8 @@ function openMessages(){
 
 if(!requireLogin())return;
 
-window.location.href="./message.html";
+window.location.href=
+"./message.html";
 
 }
 
@@ -1912,7 +2305,8 @@ function openProfile(){
 
 if(!requireLogin())return;
 
-window.location.href="./profile.html";
+window.location.href=
+"./profile.html";
 
 }
 
@@ -1929,7 +2323,9 @@ if(!cleanUsername)return;
 
 window.location.href=
 "./profile.html?username="+
-encodeURIComponent(cleanUsername);
+encodeURIComponent(
+cleanUsername
+);
 
 }
 
@@ -1942,12 +2338,33 @@ await supabaseClient.auth.signOut();
 
 if(error){
 
-alert("Logout failed: "+error.message);
+alert(
+"Logout failed: "+
+error.message
+);
+
 return;
 
 }
 
 currentSession=null;
+
+if(tonConnectUI){
+
+try{
+
+await tonConnectUI.disconnect();
+
+}catch(error){
+
+console.error(
+"TON wallet disconnect:",
+error
+);
+
+}
+
+}
 
 redirectToLogin();
 
@@ -1966,7 +2383,9 @@ async function loadPosts(shuffle=false){
 if(!requireLogin())return;
 
 const feed=
-document.getElementById("postsFeed");
+document.getElementById(
+"postsFeed"
+);
 
 feed.innerHTML=`
 <div class="loading-posts">
@@ -1978,19 +2397,29 @@ const{data:posts,error}=
 await supabaseClient
 .from("posts")
 .select("*")
-.or("visibility.eq.public,visibility.is.null")
-.order("created_at",{ascending:false})
+.or(
+"visibility.eq.public,visibility.is.null"
+)
+.order(
+"created_at",
+{ascending:false}
+)
 .limit(100);
 
 if(error){
 
-console.error("Posts:",error);
+console.error(
+"Posts:",
+error
+);
 
 feed.innerHTML=`
 <div class="no-posts">
 Could not load posts.
 <br>
-<small>${escapeHtml(error.message)}</small>
+<small>
+${escapeHtml(error.message)}
+</small>
 </div>
 `;
 
@@ -1998,15 +2427,19 @@ return;
 
 }
 
-allPosts=posts||[];
+allPosts=
+posts||[];
 
 if(shuffle){
 
-allPosts.sort(()=>Math.random()-.5);
+allPosts.sort(
+()=>Math.random()-.5
+);
 
 }
 
-displayedPostCount=INITIAL_POST_LIMIT;
+displayedPostCount=
+INITIAL_POST_LIMIT;
 
 await renderPosts();
 
@@ -2014,9 +2447,13 @@ await renderPosts();
 
 async function loadMorePosts(){
 
-if(displayedPostCount>=allPosts.length)return;
+if(
+displayedPostCount>=
+allPosts.length
+)return;
 
-displayedPostCount+=INITIAL_POST_LIMIT;
+displayedPostCount+=
+INITIAL_POST_LIMIT;
 
 await renderPosts();
 
@@ -2027,10 +2464,15 @@ async function renderPosts(){
 if(!requireLogin())return;
 
 const feed=
-document.getElementById("postsFeed");
+document.getElementById(
+"postsFeed"
+);
 
 const visiblePosts=
-allPosts.slice(0,displayedPostCount);
+allPosts.slice(
+0,
+displayedPostCount
+);
 
 if(!visiblePosts.length){
 
@@ -2040,14 +2482,18 @@ No public posts yet.
 </div>
 `;
 
-document.getElementById("loadMoreBtn").style.display="none";
+document.getElementById(
+"loadMoreBtn"
+).style.display="none";
 
 return;
 
 }
 
 const postIds=
-visiblePosts.map(p=>p.id);
+visiblePosts.map(
+p=>p.id
+);
 
 const userIds=[
 ...new Set(
@@ -2064,12 +2510,19 @@ if(userIds.length){
 const{data}=
 await supabaseClient
 .from("profiles")
-.select("id,username,avatar_url")
-.in("id",userIds);
+.select(
+"id,username,avatar_url"
+)
+.in(
+"id",
+userIds
+);
 
-(data||[]).forEach(profile=>{
+(data||[]).forEach(
+profile=>{
 profileMap[profile.id]=profile;
-});
+}
+);
 
 }
 
@@ -2080,10 +2533,16 @@ if(postIds.length){
 const{data}=
 await supabaseClient
 .from("post_likes")
-.select("post_id,user_id")
-.in("post_id",postIds);
+.select(
+"post_id,user_id"
+)
+.in(
+"post_id",
+postIds
+);
 
-likes=data||[];
+likes=
+data||[];
 
 }
 
@@ -2100,9 +2559,13 @@ const myLikes=
 new Set(
 likes
 .filter(
-like=>like.user_id===currentSession.user.id
+like=>
+like.user_id===
+currentSession.user.id
 )
-.map(like=>like.post_id)
+.map(
+like=>like.post_id
+)
 );
 
 let comments=[];
@@ -2112,11 +2575,20 @@ if(postIds.length){
 const{data}=
 await supabaseClient
 .from("post_comments")
-.select("id,post_id,user_id,comment,created_at")
-.in("post_id",postIds)
-.order("created_at",{ascending:true});
+.select(
+"id,post_id,user_id,comment,created_at"
+)
+.in(
+"post_id",
+postIds
+)
+.order(
+"created_at",
+{ascending:true}
+);
 
-comments=data||[];
+comments=
+data||[];
 
 }
 
@@ -2133,12 +2605,19 @@ if(commentUserIds.length){
 const{data}=
 await supabaseClient
 .from("profiles")
-.select("id,username,avatar_url")
-.in("id",commentUserIds);
+.select(
+"id,username,avatar_url"
+)
+.in(
+"id",
+commentUserIds
+);
 
-(data||[]).forEach(profile=>{
+(data||[]).forEach(
+profile=>{
 profileMap[profile.id]=profile;
-});
+}
+);
 
 }
 
@@ -2147,36 +2626,49 @@ feed.innerHTML="";
 visiblePosts.forEach(post=>{
 
 const profile=
-profileMap[post.user_id]||{};
+profileMap[post.user_id]||
+{};
 
 const username=
-profile.username||"User";
+profile.username||
+"User";
 
 const avatar=
-profile.avatar_url||"";
+profile.avatar_url||
+"";
 
 const initial=
-username.charAt(0).toUpperCase()||"U";
+username.charAt(0)
+.toUpperCase()||
+"U";
 
 const postComments=
 comments.filter(
-c=>String(c.post_id)===String(post.id)
+c=>
+String(c.post_id)===
+String(post.id)
 );
 
 const isOwner=
-currentSession.user.id===post.user_id;
+currentSession.user.id===
+post.user_id;
 
 const card=
-document.createElement("article");
+document.createElement(
+"article"
+);
 
-card.className="post-card";
+card.className=
+"post-card";
 
 const avatarHTML=
 avatar
 ?
 `
 <div class="post-avatar">
-<img src="${escapeHtml(avatar)}" alt="Profile">
+<img
+src="${escapeHtml(avatar)}"
+alt="Profile">
 </div>
 `
 :
@@ -2190,7 +2682,10 @@ const mediaHTML=
 renderPostMedia(post);
 
 const isPinned=
-Boolean(post.is_pinned||post.pinned);
+Boolean(
+post.is_pinned||
+post.pinned
+);
 
 card.innerHTML=`
 
@@ -2198,7 +2693,9 @@ ${
 isPinned
 ?
 `
-<div class="post-pin">📌 Pinned</div>
+<div class="post-pin">
+📌 Pinned
+</div>
 `
 :
 ""
@@ -2227,7 +2724,11 @@ ${avatarHTML}
 </div>
 
 <div class="post-time">
-${escapeHtml(formatPostTime(post.created_at))}
+${escapeHtml(
+formatPostTime(
+post.created_at
+)
+)}
 </div>
 
 ${
@@ -2238,7 +2739,9 @@ isOwner
 class="post-menu"
 onclick="
 event.stopPropagation();
-deletePost('${escapeJs(post.id)}');
+deletePost(
+'${escapeJs(post.id)}'
+);
 ">
 🗑️
 </button>
@@ -2259,20 +2762,28 @@ ${mediaHTML}
 
 <button
 class="post-action ${
-myLikes.has(post.id)?"liked":""
+myLikes.has(post.id)
+?"liked"
+:""
 }"
 onclick="
 event.stopPropagation();
-likePost('${escapeJs(post.id)}');
+likePost(
+'${escapeJs(post.id)}'
+);
 ">
 
 ${
 myLikes.has(post.id)
-?"♥ Liked"
-:"♡ Like"
+?
+"♥ Liked"
+:
+"♡ Like"
 }
 
-<span>${likeCount[post.id]||0}</span>
+<span>
+${likeCount[post.id]||0}
+</span>
 
 </button>
 
@@ -2280,11 +2791,15 @@ myLikes.has(post.id)
 class="post-action"
 onclick="
 event.stopPropagation();
-toggleComments('${escapeJs(post.id)}');
+toggleComments(
+'${escapeJs(post.id)}'
+);
 ">
 
 💬 Comments
-<span>${postComments.length}</span>
+<span>
+${postComments.length}
+</span>
 
 </button>
 
@@ -2292,7 +2807,9 @@ toggleComments('${escapeJs(post.id)}');
 class="post-action"
 onclick="
 event.stopPropagation();
-sharePost('${escapeJs(post.id)}');
+sharePost(
+'${escapeJs(post.id)}'
+);
 ">
 
 ↗ Share
@@ -2306,7 +2823,9 @@ id="comments-${escapeHtml(post.id)}"
 class="comments-box"
 style="
 display:${
-commentsOpen[post.id]?"block":"none"
+commentsOpen[post.id]
+?"block"
+:"none"
 };
 ">
 
@@ -2324,10 +2843,15 @@ feed.appendChild(card);
 
 });
 
-document.getElementById("loadMoreBtn").style.display=
-displayedPostCount<allPosts.length
-?"block"
-:"none";
+document.getElementById(
+"loadMoreBtn"
+).style.display=
+displayedPostCount<
+allPosts.length
+?
+"block"
+:
+"none";
 
 }
 
@@ -2346,9 +2870,13 @@ String(
 post.media_type||
 post.post_type||
 ""
-).toLowerCase();
+)
+.toLowerCase();
 
-if(type==="video"||post.video_url){
+if(
+type==="video"||
+post.video_url
+){
 
 return`
 <div class="post-media">
@@ -2389,17 +2917,29 @@ if(!requireLogin())return;
 const userId=
 currentSession.user.id;
 
-const{data:existing,error:checkError}=
+const{
+data:existing,
+error:checkError
+}=
 await supabaseClient
 .from("post_likes")
 .select("post_id")
-.eq("post_id",postId)
-.eq("user_id",userId)
+.eq(
+"post_id",
+postId
+)
+.eq(
+"user_id",
+userId
+)
 .maybeSingle();
 
 if(checkError){
 
-alert("Could not check reaction.");
+alert(
+"Could not check reaction."
+);
+
 return;
 
 }
@@ -2410,12 +2950,19 @@ const{error}=
 await supabaseClient
 .from("post_likes")
 .delete()
-.eq("post_id",postId)
-.eq("user_id",userId);
+.eq(
+"post_id",
+postId
+)
+.eq(
+"user_id",
+userId
+);
 
 if(error){
 
 alert(error.message);
+
 return;
 
 }
@@ -2426,13 +2973,16 @@ const{error}=
 await supabaseClient
 .from("post_likes")
 .insert({
+
 post_id:postId,
 user_id:userId
+
 });
 
 if(error){
 
 alert(error.message);
+
 return;
 
 }
@@ -2449,19 +2999,27 @@ commentsOpen[postId]=
 !commentsOpen[postId];
 
 const box=
-document.getElementById("comments-"+postId);
+document.getElementById(
+"comments-"+postId
+);
 
 if(box){
 
 box.style.display=
 commentsOpen[postId]
-?"block"
-:"none";
+?
+"block"
+:
+"none";
 
 }
 
 if(commentsOpen[postId]){
-refreshSinglePostComments(postId);
+
+refreshSinglePostComments(
+postId
+);
+
 }
 
 }
@@ -2469,29 +3027,43 @@ refreshSinglePostComments(postId);
 async function refreshSinglePostComments(postId){
 
 const box=
-document.getElementById("comments-"+postId);
+document.getElementById(
+"comments-"+postId
+);
 
 if(!box)return;
 
 const{data,error}=
 await supabaseClient
 .from("post_comments")
-.select("id,post_id,user_id,comment,created_at")
-.eq("post_id",postId)
-.order("created_at",{ascending:true});
+.select(
+"id,post_id,user_id,comment,created_at"
+)
+.eq(
+"post_id",
+postId
+)
+.order(
+"created_at",
+{ascending:true}
+);
 
 if(error){
 
 console.error(error);
+
 return;
 
 }
 
-const comments=data||[];
+const comments=
+data||[];
 
 const userIds=[
 ...new Set(
-comments.map(c=>c.user_id).filter(Boolean)
+comments
+.map(c=>c.user_id)
+.filter(Boolean)
 )
 ];
 
@@ -2502,41 +3074,63 @@ if(userIds.length){
 const{data:profiles}=
 await supabaseClient
 .from("profiles")
-.select("id,username,avatar_url")
-.in("id",userIds);
+.select(
+"id,username,avatar_url"
+)
+.in(
+"id",
+userIds
+);
 
-(profiles||[]).forEach(profile=>{
+(profiles||[]).forEach(
+profile=>{
 profileMap[profile.id]=profile;
-});
+}
+);
 
 }
 
 box.innerHTML=
-renderComments(postId,comments,profileMap);
+renderComments(
+postId,
+comments,
+profileMap
+);
 
 }
 
-function renderComments(postId,comments,profileMap){
+function renderComments(
+postId,
+comments,
+profileMap
+){
 
 let html="";
 
 comments.forEach(comment=>{
 
 const profile=
-profileMap[comment.user_id]||{};
+profileMap[
+comment.user_id
+]||{};
 
 const username=
-profile.username||"User";
+profile.username||
+"User";
 
 const avatar=
-profile.avatar_url||"";
+profile.avatar_url||
+"";
 
 const initial=
-username.charAt(0).toUpperCase()||"U";
+username.charAt(0)
+.toUpperCase()||
+"U";
 
 const isOwner=
 currentSession&&
-currentSession.user.id===comment.user_id;
+currentSession.user.id===
+comment.user_id;
 
 const avatarHTML=
 avatar
@@ -2546,10 +3140,14 @@ avatar
 class="comment-avatar"
 onclick="
 event.stopPropagation();
-openUserProfile('${escapeJs(username)}');
+openUserProfile(
+'${escapeJs(username)}'
+);
 "
 style="cursor:pointer;">
-<img src="${escapeHtml(avatar)}" alt="Profile">
+<img
+src="${escapeHtml(avatar)}"
+alt="Profile">
 </div>
 `
 :
@@ -2558,7 +3156,9 @@ style="cursor:pointer;">
 class="comment-avatar"
 onclick="
 event.stopPropagation();
-openUserProfile('${escapeJs(username)}');
+openUserProfile(
+'${escapeJs(username)}'
+);
 "
 style="cursor:pointer;">
 ${escapeHtml(initial)}
@@ -2577,14 +3177,18 @@ ${avatarHTML}
 class="comment-name"
 onclick="
 event.stopPropagation();
-openUserProfile('${escapeJs(username)}');
+openUserProfile(
+'${escapeJs(username)}'
+);
 "
 style="cursor:pointer;">
 @${escapeHtml(username)}
 </div>
 
 <div class="comment-text">
-${escapeHtml(comment.comment||"")}
+${escapeHtml(
+comment.comment||""
+)}
 </div>
 
 ${
@@ -2626,7 +3230,9 @@ placeholder="Write a comment...">
 <button
 class="comment-send"
 onclick="
-addComment('${escapeJs(postId)}');
+addComment(
+'${escapeJs(postId)}'
+);
 ">
 Send
 </button>
@@ -2644,11 +3250,14 @@ async function addComment(postId){
 if(!requireLogin())return;
 
 const input=
-document.getElementById("comment-input-"+postId);
+document.getElementById(
+"comment-input-"+postId
+);
 
 if(!input)return;
 
-const text=input.value.trim();
+const text=
+input.value.trim();
 
 if(!text)return;
 
@@ -2656,67 +3265,108 @@ const{error}=
 await supabaseClient
 .from("post_comments")
 .insert({
+
 post_id:postId,
 user_id:currentSession.user.id,
 comment:text
+
 });
 
 if(error){
 
-alert("Could not add comment: "+error.message);
+alert(
+"Could not add comment: "+
+error.message
+);
+
 return;
 
 }
 
 input.value="";
 
-await refreshSinglePostComments(postId);
+await refreshSinglePostComments(
+postId
+);
+
 await renderPosts();
 
 }
 
-async function deleteComment(commentId,postId){
+async function deleteComment(
+commentId,
+postId
+){
 
 if(!requireLogin())return;
 
-const{data:comment,error:loadError}=
+const{
+data:comment,
+error:loadError
+}=
 await supabaseClient
 .from("post_comments")
 .select("user_id")
-.eq("id",commentId)
+.eq(
+"id",
+commentId
+)
 .maybeSingle();
 
 if(loadError||!comment){
 
-alert("Comment not found.");
+alert(
+"Comment not found."
+);
+
 return;
 
 }
 
-if(comment.user_id!==currentSession.user.id){
+if(
+comment.user_id!==
+currentSession.user.id
+){
 
-alert("You can only delete your own comment.");
+alert(
+"You can only delete your own comment."
+);
+
 return;
 
 }
 
-if(!confirm("Delete this comment?"))return;
+if(
+!confirm(
+"Delete this comment?"
+)
+)return;
 
 const{error}=
 await supabaseClient
 .from("post_comments")
 .delete()
-.eq("id",commentId)
-.eq("user_id",currentSession.user.id);
+.eq(
+"id",
+commentId
+)
+.eq(
+"user_id",
+currentSession.user.id
+);
 
 if(error){
 
 alert(error.message);
+
 return;
 
 }
 
-await refreshSinglePostComments(postId);
+await refreshSinglePostComments(
+postId
+);
+
 await renderPosts();
 
 }
@@ -2725,11 +3375,17 @@ function openCreatePost(){
 
 if(!requireLogin())return;
 
-document.getElementById("createPostModal").style.display="flex";
+document.getElementById(
+"createPostModal"
+).style.display="flex";
 
-document.getElementById("postContentInput").focus();
+document.getElementById(
+"postContentInput"
+).focus();
 
-document.getElementById("mediaType").value="text";
+document.getElementById(
+"mediaType"
+).value="text";
 
 updateMediaControls();
 
@@ -2737,20 +3393,28 @@ updateMediaControls();
 
 function closeCreatePost(){
 
-document.getElementById("createPostModal").style.display="none";
+document.getElementById(
+"createPostModal"
+).style.display="none";
 
 }
 
 function updateMediaControls(){
 
 const type=
-document.getElementById("mediaType").value;
+document.getElementById(
+"mediaType"
+).value;
 
 const controls=
-document.getElementById("mediaControls");
+document.getElementById(
+"mediaControls"
+);
 
 const notice=
-document.getElementById("promotionNotice");
+document.getElementById(
+"promotionNotice"
+);
 
 controls.innerHTML="";
 notice.innerHTML="";
@@ -2774,7 +3438,9 @@ if(!canPostImage()){
 controls.innerHTML=`
 <div class="locked-feature">
 🔒
-<strong>Picture posts require Premium.</strong>
+<strong>
+Picture posts require Premium.
+</strong>
 <br><br>
 Your account does not currently have
 permission to publish picture posts.
@@ -2787,7 +3453,9 @@ return;
 
 controls.innerHTML=`
 
-<label class="media-label">Picture URL</label>
+<label class="media-label">
+Picture URL
+</label>
 
 <input
 id="mediaUrlInput"
@@ -2801,7 +3469,10 @@ Use a publicly accessible image URL or connect
 this field to your Supabase Storage upload system.
 </div>
 
-<div id="mediaPreview" class="media-preview"></div>
+<div
+id="mediaPreview"
+class="media-preview">
+</div>
 `;
 
 notice.innerHTML=`
@@ -2821,7 +3492,9 @@ if(!canPostVideo()){
 controls.innerHTML=`
 <div class="locked-feature">
 🔒
-<strong>Video posts require Premium+.</strong>
+<strong>
+Video posts require Premium+.
+</strong>
 <br><br>
 Your account does not currently have
 permission to publish video posts.
@@ -2834,7 +3507,9 @@ return;
 
 controls.innerHTML=`
 
-<label class="media-label">Video URL</label>
+<label class="media-label">
+Video URL
+</label>
 
 <input
 id="mediaUrlInput"
@@ -2848,7 +3523,10 @@ Use a publicly accessible video URL or connect
 this field to your Supabase Storage upload system.
 </div>
 
-<div id="mediaPreview" class="media-preview"></div>
+<div
+id="mediaPreview"
+class="media-preview">
+</div>
 `;
 
 notice.innerHTML=`
@@ -2864,21 +3542,29 @@ notice.innerHTML=`
 function previewMedia(){
 
 const type=
-document.getElementById("mediaType").value;
+document.getElementById(
+"mediaType"
+).value;
 
 const input=
-document.getElementById("mediaUrlInput");
+document.getElementById(
+"mediaUrlInput"
+);
 
 const preview=
-document.getElementById("mediaPreview");
+document.getElementById(
+"mediaPreview"
+);
 
 if(!input||!preview)return;
 
-const url=input.value.trim();
+const url=
+input.value.trim();
 
 if(!url){
 
 preview.innerHTML="";
+
 return;
 
 }
@@ -2886,7 +3572,9 @@ return;
 if(type==="image"){
 
 preview.innerHTML=`
-<img src="${escapeHtml(url)}" alt="Preview">
+<img
+src="${escapeHtml(url)}"
+alt="Preview">
 `;
 
 }
@@ -2910,47 +3598,78 @@ async function createPost(){
 if(!requireLogin())return;
 
 const content=
-document.getElementById("postContentInput").value.trim();
+document.getElementById(
+"postContentInput"
+).value.trim();
 
 const visibility=
-document.getElementById("postVisibility").value;
+document.getElementById(
+"postVisibility"
+).value;
 
 const mediaType=
-document.getElementById("mediaType").value;
+document.getElementById(
+"mediaType"
+).value;
 
 if(!content){
 
-alert("Write something first.");
+alert(
+"Write something first."
+);
+
 return;
 
 }
 
-if(mediaType==="image"&&!canPostImage()){
+if(
+mediaType==="image"&&
+!canPostImage()
+){
 
-alert("Picture posts require Premium.");
+alert(
+"Picture posts require Premium."
+);
+
 return;
 
 }
 
-if(mediaType==="video"&&!canPostVideo()){
+if(
+mediaType==="video"&&
+!canPostVideo()
+){
 
-alert("Video posts require Premium+.");
+alert(
+"Video posts require Premium+."
+);
+
 return;
 
 }
 
 let mediaUrl="";
 
-if(mediaType==="image"||mediaType==="video"){
+if(
+mediaType==="image"||
+mediaType==="video"
+){
 
 const input=
-document.getElementById("mediaUrlInput");
+document.getElementById(
+"mediaUrlInput"
+);
 
-mediaUrl=input?.value.trim()||"";
+mediaUrl=
+input?.value.trim()||
+"";
 
 if(!mediaUrl){
 
-alert("Add a media URL first.");
+alert(
+"Add a media URL first."
+);
+
 return;
 
 }
@@ -2958,10 +3677,13 @@ return;
 }
 
 const button=
-document.getElementById("publishPostBtn");
+document.getElementById(
+"publishPostBtn"
+);
 
 button.disabled=true;
-button.textContent="Publishing...";
+button.textContent=
+"Publishing...";
 
 const payload={
 user_id:currentSession.user.id,
@@ -2971,31 +3693,49 @@ visibility:visibility
 
 if(mediaType!=="text"){
 
-payload.media_url=mediaUrl;
-payload.media_type=mediaType;
+payload.media_url=
+mediaUrl;
+
+payload.media_type=
+mediaType;
 
 }
 
 const{error}=
 await supabaseClient
 .from("posts")
-.insert(payload);
+.insert(
+payload
+);
 
 button.disabled=false;
-button.textContent="Publish Post";
+button.textContent=
+"Publish Post";
 
 if(error){
 
 console.error(error);
 
-alert("Could not publish post: "+error.message);
+alert(
+"Could not publish post: "+
+error.message
+);
+
 return;
 
 }
 
-document.getElementById("postContentInput").value="";
-document.getElementById("postVisibility").value="public";
-document.getElementById("mediaType").value="text";
+document.getElementById(
+"postContentInput"
+).value="";
+
+document.getElementById(
+"postVisibility"
+).value="public";
+
+document.getElementById(
+"mediaType"
+).value="text";
 
 closeCreatePost();
 
@@ -3007,39 +3747,65 @@ async function deletePost(postId){
 
 if(!requireLogin())return;
 
-const{data:post,error:loadError}=
+const{
+data:post,
+error:loadError
+}=
 await supabaseClient
 .from("posts")
 .select("user_id")
-.eq("id",postId)
+.eq(
+"id",
+postId
+)
 .maybeSingle();
 
 if(loadError||!post){
 
-alert("Post not found.");
+alert(
+"Post not found."
+);
+
 return;
 
 }
 
-if(post.user_id!==currentSession.user.id){
+if(
+post.user_id!==
+currentSession.user.id
+){
 
-alert("You can only delete your own post.");
+alert(
+"You can only delete your own post."
+);
+
 return;
 
 }
 
-if(!confirm("Delete this post?"))return;
+if(
+!confirm(
+"Delete this post?"
+)
+)return;
 
 const{error}=
 await supabaseClient
 .from("posts")
 .delete()
-.eq("id",postId)
-.eq("user_id",currentSession.user.id);
+.eq(
+"id",
+postId
+)
+.eq(
+"user_id",
+currentSession.user.id
+);
 
 if(error){
 
 alert(error.message);
+
 return;
 
 }
@@ -3056,22 +3822,31 @@ const shareUrl=
 window.location.origin+
 window.location.pathname+
 "?post="+
-encodeURIComponent(postId);
+encodeURIComponent(
+postId
+);
 
 if(navigator.share){
 
 try{
 
 await navigator.share({
+
 title:"P2P Social",
-text:"Check out this post on P2P Social",
+text:
+"Check out this post on P2P Social",
 url:shareUrl
+
 });
 
 }catch(error){
 
-if(error.name!=="AbortError"){
+if(
+error.name!=="AbortError"
+){
+
 console.log(error);
+
 }
 
 }
@@ -3082,13 +3857,20 @@ return;
 
 try{
 
-await navigator.clipboard.writeText(shareUrl);
+await navigator.clipboard.writeText(
+shareUrl
+);
 
-alert("Post link copied.");
+alert(
+"Post link copied."
+);
 
 }catch(error){
 
-prompt("Copy this post link:",shareUrl);
+prompt(
+"Copy this post link:",
+shareUrl
+);
 
 }
 
@@ -3099,6 +3881,7 @@ async function loadNotifications(){
 if(!currentSession){
 
 resetNotifications();
+
 return;
 
 }
@@ -3109,28 +3892,46 @@ await supabaseClient
 .select(
 "id,user_id,type,title,body,link,is_read,created_at"
 )
-.eq("user_id",currentSession.user.id)
-.order("created_at",{ascending:false})
+.eq(
+"user_id",
+currentSession.user.id
+)
+.order(
+"created_at",
+{ascending:false}
+)
 .limit(50);
 
 if(error){
 
-console.log("Notifications:",error.message);
+console.log(
+"Notifications:",
+error.message
+);
+
 return;
 
 }
 
-renderNotifications(data||[]);
+renderNotifications(
+data||[]
+);
 
 }
 
-function renderNotifications(notifications){
+function renderNotifications(
+notifications
+){
 
 const list=
-document.getElementById("notificationList");
+document.getElementById(
+"notificationList"
+);
 
 const badge=
-document.getElementById("notificationBadge");
+document.getElementById(
+"notificationBadge"
+);
 
 if(!notifications.length){
 
@@ -3147,12 +3948,18 @@ return;
 }
 
 const unread=
-notifications.filter(n=>!n.is_read).length;
+notifications.filter(
+n=>!n.is_read
+).length;
 
 if(unread){
 
 badge.textContent=
-unread>99?"99+":unread;
+unread>99
+?
+"99+"
+:
+unread;
 
 badge.style.display="flex";
 
@@ -3164,49 +3971,75 @@ badge.style.display="none";
 
 list.innerHTML="";
 
-notifications.forEach(notification=>{
+notifications.forEach(
+notification=>{
 
 const item=
-document.createElement("div");
+document.createElement(
+"div"
+);
 
 item.className=
 "notification-item"+
-(notification.is_read?"":" unread");
+(
+notification.is_read
+?
+""
+:
+" unread"
+);
 
 item.innerHTML=`
 
 <div class="notification-icon">
-${notificationIcon(notification.type)}
+${notificationIcon(
+notification.type
+)}
 </div>
 
 <div class="notification-content">
 
 <div class="notification-title">
-${escapeHtml(notification.title||"Notification")}
+${escapeHtml(
+notification.title||
+"Notification"
+)}
 </div>
 
 <div class="notification-body">
-${escapeHtml(notification.body||"")}
+${escapeHtml(
+notification.body||
+""
+)}
 </div>
 
 <div class="notification-time">
-${escapeHtml(formatPostTime(notification.created_at))}
+${escapeHtml(
+formatPostTime(
+notification.created_at
+)
+)}
 </div>
 
 </div>
 `;
 
-item.addEventListener("click",async()=>{
+item.addEventListener(
+"click",
+async()=>{
 
 if(!notification.is_read){
 
-await markNotificationRead(notification.id);
+await markNotificationRead(
+notification.id
+);
 
 }
 
 if(notification.link){
 
-window.location.href=notification.link;
+window.location.href=
+notification.link;
 
 }else{
 
@@ -3214,11 +4047,13 @@ openMessages();
 
 }
 
-});
+}
+);
 
 list.appendChild(item);
 
-});
+}
+);
 
 }
 
@@ -3226,20 +4061,47 @@ function notificationIcon(type){
 
 switch(type){
 
-case"message":return"💬";
-case"like":return"❤️";
-case"comment":return"💬";
-case"follow":return"👤";
-case"wallet":return"💵";
-case"deposit":return"💵";
-case"withdraw":return"💵";
-case"transfer":return"💵";
-case"trade":return"🔄";
-case"premium":return"⭐";
-case"live":return"🔴";
-case"verification":return"🪪";
-case"security":return"🔐";
-default:return"🔔";
+case"message":
+return"💬";
+
+case"like":
+return"❤️";
+
+case"comment":
+return"💬";
+
+case"follow":
+return"👤";
+
+case"wallet":
+return"💵";
+
+case"deposit":
+return"💵";
+
+case"withdraw":
+return"💵";
+
+case"transfer":
+return"💵";
+
+case"trade":
+return"🔄";
+
+case"premium":
+return"⭐";
+
+case"live":
+return"🔴";
+
+case"verification":
+return"🪪";
+
+case"security":
+return"🔐";
+
+default:
+return"🔔";
 
 }
 
@@ -3252,13 +4114,24 @@ if(!currentSession)return;
 const{error}=
 await supabaseClient
 .from("notifications")
-.update({is_read:true})
-.eq("id",id)
-.eq("user_id",currentSession.user.id);
+.update({
+is_read:true
+})
+.eq(
+"id",
+id
+)
+.eq(
+"user_id",
+currentSession.user.id
+);
 
 if(error){
 
-console.error("Notification read:",error);
+console.error(
+"Notification read:",
+error
+);
 
 }
 
@@ -3273,13 +4146,24 @@ if(!currentSession)return;
 const{error}=
 await supabaseClient
 .from("notifications")
-.update({is_read:true})
-.eq("user_id",currentSession.user.id)
-.eq("is_read",false);
+.update({
+is_read:true
+})
+.eq(
+"user_id",
+currentSession.user.id
+)
+.eq(
+"is_read",
+false
+);
 
 if(error){
 
-alert("Could not mark notifications as read.");
+alert(
+"Could not mark notifications as read."
+);
+
 return;
 
 }
@@ -3290,9 +4174,13 @@ await loadNotifications();
 
 function resetNotifications(){
 
-document.getElementById("notificationBadge").style.display="none";
+document.getElementById(
+"notificationBadge"
+).style.display="none";
 
-document.getElementById("notificationList").innerHTML=`
+document.getElementById(
+"notificationList"
+).innerHTML=`
 <div class="no-notifications">
 Login to see notifications.
 </div>
@@ -3303,17 +4191,25 @@ Login to see notifications.
 function toggleNotificationPanel(event){
 
 if(event){
+
 event.stopPropagation();
+
 }
 
 if(!requireLogin())return;
 
 const panel=
-document.getElementById("notificationPanel");
+document.getElementById(
+"notificationPanel"
+);
 
-panel.classList.toggle("open");
+panel.classList.toggle(
+"open"
+);
 
-if(panel.classList.contains("open")){
+if(
+panel.classList.contains("open")
+){
 
 loadNotifications();
 
@@ -3327,22 +4223,28 @@ if(!currentSession)return;
 
 if(notificationChannel){
 
-supabaseClient.removeChannel(notificationChannel);
+supabaseClient.removeChannel(
+notificationChannel
+);
 
 }
 
-const userId=currentSession.user.id;
+const userId=
+currentSession.user.id;
 
 notificationChannel=
 supabaseClient
-.channel("notifications-"+userId)
+.channel(
+"notifications-"+userId
+)
 .on(
 "postgres_changes",
 {
 event:"INSERT",
 schema:"public",
 table:"notifications",
-filter:"user_id=eq."+userId
+filter:
+"user_id=eq."+userId
 },
 payload=>{
 
@@ -3350,7 +4252,9 @@ loadNotifications();
 
 if(!document.hidden){
 
-showNewNotificationPopup(payload.new);
+showNewNotificationPopup(
+payload.new
+);
 
 }
 
@@ -3360,7 +4264,9 @@ showNewNotificationPopup(payload.new);
 
 }
 
-function showNewNotificationPopup(notification){
+function showNewNotificationPopup(
+notification
+){
 
 if(
 "Notification" in window&&
@@ -3370,9 +4276,12 @@ Notification.permission==="granted"
 try{
 
 new Notification(
-notification.title||"New notification",
+notification.title||
+"New notification",
 {
-body:notification.body||""
+body:
+notification.body||
+""
 }
 );
 
@@ -3386,14 +4295,20 @@ console.log(error);
 
 }
 
-function getFirstValue(object,keys){
+function getFirstValue(
+object,
+keys
+){
 
 if(!object)return null;
 
 for(const key of keys){
 
 if(
-Object.prototype.hasOwnProperty.call(object,key)
+Object.prototype.hasOwnProperty.call(
+object,
+key
+)
 ){
 
 if(
@@ -3416,10 +4331,13 @@ return null;
 
 function formatNumber(value){
 
-const number=Number(value);
+const number=
+Number(value);
 
 if(Number.isNaN(number)){
+
 return String(value);
+
 }
 
 return number.toLocaleString(
@@ -3434,8 +4352,14 @@ maximumFractionDigits:8
 function formatStatus(value){
 
 return String(value||"")
-.replace(/_/g," ")
-.replace(/\b\w/g,letter=>letter.toUpperCase());
+.replace(
+/_/g,
+" "
+)
+.replace(
+/\b\w/g,
+letter=>letter.toUpperCase()
+);
 
 }
 
@@ -3443,23 +4367,43 @@ function formatPostTime(date){
 
 if(!date)return"";
 
-const d=new Date(date);
+const d=
+new Date(date);
 
-if(Number.isNaN(d.getTime())){
+if(
+Number.isNaN(
+d.getTime()
+)
+){
+
 return"";
+
 }
 
-const now=new Date();
+const now=
+new Date();
 
-const diff=Math.floor((now-d)/1000);
+const diff=
+Math.floor(
+(now-d)/1000
+);
 
 if(diff<60)return"just now";
 
-if(diff<3600)return Math.floor(diff/60)+"m ago";
+if(diff<3600)
+return Math.floor(
+diff/60
+)+"m ago";
 
-if(diff<86400)return Math.floor(diff/3600)+"h ago";
+if(diff<86400)
+return Math.floor(
+diff/3600
+)+"h ago";
 
-if(diff<604800)return Math.floor(diff/86400)+"d ago";
+if(diff<604800)
+return Math.floor(
+diff/86400
+)+"d ago";
 
 return d.toLocaleDateString();
 
@@ -3467,33 +4411,73 @@ return d.toLocaleDateString();
 
 function escapeHtml(value){
 
-return String(value??"")
-.replace(/&/g,"&amp;")
-.replace(/</g,"&lt;")
-.replace(/>/g,"&gt;")
-.replace(/"/g,"&quot;")
-.replace(/'/g,"&#039;");
+return String(
+value??""
+)
+.replace(
+/&/g,
+"&amp;"
+)
+.replace(
+/</g,
+"&lt;"
+)
+.replace(
+/>/g,
+"&gt;"
+)
+.replace(
+/"/g,
+"&quot;"
+)
+.replace(
+/'/g,
+"&#039;"
+);
 
 }
 
 function escapeJs(value){
 
-return String(value??"")
-.replace(/\\/g,"\\\\")
-.replace(/'/g,"\\'")
-.replace(/"/g,'\\"')
-.replace(/\n/g,"\\n")
-.replace(/\r/g,"\\r");
+return String(
+value??""
+)
+.replace(
+/\\/g,
+"\\\\"
+)
+.replace(
+/'/g,
+"\\'"
+)
+.replace(
+/"/g,
+'\\"'
+)
+.replace(
+/\n/g,
+"\\n"
+)
+.replace(
+/\r/g,
+"\\r"
+);
 
 }
 
-document.addEventListener("click",event=>{
+document.addEventListener(
+"click",
+event=>{
 
 const panel=
-document.getElementById("notificationPanel");
+document.getElementById(
+"notificationPanel"
+);
 
 const button=
-document.getElementById("notificationButton");
+document.getElementById(
+"notificationButton"
+);
 
 if(
 panel&&
@@ -3502,57 +4486,82 @@ button&&
 !button.contains(event.target)
 ){
 
-panel.classList.remove("open");
+panel.classList.remove(
+"open"
+);
 
 }
 
 const modalIds=[
+
 "verifyModal",
 "referralModal",
 "transferModal",
 "supportModal",
 "twoFAModal",
 "createPostModal"
+
 ];
 
-modalIds.forEach(id=>{
+modalIds.forEach(
+id=>{
 
-const modal=document.getElementById(id);
+const modal=
+document.getElementById(id);
 
-if(modal&&event.target===modal){
+if(
+modal&&
+event.target===modal
+){
 
-modal.style.display="none";
+modal.style.display=
+"none";
 
 }
 
-});
+}
+);
 
-});
+}
+);
 
-document.addEventListener("keydown",event=>{
+document.addEventListener(
+"keydown",
+event=>{
 
-if(event.key!=="Escape")return;
+if(
+event.key!=="Escape"
+)return;
 
 const modalIds=[
+
 "verifyModal",
 "referralModal",
 "transferModal",
 "supportModal",
 "twoFAModal",
 "createPostModal"
+
 ];
 
-modalIds.forEach(id=>{
+modalIds.forEach(
+id=>{
 
-const modal=document.getElementById(id);
+const modal=
+document.getElementById(id);
 
 if(modal){
-modal.style.display="none";
+
+modal.style.display=
+"none";
+
 }
 
-});
+}
+);
 
-});
+}
+);
 
 startApp();
 

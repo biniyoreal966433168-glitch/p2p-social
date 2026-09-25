@@ -1,13 +1,15 @@
 export default async function handler(req, res) {
-  if (req.method !== "GET") {
+  if (req.method !== "POST") {
     return res.status(405).json({
       error: "Method not allowed"
     });
   }
 
   try {
-    const wallet_address = req.query.wallet_address;
-    const order_amount = req.query.order_amount;
+    const {
+      wallet_address,
+      order_amount
+    } = req.body || {};
 
     if (!wallet_address) {
       return res.status(400).json({
@@ -30,6 +32,12 @@ export default async function handler(req, res) {
     }
 
     const fee = amount * 0.01;
+
+    if (fee <= 0) {
+      return res.status(400).json({
+        error: "Invalid fee amount"
+      });
+    }
 
     const TONAPI_KEY = process.env.TONAPI_KEY;
 
@@ -72,13 +80,10 @@ export default async function handler(req, res) {
 
     if (walletUsdtBalance < fee) {
       return res.status(400).json({
-        success: false,
         error: "Insufficient USDT balance for Create Order fee",
         order_amount: amount,
-        fee_percent: 1,
-        fee_amount: fee,
-        wallet_usdt_balance: walletUsdtBalance,
-        platform_wallet: platform_wallet
+        fee: fee,
+        wallet_usdt_balance: walletUsdtBalance
       });
     }
 

@@ -24,12 +24,6 @@ export default async function handler(req, res) {
       });
     }
 
-    if (!fee_amount) {
-      return res.status(400).json({
-        error: "Fee amount required"
-      });
-    }
-
     const fee = Number(fee_amount);
 
     if (!Number.isFinite(fee) || fee <= 0) {
@@ -53,8 +47,9 @@ export default async function handler(req, res) {
       "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs";
 
     const url =
-      "https://tonapi.io/v2/blockchain/transactions/" +
-      encodeURIComponent(transaction_hash);
+      "https://tonapi.io/v2/accounts/" +
+      encodeURIComponent(wallet_address) +
+      "/events?limit=100";
 
     const response = await fetch(url, {
       method: "GET",
@@ -72,16 +67,100 @@ export default async function handler(req, res) {
       });
     }
 
+    const events = Array.isArray(data.events)
+      ? data.events
+      : [];
+
+    let matchedTransfer = null;
+
+    for (const event of events) {
+      if (!event.actions) {
+        continue;
+      }
+
+      for (const action of event.actions) {
+        const jettonTransfer =
+          action.JettonTransfer ||
+          action.jetton_transfer;
+
+        if (!jettonTransfer) {
+          continue;
+        }
+
+        const sender =
+          jettonTransfer.sender?.address ||
+          jettonTransfer.sender;
+
+        const recipient =
+          jettonTransfer.recipient?.address ||
+          jettonTransfer.recipient;
+
+        const jetton =
+          jettonTransfer.jetton?.address ||
+          jettonTransfer.jetton;
+
+        const amountRaw = String(
+          jettonTransfer.amount || "0"
+        );
+
+        const eventHash =
+          event.event_id ||
+          event.transaction?.hash ||
+          "";
+
+        if (
+          sender === wallet_address &&
+          recipient === platform_wallet &&
+          jetton === usdt_master &&
+          eventHash === transaction_hash
+        ) {
+          matchedTransfer = {
+            sender,
+            recipient,
+            jetton,
+            amount_raw: amountRaw,
+            event_id: eventHash
+          };
+
+          break;
+        }
+      }
+
+      if (matchedTransfer) {
+        break;
+      }
+    }
+
+    if (!matchedTransfer) {
+      return res.status(400).json({
+        success: false,
+        verified: false,
+        error: "Matching USDT fee transaction not found"
+      });
+    }
+
+    const actualAmount =
+      Number(matchedTransfer.amount_raw) / 1000000;
+
+    if (actualAmount !== fee) {
+      return res.status(400).json({
+        success: false,
+        verified: false,
+        error: "USDT fee amount does not match",
+        expected_fee: fee,
+        actual_amount: actualAmount
+      });
+    }
+
     return res.status(200).json({
       success: true,
-      verified: false,
-      message: "Transaction found. Transfer verification will be completed from the transaction data.",
+      verified: true,
+      fee_type: "create_order",
       wallet_address: wallet_address,
-      transaction_hash: transaction_hash,
-      expected_fee: fee,
       platform_wallet: platform_wallet,
       usdt_master: usdt_master,
-      transaction: data
+      transaction_hash: transaction_hash,
+      fee_amount: actualAmount
     });
 
   } catch (error) {

@@ -12,15 +12,9 @@ export default async function handler(req, res) {
       fee_amount
     } = req.body || {};
 
-    if (!wallet_address) {
+    if (!wallet_address || !transaction_hash || !fee_amount) {
       return res.status(400).json({
-        error: "TON wallet address required"
-      });
-    }
-
-    if (!transaction_hash) {
-      return res.status(400).json({
-        error: "Transaction hash required"
+        error: "wallet_address, transaction_hash and fee_amount are required"
       });
     }
 
@@ -52,7 +46,6 @@ export default async function handler(req, res) {
       "/events?limit=100";
 
     const response = await fetch(url, {
-      method: "GET",
       headers: {
         Authorization: "Bearer " + TONAPI_KEY
       }
@@ -71,96 +64,104 @@ export default async function handler(req, res) {
       ? data.events
       : [];
 
-    let matchedTransfer = null;
-
     for (const event of events) {
-      if (!event.actions) {
+      const eventHash =
+        event.event_id ||
+        event.transaction?.hash ||
+        event.tx_hash ||
+        "";
+
+      if (eventHash !== transaction_hash) {
         continue;
       }
 
-      for (const action of event.actions) {
-        const jettonTransfer =
-          action.JettonTransfer ||
-          action.jetton_transfer;
+      const actions = Array.isArray(event.actions)
+        ? event.actions
+        : [];
 
-        if (!jettonTransfer) {
+      for (const action of actions) {
+        const transfer =
+          action.JettonTransfer ||
+          action.jetton_transfer ||
+          action.jettonTransfer;
+
+        if (!transfer) {
           continue;
         }
 
         const sender =
-          jettonTransfer.sender?.address ||
-          jettonTransfer.sender;
-
-        const recipient =
-          jettonTransfer.recipient?.address ||
-          jettonTransfer.recipient;
-
-        const jetton =
-          jettonTransfer.jetton?.address ||
-          jettonTransfer.jetton;
-
-        const amountRaw = String(
-          jettonTransfer.amount || "0"
-        );
-
-        const eventHash =
-          event.event_id ||
-          event.transaction?.hash ||
+          transfer.sender?.address ||
+          transfer.sender ||
           "";
 
-        if (
-          sender === wallet_address &&
-          recipient === platform_wallet &&
-          jetton === usdt_master &&
-          eventHash === transaction_hash
-        ) {
-          matchedTransfer = {
-            sender,
-            recipient,
-            jetton,
-            amount_raw: amountRaw,
-            event_id: eventHash
-          };
+        const recipient =
+          transfer.recipient?.address ||
+          transfer.recipient ||
+          "";
 
-          break;
+        const jetton =
+          transfer.jetton?.address ||
+          transfer.jetton ||
+          "";
+
+        const rawAmount = String(
+          transfer.amount || "0"
+        );
+
+        const actualAmount =
+          Number(rawAmount) / 1000000;
+
+        if (sender !== wallet_address) {
+          return res.status(400).json({
+            success: false,
+            verified: false,
+            error: "Sender does not match connected wallet"
+          });
         }
+
+        if (recipient !== platform_wallet) {
+          return res.status(400).json({
+            success: false,
+            verified: false,
+            error: "Recipient does not match platform wallet"
+          });
+        }
+
+        if (jetton !== usdt_master) {
+          return res.status(400).json({
+            success: false,
+            verified: false,
+            error: "Jetton is not the configured USDT"
+          });
+        }
+
+        if (actualAmount !== fee) {
+          return res.status(400).json({
+            success: false,
+            verified: false,
+            error: "Fee amount does not match",
+            expected_fee: fee,
+            actual_amount: actualAmount
+          });
+        }
+
+        return res.status(200).json({
+          success: true,
+          verified: true,
+          fee_type: "create_order",
+          wallet_address,
+          platform_wallet,
+          usdt_master,
+          transaction_hash,
+          fee_amount: actualAmount
+        });
       }
-
-      if (matchedTransfer) {
-        break;
-      }
     }
 
-    if (!matchedTransfer) {
-      return res.status(400).json({
-        success: false,
-        verified: false,
-        error: "Matching USDT fee transaction not found"
-      });
-    }
-
-    const actualAmount =
-      Number(matchedTransfer.amount_raw) / 1000000;
-
-    if (actualAmount !== fee) {
-      return res.status(400).json({
-        success: false,
-        verified: false,
-        error: "USDT fee amount does not match",
-        expected_fee: fee,
-        actual_amount: actualAmount
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      verified: true,
-      fee_type: "create_order",
-      wallet_address: wallet_address,
-      platform_wallet: platform_wallet,
-      usdt_master: usdt_master,
-      transaction_hash: transaction_hash,
-      fee_amount: actualAmount
+    return res.status(400).json({
+      success: false,
+      verified: false,
+      error: "Matching transaction or USDT transfer not found"
     });
 
   } catch (error) {

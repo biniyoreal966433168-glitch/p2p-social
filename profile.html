@@ -2,1181 +2,770 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Profile • P2P Social</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#087f73">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="P2P Social">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./p2p-logo.svg" type="image/svg+xml">
+<title>P2P Social</title>
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
-body{background:#f5f7fb;color:#172033;padding-bottom:85px}
-button,input,textarea,select{font-family:inherit}
-button{cursor:pointer}
+html,body{min-height:100%}
+body{background:#f5f7fb;color:#172033;padding-bottom:78px}
+button{font-family:Arial,sans-serif}
+button:active{transform:scale(.97)}
+#app{display:none}
 
-header{background:linear-gradient(135deg,#075e54,#087f73);color:white;padding:14px 18px;border-radius:0 0 22px 22px}
-.header-row{display:flex;align-items:center;gap:12px}
-.back-btn{border:none;background:rgba(255,255,255,.15);color:white;width:40px;height:40px;border-radius:50%;font-size:25px;flex-shrink:0}
-.brand-header{display:flex;align-items:center;gap:10px}
-.brand-icon{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#064e46,#10a889);position:relative;display:flex;justify-content:center;align-items:center;box-shadow:0 5px 14px rgba(0,0,0,.18);flex-shrink:0}
-.brand-p-left{position:absolute;left:8px;top:10px;width:12px;height:23px;border:4px solid white;border-right:0;border-radius:8px 0 0 8px}
-.brand-p-right{position:absolute;right:8px;top:10px;width:12px;height:23px;border:4px solid white;border-left:0;border-radius:0 8px 8px 0}
-.brand-center{width:12px;height:12px;background:white;border-radius:50%;position:absolute;display:flex;justify-content:center;align-items:center;z-index:5}
-.brand-dot{width:4px;height:4px;background:#087f73;border-radius:50%}
-.brand-text{display:flex;flex-direction:column;justify-content:center}
-.brand-text h1{font-size:18px;line-height:1;font-weight:800;color:white}
-.brand-text h1 span{color:#b8fff1}
-.brand-text p{margin-top:5px;font-size:7px;color:rgba(255,255,255,.78);letter-spacing:.6px}
+#checkingAuth{
+position:fixed;inset:0;background:#075e54;color:white;
+display:flex;align-items:center;justify-content:center;
+flex-direction:column;gap:12px;z-index:99999
+}
+.auth-logo{
+width:62px;height:62px;border-radius:18px;background:#087f73;
+display:flex;align-items:center;justify-content:center;font-size:30px;
+box-shadow:0 8px 25px rgba(0,0,0,.2)
+}
+.auth-loading{font-size:14px;opacity:.9}
 
-.profile-card{background:white;margin:16px;border-radius:20px;padding:20px;box-shadow:0 4px 15px rgba(0,0,0,.07)}
-.profile-top{display:flex;align-items:center;gap:15px}
-.profile-photo-wrap{position:relative;width:82px;height:82px;flex-shrink:0}
-.profile-photo{width:82px;height:82px;border-radius:50%;object-fit:cover;background:#dfeeea;display:flex;align-items:center;justify-content:center;color:#087f73;font-size:30px;font-weight:bold;overflow:hidden}
-.photo-button{position:absolute;right:-2px;bottom:-2px;width:29px;height:29px;border:none;border-radius:50%;background:#087f73;color:white;font-size:14px;display:flex;align-items:center;justify-content:center}
-.profile-info{min-width:0}
-.profile-name-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.profile-name{font-size:20px;font-weight:bold;word-break:break-word}
-.verification-badge{display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;padding:3px 7px;border-radius:8px;background:#e8f8f3;color:#087f73}
-.verification-badge.unverified{background:#f1f4f8;color:#7a8494}
-.profile-id{margin-top:5px;color:#7a8494;font-size:12px}
-.profile-bio{margin-top:5px;color:#596579;font-size:13px;word-break:break-word}
-.lock-status{margin-top:7px;display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:8px;background:#f1f4f8;color:#596579;font-size:11px;font-weight:bold}
+header{
+background:linear-gradient(135deg,#075e54,#087f73);
+color:white;padding:18px;border-radius:0 0 22px 22px
+}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.logo-area{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{
+width:45px;height:45px;border-radius:14px;
+background:linear-gradient(135deg,#064e46,#10a889);
+position:relative;display:flex;justify-content:center;
+align-items:center;flex-shrink:0;box-shadow:0 6px 15px rgba(0,0,0,.18)
+}
+.logo .p-left{
+position:absolute;left:8px;top:10px;width:13px;height:25px;
+border:4px solid white;border-right:0;border-radius:8px 0 0 8px
+}
+.logo .p-right{
+position:absolute;right:8px;top:10px;width:13px;height:25px;
+border:4px solid white;border-left:0;border-radius:0 8px 8px 0
+}
+.logo .center{
+width:12px;height:12px;background:white;border-radius:50%;
+position:absolute;z-index:5
+}
+.logo .dot{
+width:4px;height:4px;background:#087f73;border-radius:50%;
+position:absolute;top:4px;left:4px
+}
+.brand{font-size:21px;font-weight:bold;white-space:nowrap}
+.brand span{color:#b9fff1}
+.top-actions{display:flex;align-items:center;gap:6px}
+.auth-btn{
+border:none;border-radius:9px;padding:8px 10px;font-size:12px;
+font-weight:bold;cursor:pointer
+}
+.logout-btn{background:#e74c3c;color:white}
 
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:20px;border-top:1px solid #edf0f4;padding-top:16px}
-.stat{text-align:center}
-.stat strong{display:block;font-size:18px}
-.stat span{display:block;color:#7a8494;font-size:11px;margin-top:4px}
+.notification-wrap{position:relative}
+.notification{
+width:38px;height:38px;border:none;background:transparent;
+color:white;font-size:23px;cursor:pointer;position:relative
+}
+.notification-badge{
+position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;
+padding:0 5px;border-radius:20px;background:#e74c3c;color:white;
+font-size:10px;font-weight:bold;display:none;align-items:center;
+justify-content:center;border:2px solid #087f73
+}
+.notification-panel{
+display:none;position:absolute;right:0;top:45px;width:330px;
+max-width:calc(100vw - 24px);background:white;color:#172033;
+border-radius:16px;box-shadow:0 10px 35px rgba(0,0,0,.2);
+overflow:hidden;z-index:3000
+}
+.notification-panel.open{display:block}
+.notification-header{
+display:flex;align-items:center;justify-content:space-between;
+padding:14px;border-bottom:1px solid #edf0f4
+}
+.mark-all{
+border:none;background:none;color:#087f73;font-size:11px;
+font-weight:bold;cursor:pointer
+}
+.notification-list{max-height:380px;overflow-y:auto}
+.notification-item{
+display:flex;gap:10px;padding:12px 14px;
+border-bottom:1px solid #f0f2f5;cursor:pointer
+}
+.notification-item.unread{background:#edf9f6}
+.notification-icon{
+width:38px;height:38px;border-radius:50%;background:#dff3ee;
+display:flex;align-items:center;justify-content:center;
+flex-shrink:0;font-size:18px
+}
+.notification-content{min-width:0;flex:1}
+.notification-title{font-weight:bold;font-size:13px}
+.notification-body{font-size:12px;color:#687386;margin-top:3px;line-height:1.4}
+.notification-time{font-size:10px;color:#9299a5;margin-top:5px}
+.no-notifications{padding:30px 15px;text-align:center;color:#858d99;font-size:13px}
 
-.profile-buttons{display:flex;gap:8px;margin-top:17px}
-.profile-buttons button{flex:1;border:none;padding:11px;border-radius:10px;font-weight:bold}
-.edit-btn{background:#087f73;color:white}
-.settings-btn{background:#edf7f5;color:#087f73}
-.lock-btn{background:#f1f4f8;color:#172033}
+.user-info{
+display:flex;align-items:center;gap:5px;margin-top:12px;font-size:13px
+}
+.premium-user-badge{font-size:13px;font-weight:bold}
 
-.trading-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
-.trading-stat{background:#f5f7fb;border-radius:12px;padding:12px;text-align:center}
-.trading-stat strong{display:block;font-size:17px}
-.trading-stat span{display:block;color:#7a8494;font-size:11px;margin-top:5px}
+.ton-wallet{
+margin-top:12px;
+padding:10px;
+background:rgba(255,255,255,.10);
+border-radius:12px;
+}
+.ton-wallet-title{
+font-size:12px;
+font-weight:bold;
+margin-bottom:8px;
+}
+#ton-connect{
+min-height:40px;
+}
+#ton-connect button{
+border-radius:9px!important;
+}
 
-.section,.order-section{margin:16px}
-.section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.section-title h2{font-size:19px}
-.section-title-actions{display:flex;align-items:center;gap:7px}
-.collapse-btn{border:none;background:#edf7f5;color:#087f73;width:32px;height:30px;border-radius:9px;font-size:15px;font-weight:bold}
-.list-controls{display:flex;align-items:center;gap:7px}
-.list-control-btn{border:none;background:#edf7f5;color:#087f73;padding:7px 10px;border-radius:9px;font-size:11px;font-weight:bold}
-.list-control-btn.refreshing{opacity:.6}
-.collapsible-content{display:block}
-.collapsible-content.collapsed{display:none}
+.ton-wallet-info{
+display:none;
+margin-top:8px;
+font-size:11px;
+color:#fff;
+word-break:break-all;
+}
+.ton-wallet-info strong{
+font-weight:bold;
+}
 
-.wallet{background:linear-gradient(135deg,#172033,#29364f);color:white;border-radius:18px;padding:18px;box-shadow:0 5px 18px rgba(0,0,0,.1)}
-.wallet-label{opacity:.75;font-size:13px}
-.wallet-header{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.balance-toggle{border:none;background:rgba(255,255,255,.1);color:white;width:36px;height:32px;border-radius:9px;font-size:17px}
-.wallet-balances{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:9px}
-.balance-box{background:rgba(255,255,255,.08);border-radius:12px;padding:12px;min-width:0}
-.balance-title{font-size:12px;opacity:.7}
-.balance-value{font-size:21px;font-weight:bold;margin-top:5px;word-break:break-word}
-.wallet-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:15px}
-.wallet-action{border:none;color:white;padding:11px;border-radius:10px;font-weight:bold}
-.deposit-btn{background:#16a085}
-.withdraw-btn{background:#c0392b}
-.transfer-btn{background:#087f73}
+.quick-section{padding:16px 18px 5px}
+.quick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.quick-card{
+background:white;border:none;border-radius:15px;padding:14px;text-align:left;
+box-shadow:0 3px 12px rgba(0,0,0,.06);cursor:pointer;min-height:78px
+}
+.quick-card-icon{font-size:25px;margin-bottom:7px}
+.quick-card-title{font-size:13px;font-weight:bold;color:#172033}
+.quick-card-text{font-size:10px;color:#7b8492;margin-top:4px;line-height:1.3}
+.quick-card.primary{background:#087f73}
+.quick-card.primary .quick-card-title,
+.quick-card.primary .quick-card-text{color:white}
 
-.deposit-bonus-box{background:rgba(255,255,255,.08);border-radius:12px;padding:12px;margin-top:12px}
-.deposit-bonus-title{font-size:12px;font-weight:bold;margin-bottom:8px}
-.deposit-bonus-row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:11px}
-.deposit-bonus-row span:last-child{font-weight:bold;color:#b8fff1}
+.rate-box{
+margin:13px 18px 0;background:white;border-radius:17px;padding:16px;
+box-shadow:0 4px 15px rgba(0,0,0,.06)
+}
+.rate-header{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.rate-title{font-size:16px;font-weight:bold}
+.rate-status{
+font-size:10px;padding:5px 8px;border-radius:8px;
+background:#eaf7f4;color:#087f73;font-weight:bold
+}
+.rate-main{
+display:flex;justify-content:space-between;align-items:end;
+margin-top:12px;gap:10px
+}
+.rate-value{font-size:25px;font-weight:bold;color:#172033}
+.rate-unit{font-size:11px;color:#7b8492;margin-top:3px}
+.rate-change{font-size:12px;font-weight:bold;color:#16a085}
 
-.country-box{background:white;border-radius:18px;padding:16px;box-shadow:0 4px 15px rgba(0,0,0,.07)}
-.country-info{background:#f5f7fb;border-radius:12px;padding:12px}
-.country-row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #e7ebf0}
-.country-row:last-child{border-bottom:none}
-.country-label{color:#7a8494;font-size:11px}
-.country-value{font-size:13px;font-weight:bold;text-align:right;word-break:break-word}
-.currency-list{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
-.currency-chip{background:#edf7f5;color:#087f73;border-radius:9px;padding:7px 9px;font-size:11px;font-weight:bold}
-
-.bank-transfer-box{background:white;border-radius:18px;padding:16px;box-shadow:0 4px 15px rgba(0,0,0,.07)}
-.bank-transfer-info{background:#f5f7fb;border-radius:12px;padding:12px}
-.bank-transfer-row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #e7ebf0}
-.bank-transfer-row:last-child{border-bottom:none}
-.bank-transfer-label{color:#7a8494;font-size:11px}
-.bank-transfer-value{font-size:13px;font-weight:bold;text-align:right;word-break:break-word}
-.bank-transfer-button{width:100%;border:none;background:#087f73;color:white;padding:12px;border-radius:10px;font-weight:bold;margin-top:10px}
-
-.history-box{background:white;border-radius:18px;padding:15px;box-shadow:0 4px 15px rgba(0,0,0,.07)}
-.history-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}
-.history-tab{border:none;background:#f1f4f8;color:#596579;padding:9px 5px;border-radius:9px;font-size:11px;font-weight:bold}
-.history-tab.active{background:#087f73;color:white}
-.history-list{display:flex;flex-direction:column;gap:8px}
-.history-row{background:#f5f7fb;border-radius:11px;padding:11px}
-.history-row-top{display:flex;justify-content:space-between;gap:8px}
-.history-type{font-weight:bold;font-size:12px}
-.history-amount{font-weight:bold;font-size:12px}
-.history-amount.positive{color:#087f73}
-.history-amount.negative{color:#c0392b}
-.history-meta{display:flex;justify-content:space-between;gap:8px;margin-top:5px;color:#7a8494;font-size:10px}
-.history-status{margin-top:6px;display:inline-block;background:#e8f8f3;color:#087f73;padding:4px 7px;border-radius:7px;font-size:10px;font-weight:bold}
-.history-status.pending{background:#fff5df;color:#a86c00}
-.history-status.failed{background:#fdecec;color:#c0392b}
-.history-empty{padding:20px;text-align:center;color:#7b8492;font-size:12px}
-
-.order-box{background:white;border-radius:18px;padding:16px;box-shadow:0 4px 15px rgba(0,0,0,.07)}
-.create-order-button{width:100%;margin-top:10px;border:none;background:#087f73;color:white;padding:12px;border-radius:10px;font-weight:bold}
-.create-order-button.sell-create{background:#c0392b}
-.orders-list{display:flex;flex-direction:column;gap:10px}
-.order-card{background:white;border-radius:15px;padding:14px;box-shadow:0 3px 12px rgba(0,0,0,.06);border-left:4px solid #087f73}
-.order-card.sell{border-left-color:#c0392b}
-.order-card-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.order-type{font-size:14px;font-weight:bold}
-.order-status{font-size:11px;padding:5px 8px;border-radius:8px;background:#edf7f5;color:#087f73;font-weight:bold}
-.order-status.sell-status{background:#fdecec;color:#c0392b}
-.order-details{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
-.order-detail{background:#f5f7fb;border-radius:9px;padding:9px}
-.order-detail-label{color:#7a8494;font-size:10px}
-.order-detail-value{margin-top:4px;font-size:13px;font-weight:bold;word-break:break-word}
-.cancel-order-btn{width:100%;border:none;margin-top:10px;padding:10px;border-radius:9px;background:#fdecec;color:#c0392b;font-weight:bold}
-.order-empty{background:white;border-radius:15px;padding:18px;text-align:center;color:#7b8492;font-size:13px}
-
-.create-box{background:white;border-radius:17px;padding:16px;box-shadow:0 3px 12px rgba(0,0,0,.06)}
-.create-box textarea{width:100%;min-height:100px;resize:vertical;border:1px solid #dfe4eb;border-radius:12px;padding:12px;outline:none;font-size:14px}
-.post-options{display:flex;align-items:center;gap:10px;margin-top:10px}
-.post-options select{flex:1;border:1px solid #dfe4eb;border-radius:9px;padding:10px}
-.create-post-btn{border:none;background:#087f73;color:white;padding:10px 15px;border-radius:9px;font-weight:bold}
+section{padding:18px 18px 5px}
+.posts-section{padding-top:18px}
+.posts-title{
+display:flex;justify-content:space-between;align-items:center;margin-bottom:12px
+}
+.posts-title h2{font-size:19px}
+.see-all{
+font-size:12px;color:#087f73;font-weight:bold;cursor:pointer
+}
+.create-post-btn{
+border:none;background:#087f73;color:white;padding:9px 12px;
+border-radius:10px;font-weight:bold;cursor:pointer
+}
 .posts-feed{display:flex;flex-direction:column;gap:12px}
-.post-card{background:white;border-radius:17px;padding:16px;box-shadow:0 3px 12px rgba(0,0,0,.06)}
-.post-header{display:flex;align-items:center;gap:10px}
-.post-avatar{width:43px;height:43px;border-radius:50%;object-fit:cover;background:#dfeeea;display:flex;align-items:center;justify-content:center;color:#087f73;font-weight:bold;flex-shrink:0}
-.post-user{flex:1;min-width:0}
-.post-name-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
-.post-name{font-weight:bold;font-size:14px}
-.post-meta{color:#8a93a1;font-size:11px;margin-top:3px}
-.post-menu{border:none;background:transparent;font-size:20px;color:#687386}
-.post-content{margin-top:13px;font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
-.post-actions{display:flex;gap:15px;margin-top:15px;padding-top:12px;border-top:1px solid #edf0f4;flex-wrap:wrap}
-.post-action{border:none;background:transparent;color:#687386;font-size:13px}
+.post-card{
+background:white;border-radius:16px;padding:16px;
+box-shadow:0 3px 12px rgba(0,0,0,.06);position:relative
+}
+.post-pin{
+display:inline-block;margin-bottom:9px;background:#fff4d6;color:#9a6b00;
+border-radius:7px;padding:5px 8px;font-size:10px;font-weight:bold
+}
+.post-header{display:flex;align-items:center;gap:10px;cursor:pointer}
+.post-avatar{
+width:42px;height:42px;border-radius:50%;object-fit:cover;
+background:#dfeeea;display:flex;align-items:center;justify-content:center;
+color:#087f73;font-weight:bold;flex-shrink:0;overflow:hidden
+}
+.post-avatar img{width:100%;height:100%;object-fit:cover}
+.post-user-info{flex:1;min-width:0}
+.post-name{font-weight:bold;font-size:14px;overflow:hidden;text-overflow:ellipsis}
+.post-handle{color:#7a8494;font-size:12px;margin-top:3px}
+.post-time{color:#8a93a1;font-size:11px;white-space:nowrap}
+.post-menu{border:none;background:none;font-size:18px;cursor:pointer}
+.post-content{
+margin-top:13px;color:#303b4d;font-size:14px;line-height:1.55;
+white-space:pre-wrap;word-break:break-word
+}
+.post-media{margin-top:13px;border-radius:13px;overflow:hidden;background:#edf0f4}
+.post-media img,.post-media video{
+width:100%;max-height:500px;object-fit:cover;display:block
+}
+.post-type-label{
+display:inline-block;margin-top:10px;background:#edf8f5;color:#087f73;
+padding:4px 7px;border-radius:6px;font-size:10px;font-weight:bold
+}
+.post-actions{
+display:flex;gap:18px;margin-top:15px;padding-top:12px;
+border-top:1px solid #edf0f4;flex-wrap:wrap
+}
+.post-action{
+border:none;background:transparent;color:#687386;cursor:pointer;font-size:13px
+}
 .post-action.liked{color:#e74c3c;font-weight:bold}
 .comments-box{margin-top:12px;border-top:1px solid #edf0f4;padding-top:10px}
-.comments-box.hidden{display:none}
 .comment{display:flex;gap:8px;margin-bottom:9px}
-.comment-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;background:#dfeeea;display:flex;align-items:center;justify-content:center;color:#087f73;font-weight:bold;flex-shrink:0}
-.comment-body{background:#f5f7fb;border-radius:11px;padding:8px 10px;flex:1;min-width:0}
-.comment-top{display:flex;justify-content:space-between;gap:8px}
-.comment-name{font-weight:bold;font-size:12px}
-.comment-delete{border:none;background:transparent;color:#e74c3c;font-size:11px}
-.comment-text{font-size:13px;margin-top:3px;white-space:pre-wrap;word-break:break-word}
+.comment-avatar{
+width:32px;height:32px;border-radius:50%;background:#dfeeea;
+display:flex;justify-content:center;align-items:center;color:#087f73;
+font-weight:bold;flex-shrink:0;overflow:hidden
+}
+.comment-avatar img{width:100%;height:100%;object-fit:cover}
+.comment-body{
+background:#f5f7fb;border-radius:12px;padding:8px 10px;
+flex:1;position:relative
+}
+.comment-name{font-size:12px;font-weight:bold;padding-right:20px}
+.comment-text{
+font-size:13px;color:#303b4d;margin-top:3px;
+white-space:pre-wrap;word-break:break-word
+}
+.comment-delete{
+position:absolute;top:6px;right:7px;border:none;background:none;
+color:#e74c3c;font-size:11px;cursor:pointer
+}
 .comment-input-row{display:flex;gap:7px;margin-top:10px}
-.comment-input{flex:1;min-width:0;border:1px solid #dfe4eb;border-radius:10px;padding:9px;outline:none}
-.comment-send{border:none;background:#087f73;color:white;border-radius:10px;padding:0 13px;font-weight:bold}
-.view-comments{border:none;background:transparent;color:#087f73;font-size:12px;font-weight:bold;margin-top:8px}
-.empty{background:white;border-radius:16px;padding:25px;text-align:center;color:#7b8492}
+.comment-input{
+flex:1;border:1px solid #dfe4eb;border-radius:10px;
+padding:9px 11px;outline:none;font-size:13px
+}
+.comment-send{
+border:none;background:#087f73;color:white;border-radius:10px;
+padding:0 13px;cursor:pointer;font-weight:bold
+}
+.load-more{
+width:100%;margin-top:5px;border:none;background:white;color:#087f73;
+padding:13px;border-radius:12px;font-weight:bold;cursor:pointer;
+box-shadow:0 3px 12px rgba(0,0,0,.05)
+}
+.no-posts,.loading-posts{
+background:white;border-radius:16px;padding:25px 18px;text-align:center;
+color:#7b8492;box-shadow:0 3px 12px rgba(0,0,0,.05)
+}
 
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3000;align-items:center;justify-content:center;padding:20px}
-.modal.show{display:flex}
-.modal-box{width:100%;max-width:430px;background:white;border-radius:18px;padding:20px;max-height:90vh;overflow-y:auto}
-.modal-box h3{margin-bottom:15px}
-.modal-box input,.modal-box textarea,.modal-box select{width:100%;border:1px solid #dfe4eb;border-radius:10px;padding:11px;margin-bottom:10px;outline:none;background:white}
-.modal-box textarea{min-height:100px;resize:vertical}
-.modal-buttons{display:flex;gap:8px}
-.modal-buttons button{flex:1;border:none;padding:11px;border-radius:10px;font-weight:bold}
-.cancel-btn{background:#edf0f4;color:#172033}
-.save-btn{background:#087f73;color:white}
-.settings-list{display:flex;flex-direction:column;gap:8px}
-.settings-item{width:100%;border:none;background:#f5f7fb;padding:13px;border-radius:10px;text-align:left;font-weight:bold}
-.settings-item.logout{color:#e74c3c}
-.money-modal-info{background:#f5f7fb;border-radius:11px;padding:12px;margin-bottom:12px;font-size:12px;color:#596579;line-height:1.5}
-.money-balance{font-size:14px;font-weight:bold;color:#172033;margin-top:4px}
-.deposit-address{background:white;border:1px solid #dfe4eb;border-radius:9px;padding:12px;margin-top:8px;word-break:break-all;font-size:12px;color:#172033}
-.copy-address-btn{width:100%;border:none;background:#087f73;color:white;padding:11px;border-radius:9px;margin-top:10px;font-weight:bold}
-.deposit-bonus-modal{background:#e8f8f3;border-radius:11px;padding:12px;margin-bottom:12px}
-.deposit-bonus-modal h4{font-size:13px;color:#087f73;margin-bottom:8px}
-.deposit-bonus-modal-row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:12px}
-.deposit-bonus-modal-row strong{color:#087f73}
-.withdraw-pending-note{background:#fff5df;color:#8b5b00;border-radius:11px;padding:11px;margin-bottom:12px;font-size:12px;line-height:1.5}
-.order-modal-title{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.order-modal-type{font-size:12px;padding:5px 9px;border-radius:8px;font-weight:bold}
-.order-modal-type.buy{background:#e8f8f3;color:#087f73}
-.order-modal-type.sell{background:#fdecec;color:#c0392b}
-.form-label{display:block;font-size:12px;font-weight:bold;color:#596579;margin:3px 0 6px}
-.fee-preview{background:#f5f7fb;border-radius:11px;padding:12px;margin-top:2px;margin-bottom:10px}
-.fee-row{display:flex;justify-content:space-between;gap:10px;font-size:12px;margin-bottom:7px}
-.fee-row:last-child{margin-bottom:0;padding-top:7px;border-top:1px solid #dfe4eb;font-weight:bold}
-.order-submit{width:100%;border:none;background:#087f73;color:white;padding:12px;border-radius:10px;font-weight:bold}
-.order-submit.sell-submit{background:#c0392b}
-.bank-modal-note{background:#f5f7fb;border-radius:11px;padding:11px;margin-bottom:12px;color:#596579;font-size:12px;line-height:1.5}
-
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:68px;background:white;border-top:1px solid #ddd;display:flex;justify-content:space-around;align-items:center;z-index:2000}
-.nav-item{text-align:center;color:#777;font-size:11px;min-width:55px;cursor:pointer}
+.modal{
+display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);
+z-index:5000;align-items:center;justify-content:center;padding:20px
+}
+.modal-content{
+width:100%;max-width:500px;max-height:90vh;overflow-y:auto;
+background:white;border-radius:18px;padding:20px
+}
+.modal-header{
+display:flex;justify-content:space-between;align-items:center;margin-bottom:15px
+}
+.modal-header h3{font-size:19px}
+.close-modal{border:none;background:none;font-size:25px;cursor:pointer}
+.verify-text{color:#687386;font-size:13px;line-height:1.5;margin-bottom:15px}
+.verify-status{padding:12px;border-radius:12px;background:#f5f7fb;font-size:13px;margin-bottom:14px}
+.verify-status strong{color:#087f73}
+.verify-form{display:flex;flex-direction:column;gap:10px}
+.verify-note{font-size:11px;color:#7a8494;line-height:1.4}
+.verify-submit{
+border:none;background:#087f73;color:white;padding:12px;
+border-radius:10px;font-weight:bold;cursor:pointer
+}
+.referral-box{text-align:center}
+.referral-icon{font-size:42px;margin-bottom:10px}
+.referral-title{font-size:21px;font-weight:bold}
+.referral-percent{font-size:36px;font-weight:bold;color:#087f73;margin:10px 0}
+.referral-description{font-size:13px;color:#687386;line-height:1.5}
+.referral-code-box{
+margin-top:15px;padding:13px;background:#f5f7fb;border-radius:12px;
+display:flex;justify-content:space-between;align-items:center;gap:10px
+}
+.referral-code{font-weight:bold;font-size:14px;word-break:break-all}
+.copy-btn{
+border:none;background:#087f73;color:white;padding:8px 11px;
+border-radius:8px;font-weight:bold;cursor:pointer
+}
+.transfer-form{display:flex;flex-direction:column;gap:10px}
+.transfer-label{font-size:12px;font-weight:bold;margin-top:4px}
+.transfer-input{
+width:100%;border:1px solid #dfe4eb;border-radius:10px;
+padding:12px;outline:none;font-size:14px
+}
+.transfer-note{font-size:11px;color:#7a8494;line-height:1.4}
+.transfer-submit{
+border:none;background:#087f73;color:white;padding:12px;
+border-radius:10px;font-weight:bold;cursor:pointer
+}
+.support-list{display:flex;flex-direction:column;gap:10px}
+.support-item{
+display:flex;align-items:center;gap:12px;padding:13px;
+background:#f5f7fb;border-radius:12px;cursor:pointer
+}
+.support-icon{font-size:22px}
+.support-info{flex:1}
+.support-title{font-size:13px;font-weight:bold}
+.support-text{font-size:11px;color:#7a8494;margin-top:3px}
+.security-box{padding:13px;background:#f5f7fb;border-radius:12px;margin-bottom:14px}
+.security-title{font-weight:bold;font-size:14px}
+.security-text{font-size:12px;color:#687386;line-height:1.5;margin-top:5px}
+.twofa-button{
+width:100%;border:none;background:#087f73;color:white;padding:12px;
+border-radius:10px;font-weight:bold;cursor:pointer
+}
+.post-textarea{
+width:100%;min-height:130px;resize:vertical;border:1px solid #dfe4eb;
+border-radius:12px;padding:12px;outline:none;font-size:14px
+}
+.visibility-label{display:block;margin:12px 0 6px;font-size:13px;font-weight:bold}
+.visibility-select,.media-type-select{
+width:100%;border:1px solid #dfe4eb;border-radius:10px;
+padding:11px;background:white
+}
+.media-section{margin-top:12px}
+.media-label{display:block;font-size:13px;font-weight:bold;margin-bottom:7px}
+.media-note{font-size:11px;color:#7a8494;margin-top:6px;line-height:1.4}
+.media-input{
+width:100%;border:1px solid #dfe4eb;border-radius:10px;padding:10px
+}
+.media-preview{margin-top:10px;border-radius:10px;overflow:hidden;background:#f1f3f6}
+.media-preview img,.media-preview video{
+width:100%;max-height:280px;display:block;object-fit:cover
+}
+.locked-feature{
+background:#f7f8fa;border:1px dashed #ccd2da;border-radius:11px;
+padding:12px;color:#687386;font-size:12px;line-height:1.45
+}
+.info-box{
+background:#edf8f5;color:#087f73;border-radius:10px;
+padding:11px;font-size:12px;line-height:1.4
+}
+.publish-btn{
+width:100%;margin-top:14px;border:none;background:#087f73;color:white;
+padding:12px;border-radius:10px;font-weight:bold;cursor:pointer
+}
+.bottom-nav{
+position:fixed;bottom:0;left:0;right:0;height:68px;background:white;
+border-top:1px solid #ddd;display:flex;justify-content:space-around;
+align-items:center;z-index:1000
+}
+.nav-item{text-align:center;color:#777;font-size:11px;cursor:pointer}
 .nav-item span{display:block;font-size:22px;margin-bottom:3px}
 .nav-item.active{color:#087f73;font-weight:bold}
-input[type=file]{display:none}
-button:disabled{opacity:.6;cursor:not-allowed}
 
 @media(max-width:450px){
-header{padding:12px}
-.profile-card,.section,.order-section{margin-left:12px;margin-right:12px}
-.profile-top{align-items:flex-start}
-.profile-name{font-size:18px}
-.stats{gap:3px}
-.stat strong{font-size:16px}
-.wallet-balances{grid-template-columns:1fr}
-.post-options{flex-direction:column;align-items:stretch}
-.post-options select,.create-post-btn{width:100%}
-.brand-icon{width:38px;height:38px}
-.brand-p-left,.brand-p-right{top:9px;height:20px}
-.brand-p-left{left:7px}
-.brand-p-right{right:7px}
-.brand-center{width:10px;height:10px}
-.brand-dot{width:3px;height:3px}
-.brand-text h1{font-size:15px}
-.brand-text p{font-size:6px}
-.order-details{grid-template-columns:1fr}
-.history-tabs{grid-template-columns:1fr 1fr 1fr}
-.history-tab{font-size:10px}
+header{padding:16px 12px}
+.brand{font-size:19px}
+.quick-section{padding-left:12px;padding-right:12px}
+.rate-box{margin-left:12px;margin-right:12px}
+section{padding-left:12px;padding-right:12px}
+.notification-panel{right:-45px}
+.quick-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:350px){
+.quick-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
 
 <body>
 
+<div id="checkingAuth">
+<div class="auth-logo">P2P</div>
+<div><strong>P2P Social</strong></div>
+<div class="auth-loading">Checking login...</div>
+</div>
+
+<div id="app">
+
 <header>
-<div class="header-row">
-<button class="back-btn" onclick="goHome()">‹</button>
 
-<div class="brand-header">
-<div class="brand-icon">
-<div class="brand-p-left"></div>
-<div class="brand-p-right"></div>
-<div class="brand-center">
-<div class="brand-dot"></div>
+<div class="top">
+
+<div class="logo-area">
+
+<div class="logo">
+<div class="p-left"></div>
+<div class="p-right"></div>
+<div class="center"><div class="dot"></div></div>
+</div>
+
+<div class="brand">
+P2P <span>Social</span>
+</div>
+
+</div>
+
+<div class="top-actions">
+
+<button id="logoutBtn" class="auth-btn logout-btn" onclick="logout()">
+Logout
+</button>
+
+<div class="notification-wrap">
+
+<button id="notificationButton" class="notification"
+onclick="toggleNotificationPanel(event)">
+🔔
+<span id="notificationBadge" class="notification-badge">0</span>
+</button>
+
+<div id="notificationPanel" class="notification-panel">
+
+<div class="notification-header">
+<strong>Notifications</strong>
+
+<button class="mark-all" onclick="markAllNotificationsRead()">
+Mark all read
+</button>
+
+</div>
+
+<div id="notificationList" class="notification-list">
+<div class="no-notifications">Loading notifications...</div>
+</div>
+
+</div>
+</div>
 </div>
 </div>
 
-<div class="brand-text">
-<h1>P2P <span>Social</span></h1>
-<p>CONNECT • TRADE • SHARE</p>
+<div class="user-info">
+Logged in as:
+<strong id="usernameDisplay">User</strong>
+<span id="headerPremiumBadge" class="premium-user-badge"></span>
 </div>
+
+<div class="ton-wallet">
+
+<div class="ton-wallet-title">
+🌐 TON / Tonkeeper Wallet
 </div>
+
+<div id="ton-connect"></div>
+
+<div id="ton-wallet-info" class="ton-wallet-info">
+Wallet:
+<strong id="ton-wallet-address"></strong>
 </div>
+
+</div>
+
 </header>
 
-<div class="profile-card">
+<div class="quick-section">
 
-<div class="profile-top">
+<div class="quick-grid">
 
-<div class="profile-photo-wrap">
-<div id="profilePhotoBox" class="profile-photo">U</div>
+<button class="quick-card primary" onclick="openLiveRate()">
+<div class="quick-card-icon">📈</div>
+<div class="quick-card-title">Live Rate</div>
+<div class="quick-card-text">View current USDT market rate</div>
+</button>
 
-<label class="photo-button" for="photoInput">📷</label>
+<button class="quick-card" onclick="openVerifyIdentity()">
+<div class="quick-card-icon">🪪</div>
+<div class="quick-card-title">Verify identity</div>
+<div class="quick-card-text">Send one verification request to P2P Social Admin</div>
+</button>
 
-<input
-id="photoInput"
-type="file"
-accept="image/*"
-onchange="changeProfilePhoto(event)"
->
-</div>
+<button class="quick-card" onclick="openReferral()">
+<div class="quick-card-icon">🎁</div>
+<div class="quick-card-title">Referral 30% commission</div>
+<div class="quick-card-text">View referral USDT balance in Profile</div>
+</button>
 
-<div class="profile-info">
+<button class="quick-card" onclick="openTransfer()">
+<div class="quick-card-icon">💵</div>
+<div class="quick-card-title">Transfer USDT</div>
+<div class="quick-card-text">Send USDT using username</div>
+</button>
 
-<div class="profile-name-row">
-<div id="profileName" class="profile-name">Loading...</div>
-<div id="verificationBadge" class="verification-badge unverified">Unverified</div>
-</div>
+<button class="quick-card" onclick="openSupport()">
+<div class="quick-card-icon">🛟</div>
+<div class="quick-card-title">Support</div>
+<div class="quick-card-text">Contact @P2P_Social_Admin in Messages</div>
+</button>
 
-<div id="profileId" class="profile-id">Username: --</div>
-<div id="profileBio" class="profile-bio">No bio yet.</div>
-<div id="lockStatus" class="lock-status">🔓 Public profile</div>
-
-</div>
-</div>
-
-<div class="stats">
-
-<div class="stat">
-<strong id="postCount">0</strong>
-<span>Posts</span>
-</div>
-
-<div class="stat">
-<strong id="followersCount">0</strong>
-<span>Followers</span>
-</div>
-
-<div class="stat">
-<strong id="followingCount">0</strong>
-<span>Following</span>
-</div>
-
-<div class="stat">
-<strong id="likeCount">0</strong>
-<span>Likes</span>
-</div>
-
-</div>
-
-<div class="trading-stats">
-
-<div class="trading-stat">
-<strong id="completedRate">0%</strong>
-<span>30 Day Completed Rate</span>
-</div>
-
-<div class="trading-stat">
-<strong id="thirtyDayTrade">0</strong>
-<span>30 Day Trade</span>
-</div>
-
-<div class="trading-stat">
-<strong id="totalTrade">0</strong>
-<span>Total Trade</span>
-</div>
-
-<div class="trading-stat">
-<strong id="usernameAge">--</strong>
-<span>Username</span>
-</div>
-
-</div>
-
-<div class="profile-buttons">
-<button class="edit-btn" onclick="openEditProfile()">✏️ Edit</button>
-<button id="lockButton" class="lock-btn" onclick="toggleProfileLock()">🔒 Lock</button>
-<button class="settings-btn" onclick="openSettings()">⚙️ Settings</button>
-</div>
-
-</div>
-
-<section class="section">
-
-<div class="section-title">
-<h2>💰 Wallet</h2>
-</div>
-
-<div class="wallet">
-
-<div class="wallet-header">
-
-<div class="wallet-label">
-USDT Balance • Username Account
-</div>
-
-<button
-id="balanceToggleButton"
-class="balance-toggle"
-onclick="toggleBalanceVisibility()"
->
-👁️
+<button class="quick-card" onclick="openTwoFA()">
+<div class="quick-card-icon">🔐</div>
+<div class="quick-card-title">Enable 2FA</div>
+<div class="quick-card-text">Protect your account</div>
 </button>
 
 </div>
-
-<div class="wallet-balances">
-
-<div class="balance-box">
-<div class="balance-title">Available USDT</div>
-<div id="usdtBalance" class="balance-value">Loading...</div>
 </div>
 
-<div class="balance-box">
-<div class="balance-title">P2P Locked USDT</div>
-<div id="lockedUSDTBalance" class="balance-value">Loading...</div>
+<div class="rate-box">
+
+<div class="rate-header">
+<div class="rate-title">📈 USDT Live Rate</div>
+<div id="rateStatus" class="rate-status">LIVE</div>
 </div>
 
+<div class="rate-main">
+
+<div>
+<div id="liveRateValue" class="rate-value">Loading...</div>
+<div id="liveRateUnit" class="rate-unit">USDT</div>
 </div>
 
-<div class="deposit-bonus-box">
-
-<div class="deposit-bonus-title">
-⬇️ Deposit USDT Bonus
-</div>
-
-<div class="deposit-bonus-row">
-<span>5 USDT</span>
-<span>+10%</span>
-</div>
-
-<div class="deposit-bonus-row">
-<span>10 USDT</span>
-<span>+15%</span>
-</div>
-
-<div class="deposit-bonus-row">
-<span>50 USDT</span>
-<span>+20%</span>
-</div>
-
-<div class="deposit-bonus-row">
-<span>100 USDT</span>
-<span>+30%</span>
-</div>
-
-<div class="deposit-bonus-row">
-<span>500 USDT</span>
-<span>+40%</span>
-</div>
-
-<div class="deposit-bonus-row">
-<span>1,000 USDT</span>
-<span>+50%</span>
-</div>
+<div id="liveRateChange" class="rate-change">Updating</div>
 
 </div>
-
-<div class="wallet-actions">
-
-<button class="wallet-action deposit-btn" onclick="openDeposit()">
-⬇️ Deposit
-</button>
-
-<button class="wallet-action withdraw-btn" onclick="openWithdraw()">
-⬆️ Withdrawal
-</button>
-
-<button class="wallet-action transfer-btn" onclick="openTransfer()">
-💵 Transfer USDT
-</button>
-
 </div>
 
-</div>
+<section class="posts-section">
 
-</section>
+<div class="posts-title">
 
-<section class="section">
+<h2>📝 Public Posts</h2>
 
-<div class="section-title">
-<h2>🌍 Country & Currency</h2>
-</div>
+<div style="display:flex;gap:7px;align-items:center;">
 
-<div class="country-box">
+<span class="see-all" onclick="loadPosts(true)">🔃 Refresh</span>
 
-<div class="country-info">
-
-<div class="country-row">
-<div class="country-label">Country</div>
-<div id="myCountry" class="country-value">Loading...</div>
-</div>
-
-<div class="country-row">
-<div class="country-label">Currency</div>
-<div id="myCurrency" class="country-value">Loading...</div>
-</div>
-
-</div>
-
-<div id="currencyList" class="currency-list">
-<div class="history-empty">Loading currencies...</div>
-</div>
-
-</div>
-
-</section>
-
-<section class="section">
-
-<div class="section-title">
-<h2>🏦 Bank Transfer</h2>
-</div>
-
-<div class="bank-transfer-box">
-
-<div class="bank-transfer-info">
-
-<div class="bank-transfer-row">
-<div class="bank-transfer-label">Country</div>
-<div id="bankCountryDisplay" class="bank-transfer-value">Not selected</div>
-</div>
-
-<div class="bank-transfer-row">
-<div class="bank-transfer-label">Bank Name</div>
-<div id="bankNameDisplay" class="bank-transfer-value">Not added</div>
-</div>
-
-<div class="bank-transfer-row">
-<div class="bank-transfer-label">Account Name</div>
-<div id="accountNameDisplay" class="bank-transfer-value">Not added</div>
-</div>
-
-<div class="bank-transfer-row">
-<div class="bank-transfer-label">Account Number</div>
-<div id="accountNumberDisplay" class="bank-transfer-value">Not added</div>
-</div>
-
-</div>
-
-<button class="bank-transfer-button" onclick="openBankTransfer()">
-🏦 Add / Edit Bank Transfer
-</button>
-
-</div>
-
-</section>
-
-<section class="section">
-
-<div class="section-title">
-
-<h2>📜 USDT History</h2>
-
-<div class="section-title-actions">
-
-<div class="list-controls">
-
-<button id="historyViewButton" class="list-control-btn" onclick="toggleHistoryView()">
-Show 3
-</button>
-
-<button id="historyRefreshButton" class="list-control-btn" onclick="refreshHistory()">
-🔃 Refresh
-</button>
-
-</div>
-
-<button id="historyCollapseButton" class="collapse-btn" onclick="toggleSection('historyContent','historyCollapseButton')">
-⌃
-</button>
-
-</div>
-
-</div>
-
-<div id="historyContent" class="collapsible-content">
-
-<div class="history-box">
-
-<div class="history-tabs">
-
-<button id="historyTabAll" class="history-tab active" onclick="setHistoryType('all')">
-All
-</button>
-
-<button id="historyTabDeposit" class="history-tab" onclick="setHistoryType('deposit')">
-Deposits
-</button>
-
-<button id="historyTabWithdrawal" class="history-tab" onclick="setHistoryType('withdrawal')">
-Withdrawals
-</button>
-
-</div>
-
-<div id="historyList" class="history-list">
-<div class="history-empty">Loading history...</div>
-</div>
-
-</div>
-
-</div>
-
-</section>
-
-<section class="order-section">
-
-<div class="section-title">
-<h2>🔄 P2P Orders</h2>
-</div>
-
-<div class="order-box">
-
-<button class="create-order-button" onclick="openOrderModal('buy')">
-➕ Create Buy Order
-</button>
-
-<button class="create-order-button sell-create" onclick="openOrderModal('sell')">
-➕ Create Sell Order
-</button>
-
-</div>
-
-</section>
-
-<section class="section">
-
-<div class="section-title">
-
-<h2>📋 My Orders</h2>
-
-<div class="section-title-actions">
-
-<div class="list-controls">
-
-<button id="ordersViewButton" class="list-control-btn" onclick="toggleOrdersView()">
-Show 3
-</button>
-
-<button id="ordersRefreshButton" class="list-control-btn" onclick="refreshOrders()">
-🔃 Refresh
-</button>
-
-</div>
-
-<button id="ordersCollapseButton" class="collapse-btn" onclick="toggleSection('ordersContent','ordersCollapseButton')">
-⌃
-</button>
-
-</div>
-
-</div>
-
-<div id="ordersContent" class="collapsible-content">
-
-<div id="myOrders" class="orders-list">
-<div class="order-empty">Loading orders...</div>
-</div>
-
-</div>
-
-</section>
-
-<section class="section">
-
-<div class="section-title">
-<h2>📝 Create Post</h2>
-</div>
-
-<div class="create-box">
-
-<textarea
-id="postContent"
-maxlength="5000"
-placeholder="What's on your mind?"
-></textarea>
-
-<div class="post-options">
-
-<select id="postVisibility">
-<option value="public">🌍 Public</option>
-<option value="private">👥 Friends / Private</option>
-</select>
-
-<button id="createPostButton" class="create-post-btn" onclick="createPost()">
+<button class="create-post-btn" onclick="openCreatePost()">
 Post
 </button>
 
 </div>
-
 </div>
-
-</section>
-
-<section class="section">
-
-<div class="section-title">
-
-<h2>📄 Your Posts</h2>
-
-<div class="section-title-actions">
-
-<div class="list-controls">
-
-<button id="postsViewButton" class="list-control-btn" onclick="togglePostsView()">
-Show 3
-</button>
-
-<button id="postsRefreshButton" class="list-control-btn" onclick="refreshPosts()">
-🔃 Refresh
-</button>
-
-</div>
-
-<button id="postsCollapseButton" class="collapse-btn" onclick="toggleSection('postsContent','postsCollapseButton')">
-⌃
-</button>
-
-</div>
-
-</div>
-
-<div id="postsContent" class="collapsible-content">
 
 <div id="postsFeed" class="posts-feed">
-<div class="empty">Loading posts...</div>
+<div class="loading-posts">Loading public posts...</div>
 </div>
 
-</div>
+<button id="loadMoreBtn" class="load-more"
+onclick="loadMorePosts()" style="display:none;">
+➕ Load more posts
+</button>
 
 </section>
 
-<div id="depositModal" class="modal">
-
-<div class="modal-box">
-
-<h3>⬇️ Deposit USDT</h3>
-
-<div class="deposit-bonus-modal">
-
-<h4>Deposit Bonus</h4>
-
-<div class="deposit-bonus-modal-row">
-<span>5 USDT</span>
-<strong>+10%</strong>
+<div id="verifyModal" class="modal">
+<div class="modal-content">
+<div class="modal-header">
+<h3>🪪 Verify Identity</h3>
+<button class="close-modal" onclick="closeVerifyIdentity()">×</button>
 </div>
-
-<div class="deposit-bonus-modal-row">
-<span>10 USDT</span>
-<strong>+15%</strong>
+<div class="verify-text">
+Verification is handled by P2P Social Admin/Owner.
+You can submit one verification attempt.
+Your request will open in Messages with the Admin/Owner.
 </div>
-
-<div class="deposit-bonus-modal-row">
-<span>50 USDT</span>
-<strong>+20%</strong>
+<div class="verify-status">
+Your status:
+<strong id="verificationStatus">Unverified</strong>
 </div>
-
-<div class="deposit-bonus-modal-row">
-<span>100 USDT</span>
-<strong>+30%</strong>
+<div class="verify-form">
+<div class="verify-note">
+One user can have only one pending verification request.
+The Admin/Owner reviews the verification and approves or rejects it.
 </div>
-
-<div class="deposit-bonus-modal-row">
-<span>500 USDT</span>
-<strong>+40%</strong>
-</div>
-
-<div class="deposit-bonus-modal-row">
-<span>1,000 USDT</span>
-<strong>+50%</strong>
-</div>
-
-</div>
-
-<div class="money-modal-info">
-
-USDT Deposit Network
-
-<select id="depositNetwork" onchange="updateDepositAddress()">
-<option value="TON">TON</option>
-</select>
-
-Supported network only.
-
-<div class="deposit-address" id="depositAddress">
-Loading...
-</div>
-
-<button class="copy-address-btn" onclick="copyDepositAddress()">
-📋 Copy Address
+<button id="verificationRequestBtn" class="verify-submit"
+onclick="sendVerificationRequest()">
+Send Verification Request
 </button>
-
+</div>
+</div>
 </div>
 
-<div class="money-modal-info">
-
-Send USDT to the displayed address.<br><br>
-
-No transaction hash is required from you.<br><br>
-
-After blockchain/backend verification is completed,
-the verified deposit is credited to your USDT balance.
-
+<div id="referralModal" class="modal">
+<div class="modal-content">
+<div class="modal-header">
+<h3>🎁 Referral Program</h3>
+<button class="close-modal" onclick="closeReferral()">×</button>
 </div>
-
-<div class="modal-buttons">
-
-<button class="cancel-btn" onclick="closeDeposit()">
-Close
+<div class="referral-box">
+<div class="referral-icon">🎁</div>
+<div class="referral-title">Referral Commission</div>
+<div class="referral-percent">30%</div>
+<div class="referral-description">
+Your referral bonus is USDT and is managed securely through
+your P2P Social Profile balance.
+</div>
+<div class="referral-code-box">
+<div id="referralCode" class="referral-code">Loading...</div>
+<button class="copy-btn" onclick="copyReferralCode()">Copy</button>
+</div>
+<button class="verify-submit"
+style="width:100%;margin-top:12px"
+onclick="openReferralBalance()">
+👤 Open Profile USDT Balance
 </button>
-
 </div>
-
 </div>
-
-</div>
-
-<div id="withdrawModal" class="modal">
-
-<div class="modal-box">
-
-<h3>⬆️ Withdrawal USDT</h3>
-
-<div class="money-modal-info">
-
-Available USDT
-
-<div id="withdrawBalance" class="money-balance">
-0.00 USDT
-</div>
-
-</div>
-
-<div class="withdraw-pending-note">
-After submitting, your withdrawal remains <strong>Pending...</strong> until backend/admin approval and processing are completed.
-</div>
-
-<label class="form-label">Network</label>
-
-<select id="withdrawNetwork">
-<option value="TON">TON</option>
-</select>
-
-<label class="form-label">Withdrawal Address</label>
-
-<input
-id="withdrawAddress"
-type="text"
-maxlength="150"
-placeholder="Enter TON address"
->
-
-<label class="form-label">Amount (USDT)</label>
-
-<input
-id="withdrawAmount"
-type="number"
-min="10"
-step="any"
-placeholder="Minimum 10 USDT"
->
-
-<div class="money-modal-info">
-Minimum Withdrawal: <strong>10 USDT</strong><br>
-Withdrawal Fee: <strong>3%</strong>
-</div>
-
-<div class="modal-buttons">
-
-<button class="cancel-btn" onclick="closeWithdraw()">
-Cancel
-</button>
-
-<button id="withdrawSubmitButton" class="save-btn" onclick="submitWithdrawal()">
-Submit Withdrawal
-</button>
-
-</div>
-
-</div>
-
 </div>
 
 <div id="transferModal" class="modal">
-
-<div class="modal-box">
-
+<div class="modal-content">
+<div class="modal-header">
 <h3>💵 Transfer USDT</h3>
+<button class="close-modal" onclick="closeTransfer()">×</button>
+</div>
+<div class="transfer-form">
 
-<div class="money-modal-info">
+<label class="transfer-label">Recipient username</label>
 
-Transfer using permanent username
+<input id="transferRecipient" class="transfer-input"
+type="text" maxlength="50" autocomplete="off"
+placeholder="@username">
 
-<div id="transferSender" class="money-balance">
-Loading username...
+<label class="transfer-label">USDT amount</label>
+
+<input id="transferAmount" class="transfer-input"
+type="number" min="0" step="0.00000001" placeholder="0">
+
+<div class="transfer-note">
+The database controls the real USDT balance.
+The transfer checks available balance and prevents
+negative balance and unauthorized balance changes.
 </div>
 
-</div>
-
-<label class="form-label">Recipient Username</label>
-
-<input
-id="transferUsername"
-type="text"
-maxlength="100"
-placeholder="Enter username"
->
-
-<label class="form-label">Amount (USDT)</label>
-
-<input
-id="transferAmount"
-type="number"
-min="0"
-step="any"
-placeholder="Enter USDT amount"
->
-
-<div class="modal-buttons">
-
-<button class="cancel-btn" onclick="closeTransfer()">
-Cancel
-</button>
-
-<button id="transferSubmitButton" class="save-btn" onclick="submitTransfer()">
-Transfer
+<button id="transferSubmitBtn" class="transfer-submit"
+onclick="submitUSDTTransfer()">
+Transfer USDT
 </button>
 
 </div>
+</div>
+</div>
 
+<div id="supportModal" class="modal">
+<div class="modal-content">
+<div class="modal-header">
+<h3>🛟 Support</h3>
+<button class="close-modal" onclick="closeSupport()">×</button>
+</div>
+<div class="support-list">
+
+<div class="support-item" onclick="openSupportContact()">
+<div class="support-icon">💬</div>
+<div class="support-info">
+<div class="support-title">Contact @P2P_Social_Admin</div>
+<div class="support-text">
+Open Messages and contact P2P Social support.
+</div>
+</div>
+<div>›</div>
+</div>
+
+<div class="support-item" onclick="openP2PHelp()">
+<div class="support-icon">🔄</div>
+<div class="support-info">
+<div class="support-title">USDT P2P Trade Help</div>
+<div class="support-text">
+Get help with USDT offers and orders.
+</div>
+</div>
+<div>›</div>
+</div>
+
+<div class="support-item" onclick="openSecurityHelp()">
+<div class="support-icon">🔐</div>
+<div class="support-info">
+<div class="support-title">Security Help</div>
+<div class="support-text">
+Account and security assistance.
+</div>
+</div>
+<div>›</div>
 </div>
 
 </div>
-
-<div id="bankTransferModal" class="modal">
-
-<div class="modal-box">
-
-<h3>🏦 Bank Transfer</h3>
-
-<div class="bank-modal-note">
-Only Bank Transfer is supported.
+</div>
 </div>
 
-<label class="form-label">Country</label>
+<div id="twoFAModal" class="modal">
+<div class="modal-content">
+<div class="modal-header">
+<h3>🔐 Two-Factor Authentication</h3>
+<button class="close-modal" onclick="closeTwoFA()">×</button>
+</div>
+<div class="security-box">
+<div class="security-title">Protect your account</div>
+<div class="security-text">
+Two-factor authentication should be enabled and
+verified through your authentication/security backend.
+</div>
+</div>
+<button id="twoFAButton" class="twofa-button"
+onclick="enableTwoFA()">
+Enable 2FA
+</button>
+</div>
+</div>
 
-<select id="bankCountryInput" onchange="updateBankCountryCurrency()">
-<option value="">Select country</option>
+<div id="createPostModal" class="modal">
+<div class="modal-content">
+
+<div class="modal-header">
+<h3>Create Post</h3>
+<button class="close-modal" onclick="closeCreatePost()">×</button>
+</div>
+
+<textarea id="postContentInput"
+class="post-textarea"
+maxlength="5000"
+placeholder="What's on your mind?"></textarea>
+
+<label class="visibility-label">Post visibility</label>
+
+<select id="postVisibility" class="visibility-select">
+<option value="public">🌍 Public</option>
+<option value="private">🔒 Private</option>
 </select>
 
-<label class="form-label">Currency</label>
+<div class="media-section">
+<label class="media-label">Post type</label>
 
-<input
-id="bankCurrencyInput"
-type="text"
-readonly
-placeholder="Currency"
->
+<select id="mediaType"
+class="media-type-select"
+onchange="updateMediaControls()">
 
-<label class="form-label">Bank Name</label>
+<option value="text">📝 Text</option>
+<option value="image">🖼️ Picture</option>
+<option value="video">🎥 Video</option>
 
-<input
-id="bankNameInput"
-type="text"
-maxlength="150"
-placeholder="Enter bank name"
->
-
-<label class="form-label">Account Name</label>
-
-<input
-id="accountNameInput"
-type="text"
-maxlength="150"
-placeholder="Enter account name"
->
-
-<label class="form-label">Account Number</label>
-
-<input
-id="accountNumberInput"
-type="text"
-maxlength="100"
-placeholder="Enter account number"
->
-
-<div class="modal-buttons">
-
-<button class="cancel-btn" onclick="closeBankTransfer()">
-Cancel
-</button>
-
-<button id="bankTransferSaveButton" class="save-btn" onclick="saveBankTransfer()">
-Save
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-<div id="orderModal" class="modal">
-
-<div class="modal-box">
-
-<div class="order-modal-title">
-
-<h3 id="orderModalTitle">
-🟢 Create Buy Order
-</h3>
-
-<div id="orderModalType" class="order-modal-type buy">
-BUY
-</div>
-
-</div>
-
-<div class="money-modal-info">
-
-P2P identity
-
-<div id="orderUsername" class="money-balance">
-Loading username...
-</div>
-
-</div>
-
-<label class="form-label">Trading Pair</label>
-
-<select id="orderPair" onchange="updateOrderCurrency();updateFeePreview()"></select>
-
-<label class="form-label">Amount (USDT)</label>
-
-<input
-id="orderAmount"
-type="number"
-min="0"
-step="any"
-placeholder="Enter USDT amount"
-oninput="updateFeePreview()"
->
-
-<label class="form-label">
-Price (<span id="orderPriceCurrency">ETB</span>)
-</label>
-
-<input
-id="orderPrice"
-type="number"
-min="0"
-step="any"
-placeholder="Enter price"
-oninput="updateFeePreview()"
->
-
-<label class="form-label">Payment Method</label>
-
-<select id="orderPayment">
-<option value="Bank Transfer">🏦 Bank Transfer</option>
 </select>
-
-<div class="fee-preview">
-
-<div class="fee-row">
-<span>Trade Value</span>
-<span id="orderTradeValue">0.00 ETB</span>
 </div>
 
-<div class="fee-row">
-<span>Platform Fee</span>
-<span id="orderFee">0.00 USDT</span>
-</div>
+<div id="mediaControls" class="media-section"></div>
+<div id="promotionNotice" class="media-section"></div>
 
-<div class="fee-row">
-<span>Total USDT</span>
-<span id="orderTotal">0.00 USDT</span>
-</div>
-
-</div>
-
-<div class="modal-buttons">
-
-<button class="cancel-btn" onclick="closeOrderModal()">
-Cancel
-</button>
-
-<button id="submitOrderButton" class="order-submit" onclick="createOrder()">
-Create Buy Order
+<button id="publishPostBtn" class="publish-btn"
+onclick="createPost()">
+Publish Post
 </button>
 
 </div>
-
-</div>
-
-</div>
-
-<div id="editModal" class="modal">
-
-<div class="modal-box">
-
-<h3>✏️ Edit Profile</h3>
-
-<div class="money-modal-info">
-
-Username
-
-<div id="permanentUsername" class="money-balance">
-Loading...
-</div>
-
-</div>
-
-<div class="money-modal-info">
-Your username is your permanent identity and cannot be changed.
-</div>
-
-<textarea
-id="editBio"
-maxlength="300"
-placeholder="Bio"
-></textarea>
-
-<div class="modal-buttons">
-
-<button class="cancel-btn" onclick="closeEditProfile()">
-Cancel
-</button>
-
-<button id="saveProfileButton" class="save-btn" onclick="saveProfile()">
-Save
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-<div id="settingsModal" class="modal">
-
-<div class="modal-box">
-
-<h3>⚙️ Settings</h3>
-
-<div class="settings-list">
-
-<button class="settings-item" onclick="openEditProfile();closeSettings()">
-✏️ Edit Profile
-</button>
-
-<button class="settings-item" onclick="toggleProfileLock();closeSettings()">
-🔒 Lock / Unlock Profile
-</button>
-
-<button class="settings-item" onclick="openOrderModal('buy');closeSettings()">
-🟢 Create Buy Order
-</button>
-
-<button class="settings-item" onclick="openOrderModal('sell');closeSettings()">
-🔴 Create Sell Order
-</button>
-
-<button class="settings-item" onclick="openTransfer();closeSettings()">
-💵 Transfer USDT
-</button>
-
-<button class="settings-item" onclick="openDeposit();closeSettings()">
-⬇️ Deposit USDT
-</button>
-
-<button class="settings-item" onclick="openWithdraw();closeSettings()">
-⬆️ Withdrawal USDT
-</button>
-
-<button class="settings-item" onclick="openBankTransfer();closeSettings()">
-🏦 Bank Transfer
-</button>
-
-<button class="settings-item" onclick="openMessages()">
-💬 Messages
-</button>
-
-<button class="settings-item" onclick="openVerification()">
-✅ Verification → @P2P_Social_Admin
-</button>
-
-<button class="settings-item" onclick="openSupport()">
-🆘 Support → @P2P_Social_Admin
-</button>
-
-<button class="settings-item logout" onclick="logout()">
-🚪 Logout
-</button>
-
-<button
-class="cancel-btn"
-style="width:100%;padding:11px;border:none;border-radius:10px"
-onclick="closeSettings()"
->
-Close
-</button>
-
-</div>
-
-</div>
-
 </div>
 
 <nav class="bottom-nav">
 
-<div class="nav-item" onclick="goHome()">
+<div class="nav-item active" onclick="goHome()">
 <span>🏠</span>
 Home
 </div>
@@ -1196,16 +785,22 @@ Sell
 Messages
 </div>
 
-<div class="nav-item active" onclick="openProfile()">
+<div class="nav-item" onclick="openProfile()">
 <span>👤</span>
 Profile
 </div>
 
 </nav>
 
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+
 <script>
 
-const SUPABASE_URL="https://mbsvuwrgigqfporxwpfr.supabase.co";
+const SUPABASE_URL=
+"https://mbsvuwrgigqfporxwpfr.supabase.co";
 
 const SUPABASE_PUBLISHABLE_KEY=
 "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
@@ -1216,1716 +811,1047 @@ SUPABASE_URL,
 SUPABASE_PUBLISHABLE_KEY
 );
 
+const ADMIN_USERNAME="P2P_Social_Admin";
+
 let currentSession=null;
 let currentProfile=null;
+let currentPremiumTier="free";
+let currentLevel=0;
+let isAdmin=false;
 
-let currentUSDTBalance=0;
-let currentLockedUSDT=0;
+let allPosts=[];
+let displayedPostCount=10;
+let commentsOpen={};
+let notificationChannel=null;
 
-let allProfiles={};
-let allComments=[];
+let tonConnectUI=null;
+let connectedTonWallet=null;
 
-let orderType="buy";
-let balanceVisible=true;
-let permanentUsername="";
-let balanceChannel=null;
-let currentHistoryType="all";
+const INITIAL_POST_LIMIT=10;
 
-let showAllHistory=false;
-let showAllOrders=false;
-let showAllPosts=false;
+function initializeTonConnect(){
 
-let currentBankTransferDetails=null;
-let currentPaymentCountry=null;
-let backendCurrencies=[];
-
-const PLATFORM_FEE_RATE=0.01;
-
-const MIN_WITHDRAWAL=10;
-const WITHDRAWAL_FEE_RATE=0.03;
-
-const DEPOSIT_BONUS_TIERS=[
-{
-amount:1,
-bonus:100
-},
-{
-amount:5,
-bonus:150
-},
-{
-amount:10,
-bonus:200
-},
-{
-amount:25,
-bonus:300
-},
-{
-amount:50,
-bonus:400
-},
-{
-amount:100,
-bonus:500
+if(typeof TON_CONNECT_UI==="undefined"){
+console.error("TON Connect UI failed to load.");
+return;
 }
-];
 
-const DEPOSIT_NETWORKS={
-TON:{
-address:"UQACkUS0J6lEIlo6iHWoAjxnUYoOOR4StNPVbTXDOt-Em1zl"
+const buttonRoot=
+document.getElementById("ton-connect");
+
+if(!buttonRoot){
+console.error("TON Connect button container not found.");
+return;
 }
-};
 
-function toggleSection(contentId,buttonId){
+try{
 
-const content=document.getElementById(contentId);
-const button=document.getElementById(buttonId);
+tonConnectUI=
+new TON_CONNECT_UI.TonConnectUI({
+manifestUrl:
+window.location.origin+
+"/tonconnect-manifest.json",
+buttonRootId:"ton-connect"
+});
 
-if(!content||!button)return;
+tonConnectUI.onStatusChange(wallet=>{
 
-const collapsed=
-content.classList.toggle("collapsed");
+connectedTonWallet=
+wallet||null;
 
-button.textContent=
-collapsed?"⌄":"⌃";
+const walletInfo=
+document.getElementById("ton-wallet-info");
+
+const address=
+document.getElementById("ton-wallet-address");
+
+if(!wallet){
+
+walletInfo.style.display="none";
+address.textContent="";
+return;
 
 }
 
-function updateListViewButton(buttonId,showAll){
+const rawAddress=
+wallet.account?.address||"";
 
-const button=document.getElementById(buttonId);
+address.textContent=
+shortenTonAddress(rawAddress);
 
-if(!button)return;
+walletInfo.style.display=
+rawAddress
+?"block"
+:"none";
 
-button.textContent=
-showAll?"View All":"Show 3";
-
-}
-
-function toggleHistoryView(){
-
-showAllHistory=!showAllHistory;
-
-updateListViewButton(
-"historyViewButton",
-showAllHistory
+console.log(
+"TON wallet connected:",
+rawAddress
 );
 
-loadUSDTHistory();
+});
 
-}
+}catch(error){
 
-function toggleOrdersView(){
-
-showAllOrders=!showAllOrders;
-
-updateListViewButton(
-"ordersViewButton",
-showAllOrders
+console.error(
+"TON Connect initialization failed:",
+error
 );
 
-loadMyOrders();
+}
 
 }
 
-function togglePostsView(){
+function shortenTonAddress(address){
 
-showAllPosts=!showAllPosts;
+if(!address)return"";
 
-updateListViewButton(
-"postsViewButton",
-showAllPosts
+if(address.length<=20)return address;
+
+return address.slice(0,8)+"…"+address.slice(-8);
+
+}
+
+async function disconnectTonWallet(){
+
+if(!tonConnectUI)return;
+
+try{
+
+await tonConnectUI.disconnect();
+
+}catch(error){
+
+console.error(
+"TON wallet disconnect:",
+error
 );
 
-loadPosts();
-
 }
-
-async function refreshHistory(){
-
-const button=
-document.getElementById("historyRefreshButton");
-
-if(button){
-
-button.disabled=true;
-button.classList.add("refreshing");
-
-}
-
-await loadUSDTHistory();
-
-if(button){
-
-button.disabled=false;
-button.classList.remove("refreshing");
-
-}
-
-}
-
-async function refreshOrders(){
-
-const button=
-document.getElementById("ordersRefreshButton");
-
-if(button){
-
-button.disabled=true;
-button.classList.add("refreshing");
-
-}
-
-await loadMyOrders();
-
-if(button){
-
-button.disabled=false;
-button.classList.remove("refreshing");
-
-}
-
-}
-
-async function refreshPosts(){
-
-const button=
-document.getElementById("postsRefreshButton");
-
-if(button){
-
-button.disabled=true;
-button.classList.add("refreshing");
-
-}
-
-await loadPosts();
-
-if(button){
-
-button.disabled=false;
-button.classList.remove("refreshing");
-
-}
-
-}
-
-function getPermanentUsername(){
-
-if(permanentUsername)return permanentUsername;
-
-if(currentProfile?.username)
-return String(currentProfile.username).trim();
-
-if(currentSession?.user)
-return String(
-currentSession.user.user_metadata?.username||""
-).trim();
-
-return "";
-
-}
-
-function requirePermanentUsername(){
-
-const username=
-getPermanentUsername();
-
-if(!username){
-
-alert(
-"Your permanent username is not available. Please complete your profile first."
-);
-
-return false;
-
-}
-
-return true;
-
-}
-
-function usernameEquals(a,b){
-
-return String(a||"").trim().toLowerCase()===
-String(b||"").trim().toLowerCase();
 
 }
 
 async function startApp(){
 
-const {data,error}=
+try{
+
+const{data,error}=
 await supabaseClient.auth.getSession();
 
 if(error){
 
 console.error(error);
+redirectToLogin();
+return;
 
-showLogin();
+}
 
+if(!data||!data.session){
+
+redirectToLogin();
 return;
 
 }
 
 currentSession=data.session;
 
+document.getElementById("checkingAuth").style.display="none";
+document.getElementById("app").style.display="block";
+
+initializeTonConnect();
+
+await initializeDashboard();
+
+}catch(error){
+
+console.error(
+"Authentication error:",
+error
+);
+
+redirectToLogin();
+
+}
+
+}
+
+function redirectToLogin(){
+window.location.replace("./login.html");
+}
+
+supabaseClient.auth.onAuthStateChange(
+async(event,session)=>{
+
+if(event==="SIGNED_OUT"){
+
+currentSession=null;
+redirectToLogin();
+return;
+
+}
+
+if(event==="SIGNED_IN"&&session){
+currentSession=session;
+}
+
+});
+
+async function initializeDashboard(){
+
 if(!currentSession){
 
-showLogin();
-
+redirectToLogin();
 return;
 
 }
 
-await loadProfile();
-await loadCurrencies();
-await loadMyPaymentCountry();
-await loadBankTransferDetails();
-await loadPosts();
-await loadMyOrders();
-await loadUSDTHistory();
+await updateUserUI();
 
-setupUSDTBalanceRealtime();
+await Promise.allSettled([
+loadNotifications(),
+loadPosts(false),
+loadLiveRate()
+]);
 
-}
-
-function showLogin(){
-
-alert("Please login first.");
-
-window.location.href="login.html";
+subscribeToNotifications();
 
 }
 
-function getVerificationStatus(){
+async function updateUserUI(){
 
-if(!currentSession)return false;
+if(!currentSession){
 
-return Boolean(
-currentProfile&&(
-currentProfile.verified===true||
-currentProfile.is_verified===true||
-currentProfile.user_verified===true||
-currentProfile.verification_status==="verified"
-)
-);
-
-}
-
-function updateVerificationUI(){
-
-const badge=
-document.getElementById("verificationBadge");
-
-if(!badge)return;
-
-if(getVerificationStatus()){
-
-badge.textContent="✓ Verified";
-badge.className="verification-badge";
-
-}else{
-
-badge.textContent="Unverified";
-badge.className=
-"verification-badge unverified";
-
-}
-
-}
-
-/* Available USDT → usdt_balances.usdt_balance */
-async function loadUSDTBalance(){
-
-if(!currentSession)return 0;
-
-const {data,error}=
-await supabaseClient
-.from("usdt_balances")
-.select("usdt_balance")
-.eq(
-"user_id",
-currentSession.user.id
-)
-.maybeSingle();
-
-if(error){
-
-console.error(
-"USDT balance load failed:",
-error
-);
-
-currentUSDTBalance=0;
-
-renderUSDTBalance();
-
-return 0;
-
-}
-
-currentUSDTBalance=
-Number(data?.usdt_balance||0);
-
-if(!Number.isFinite(currentUSDTBalance))
-currentUSDTBalance=0;
-
-renderUSDTBalance();
-
-return currentUSDTBalance;
-
-}
-
-async function loadLockedUSDTFromOrders(){
-
-if(!currentSession)return;
-
-const {data,error}=
-await supabaseClient
-.from("p2p_orders")
-.select(
-"remaining_amount,order_type,status"
-)
-.eq(
-"user_id",
-currentSession.user.id
-)
-.eq(
-"order_type",
-"sell"
-)
-.in(
-"status",
-[
-"open",
-"active",
-"pending"
-]
-);
-
-if(error){
-
-console.error(
-"Locked order load failed:",
-error
-);
-
+redirectToLogin();
 return;
 
 }
 
-const orderLocked=
-(data||[]).reduce(
-(total,order)=>{
+const user=currentSession.user;
 
-const amount=
-Number(
-order.remaining_amount||0
-);
-
-return total+
-(
-Number.isFinite(amount)&&amount>0?
-amount:
-0
-);
-
-},
-0
-);
-
-currentLockedUSDT=
-orderLocked;
-
-renderUSDTBalance();
-
-}
-
-async function refreshWallet(){
-
-await loadUSDTBalance();
-await loadLockedUSDTFromOrders();
-await loadMyOrders();
-
-}
-
-function setupUSDTBalanceRealtime(){
-
-if(!currentSession)return;
-
-if(balanceChannel){
-
-supabaseClient.removeChannel(
-balanceChannel
-);
-
-}
-
-balanceChannel=
-supabaseClient
-.channel(
-"usdt-wallet-"+
-currentSession.user.id
-)
-
-.on(
-"postgres_changes",
-{
-event:"*",
-schema:"public",
-table:"usdt_balances",
-filter:
-"user_id=eq."+
-currentSession.user.id
-},
-async()=>{
-
-await loadUSDTBalance();
-
-}
-)
-
-.on(
-"postgres_changes",
-{
-event:"*",
-schema:"public",
-table:"p2p_usdt_balances",
-filter:
-"user_id=eq."+
-currentSession.user.id
-},
-async()=>{
-
-await loadUSDTBalance();
-
-}
-)
-
-.on(
-"postgres_changes",
-{
-event:"*",
-schema:"public",
-table:"p2p_orders",
-filter:
-"user_id=eq."+
-currentSession.user.id
-},
-async()=>{
-
-await loadUSDTBalance();
-await loadLockedUSDTFromOrders();
-
-}
-)
-
-.subscribe();
-
-}
-
-async function loadProfile(){
-
-if(!currentSession)return;
-
-const user=
-currentSession.user;
+let username=
+user.user_metadata?.username||
+user.email?.split("@")[0]||
+"User";
 
 let profile=null;
 
-const primary=
+const{data,error}=
 await supabaseClient
 .from("profiles")
 .select("*")
 .eq("id",user.id)
 .maybeSingle();
 
-if(!primary.error)
-profile=primary.data;
-
-if(!profile){
-
-const fallback=
-await supabaseClient
-.from("profiles")
-.select("*")
-.eq("user_id",user.id)
-.maybeSingle();
-
-if(!fallback.error)
-profile=fallback.data;
-
+if(error){
+console.log("Profile:",error.message);
 }
 
-const metadataUsername=
-String(
-user.user_metadata?.username||""
-).trim();
-
-if(!profile&&metadataUsername){
-
-const usernameLookup=
-await supabaseClient
-.from("profiles")
-.select("*")
-.ilike(
-"username",
-metadataUsername
-)
-.maybeSingle();
-
-if(!usernameLookup.error)
-profile=usernameLookup.data;
-
-}
-
+profile=data||null;
 currentProfile=profile||{};
 
-const username=
-currentProfile.username||
-metadataUsername||
-"";
+if(profile){
 
-if(username){
+username=
+profile.username||
+username;
 
-permanentUsername=
-String(username).trim();
+currentPremiumTier=
+normalizePremiumTier(profile);
 
-document.getElementById(
-"profileName"
-).textContent=
-permanentUsername;
+currentLevel=
+getUserLevel(profile);
 
-document.getElementById(
-"profileId"
-).textContent=
-"Username: @"+
-permanentUsername;
+isAdmin=
+detectAdmin(profile);
 
 }else{
 
-document.getElementById(
-"profileName"
-).textContent=
-"Username unavailable";
-
-document.getElementById(
-"profileId"
-).textContent=
-"Username: --";
+currentPremiumTier="free";
+currentLevel=0;
+isAdmin=false;
 
 }
-
-await loadUSDTBalance();
-await loadLockedUSDTFromOrders();
 
 document.getElementById(
-"profileBio"
-).textContent=
-currentProfile.bio||
-"No bio yet.";
+"usernameDisplay"
+).textContent=username;
 
-setProfilePhoto(
-currentProfile.avatar_url||"",
-username||"U"
-);
-
-updateVerificationUI();
-
-document.getElementById(
-"permanentUsername"
-).textContent=
-permanentUsername?
-"@"+permanentUsername:
-"--";
-
-document.getElementById(
-"editBio"
-).value=
-currentProfile.bio||"";
-
-updateLockUI();
-
-await loadStats();
-await loadTradeStats();
+updatePremiumBadge();
+updateVerificationStatus();
 
 }
 
-function renderUSDTBalance(){
-
-const availableElement=
-document.getElementById(
-"usdtBalance"
-);
-
-const lockedElement=
-document.getElementById(
-"lockedUSDTBalance"
-);
-
-if(!availableElement||
-!lockedElement)return;
-
-if(!balanceVisible){
-
-availableElement.textContent=
-"•••••• USDT";
-
-lockedElement.textContent=
-"•••••• USDT";
-
-}else{
-
-availableElement.textContent=
-formatNumber(
-currentUSDTBalance
-)+
-" USDT";
-
-lockedElement.textContent=
-formatNumber(
-currentLockedUSDT
-)+
-" USDT";
-
-}
-
-const withdrawBalance=
-document.getElementById(
-"withdrawBalance"
-);
-
-if(withdrawBalance){
-
-withdrawBalance.textContent=
-formatNumber(
-currentUSDTBalance
-)+
-" USDT";
-
-}
-
-}
-
-function toggleBalanceVisibility(){
-
-balanceVisible=
-!balanceVisible;
-
-renderUSDTBalance();
-
-const button=
-document.getElementById(
-"balanceToggleButton"
-);
-
-if(button)
-button.textContent=
-balanceVisible?
-"👁️":
-"🙈";
-
-}
-
-function setProfilePhoto(
-avatar,
-username
-){
-
-const oldBox=
-document.getElementById(
-"profilePhotoBox"
-);
-
-if(!oldBox)return;
-
-if(avatar){
-
-const img=
-document.createElement("img");
-
-img.id="profilePhotoBox";
-img.className="profile-photo";
-img.src=avatar;
-img.alt="Profile photo";
-
-oldBox.replaceWith(img);
-
-}else{
-
-oldBox.textContent=
-String(
-username||"U"
-)
-.charAt(0)
-.toUpperCase();
-
-oldBox.className=
-"profile-photo";
-
-}
-
-}
-
-async function changeProfilePhoto(event){
-
-if(!currentSession)return;
-
-const file=
-event.target.files[0];
-
-if(!file)return;
-
-if(!file.type.startsWith("image/")){
-
-alert("Please select an image.");
-
-return;
-
-}
-
-if(file.size>5*1024*1024){
-
-alert(
-"Image must be smaller than 5 MB."
-);
-
-return;
-
-}
-
-const userId=
-currentSession.user.id;
-
-const extension=
-file.name
-.split(".")
-.pop()
-.toLowerCase();
-
-const filePath=
-userId+
-"/profile."+
-extension;
-
-const {error:uploadError}=
-await supabaseClient
-.storage
-.from("avatars")
-.upload(
-filePath,
-file,
-{
-upsert:true,
-contentType:file.type
-}
-);
-
-if(uploadError){
-
-alert(
-"Photo upload failed.\n\n"+
-uploadError.message
-);
-
-return;
-
-}
-
-const {data}=
-supabaseClient
-.storage
-.from("avatars")
-.getPublicUrl(filePath);
-
-const avatarUrl=
-data.publicUrl+
-"?t="+
-Date.now();
-
-let {error:updateError}=
-await supabaseClient
-.from("profiles")
-.update({
-avatar_url:avatarUrl
-})
-.eq("id",userId);
-
-if(updateError){
-
-const fallbackUpdate=
-await supabaseClient
-.from("profiles")
-.update({
-avatar_url:avatarUrl
-})
-.eq("user_id",userId);
-
-updateError=
-fallbackUpdate.error;
-
-}
-
-if(updateError){
-
-alert(
-"Could not save profile photo.\n\n"+
-updateError.message
-);
-
-return;
-
-}
-
-currentProfile.avatar_url=
-avatarUrl;
-
-await loadProfile();
-await loadPosts();
-
-event.target.value="";
-
-}
-
-function isProfileLocked(){
-
-return Boolean(
-currentProfile&&(
-currentProfile.profile_locked===true||
-currentProfile.is_locked===true||
-currentProfile.locked===true
-)
-);
-
-}
-
-function updateLockUI(){
-
-const locked=
-isProfileLocked();
-
-const button=
-document.getElementById(
-"lockButton"
-);
-
-const status=
-document.getElementById(
-"lockStatus"
-);
-
-if(!button||!status)return;
-
-if(locked){
-
-button.textContent=
-"🔓 Unlock";
-
-status.textContent=
-"🔒 Locked profile";
-
-}else{
-
-button.textContent=
-"🔒 Lock";
-
-status.textContent=
-"🔓 Public profile";
-
-}
-
-}
-
-async function toggleProfileLock(){
-
-if(!currentSession)return;
-
-const newValue=
-!isProfileLocked();
-
-if(!confirm(
-newValue?
-"Lock your profile from viewers?":
-"Unlock your profile for viewers?"
-))
-return;
-
-let {error}=
-await supabaseClient
-.from("profiles")
-.update({
-profile_locked:newValue
-})
-.eq(
-"id",
-currentSession.user.id
-);
-
-if(error){
-
-const fallback=
-await supabaseClient
-.from("profiles")
-.update({
-profile_locked:newValue
-})
-.eq(
-"user_id",
-currentSession.user.id
-);
-
-error=fallback.error;
-
-}
-
-if(error){
-
-alert(
-"Could not change profile lock:\n\n"+
-error.message
-);
-
-return;
-
-}
-
-currentProfile.profile_locked=
-newValue;
-
-updateLockUI();
-
-await loadPosts();
-
-}
-
-function openEditProfile(){
-
-if(!requirePermanentUsername())
-return;
-
-document.getElementById(
-"permanentUsername"
-).textContent=
-"@"+
-getPermanentUsername();
-
-document.getElementById(
-"editModal"
-).classList.add("show");
-
-}
-
-function closeEditProfile(){
-
-document.getElementById(
-"editModal"
-).classList.remove("show");
-
-}
-
-async function saveProfile(){
-
-if(
-!currentSession||
-!requirePermanentUsername()
-)
-return;
-
-const bio=
-document.getElementById(
-"editBio"
-).value.trim();
-
-const button=
-document.getElementById(
-"saveProfileButton"
-);
-
-button.disabled=true;
-
-let {error}=
-await supabaseClient
-.from("profiles")
-.update({
-bio:bio
-})
-.eq(
-"id",
-currentSession.user.id
-);
-
-if(error){
-
-const fallback=
-await supabaseClient
-.from("profiles")
-.update({
-bio:bio
-})
-.eq(
-"user_id",
-currentSession.user.id
-);
-
-error=fallback.error;
-
-}
-
-button.disabled=false;
-
-if(error){
-
-alert(
-"Could not update profile:\n\n"+
-error.message
-);
-
-return;
-
-}
-
-closeEditProfile();
-
-await loadProfile();
-await loadPosts();
-
-}
-
-function openSettings(){
-
-document.getElementById(
-"settingsModal"
-).classList.add("show");
-
-}
-
-function closeSettings(){
-
-document.getElementById(
-"settingsModal"
-).classList.remove("show");
-
-}
-
-async function loadCurrencies(){
-
-const list=
-document.getElementById(
-"currencyList"
-);
-
-if(!list)return;
-
-list.innerHTML=
-'<div class="history-empty">Loading currencies...</div>';
-
-const {data,error}=
-await supabaseClient.rpc(
-"get_p2p_payment_countries"
-);
-
-if(error){
-
-console.error(
-"Currency RPC failed:",
-error
-);
-
-list.innerHTML=
-'<div class="history-empty">Could not load currencies.</div>';
-
-return;
-
-}
-
-backendCurrencies=
-(data||[]).filter(
-item=>
-item.currency_code&&
-item.currency_code!=="💎"
-);
-
-list.innerHTML="";
-
-if(!backendCurrencies.length){
-
-list.innerHTML=
-'<div class="history-empty">No currencies available.</div>';
-
-return;
-
-}
-
-backendCurrencies.forEach(item=>{
-
-const chip=
-document.createElement("div");
-
-chip.className=
-"currency-chip";
-
-chip.textContent=
-(item.flag?
-item.flag+" ":"")+
-String(
-item.currency_code
-);
-
-list.appendChild(chip);
-
-});
-
-updateOrderPairOptions();
-populateBankCountryOptions();
-
-}
-
-async function loadMyPaymentCountry(){
-
-const countryResult=
-await supabaseClient.rpc(
-"get_my_payment_country"
-);
-
-if(countryResult.error){
-
-console.error(
-"My payment country load failed:",
-countryResult.error
-);
-
-currentPaymentCountry=null;
-
-renderPaymentCountry();
-
-return;
-
-}
-
-if(Array.isArray(
-countryResult.data
-))
-currentPaymentCountry=
-countryResult.data[0]||
-null;
-else
-currentPaymentCountry=
-countryResult.data||
-null;
-
-renderPaymentCountry();
-
-}
-
-function renderPaymentCountry(){
-
-const country=
-document.getElementById(
-"myCountry"
-);
-
-const currency=
-document.getElementById(
-"myCurrency"
-);
-
-const bankCountry=
-document.getElementById(
-"bankCountryDisplay"
-);
-
-if(!country||!currency)return;
-
-if(currentPaymentCountry){
-
-const flag=
-currentPaymentCountry.flag||
-"";
-
-country.textContent=
-(flag?
-flag+" ":"")+
-(
-currentPaymentCountry.country_name||
-currentPaymentCountry.country_code||
-"Selected"
-);
-
-currency.textContent=
-(
-currentPaymentCountry.currency_code||
-"--"
-)+
-(
-currentPaymentCountry.currency_name?
-" • "+
-currentPaymentCountry.currency_name:
-""
-);
-
-if(bankCountry){
-
-bankCountry.textContent=
-(flag?
-flag+" ":"")+
-(
-currentPaymentCountry.country_name||
-currentPaymentCountry.country_code||
-"Selected"
-);
-
-}
-
-}else{
-
-country.textContent=
-"Not selected";
-
-currency.textContent="--";
-
-if(bankCountry)
-bankCountry.textContent=
-"Not selected";
-
-}
-
-}
-
-function populateBankCountryOptions(){
-
-const select=
-document.getElementById(
-"bankCountryInput"
-);
-
-if(!select)return;
-
-const oldValue=
-select.value;
-
-select.innerHTML=
-'<option value="">Select country</option>';
-
-backendCurrencies.forEach(item=>{
-
-const option=
-document.createElement("option");
-
-option.value=
-item.id||
-item.country_code;
-
-option.textContent=
-(item.flag?
-item.flag+" ":"")+
-item.country_name+
-" • "+
-item.currency_code;
-
-option.dataset.currency=
-item.currency_code||
-"";
-
-select.appendChild(option);
-
-});
-
-if(currentPaymentCountry){
-
-const target=
-backendCurrencies.find(
-item=>
-String(item.id)===
-String(
-currentPaymentCountry.id
-)
-);
-
-if(target)
-select.value=
-target.id;
-
-}
-
-if(
-oldValue&&
-!select.value&&
-[...select.options].some(
-option=>
-option.value===oldValue
-)
-)
-select.value=oldValue;
-
-updateBankCountryCurrency();
-
-}
-
-function updateBankCountryCurrency(){
-
-const select=
-document.getElementById(
-"bankCountryInput"
-);
-
-const currency=
-document.getElementById(
-"bankCurrencyInput"
-);
-
-if(!select||!currency)return;
-
-const option=
-select.options[
-select.selectedIndex
+function normalizePremiumTier(profile){
+
+if(!profile)return"free";
+
+const values=[
+profile.premium_tier,
+profile.subscription_tier,
+profile.membership,
+profile.plan,
+profile.premium_plan,
+profile.account_tier
 ];
 
-currency.value=
-option?.dataset?.currency||
-"";
+let value=
+values.find(
+v=>
+v!==null&&
+v!==undefined&&
+String(v).trim()!==""
+);
 
-}
+if(!value)return"free";
 
-async function saveSelectedPaymentCountry(
-countryId
+value=
+String(value)
+.toLowerCase()
+.trim()
+.replace(/\s+/g,"");
+
+if(
+value==="premiummax"||
+value==="max"||
+value==="premium_max"
 ){
 
-if(!countryId)return true;
-
-const result=
-await supabaseClient.rpc(
-"set_my_payment_country",
-{
-p_country_id:countryId
-}
-);
-
-if(result.error){
-
-console.error(
-"Payment country save failed:",
-result.error
-);
-
-return false;
+return"premium_max";
 
 }
+
+if(
+value==="premium+"||
+value==="premiumplus"||
+value==="premium_plus"||
+value==="plus"
+){
+
+return"premium_plus";
+
+}
+
+if(value==="premium"){
+
+return"premium";
+
+}
+
+return"free";
+
+}
+
+function getUserLevel(profile){
+
+const values=[
+profile.level,
+profile.user_level,
+profile.account_level,
+profile.rank_level
+];
+
+for(const value of values){
+
+if(
+value!==null&&
+value!==undefined&&
+value!==""
+){
+
+const number=
+Number(value);
+
+if(!Number.isNaN(number)){
+
+return number;
+
+}
+
+}
+
+}
+
+return 0;
+
+}
+
+function detectAdmin(profile){
+
+if(!profile)return false;
+
+if(profile.is_admin===true)return true;
+
+if(
+String(profile.role||"").toLowerCase()==="admin"||
+String(profile.role||"").toLowerCase()==="owner"
+){
 
 return true;
 
 }
 
-async function loadBankTransferDetails(){
+if(
+String(profile.account_role||"").toLowerCase()==="admin"||
+String(profile.account_role||"").toLowerCase()==="owner"
+){
+
+return true;
+
+}
+
+return false;
+
+}
+
+function hasPremium(){
+
+return[
+"premium",
+"premium_plus",
+"premium_max"
+].includes(currentPremiumTier);
+
+}
+
+function hasPremiumPlus(){
+
+return[
+"premium_plus",
+"premium_max"
+].includes(currentPremiumTier);
+
+}
+
+function canPostImage(){
+return hasPremium();
+}
+
+function canPostVideo(){
+return hasPremiumPlus();
+}
+
+function updatePremiumBadge(){
+
+const header=
+document.getElementById(
+"headerPremiumBadge"
+);
+
+if(!header)return;
+
+if(currentPremiumTier==="premium"){
+
+header.textContent="🟢 Premium";
+
+}else if(currentPremiumTier==="premium_plus"){
+
+header.textContent="🔵 Premium+";
+
+}else if(currentPremiumTier==="premium_max"){
+
+header.textContent="🟣 Premium Max";
+
+}else{
+
+header.textContent="";
+
+}
+
+}
+
+async function loadLiveRate(){
+
+const valueElement=
+document.getElementById(
+"liveRateValue"
+);
+
+const unitElement=
+document.getElementById(
+"liveRateUnit"
+);
+
+const changeElement=
+document.getElementById(
+"liveRateChange"
+);
+
+try{
+
+let data=null;
+
+const result=
+await supabaseClient
+.from("market_rates")
+.select("*")
+.order("created_at",{ascending:false})
+.limit(1)
+.maybeSingle();
+
+if(!result.error&&result.data){
+data=result.data;
+}
+
+if(!data){
+
+const fallback=
+await supabaseClient
+.from("rates")
+.select("*")
+.order("created_at",{ascending:false})
+.limit(1)
+.maybeSingle();
+
+if(!fallback.error&&fallback.data){
+data=fallback.data;
+}
+
+}
+
+if(!data){
+
+valueElement.textContent="—";
+unitElement.textContent="USDT unavailable";
+changeElement.textContent="Offline";
+
+return;
+
+}
+
+const rate=
+getFirstValue(
+data,
+[
+"rate",
+"price",
+"exchange_rate",
+"usdt_price",
+"usdt_rate",
+"price_per_usdt"
+]
+);
+
+const change=
+getFirstValue(
+data,
+[
+"change_percent",
+"change",
+"percentage_change"
+]
+);
+
+valueElement.textContent=
+rate!==null
+?
+formatNumber(rate)
+:
+"—";
+
+unitElement.textContent="USDT";
+
+changeElement.textContent=
+change!==null
+?
+String(change).includes("%")
+?
+String(change)
+:
+String(change)+"%"
+:
+"Live";
+
+}catch(error){
+
+console.error(
+"Live rate:",
+error
+);
+
+valueElement.textContent="—";
+unitElement.textContent="USDT unavailable";
+changeElement.textContent="Offline";
+
+}
+
+}
+
+function openLiveRate(){
+
+document.querySelector(
+".rate-box"
+)?.scrollIntoView({
+behavior:"smooth",
+block:"center"
+});
+
+loadLiveRate();
+
+}
+
+function openVerifyIdentity(){
+
+if(!requireLogin())return;
+
+document.getElementById(
+"verifyModal"
+).style.display="flex";
+
+updateVerificationStatus();
+
+}
+
+function closeVerifyIdentity(){
+
+document.getElementById(
+"verifyModal"
+).style.display="none";
+
+}
+
+function formatVerificationStatus(value){
+
+const status=
+String(value||"")
+.toLowerCase()
+.trim();
+
+if(status==="verified_plus"){
+return"Verified+";
+}
+
+if(status==="verified"){
+return"Verified";
+}
+
+return"Unverified";
+
+}
+
+async function updateVerificationStatus(){
 
 if(!currentSession)return;
 
-const result=
-await supabaseClient.rpc(
-"get_my_bank_transfer_details"
+const statusElement=
+document.getElementById(
+"verificationStatus"
 );
 
-if(result.error){
-
-console.error(
-"Bank transfer details load failed:",
-result.error
-);
-
-currentBankTransferDetails=
-null;
-
-renderBankTransferDetails();
-
-return;
-
-}
-
-if(Array.isArray(
-result.data
-))
-currentBankTransferDetails=
-result.data[0]||
-null;
-else
-currentBankTransferDetails=
-result.data||
-null;
-
-renderBankTransferDetails();
-
-}
-
-function renderBankTransferDetails(){
-
-const bankName=
-document.getElementById(
-"bankNameDisplay"
-);
-
-const accountName=
-document.getElementById(
-"accountNameDisplay"
-);
-
-const accountNumber=
-document.getElementById(
-"accountNumberDisplay"
-);
-
-if(
-!bankName||
-!accountName||
-!accountNumber
-)
-return;
-
-const details=
-currentBankTransferDetails||
-{};
-
-bankName.textContent=
-details.bank_name||
-"Not added";
-
-accountName.textContent=
-details.account_name||
-"Not added";
-
-accountNumber.textContent=
-details.account_number||
-"Not added";
-
-renderPaymentCountry();
-
-}
-
-function openBankTransfer(){
-
-if(!currentSession){
-
-showLogin();
-
-return;
-
-}
-
-populateBankCountryOptions();
-
-const details=
-currentBankTransferDetails||
-{};
-
-document.getElementById(
-"bankNameInput"
-).value=
-details.bank_name||
-"";
-
-document.getElementById(
-"accountNameInput"
-).value=
-details.account_name||
-"";
-
-document.getElementById(
-"accountNumberInput"
-).value=
-details.account_number||
-"";
-
-document.getElementById(
-"bankTransferModal"
-).classList.add("show");
-
-}
-
-function closeBankTransfer(){
-
-document.getElementById(
-"bankTransferModal"
-).classList.remove("show");
-
-}
-
-async function saveBankTransfer(){
-
-if(!currentSession){
-
-showLogin();
-
-return;
-
-}
-
-const countryId=
-document.getElementById(
-"bankCountryInput"
-).value;
-
-const bankName=
-document.getElementById(
-"bankNameInput"
-).value.trim();
-
-const accountName=
-document.getElementById(
-"accountNameInput"
-).value.trim();
-
-const accountNumber=
-document.getElementById(
-"accountNumberInput"
-).value.trim();
-
-if(!countryId){
-
-alert(
-"Please select your country."
-);
-
-return;
-
-}
-
-if(!bankName){
-
-alert(
-"Please enter your bank name."
-);
-
-return;
-
-}
-
-if(!accountName){
-
-alert(
-"Please enter the account name."
-);
-
-return;
-
-}
-
-if(!accountNumber){
-
-alert(
-"Please enter the account number."
-);
-
-return;
-
-}
+if(!statusElement)return;
 
 const button=
 document.getElementById(
-"bankTransferSaveButton"
+"verificationRequestBtn"
+);
+
+const profileStatus=
+String(
+currentProfile?.verification_status||""
+)
+.toLowerCase()
+.trim();
+
+if(
+profileStatus==="verified"||
+profileStatus==="verified_plus"
+){
+
+statusElement.textContent=
+formatVerificationStatus(
+profileStatus
+);
+
+if(button){
+
+button.disabled=true;
+button.textContent="Already Verified";
+
+}
+
+return;
+
+}
+
+if(button){
+
+button.disabled=true;
+button.textContent="Checking...";
+
+}
+
+const{data,error}=
+await supabaseClient
+.from("verification_requests")
+.select("id,status,created_at")
+.eq(
+"requester_id",
+currentSession.user.id
+)
+.order(
+"created_at",
+{ascending:false}
+)
+.limit(1)
+.maybeSingle();
+
+if(error){
+
+console.error(
+"Verification status:",
+error
+);
+
+statusElement.textContent="Unverified";
+
+if(button){
+
+button.disabled=false;
+button.textContent=
+"Send Verification Request";
+
+}
+
+return;
+
+}
+
+if(!data){
+
+statusElement.textContent="Unverified";
+
+if(button){
+
+button.disabled=false;
+button.textContent=
+"Send Verification Request";
+
+}
+
+return;
+
+}
+
+const status=
+String(data.status||"")
+.toLowerCase();
+
+if(status==="pending"){
+
+statusElement.textContent=
+"Verification Pending";
+
+if(button){
+
+button.disabled=true;
+button.textContent=
+"Verification Pending";
+
+}
+
+return;
+
+}
+
+if(status==="approved"){
+
+statusElement.textContent="Verified";
+
+if(button){
+
+button.disabled=true;
+button.textContent=
+"Already Verified";
+
+}
+
+return;
+
+}
+
+if(status==="rejected"){
+
+statusElement.textContent="Unverified";
+
+if(button){
+
+button.disabled=false;
+button.textContent=
+"Send New Verification Request";
+
+}
+
+return;
+
+}
+
+statusElement.textContent="Unverified";
+
+if(button){
+
+button.disabled=false;
+button.textContent=
+"Send Verification Request";
+
+}
+
+}
+
+async function sendVerificationRequest(){
+
+if(!requireLogin())return;
+
+const button=
+document.getElementById(
+"verificationRequestBtn"
 );
 
 button.disabled=true;
-button.textContent="Saving...";
+button.textContent="Checking...";
 
-const countrySaved=
-await saveSelectedPaymentCountry(
-countryId
-);
+try{
 
-if(!countrySaved){
+const profileStatus=
+String(
+currentProfile?.verification_status||""
+)
+.toLowerCase()
+.trim();
 
-button.disabled=false;
-button.textContent="Save";
+if(
+profileStatus==="verified"||
+profileStatus==="verified_plus"
+){
 
 alert(
-"Could not save payment country."
+"Your account is already verified."
 );
 
 return;
 
 }
 
-const result=
+const{
+data:existing,
+error:existingError
+}=
+await supabaseClient
+.from("verification_requests")
+.select("id,status")
+.eq(
+"requester_id",
+currentSession.user.id
+)
+.eq(
+"status",
+"pending"
+)
+.maybeSingle();
+
+if(existingError){
+
+console.error(
+"Verification request check:",
+existingError
+);
+
+alert(
+"Could not check your verification request: "+
+existingError.message
+);
+
+return;
+
+}
+
+if(existing){
+
+window.location.href=
+"./message.html?username="+
+encodeURIComponent(
+ADMIN_USERNAME
+)+
+"&verification_request="+
+encodeURIComponent(
+existing.id
+);
+
+return;
+
+}
+
+button.textContent="Sending...";
+
+const{
+data:requestId,
+error:requestError
+}=
 await supabaseClient.rpc(
-"save_my_bank_transfer_details",
-{
-p_bank_name:bankName,
-p_account_name:accountName,
-p_account_number:accountNumber
-}
+"create_verification_request"
 );
 
-button.disabled=false;
-button.textContent="Save";
+if(requestError){
 
-if(result.error){
+console.error(
+"Verification request:",
+requestError
+);
 
 alert(
-"Could not save bank transfer details:\n\n"+
-result.error.message
+"Could not send verification request: "+
+requestError.message
 );
 
 return;
 
 }
 
-currentBankTransferDetails={
-bank_name:bankName,
-account_name:accountName,
-account_number:accountNumber
-};
+if(!requestId){
 
-const selected=
-backendCurrencies.find(
-item=>
-String(item.id)===
-String(countryId)
+alert(
+"Verification request could not be created."
 );
 
-if(selected){
-
-currentPaymentCountry={
-id:selected.id,
-country_code:selected.country_code,
-country_name:selected.country_name,
-flag:selected.flag,
-currency_code:selected.currency_code,
-currency_name:selected.currency_name
-};
+return;
 
 }
 
-renderBankTransferDetails();
+closeVerifyIdentity();
 
-closeBankTransfer();
+window.location.href=
+"./message.html?username="+
+encodeURIComponent(
+ADMIN_USERNAME
+)+
+"&verification_request="+
+encodeURIComponent(
+requestId
+);
+
+}catch(error){
+
+console.error(
+"Verification request:",
+error
+);
 
 alert(
-"Bank transfer details saved successfully."
+"Verification request could not be sent."
 );
+
+}finally{
+
+button.disabled=false;
+button.textContent=
+"Send Verification Request";
+
+}
+
+}
+
+function openReferral(){
+
+if(!requireLogin())return;
+
+document.getElementById(
+"referralModal"
+).style.display="flex";
+
+loadReferral();
+
+}
+
+function closeReferral(){
+
+document.getElementById(
+"referralModal"
+).style.display="none";
+
+}
+
+async function loadReferral(){
+
+const element=
+document.getElementById(
+"referralCode"
+);
+
+const user=
+currentSession.user;
+
+let username=
+currentProfile?.username||
+user.user_metadata?.username||
+"";
+
+if(!username){
+
+username=
+user.email?.split("@")[0]||
+"User";
+
+}
+
+const referralUrl=
+window.location.origin+
+"/register.html?ref="+
+encodeURIComponent(
+username
+);
+
+element.textContent=
+referralUrl;
+
+}
+
+async function copyReferralCode(){
+
+const element=
+document.getElementById(
+"referralCode"
+);
+
+const value=
+element.textContent;
+
+try{
+
+await navigator.clipboard.writeText(
+value
+);
+
+alert(
+"Referral link copied."
+);
+
+}catch(error){
+
+prompt(
+"Copy referral link:",
+value
+);
+
+}
+
+}
+
+function openReferralBalance(){
+
+closeReferral();
+
+if(!requireLogin())return;
+
+window.location.href=
+"./profile.html?referral=balance";
 
 }
 
 function openTransfer(){
 
-if(!requirePermanentUsername())
-return;
-
-document.getElementById(
-"transferSender"
-).textContent=
-"@"+
-getPermanentUsername();
-
-document.getElementById(
-"transferUsername"
-).value="";
-
-document.getElementById(
-"transferAmount"
-).value="";
+if(!requireLogin())return;
 
 document.getElementById(
 "transferModal"
-).classList.add("show");
+).style.display="flex";
 
 }
 
@@ -2933,26 +1859,17 @@ function closeTransfer(){
 
 document.getElementById(
 "transferModal"
-).classList.remove("show");
+).style.display="none";
 
 }
 
-async function submitTransfer(){
+async function submitUSDTTransfer(){
 
-if(!currentSession){
+if(!requireLogin())return;
 
-showLogin();
-
-return;
-
-}
-
-if(!requirePermanentUsername())
-return;
-
-const recipient=
+let recipient=
 document.getElementById(
-"transferUsername"
+"transferRecipient"
 ).value.trim();
 
 const amount=
@@ -2962,25 +1879,20 @@ document.getElementById(
 ).value
 );
 
+const button=
+document.getElementById(
+"transferSubmitBtn"
+);
+
+recipient=
+recipient
+.replace(/^@/,"")
+.trim();
+
 if(!recipient){
 
 alert(
-"Please enter the recipient username."
-);
-
-return;
-
-}
-
-if(
-usernameEquals(
-recipient,
-getPermanentUsername()
-)
-){
-
-alert(
-"You cannot transfer to your own username."
+"Enter the recipient username."
 );
 
 return;
@@ -2993,56 +1905,72 @@ amount<=0
 ){
 
 alert(
-"Please enter a valid USDT amount."
+"Enter a valid USDT amount."
 );
 
 return;
 
 }
 
-if(amount>currentUSDTBalance){
+const myUsername=
+String(
+currentProfile?.username||
+currentSession.user.user_metadata?.username||
+""
+)
+.trim()
+.toLowerCase();
+
+if(
+myUsername&&
+recipient.toLowerCase()===myUsername
+){
 
 alert(
-"Insufficient USDT balance."
+"You cannot transfer USDT to yourself."
 );
 
 return;
 
 }
 
-const button=
-document.getElementById(
-"transferSubmitButton"
-);
-
 button.disabled=true;
-button.textContent=
-"Transferring...";
+button.textContent="Processing...";
 
-const result=
+try{
+
+const{error}=
 await supabaseClient.rpc(
 "transfer_usdt_by_username",
 {
-p_recipient_username:
-recipient,
+p_recipient_username:recipient,
 p_amount:amount
 }
 );
 
-button.disabled=false;
-button.textContent=
-"Transfer";
+if(error){
 
-if(result.error){
+console.error(
+"USDT transfer:",
+error
+);
 
 alert(
-"Could not complete transfer:\n\n"+
-result.error.message
+"Transfer failed: "+
+error.message
 );
 
 return;
 
 }
+
+alert(
+"USDT transfer completed."
+);
+
+document.getElementById(
+"transferRecipient"
+).value="";
 
 document.getElementById(
 "transferAmount"
@@ -3050,1617 +1978,224 @@ document.getElementById(
 
 closeTransfer();
 
-await loadUSDTBalance();
-await loadUSDTHistory();
-
-alert(
-"USDT transfer completed successfully."
-);
-
-}
-
-function updateDepositAddress(){
-
-const network=
-document.getElementById(
-"depositNetwork"
-).value;
-
-const address=
-DEPOSIT_NETWORKS[
-network
-]?.address||
-"";
-
-document.getElementById(
-"depositAddress"
-).textContent=
-address||
-"Address unavailable";
-
-}
-
-function openDeposit(){
-
-updateDepositAddress();
-
-document.getElementById(
-"depositModal"
-).classList.add("show");
-
-}
-
-function closeDeposit(){
-
-document.getElementById(
-"depositModal"
-).classList.remove("show");
-
-}
-
-async function copyDepositAddress(){
-
-const address=
-document.getElementById(
-"depositAddress"
-).textContent.trim();
-
-if(!address)return;
-
-try{
-
-await navigator.clipboard.writeText(
-address
-);
-
-alert(
-"Deposit address copied."
-);
-
 }catch(error){
 
-alert(address);
-
-}
-
-}
-
-function openWithdraw(){
-
-document.getElementById(
-"withdrawBalance"
-).textContent=
-formatNumber(
-currentUSDTBalance
-)+
-" USDT";
-
-document.getElementById(
-"withdrawModal"
-).classList.add("show");
-
-}
-
-function closeWithdraw(){
-
-document.getElementById(
-"withdrawModal"
-).classList.remove("show");
-
-}
-
-async function submitWithdrawal(){
-
-if(!currentSession){
-
-showLogin();
-
-return;
-
-}
-
-if(!requirePermanentUsername())
-return;
-
-const amount=
-Number(
-document.getElementById(
-"withdrawAmount"
-).value
-);
-
-const address=
-document.getElementById(
-"withdrawAddress"
-).value.trim();
-
-const network=
-document.getElementById(
-"withdrawNetwork"
-).value;
-
-if(
-!Number.isFinite(amount)||
-amount<MIN_WITHDRAWAL
-){
-
-alert(
-"Minimum withdrawal is "+
-MIN_WITHDRAWAL+
-" USDT."
-);
-
-return;
-
-}
-
-if(amount>currentUSDTBalance){
-
-alert(
-"Insufficient USDT balance."
-);
-
-return;
-
-}
-
-if(!address){
-
-alert(
-"Please enter a withdrawal address."
-);
-
-return;
-
-}
-
-if(
-network==="TON"&&
-address.length<20
-){
-
-alert(
-"Please enter a valid TON address."
-);
-
-return;
-
-}
-
-if(!confirm(
-"Submit this withdrawal request?"
-))
-return;
-
-const button=
-document.getElementById(
-"withdrawSubmitButton"
-);
-
-button.disabled=true;
-button.textContent=
-"Submitting...";
-
-const result=
-await supabaseClient.rpc(
-"request_usdt_withdrawal",
-{
-p_amount:amount,
-p_network:network,
-p_withdrawal_address:address
-}
-);
-
-button.disabled=false;
-button.textContent=
-"Submit Withdrawal";
-
-if(result.error){
-
-alert(
-"Could not submit withdrawal:\n\n"+
-result.error.message
-);
-
-return;
-
-}
-
-document.getElementById(
-"withdrawAmount"
-).value="";
-
-document.getElementById(
-"withdrawAddress"
-).value="";
-
-closeWithdraw();
-
-await loadUSDTBalance();
-await loadUSDTHistory();
-
-alert(
-"Pending... Withdrawal request submitted and is waiting for backend/admin approval."
-);
-
-}
-
-function setHistoryType(type){
-
-currentHistoryType=type;
-
-document.getElementById(
-"historyTabAll"
-)
-.classList.toggle(
-"active",
-type==="all"
-);
-
-document.getElementById(
-"historyTabDeposit"
-)
-.classList.toggle(
-"active",
-type==="deposit"
-);
-
-document.getElementById(
-"historyTabWithdrawal"
-)
-.classList.toggle(
-"active",
-type==="withdrawal"
-);
-
-loadUSDTHistory();
-
-}
-
-async function loadUSDTHistory(){
-
-if(!currentSession)return;
-
-const list=
-document.getElementById(
-"historyList"
-);
-
-if(!list)return;
-
-list.innerHTML=
-'<div class="history-empty">Loading history...</div>';
-
-const userId=
-currentSession.user.id;
-
-const {data,error}=
-await supabaseClient
-.from("usdt_transfers")
-.select(`
-id,
-sender_id,
-recipient_id,
-amount,
-fee,
-recipient_amount,
-status,
-created_at
-`)
-.or(
-"sender_id.eq."+
-userId+
-",recipient_id.eq."+
-userId
-)
-.order(
-"created_at",
-{
-ascending:false
-}
-)
-.limit(
-showAllHistory?
-50:
-20
-);
-
-let transferHistory=[];
-
-if(!error&&data)
-transferHistory=data;
-
-if(error)
 console.error(
-"USDT transfer history:",
+"USDT transfer:",
 error
 );
 
-const ledgerResult=
-await supabaseClient
-.from("p2p_usdt_ledger")
-.select("*")
-.eq("user_id",userId)
-.order(
-"created_at",
-{
-ascending:false
-}
-)
-.limit(50);
-
-if(
-!ledgerResult.error&&
-ledgerResult.data
-){
-
-ledgerResult.data.forEach(item=>{
-
-const type=
-String(
-item.type||
-item.transaction_type||
-item.entry_type||
-item.kind||
-""
-).toLowerCase();
-
-const isDeposit=
-type.includes("deposit");
-
-const isWithdrawal=
-type.includes("withdraw");
-
-if(
-currentHistoryType==="deposit"&&
-!isDeposit
-)
-return;
-
-if(
-currentHistoryType==="withdrawal"&&
-!isWithdrawal
-)
-return;
-
-if(
-currentHistoryType==="all"||
-isDeposit||
-isWithdrawal
-){
-
-transferHistory.push({
-
-id:
-"ledger-"+
-String(
-item.id||
-Math.random()
-),
-
-sender_id:null,
-recipient_id:null,
-
-amount:Number(
-item.amount||
-item.usdt_amount||
-item.value||
-0
-),
-
-fee:Number(
-item.fee||
-0
-),
-
-recipient_amount:Number(
-item.recipient_amount||
-item.net_amount||
-item.amount||
-item.usdt_amount||
-0
-),
-
-status:
-item.status||
-item.transaction_status||
-"completed",
-
-created_at:item.created_at,
-
-history_type:
-isDeposit?
-"deposit":
-isWithdrawal?
-"withdrawal":
-"ledger"
-
-});
-
-}
-
-});
-
-}
-
-if(
-currentHistoryType==="deposit"||
-currentHistoryType==="withdrawal"
-){
-
-transferHistory=
-transferHistory.filter(
-item=>{
-
-const type=
-String(
-item.history_type||
-""
-).toLowerCase();
-
-return type===
-currentHistoryType;
-
-}
+alert(
+"Transfer could not be processed."
 );
 
-}
+}finally{
 
-const uniqueMap=new Map();
-
-transferHistory.forEach(item=>{
-
-const key=
-String(item.id)+
-"|"+
-String(
-item.created_at||
-""
-);
-
-if(!uniqueMap.has(key))
-uniqueMap.set(key,item);
-
-});
-
-transferHistory=
-[...uniqueMap.values()]
-.sort(
-(a,b)=>
-new Date(
-b.created_at||0
-)-
-new Date(
-a.created_at||0
-)
-);
-
-if(!showAllHistory)
-transferHistory=
-transferHistory.slice(0,3);
-else
-transferHistory=
-transferHistory.slice(0,50);
-
-if(!transferHistory.length){
-
-list.innerHTML=
-'<div class="history-empty">No history yet.</div>';
-
-return;
+button.disabled=false;
+button.textContent=
+"Transfer USDT";
 
 }
 
-list.innerHTML="";
+}
 
-transferHistory.forEach(item=>{
+function openSupport(){
 
-const type=
-String(
-item.history_type||
-""
-).toLowerCase();
+if(!requireLogin())return;
 
-let title=
-"USDT Transfer";
+document.getElementById(
+"supportModal"
+).style.display="flex";
 
-let displayAmount="";
+}
 
-let amountClass=
-"positive";
+function closeSupport(){
 
-if(type==="deposit"){
+document.getElementById(
+"supportModal"
+).style.display="none";
 
-title=
-"USDT Deposit";
+}
 
-displayAmount=
-"+"+
-formatNumber(
-item.recipient_amount||
-item.amount
+function openAdminMessage(type){
+
+if(!requireLogin())return;
+
+window.location.href=
+"./message.html?username="+
+encodeURIComponent(
+ADMIN_USERNAME
 )+
-" USDT";
-
-amountClass=
-"positive";
-
-}else if(type==="withdrawal"){
-
-title=
-"USDT Withdrawal";
-
-displayAmount=
-"-"+
-formatNumber(
-item.amount
-)+
-" USDT";
-
-amountClass=
-"negative";
-
-}else{
-
-const sent=
-String(item.sender_id)===
-String(userId);
-
-title=
-sent?
-"USDT Transfer Sent":
-"USDT Transfer Received";
-
-displayAmount=
-sent?
-"-"+
-formatNumber(
-item.amount
-)+
-" USDT":
-"+"+
-formatNumber(
-item.recipient_amount||
-item.amount
-)+
-" USDT";
-
-amountClass=
-sent?
-"negative":
-"positive";
-
-}
-
-const row=
-document.createElement("div");
-
-row.className=
-"history-row";
-
-const date=
-item.created_at?
-new Date(
-item.created_at
-).toLocaleString():
-"";
-
-const status=
-String(
-item.status||
-"completed"
-).toLowerCase();
-
-row.innerHTML=`
-
-<div class="history-row-top">
-
-<div class="history-type">
-${escapeHtml(title)}
-</div>
-
-<div class="history-amount ${amountClass}">
-${escapeHtml(displayAmount)}
-</div>
-
-</div>
-
-<div class="history-meta">
-
-<span>
-${escapeHtml(
-type==="deposit"?
-"Deposit":
-type==="withdrawal"?
-"Withdrawal":
-"USDT transfer"
-)}
-</span>
-
-<span>
-${escapeHtml(date)}
-</span>
-
-</div>
-
-${
-Number(item.fee||0)>0?
-`
-<div class="history-meta">
-<span>Fee</span>
-<span>${formatNumber(item.fee)} USDT</span>
-</div>
-`
-:""
-}
-
-<div class="history-status ${
-status==="pending"?
-"pending":
-status==="failed"||
-status==="rejected"||
-status==="cancelled"?
-"failed":
-""
-}">
-
-${escapeHtml(
-status.toUpperCase()
-)}
-
-</div>
-
-`;
-
-list.appendChild(row);
-
-});
-
-}
-
-function updateOrderPairOptions(){
-
-const select=
-document.getElementById(
-"orderPair"
+"&support="+
+encodeURIComponent(
+type||"support"
 );
 
-if(!select)return;
-
-const currencies=
-backendCurrencies.length?
-backendCurrencies:
-[
-{
-currency_code:"ETB",
-currency_name:
-"Ethiopian Birr"
 }
-];
 
-const pairs=[];
+function openSupportContact(){
 
-currencies.forEach(item=>{
+closeSupport();
 
-const code=
-String(
-item.currency_code||""
-)
-.trim()
-.toUpperCase();
+openAdminMessage("support");
 
-if(
-!code||
-code==="USDT"||
-code==="💎"
-)
-return;
+}
 
-pairs.push([
-"USDT_"+code,
-"USDT / "+code
-]);
+function openP2PHelp(){
 
-});
+closeSupport();
 
-select.innerHTML="";
+openAdminMessage("p2p");
 
-pairs.forEach(item=>{
+}
 
-const option=
-document.createElement(
-"option"
+function openSecurityHelp(){
+
+closeSupport();
+
+openAdminMessage("security");
+
+}
+
+function openTwoFA(){
+
+if(!requireLogin())return;
+
+document.getElementById(
+"twoFAModal"
+).style.display="flex";
+
+}
+
+function closeTwoFA(){
+
+document.getElementById(
+"twoFAModal"
+).style.display="none";
+
+}
+
+async function enableTwoFA(){
+
+if(!requireLogin())return;
+
+const button=
+document.getElementById(
+"twoFAButton"
 );
 
-option.value=item[0];
-option.textContent=item[1];
+button.disabled=true;
+button.textContent=
+"Opening security settings...";
 
-select.appendChild(option);
+try{
 
-});
+window.location.href=
+"./profile.html?security=2fa";
 
-if(
-[...select.options].some(
-option=>
-option.value==="USDT_ETB"
-)
-)
-select.value=
-"USDT_ETB";
+}catch(error){
 
-updateOrderCurrency();
+console.error(error);
 
-}
-
-function openOrderModal(type){
-
-if(!requirePermanentUsername())
-return;
-
-orderType=
-type==="sell"?
-"sell":
-"buy";
-
-const title=
-document.getElementById(
-"orderModalTitle"
-);
-
-const typeBadge=
-document.getElementById(
-"orderModalType"
-);
-
-const submitButton=
-document.getElementById(
-"submitOrderButton"
-);
-
-document.getElementById(
-"orderUsername"
-).textContent=
-"@"+
-getPermanentUsername();
-
-if(orderType==="sell"){
-
-title.textContent=
-"🔴 Create Sell Order";
-
-typeBadge.textContent=
-"SELL";
-
-typeBadge.className=
-"order-modal-type sell";
-
-submitButton.textContent=
-"Create Sell Order";
-
-submitButton.className=
-"order-submit sell-submit";
-
-}else{
-
-title.textContent=
-"🟢 Create Buy Order";
-
-typeBadge.textContent=
-"BUY";
-
-typeBadge.className=
-"order-modal-type buy";
-
-submitButton.textContent=
-"Create Buy Order";
-
-submitButton.className=
-"order-submit";
+button.disabled=false;
+button.textContent=
+"Enable 2FA";
 
 }
 
-updateOrderPairOptions();
-updateOrderCurrency();
-updateFeePreview();
-
-document.getElementById(
-"orderModal"
-).classList.add("show");
-
 }
 
-function closeOrderModal(){
-
-document.getElementById(
-"orderModal"
-).classList.remove("show");
-
-}
-
-function getPairParts(pair){
-
-const parts=
-String(pair||"").split("_");
-
-return{
-
-base:
-parts[0]||"USDT",
-
-quote:
-parts[1]||"ETB"
-
-};
-
-}
-
-function updateOrderCurrency(){
-
-const select=
-document.getElementById(
-"orderPair"
-);
-
-const pair=
-select?.value||
-"USDT_ETB";
-
-const {quote}=
-getPairParts(pair);
-
-document.getElementById(
-"orderPriceCurrency"
-).textContent=
-quote;
-
-}
-
-function calculatePlatformFee(value){
-
-const number=
-Number(value);
-
-return Number.isFinite(number)&&
-number>0?
-number*
-PLATFORM_FEE_RATE:
-0;
-
-}
-
-function calculateTotalWithFee(value){
-
-const number=
-Number(value);
-
-if(
-!Number.isFinite(number)||
-number<=0
-)
-return 0;
-
-return number+
-calculatePlatformFee(number);
-
-}
-
-function calculatePairValue(
-amount,
-price
-){
-
-const a=Number(amount);
-const p=Number(price);
-
-if(
-!Number.isFinite(a)||
-!Number.isFinite(p)||
-a<=0||
-p<=0
-)
-return 0;
-
-return a*p;
-
-}
-
-function updateFeePreview(){
-
-const amount=
-Number(
-document.getElementById(
-"orderAmount"
-).value
-);
-
-const price=
-Number(
-document.getElementById(
-"orderPrice"
-).value
-);
-
-const pair=
-document.getElementById(
-"orderPair"
-).value;
-
-const {quote}=
-getPairParts(pair);
-
-const tradeValue=
-calculatePairValue(
-amount,
-price
-);
-
-const fee=
-calculatePlatformFee(
-amount
-);
-
-const total=
-calculateTotalWithFee(
-amount
-);
-
-document.getElementById(
-"orderTradeValue"
-).textContent=
-formatNumber(
-tradeValue
-)+
-" "+
-quote;
-
-document.getElementById(
-"orderFee"
-).textContent=
-formatNumber(
-fee
-)+
-" USDT";
-
-document.getElementById(
-"orderTotal"
-).textContent=
-formatNumber(
-total
-)+
-" USDT";
-
-}
-
-async function createOrder(){
+function requireLogin(){
 
 if(!currentSession){
 
-showLogin();
+redirectToLogin();
 
-return;
-
-}
-
-if(!requirePermanentUsername())
-return;
-
-const pair=
-document.getElementById(
-"orderPair"
-).value;
-
-const amount=
-Number(
-document.getElementById(
-"orderAmount"
-).value
-);
-
-const price=
-Number(
-document.getElementById(
-"orderPrice"
-).value
-);
-
-const payment=
-document.getElementById(
-"orderPayment"
-).value;
-
-if(!pair){
-
-alert(
-"Please select a trading pair."
-);
-
-return;
+return false;
 
 }
 
-if(
-!Number.isFinite(amount)||
-amount<=0
-){
-
-alert(
-"Please enter a valid USDT amount."
-);
-
-return;
+return true;
 
 }
 
-if(
-!Number.isFinite(price)||
-price<=0
-){
+function goHome(){
 
-alert(
-"Please enter a valid price."
-);
+if(!requireLogin())return;
 
-return;
-
-}
-
-if(payment!=="Bank Transfer"){
-
-alert(
-"Only Bank Transfer is supported."
-);
-
-return;
-
-}
-
-const fee=
-calculatePlatformFee(amount);
-
-const totalUSDT=
-calculateTotalWithFee(amount);
-
-if(
-orderType==="sell"&&
-totalUSDT>currentUSDTBalance
-){
-
-alert(
-"Insufficient USDT balance.\n\n"+
-"Order: "+
-formatNumber(amount)+
-" USDT\n"+
-"Platform Fee: "+
-formatNumber(fee)+
-" USDT\n"+
-"Required: "+
-formatNumber(totalUSDT)+
-" USDT"
-);
-
-return;
-
-}
-
-if(
-orderType==="buy"&&
-fee>currentUSDTBalance
-){
-
-alert(
-"Insufficient USDT balance for the 1% buyer creation fee.\n\n"+
-"Buy amount: "+
-formatNumber(amount)+
-" USDT\n"+
-"Platform Fee: "+
-formatNumber(fee)+
-" USDT\n"+
-"Required fee balance: "+
-formatNumber(fee)+
-" USDT"
-);
-
-return;
-
-}
-
-const button=
-document.getElementById(
-"submitOrderButton"
-);
-
-button.disabled=true;
-button.textContent=
-"Creating...";
-
-const {error}=
-await supabaseClient.rpc(
-"create_p2p_order",
-{
-p_order_type:
-orderType,
-
-p_pair:
-pair,
-
-p_amount:
-amount,
-
-p_price:
-price,
-
-p_payment_method:
-payment
-}
-);
-
-button.disabled=false;
-
-button.textContent=
-orderType==="sell"?
-"Create Sell Order":
-"Create Buy Order";
-
-if(error){
-
-alert(
-"Could not create order:\n\n"+
-error.message
-);
-
-return;
-
-}
-
-document.getElementById(
-"orderAmount"
-).value="";
-
-document.getElementById(
-"orderPrice"
-).value="";
-
-updateFeePreview();
-
-closeOrderModal();
-
-await loadMyOrders();
-await loadUSDTBalance();
-await loadLockedUSDTFromOrders();
-await loadTradeStats();
-
-alert(
-"Order created successfully."
-);
-
-}
-
-async function loadMyOrders(){
-
-if(!currentSession)return;
-
-const container=
-document.getElementById(
-"myOrders"
-);
-
-container.innerHTML=
-'<div class="order-empty">Loading orders...</div>';
-
-const {data:orders,error}=
-await supabaseClient
-.from("p2p_orders")
-.select("*")
-.eq(
-"user_id",
-currentSession.user.id
-)
-.order(
-"created_at",
-{
-ascending:false
-}
-)
-.limit(
-showAllOrders?
-50:
-3
-);
-
-if(error){
-
-container.innerHTML=
-'<div class="order-empty">Could not load orders.<br><br><small>'+
-escapeHtml(
-error.message
-)+
-"</small></div>";
-
-return;
-
-}
-
-if(!orders?.length){
-
-container.innerHTML=
-'<div class="order-empty">You have no Buy / Sell orders yet.</div>';
-
-return;
-
-}
-
-container.innerHTML="";
-
-orders.forEach(
-order=>
-renderOrderCard(
-order,
-container
-)
-);
-
-}
-
-function renderOrderCard(
-order,
-container
-){
-
-const type=
-String(
-order.order_type||
-order.type||
-"buy"
-).toLowerCase();
-
-const pair=
-order.pair||
-"USDT_ETB";
-
-const {base,quote}=
-getPairParts(pair);
-
-const amount=
-Number(
-order.amount||0
-);
-
-const remaining=
-Number(
-order.remaining_amount||0
-);
-
-const price=
-Number(
-order.price||0
-);
-
-const tradeValue=
-calculatePairValue(
-amount,
-price
-);
-
-const remainingValue=
-calculatePairValue(
-remaining,
-price
-);
-
-const status=
-String(
-order.status||
-"open"
-).toLowerCase();
-
-const statusText=
-status.charAt(0).toUpperCase()+
-status.slice(1);
-
-const payment=
-order.payment_method||
-order.payment||
-"Bank Transfer";
-
-const username=
-order.username||
-getPermanentUsername();
-
-const created=
-order.created_at?
-formatTime(
-order.created_at
-):
-"";
-
-const card=
-document.createElement("div");
-
-card.className=
-"order-card "+
-(
-type==="sell"?
-"sell":
-""
-);
-
-const canCancel=
-type==="sell"&&
-[
-"open",
-"active",
-"pending"
-].includes(status)&&
-remaining>0;
-
-card.innerHTML=`
-
-<div class="order-card-top">
-
-<div class="order-type">
-${type==="sell"?
-"🔴 Sell USDT":
-"🟢 Buy USDT"}
-</div>
-
-<div class="order-status ${
-type==="sell"?
-"sell-status":
-""
-}">
-
-${escapeHtml(statusText)}
-
-</div>
-
-</div>
-
-<div class="order-details">
-
-<div class="order-detail">
-
-<div class="order-detail-label">
-Username
-</div>
-
-<div class="order-detail-value">
-@${escapeHtml(username)}
-</div>
-
-</div>
-
-<div class="order-detail">
-
-<div class="order-detail-label">
-Pair
-</div>
-
-<div class="order-detail-value">
-${escapeHtml(base)}
-/
-${escapeHtml(quote)}
-</div>
-
-</div>
-
-<div class="order-detail">
-
-<div class="order-detail-label">
-Amount
-</div>
-
-<div class="order-detail-value">
-${formatNumber(amount)} USDT
-</div>
-
-</div>
-
-<div class="order-detail">
-
-<div class="order-detail-label">
-Remaining / Locked
-</div>
-
-<div class="order-detail-value">
-${formatNumber(remaining)} USDT
-</div>
-
-</div>
-
-<div class="order-detail">
-
-<div class="order-detail-label">
-Price
-</div>
-
-<div class="order-detail-value">
-${formatNumber(price)}
-${escapeHtml(quote)}
-</div>
-
-</div>
-
-<div class="order-detail">
-
-<div class="order-detail-label">
-Trade Value
-</div>
-
-<div class="order-detail-value">
-${formatNumber(tradeValue)}
-${escapeHtml(quote)}
-</div>
-
-</div>
-
-<div class="order-detail">
-
-<div class="order-detail-label">
-Remaining Value
-</div>
-
-<div class="order-detail-value">
-${formatNumber(remainingValue)}
-${escapeHtml(quote)}
-</div>
-
-</div>
-
-<div class="order-detail">
-
-<div class="order-detail-label">
-Platform Fee
-</div>
-
-<div class="order-detail-value">
-${formatNumber(
-calculatePlatformFee(amount)
-)}
-USDT
-</div>
-
-</div>
-
-<div class="order-detail">
-
-<div class="order-detail-label">
-Payment
-</div>
-
-<div class="order-detail-value">
-🏦 ${escapeHtml(payment)}
-</div>
-
-</div>
-
-<div class="order-detail">
-
-<div class="order-detail-label">
-Created
-</div>
-
-<div class="order-detail-value">
-${escapeHtml(created)}
-</div>
-
-</div>
-
-</div>
-
-${
-canCancel?
-`
-<button
-class="cancel-order-btn"
-onclick="cancelOrder('${escapeJs(order.id)}')"
->
-Cancel Order
-</button>
-`
-:""
-}
-
-`;
-
-container.appendChild(card);
-
-}
-
-async function cancelOrder(orderId){
-
-if(!currentSession)return;
-
-if(!confirm(
-"Cancel this Sell Order and return the locked USDT to your available balance?"
-))
-return;
-
-const {error}=
-await supabaseClient.rpc(
-"cancel_p2p_order",
-{
-p_order_id:orderId
-}
-);
-
-if(error){
-
-alert(
-"Could not cancel order:\n\n"+
-error.message
-);
-
-return;
-
-}
-
-await loadMyOrders();
-await loadUSDTBalance();
-await loadLockedUSDTFromOrders();
-await loadTradeStats();
-
-}
-
-async function createPost(){
-
-if(!currentSession)return;
-
-if(!requirePermanentUsername())
-return;
-
-const textarea=
-document.getElementById(
-"postContent"
-);
-
-const visibility=
-document.getElementById(
-"postVisibility"
-).value;
-
-const content=
-textarea.value.trim();
-
-if(!content){
-
-alert(
-"Write something first."
-);
-
-return;
-
-}
-
-const button=
-document.getElementById(
-"createPostButton"
-);
-
-button.disabled=true;
-
-const {error}=
-await supabaseClient
-.from("posts")
-.insert({
-user_id:
-currentSession.user.id,
-
-username:
-getPermanentUsername(),
-
-content:
-content,
-
-visibility:
-visibility
+window.scrollTo({
+top:0,
+behavior:"smooth"
 });
 
-button.disabled=false;
+}
+
+function openBuy(){
+
+if(!requireLogin())return;
+
+window.location.href=
+"./live.html";
+
+}
+
+function openSell(){
+
+if(!requireLogin())return;
+
+window.location.href=
+"./wallet.html";
+
+}
+
+function openMessages(){
+
+if(!requireLogin())return;
+
+window.location.href=
+"./message.html";
+
+}
+
+function openProfile(){
+
+if(!requireLogin())return;
+
+window.location.href=
+"./profile.html";
+
+}
+
+function openUserProfile(username){
+
+if(!requireLogin())return;
+
+const cleanUsername=
+String(username||"")
+.replace(/^@/,"")
+.trim();
+
+if(!cleanUsername)return;
+
+window.location.href=
+"./profile.html?username="+
+encodeURIComponent(
+cleanUsername
+);
+
+}
+
+async function logout(){
+
+try{
+
+const{error}=
+await supabaseClient.auth.signOut();
 
 if(error){
 
 alert(
-"Could not create post:\n\n"+
+"Logout failed: "+
 error.message
 );
 
@@ -4668,107 +2203,167 @@ return;
 
 }
 
-textarea.value="";
+currentSession=null;
 
-await loadPosts();
-await loadStats();
+if(tonConnectUI){
+
+try{
+
+await tonConnectUI.disconnect();
+
+}catch(error){
+
+console.error(
+"TON wallet disconnect:",
+error
+);
 
 }
 
-async function loadPosts(){
+}
 
-if(!currentSession)return;
+redirectToLogin();
+
+}catch(error){
+
+console.error(error);
+
+redirectToLogin();
+
+}
+
+}
+
+async function loadPosts(shuffle=false){
+
+if(!requireLogin())return;
 
 const feed=
 document.getElementById(
 "postsFeed"
 );
 
-feed.innerHTML=
-'<div class="empty">Loading posts...</div>';
+feed.innerHTML=`
+<div class="loading-posts">
+Loading public posts...
+</div>
+`;
 
-const {data:posts,error}=
+const{data:posts,error}=
 await supabaseClient
 .from("posts")
-.select(
-"id,user_id,username,content,visibility,created_at"
-)
-.eq(
-"user_id",
-currentSession.user.id
+.select("*")
+.or(
+"visibility.eq.public,visibility.is.null"
 )
 .order(
 "created_at",
-{
-ascending:false
-}
+{ascending:false}
 )
-.limit(
-showAllPosts?
-50:
-3
-);
+.limit(100);
 
 if(error){
 
-feed.innerHTML=
-'<div class="empty">Could not load posts.<br><br><small>'+
-escapeHtml(
-error.message
-)+
-"</small></div>";
+console.error(
+"Posts:",
+error
+);
+
+feed.innerHTML=`
+<div class="no-posts">
+Could not load posts.
+<br>
+<small>
+${escapeHtml(error.message)}
+</small>
+</div>
+`;
 
 return;
 
 }
 
-if(!posts?.length){
+allPosts=
+posts||[];
 
-feed.innerHTML=
-'<div class="empty">You have not created any posts yet.</div>';
+if(shuffle){
+
+allPosts.sort(
+()=>Math.random()-.5
+);
+
+}
+
+displayedPostCount=
+INITIAL_POST_LIMIT;
+
+await renderPosts();
+
+}
+
+async function loadMorePosts(){
+
+if(
+displayedPostCount>=
+allPosts.length
+)return;
+
+displayedPostCount+=
+INITIAL_POST_LIMIT;
+
+await renderPosts();
+
+}
+
+async function renderPosts(){
+
+if(!requireLogin())return;
+
+const feed=
+document.getElementById(
+"postsFeed"
+);
+
+const visiblePosts=
+allPosts.slice(
+0,
+displayedPostCount
+);
+
+if(!visiblePosts.length){
+
+feed.innerHTML=`
+<div class="no-posts">
+No public posts yet.
+</div>
+`;
+
+document.getElementById(
+"loadMoreBtn"
+).style.display="none";
 
 return;
 
 }
 
 const postIds=
-posts.map(
-post=>post.id
+visiblePosts.map(
+p=>p.id
 );
 
-await loadPostProfiles(posts);
-
-const likes=
-await loadLikes(postIds);
-
-const comments=
-await loadComments(postIds);
-
-allComments=comments;
-
-renderPosts(
-posts,
-likes,
-comments
-);
-
-}
-
-async function loadPostProfiles(posts){
-
-const ids=[
+const userIds=[
 ...new Set(
-posts.map(
-post=>post.user_id
-)
+visiblePosts
+.map(p=>p.user_id)
+.filter(Boolean)
 )
 ];
 
-allProfiles={};
+const profileMap={};
 
-if(!ids.length)return;
+if(userIds.length){
 
-const {data,error}=
+const{data}=
 await supabaseClient
 .from("profiles")
 .select(
@@ -4776,25 +2371,22 @@ await supabaseClient
 )
 .in(
 "id",
-ids
+userIds
 );
 
-if(error)return;
-
 (data||[]).forEach(
-profile=>
-allProfiles[
-profile.id
-]=profile
+profile=>{
+profileMap[profile.id]=profile;
+}
 );
 
 }
 
-async function loadLikes(postIds){
+let likes=[];
 
-if(!postIds.length)return[];
+if(postIds.length){
 
-const {data,error}=
+const{data}=
 await supabaseClient
 .from("post_likes")
 .select(
@@ -4805,17 +2397,38 @@ await supabaseClient
 postIds
 );
 
-if(error)return[];
-
-return data||[];
+likes=
+data||[];
 
 }
 
-async function loadComments(postIds){
+const likeCount={};
 
-if(!postIds.length)return[];
+likes.forEach(like=>{
 
-const {data,error}=
+likeCount[like.post_id]=
+(likeCount[like.post_id]||0)+1;
+
+});
+
+const myLikes=
+new Set(
+likes
+.filter(
+like=>
+like.user_id===
+currentSession.user.id
+)
+.map(
+like=>like.post_id
+)
+);
+
+let comments=[];
+
+if(postIds.length){
+
+const{data}=
 await supabaseClient
 .from("post_comments")
 .select(
@@ -4827,27 +2440,25 @@ postIds
 )
 .order(
 "created_at",
-{
-ascending:true
-}
+{ascending:true}
 );
 
-if(error)return[];
+comments=
+data||[];
 
-const ids=[
+}
+
+const commentUserIds=[
 ...new Set(
-(data||[]).map(
-comment=>comment.user_id
-)
+comments
+.map(c=>c.user_id)
+.filter(Boolean)
 )
 ];
 
-if(ids.length){
+if(commentUserIds.length){
 
-const {
-data:profiles,
-error:profileError
-}=
+const{data}=
 await supabaseClient
 .from("profiles")
 .select(
@@ -4855,48 +2466,26 @@ await supabaseClient
 )
 .in(
 "id",
-ids
+commentUserIds
 );
 
-if(!profileError){
-
-(profiles||[]).forEach(
-profile=>
-allProfiles[
-profile.id
-]=profile
+(data||[]).forEach(
+profile=>{
+profileMap[profile.id]=profile;
+}
 );
 
 }
-
-}
-
-return data||[];
-
-}
-
-function renderPosts(
-posts,
-likes,
-comments
-){
-
-const feed=
-document.getElementById(
-"postsFeed"
-);
 
 feed.innerHTML="";
 
-posts.forEach(post=>{
+visiblePosts.forEach(post=>{
 
 const profile=
-allProfiles[
-post.user_id
-]||{};
+profileMap[post.user_id]||
+{};
 
 const username=
-post.username||
 profile.username||
 "User";
 
@@ -4905,34 +2494,20 @@ profile.avatar_url||
 "";
 
 const initial=
-username
-.charAt(0)
-.toUpperCase();
-
-const postLikes=
-likes.filter(
-like=>
-String(
-like.post_id
-)===
-String(post.id)
-);
-
-const liked=
-postLikes.some(
-like=>
-like.user_id===
-currentSession.user.id
-);
+username.charAt(0)
+.toUpperCase()||
+"U";
 
 const postComments=
 comments.filter(
-comment=>
-String(
-comment.post_id
-)===
+c=>
+String(c.post_id)===
 String(post.id)
 );
+
+const isOwner=
+currentSession.user.id===
+post.user_id;
 
 const card=
 document.createElement(
@@ -4942,290 +2517,263 @@ document.createElement(
 card.className=
 "post-card";
 
-card.innerHTML=`
-
-<div class="post-header">
-
-${
-avatar?
+const avatarHTML=
+avatar
+?
 `
+<div class="post-avatar">
 <img
-class="post-avatar"
 src="${escapeHtml(avatar)}"
-alt="Profile"
->
+alt="Profile">
+</div>
 `
 :
 `
 <div class="post-avatar">
 ${escapeHtml(initial)}
 </div>
+`;
+
+const mediaHTML=
+renderPostMedia(post);
+
+const isPinned=
+Boolean(
+post.is_pinned||
+post.pinned
+);
+
+card.innerHTML=`
+
+${
+isPinned
+?
 `
+<div class="post-pin">
+📌 Pinned
+</div>
+`
+:
+""
 }
 
-<div class="post-user">
+<div
+class="post-header"
+onclick="
+openUserProfile(
+'${escapeJs(username)}'
+);
+">
 
-<div class="post-name-row">
+${avatarHTML}
+
+<div class="post-user-info">
 
 <div class="post-name">
 @${escapeHtml(username)}
 </div>
 
+<div class="post-handle">
+@${escapeHtml(username)}
 </div>
 
-<div class="post-meta">
+</div>
 
-${
-post.visibility==="private"?
-"👥 Friends / Private":
-"🌍 Public"
-}
-
-·
-
+<div class="post-time">
 ${escapeHtml(
-formatTime(
+formatPostTime(
 post.created_at
 )
 )}
-
 </div>
 
-</div>
-
+${
+isOwner
+?
+`
 <button
 class="post-menu"
-title="Delete post"
-onclick="deletePost('${escapeJs(post.id)}')"
->
-⋮
+onclick="
+event.stopPropagation();
+deletePost(
+'${escapeJs(post.id)}'
+);
+">
+🗑️
 </button>
+`
+:
+""
+}
 
 </div>
 
 <div class="post-content">
-${escapeHtml(
-post.content||""
-)}
+${escapeHtml(post.content||"")}
 </div>
+
+${mediaHTML}
 
 <div class="post-actions">
 
 <button
 class="post-action ${
-liked?
-"liked":
-""
+myLikes.has(post.id)
+?"liked"
+:""
 }"
-onclick="likePost('${escapeJs(post.id)}')"
->
+onclick="
+event.stopPropagation();
+likePost(
+'${escapeJs(post.id)}'
+);
+">
 
-${liked?
-"❤️ Liked":
-"♡ Like"}
+${
+myLikes.has(post.id)
+?
+"♥ Liked"
+:
+"♡ Like"
+}
 
 <span>
-${postLikes.length}
+${likeCount[post.id]||0}
 </span>
 
 </button>
 
 <button
 class="post-action"
-onclick="toggleComments('${escapeJs(post.id)}')"
->
+onclick="
+event.stopPropagation();
+toggleComments(
+'${escapeJs(post.id)}'
+);
+">
+
 💬 Comments
 <span>
 ${postComments.length}
 </span>
+
 </button>
 
 <button
 class="post-action"
-onclick="sharePost('${escapeJs(post.id)}')"
->
-↗️ Share
+onclick="
+event.stopPropagation();
+sharePost(
+'${escapeJs(post.id)}'
+);
+">
+
+↗ Share
+
 </button>
 
 </div>
-
-<button
-id="view-comments-${escapeHtml(post.id)}"
-class="view-comments"
-onclick="toggleComments('${escapeJs(post.id)}')"
->
-💬 View comments
-</button>
 
 <div
 id="comments-${escapeHtml(post.id)}"
-class="comments-box hidden"
->
+class="comments-box"
+style="
+display:${
+commentsOpen[post.id]
+?"block"
+:"none"
+};
+">
 
-${renderComments(postComments)}
-
-<div class="comment-input-row">
-
-<input
-id="comment-input-${escapeHtml(post.id)}"
-class="comment-input"
-maxlength="500"
-placeholder="Write a comment..."
-onkeydown="if(event.key==='Enter'){event.preventDefault();sendComment('${escapeJs(post.id)}')}"
->
-
-<button
-class="comment-send"
-onclick="sendComment('${escapeJs(post.id)}')"
->
-Send
-</button>
+${renderComments(
+post.id,
+postComments,
+profileMap
+)}
 
 </div>
 
-</div>
 `;
 
 feed.appendChild(card);
 
 });
 
-}
-
-function renderComments(comments){
-
-if(!comments.length){
-
-return `
-<div
-style="font-size:12px;color:#8a93a1;margin-bottom:8px"
->
-No comments yet.
-</div>
-`;
+document.getElementById(
+"loadMoreBtn"
+).style.display=
+displayedPostCount<
+allPosts.length
+?
+"block"
+:
+"none";
 
 }
 
-return comments.map(
-comment=>{
+function renderPostMedia(post){
 
-const profile=
-allProfiles[
-comment.user_id
-]||{};
-
-const username=
-profile.username||
-"User";
-
-const avatar=
-profile.avatar_url||
+const mediaUrl=
+post.media_url||
+post.image_url||
+post.video_url||
 "";
 
-const initial=
-username
-.charAt(0)
-.toUpperCase();
+if(!mediaUrl)return"";
 
-const isOwner=
-comment.user_id===
-currentSession.user.id;
+const type=
+String(
+post.media_type||
+post.post_type||
+""
+)
+.toLowerCase();
 
-return `
+if(
+type==="video"||
+post.video_url
+){
 
-<div class="comment">
-
-${
-avatar?
-`
-<img
-class="comment-avatar"
-src="${escapeHtml(avatar)}"
-alt="Profile"
->
-`
-:
-`
-<div class="comment-avatar">
-${escapeHtml(initial)}
-</div>
-`
-}
-
-<div class="comment-body">
-
-<div class="comment-top">
-
-<div class="comment-name">
-@${escapeHtml(username)}
+return`
+<div class="post-media">
+<video
+src="${escapeHtml(mediaUrl)}"
+controls
+playsinline
+preload="metadata">
+</video>
 </div>
 
-${
-isOwner?
-`
-<button
-class="comment-delete"
-onclick="deleteComment('${escapeJs(comment.id)}')"
->
-Delete
-</button>
-`
-:""
-}
-
+<div class="post-type-label">
+🎥 Video
 </div>
-
-<div class="comment-text">
-${escapeHtml(
-comment.comment||""
-)}
-</div>
-
-</div>
-
-</div>
-
 `;
 
 }
-).join("");
 
-}
+return`
+<div class="post-media">
+<img
+src="${escapeHtml(mediaUrl)}"
+alt="Post image"
+loading="lazy">
+</div>
 
-function toggleComments(postId){
-
-const box=
-document.getElementById(
-"comments-"+postId
-);
-
-const button=
-document.getElementById(
-"view-comments-"+postId
-);
-
-if(!box||!button)return;
-
-const hidden=
-box.classList.toggle(
-"hidden"
-);
-
-button.textContent=
-hidden?
-"💬 View comments":
-"🔽 Hide comments";
+<div class="post-type-label">
+🖼️ Picture
+</div>
+`;
 
 }
 
 async function likePost(postId){
 
-if(!currentSession)return;
+if(!requireLogin())return;
 
 const userId=
 currentSession.user.id;
 
-const {
+const{
 data:existing,
 error:checkError
 }=
@@ -5245,8 +2793,7 @@ userId
 if(checkError){
 
 alert(
-"Could not check like:\n\n"+
-checkError.message
+"Could not check reaction."
 );
 
 return;
@@ -5255,7 +2802,7 @@ return;
 
 if(existing){
 
-const {error}=
+const{error}=
 await supabaseClient
 .from("post_likes")
 .delete()
@@ -5270,10 +2817,7 @@ userId
 
 if(error){
 
-alert(
-"Could not unlike post:\n\n"+
-error.message
-);
+alert(error.message);
 
 return;
 
@@ -5281,40 +2825,283 @@ return;
 
 }else{
 
-const {error}=
+const{error}=
 await supabaseClient
 .from("post_likes")
 .insert({
 post_id:postId,
-user_id:userId,
-username:
-getPermanentUsername()
+user_id:userId
 });
 
 if(error){
 
-alert(
-"Could not like post:\n\n"+
-error.message
+alert(error.message);
+
+return;
+
+}
+
+}
+
+await renderPosts();
+
+}
+
+function toggleComments(postId){
+
+commentsOpen[postId]=
+!commentsOpen[postId];
+
+const box=
+document.getElementById(
+"comments-"+postId
 );
 
+if(box){
+
+box.style.display=
+commentsOpen[postId]
+?
+"block"
+:
+"none";
+
+}
+
+if(commentsOpen[postId]){
+
+refreshSinglePostComments(
+postId
+);
+
+}
+
+}
+
+async function refreshSinglePostComments(postId){
+
+const box=
+document.getElementById(
+"comments-"+postId
+);
+
+if(!box)return;
+
+const{data,error}=
+await supabaseClient
+.from("post_comments")
+.select(
+"id,post_id,user_id,comment,created_at"
+)
+.eq(
+"post_id",
+postId
+)
+.order(
+"created_at",
+{ascending:true}
+);
+
+if(error){
+
+console.error(error);
+
 return;
 
 }
 
+const comments=
+data||[];
+
+const userIds=[
+...new Set(
+comments
+.map(c=>c.user_id)
+.filter(Boolean)
+)
+];
+
+const profileMap={};
+
+if(userIds.length){
+
+const{data:profiles}=
+await supabaseClient
+.from("profiles")
+.select(
+"id,username,avatar_url"
+)
+.in(
+"id",
+userIds
+);
+
+(profiles||[]).forEach(
+profile=>{
+profileMap[profile.id]=profile;
+}
+);
+
 }
 
-await loadPosts();
-await loadStats();
+box.innerHTML=
+renderComments(
+postId,
+comments,
+profileMap
+);
 
 }
 
-async function sendComment(postId){
+function renderComments(
+postId,
+comments,
+profileMap
+){
 
-if(!currentSession)return;
+let html="";
 
-if(!requirePermanentUsername())
-return;
+comments.forEach(comment=>{
+
+const profile=
+profileMap[
+comment.user_id
+]||{};
+
+const username=
+profile.username||
+"User";
+
+const avatar=
+profile.avatar_url||
+"";
+
+const initial=
+username.charAt(0)
+.toUpperCase()||
+"U";
+
+const isOwner=
+currentSession&&
+currentSession.user.id===
+comment.user_id;
+
+const avatarHTML=
+avatar
+?
+`
+<div
+class="comment-avatar"
+onclick="
+event.stopPropagation();
+openUserProfile(
+'${escapeJs(username)}'
+);
+"
+style="cursor:pointer;">
+<img
+src="${escapeHtml(avatar)}"
+alt="Profile">
+</div>
+`
+:
+`
+<div
+class="comment-avatar"
+onclick="
+event.stopPropagation();
+openUserProfile(
+'${escapeJs(username)}'
+);
+"
+style="cursor:pointer;">
+${escapeHtml(initial)}
+</div>
+`;
+
+html+=`
+
+<div class="comment">
+
+${avatarHTML}
+
+<div class="comment-body">
+
+<div
+class="comment-name"
+onclick="
+event.stopPropagation();
+openUserProfile(
+'${escapeJs(username)}'
+);
+"
+style="cursor:pointer;">
+@${escapeHtml(username)}
+</div>
+
+<div class="comment-text">
+${escapeHtml(
+comment.comment||""
+)}
+</div>
+
+${
+isOwner
+?
+`
+<button
+class="comment-delete"
+onclick="
+deleteComment(
+'${escapeJs(comment.id)}',
+'${escapeJs(postId)}'
+);
+">
+Delete
+</button>
+`
+:
+""
+}
+
+</div>
+</div>
+
+`;
+
+});
+
+html+=`
+
+<div class="comment-input-row">
+
+<input
+id="comment-input-${escapeHtml(postId)}"
+class="comment-input"
+maxlength="1000"
+placeholder="Write a comment...">
+
+<button
+class="comment-send"
+onclick="
+addComment(
+'${escapeJs(postId)}'
+);
+">
+Send
+</button>
+
+</div>
+
+`;
+
+return html;
+
+}
+
+async function addComment(postId){
+
+if(!requireLogin())return;
 
 const input=
 document.getElementById(
@@ -5323,37 +3110,26 @@ document.getElementById(
 
 if(!input)return;
 
-const comment=
+const text=
 input.value.trim();
 
-if(!comment)return;
+if(!text)return;
 
-if(comment.length>500){
-
-alert(
-"Comment is too long."
-);
-
-return;
-
-}
-
-const {error}=
+const{error}=
 await supabaseClient
 .from("post_comments")
 .insert({
+
 post_id:postId,
-user_id:
-currentSession.user.id,
-username:
-getPermanentUsername(),
-comment:comment
+user_id:currentSession.user.id,
+comment:text
+
 });
 
 if(error){
 
 alert(
-"Comment failed:\n\n"+
+"Could not add comment: "+
 error.message
 );
 
@@ -5363,20 +3139,64 @@ return;
 
 input.value="";
 
-await loadPosts();
+await refreshSinglePostComments(
+postId
+);
+
+await renderPosts();
 
 }
 
 async function deleteComment(
-commentId
+commentId,
+postId
 ){
 
-if(!confirm(
-"Delete your comment?"
-))
+if(!requireLogin())return;
+
+const{
+data:comment,
+error:loadError
+}=
+await supabaseClient
+.from("post_comments")
+.select("user_id")
+.eq(
+"id",
+commentId
+)
+.maybeSingle();
+
+if(loadError||!comment){
+
+alert(
+"Comment not found."
+);
+
 return;
 
-const {error}=
+}
+
+if(
+comment.user_id!==
+currentSession.user.id
+){
+
+alert(
+"You can only delete your own comment."
+);
+
+return;
+
+}
+
+if(
+!confirm(
+"Delete this comment?"
+)
+)return;
+
+const{error}=
 await supabaseClient
 .from("post_comments")
 .delete()
@@ -5391,8 +3211,367 @@ currentSession.user.id
 
 if(error){
 
+alert(error.message);
+
+return;
+
+}
+
+await refreshSinglePostComments(
+postId
+);
+
+await renderPosts();
+
+}
+
+function openCreatePost(){
+
+if(!requireLogin())return;
+
+document.getElementById(
+"createPostModal"
+).style.display="flex";
+
+document.getElementById(
+"postContentInput"
+).focus();
+
+document.getElementById(
+"mediaType"
+).value="text";
+
+updateMediaControls();
+
+}
+
+function closeCreatePost(){
+
+document.getElementById(
+"createPostModal"
+).style.display="none";
+
+}
+
+function updateMediaControls(){
+
+const type=
+document.getElementById(
+"mediaType"
+).value;
+
+const controls=
+document.getElementById(
+"mediaControls"
+);
+
+const notice=
+document.getElementById(
+"promotionNotice"
+);
+
+controls.innerHTML="";
+notice.innerHTML="";
+
+if(type==="text"){
+
+notice.innerHTML=`
+<div class="info-box">
+⚪ Text posts are available.
+</div>
+`;
+
+return;
+
+}
+
+if(type==="image"){
+
+if(!canPostImage()){
+
+controls.innerHTML=`
+<div class="locked-feature">
+🔒
+<strong>
+Picture posts require Premium.
+</strong>
+<br><br>
+Your account does not currently have
+permission to publish picture posts.
+</div>
+`;
+
+return;
+
+}
+
+controls.innerHTML=`
+
+<label class="media-label">
+Picture URL
+</label>
+
+<input
+id="mediaUrlInput"
+class="media-input"
+type="url"
+placeholder="https://example.com/image.jpg"
+oninput="previewMedia()">
+
+<div class="media-note">
+Use a publicly accessible image URL or connect
+this field to your Supabase Storage upload system.
+</div>
+
+<div
+id="mediaPreview"
+class="media-preview">
+</div>
+`;
+
+notice.innerHTML=`
+<div class="info-box">
+🖼️ Picture post enabled for your account.
+</div>
+`;
+
+return;
+
+}
+
+if(type==="video"){
+
+if(!canPostVideo()){
+
+controls.innerHTML=`
+<div class="locked-feature">
+🔒
+<strong>
+Video posts require Premium+.
+</strong>
+<br><br>
+Your account does not currently have
+permission to publish video posts.
+</div>
+`;
+
+return;
+
+}
+
+controls.innerHTML=`
+
+<label class="media-label">
+Video URL
+</label>
+
+<input
+id="mediaUrlInput"
+class="media-input"
+type="url"
+placeholder="https://example.com/video.mp4"
+oninput="previewMedia()">
+
+<div class="media-note">
+Use a publicly accessible video URL or connect
+this field to your Supabase Storage upload system.
+</div>
+
+<div
+id="mediaPreview"
+class="media-preview">
+</div>
+`;
+
+notice.innerHTML=`
+<div class="info-box">
+🎥 Video post enabled for your account.
+</div>
+`;
+
+}
+
+}
+
+function previewMedia(){
+
+const type=
+document.getElementById(
+"mediaType"
+).value;
+
+const input=
+document.getElementById(
+"mediaUrlInput"
+);
+
+const preview=
+document.getElementById(
+"mediaPreview"
+);
+
+if(!input||!preview)return;
+
+const url=
+input.value.trim();
+
+if(!url){
+
+preview.innerHTML="";
+
+return;
+
+}
+
+if(type==="image"){
+
+preview.innerHTML=`
+<img
+src="${escapeHtml(url)}"
+alt="Preview">
+`;
+
+}
+
+if(type==="video"){
+
+preview.innerHTML=`
+<video
+src="${escapeHtml(url)}"
+controls
+playsinline>
+</video>
+`;
+
+}
+
+}
+
+async function createPost(){
+
+if(!requireLogin())return;
+
+const content=
+document.getElementById(
+"postContentInput"
+).value.trim();
+
+const visibility=
+document.getElementById(
+"postVisibility"
+).value;
+
+const mediaType=
+document.getElementById(
+"mediaType"
+).value;
+
+if(!content){
+
 alert(
-"Could not delete comment:\n\n"+
+"Write something first."
+);
+
+return;
+
+}
+
+if(
+mediaType==="image"&&
+!canPostImage()
+){
+
+alert(
+"Picture posts require Premium."
+);
+
+return;
+
+}
+
+if(
+mediaType==="video"&&
+!canPostVideo()
+){
+
+alert(
+"Video posts require Premium+."
+);
+
+return;
+
+}
+
+let mediaUrl="";
+
+if(
+mediaType==="image"||
+mediaType==="video"
+){
+
+const input=
+document.getElementById(
+"mediaUrlInput"
+);
+
+mediaUrl=
+input?.value.trim()||
+"";
+
+if(!mediaUrl){
+
+alert(
+"Add a media URL first."
+);
+
+return;
+
+}
+
+}
+
+const button=
+document.getElementById(
+"publishPostBtn"
+);
+
+button.disabled=true;
+button.textContent=
+"Publishing...";
+
+const payload={
+user_id:currentSession.user.id,
+content:content,
+visibility:visibility
+};
+
+if(mediaType!=="text"){
+
+payload.media_url=
+mediaUrl;
+
+payload.media_type=
+mediaType;
+
+}
+
+const{error}=
+await supabaseClient
+.from("posts")
+.insert(
+payload
+);
+
+button.disabled=false;
+button.textContent=
+"Publish Post";
+
+if(error){
+
+console.error(error);
+
+alert(
+"Could not publish post: "+
 error.message
 );
 
@@ -5400,18 +3579,71 @@ return;
 
 }
 
-await loadPosts();
+document.getElementById(
+"postContentInput"
+).value="";
+
+document.getElementById(
+"postVisibility"
+).value="public";
+
+document.getElementById(
+"mediaType"
+).value="text";
+
+closeCreatePost();
+
+await loadPosts(false);
 
 }
 
 async function deletePost(postId){
 
-if(!confirm(
-"Delete this post?"
-))
+if(!requireLogin())return;
+
+const{
+data:post,
+error:loadError
+}=
+await supabaseClient
+.from("posts")
+.select("user_id")
+.eq(
+"id",
+postId
+)
+.maybeSingle();
+
+if(loadError||!post){
+
+alert(
+"Post not found."
+);
+
 return;
 
-const {error}=
+}
+
+if(
+post.user_id!==
+currentSession.user.id
+){
+
+alert(
+"You can only delete your own post."
+);
+
+return;
+
+}
+
+if(
+!confirm(
+"Delete this post?"
+)
+)return;
+
+const{error}=
 await supabaseClient
 .from("posts")
 .delete()
@@ -5426,48 +3658,50 @@ currentSession.user.id
 
 if(error){
 
-alert(
-"Could not delete post:\n\n"+
-error.message
-);
+alert(error.message);
 
 return;
 
 }
 
-await loadPosts();
-await loadStats();
+await loadPosts(false);
 
 }
 
 async function sharePost(postId){
 
-const username=
-getPermanentUsername();
+if(!requireLogin())return;
 
-const url=
+const shareUrl=
 window.location.origin+
 window.location.pathname+
-"?username="+
-encodeURIComponent(username)+
-"&post="+
-encodeURIComponent(postId);
+"?post="+
+encodeURIComponent(
+postId
+);
 
 if(navigator.share){
 
 try{
 
 await navigator.share({
-title:
-"P2P Social Post",
+
+title:"P2P Social",
 text:
-"Check out this post.",
-url:url
+"Check out this post on P2P Social",
+url:shareUrl
+
 });
 
 }catch(error){
 
+if(
+error.name!=="AbortError"
+){
+
 console.log(error);
+
+}
 
 }
 
@@ -5478,7 +3712,7 @@ return;
 try{
 
 await navigator.clipboard.writeText(
-url
+shareUrl
 );
 
 alert(
@@ -5487,404 +3721,45 @@ alert(
 
 }catch(error){
 
-alert(url);
-
-}
-
-}
-
-async function loadStats(){
-
-if(!currentSession)return;
-
-const userId=
-currentSession.user.id;
-
-const {count:postCount}=
-await supabaseClient
-.from("posts")
-.select(
-"id",
-{
-count:"exact",
-head:true
-}
-)
-.eq(
-"user_id",
-userId
-);
-
-document.getElementById(
-"postCount"
-).textContent=
-postCount||0;
-
-const {data:userPosts}=
-await supabaseClient
-.from("posts")
-.select("id")
-.eq(
-"user_id",
-userId
-);
-
-let totalLikes=0;
-
-if(userPosts?.length){
-
-const postIds=
-userPosts.map(
-post=>post.id
-);
-
-const {count}=
-await supabaseClient
-.from("post_likes")
-.select(
-"post_id",
-{
-count:"exact",
-head:true
-}
-)
-.in(
-"post_id",
-postIds
-);
-
-totalLikes=
-count||0;
-
-}
-
-document.getElementById(
-"likeCount"
-).textContent=
-totalLikes;
-
-const {
-count:followers,
-error:followersError
-}=
-await supabaseClient
-.from("followers")
-.select(
-"follower_id",
-{
-count:"exact",
-head:true
-}
-)
-.eq(
-"following_id",
-userId
-);
-
-document.getElementById(
-"followersCount"
-).textContent=
-followersError?
-"0":
-followers||0;
-
-const {
-count:following,
-error:followingError
-}=
-await supabaseClient
-.from("followers")
-.select(
-"following_id",
-{
-count:"exact",
-head:true
-}
-)
-.eq(
-"follower_id",
-userId
-);
-
-document.getElementById(
-"followingCount"
-).textContent=
-followingError?
-"0":
-following||0;
-
-}
-
-async function loadTradeStats(){
-
-if(!currentSession)return;
-
-const userId=
-currentSession.user.id;
-
-const thirtyDaysAgo=
-new Date(
-Date.now()-
-30*
-24*
-60*
-60*
-1000
-).toISOString();
-
-let totalTrades=0;
-let recentTrades=[];
-
-const {
-data:trades,
-error:tradeError
-}=
-await supabaseClient
-.from("p2p_trades")
-.select("*")
-.or(
-"buyer_id.eq."+
-userId+
-",seller_id.eq."+
-userId
-);
-
-if(
-!tradeError&&
-trades
-){
-
-totalTrades=
-trades.length;
-
-recentTrades=
-trades.filter(
-trade=>
-new Date(
-trade.created_at||
-trade.completed_at||
-trade.updated_at||
-0
-).getTime()>=
-new Date(
-thirtyDaysAgo
-).getTime()
-);
-
-}
-
-if(
-tradeError||
-totalTrades===0
-){
-
-const {data:orders}=
-await supabaseClient
-.from("p2p_orders")
-.select("*")
-.eq(
-"user_id",
-userId
-);
-
-if(orders){
-
-const completedOrders=
-orders.filter(
-order=>
-isCompletedStatus(
-order.status
-)
-);
-
-totalTrades=
-Math.max(
-totalTrades,
-completedOrders.length
-);
-
-recentTrades=
-completedOrders.filter(
-order=>
-new Date(
-order.completed_at||
-order.updated_at||
-order.created_at||
-0
-).getTime()>=
-new Date(
-thirtyDaysAgo
-).getTime()
+prompt(
+"Copy this post link:",
+shareUrl
 );
 
 }
 
 }
 
-const completedRecent=
-recentTrades.filter(
-trade=>
-isCompletedStatus(
-trade.status||
-trade.trade_status||
-trade.order_status
-)
-).length;
+async function loadNotifications(){
 
-const recentTotal=
-recentTrades.length;
+if(!currentSession){
 
-const completedRate=
-recentTotal>0?
-(
-completedRecent/
-recentTotal
-)*
-100:
-0;
+resetNotifications();
 
-document.getElementById(
-"completedRate"
-).textContent=
-completedRate.toLocaleString(
-undefined,
-{
-minimumFractionDigits:0,
-maximumFractionDigits:2
-}
-)+
-"%";
-
-document.getElementById(
-"thirtyDayTrade"
-).textContent=
-recentTotal;
-
-document.getElementById(
-"totalTrade"
-).textContent=
-totalTrades;
-
-document.getElementById(
-"usernameAge"
-).textContent=
-"Permanent";
-
-}
-
-function isCompletedStatus(status){
-
-return[
-"completed",
-"complete",
-"closed",
-"success",
-"successful",
-"settled",
-"done",
-"finished"
-].includes(
-String(
-status||""
-)
-.toLowerCase()
-.trim()
-);
-
-}
-
-function openVerification(){
-
-window.location.href=
-"message.html?username="+
-encodeURIComponent(
-"P2P_Social_Admin"
-)+
-"&subject="+
-encodeURIComponent(
-"Verification Request"
-);
-
-}
-
-function openSupport(){
-
-window.location.href=
-"message.html?username="+
-encodeURIComponent(
-"P2P_Social_Admin"
-)+
-"&subject="+
-encodeURIComponent(
-"Support Request"
-);
-
-}
-
-function openBuy(){
-
-window.location.href=
-"live.html";
-
-}
-
-function openSell(){
-
-window.location.href=
-"wallet.html";
-
-}
-
-function openProfile(){
-
-window.location.href=
-"profile.html";
-
-}
-
-function openMessages(){
-
-window.location.href=
-"message.html?username="+
-encodeURIComponent(
-getPermanentUsername()
-);
-
-}
-
-function openWallet(){
-
-window.location.href=
-"wallet.html";
-
-}
-
-function goHome(){
-
-window.location.href=
-"index.html?username="+
-encodeURIComponent(
-getPermanentUsername()
-);
-
-}
-
-async function logout(){
-
-if(!confirm(
-"Do you want to log out?"
-))
 return;
 
-const {error}=
+}
+
+const{data,error}=
 await supabaseClient
-.auth
-.signOut();
+.from("notifications")
+.select(
+"id,user_id,type,title,body,link,is_read,created_at"
+)
+.eq(
+"user_id",
+currentSession.user.id
+)
+.order(
+"created_at",
+{ascending:false}
+)
+.limit(50);
 
 if(error){
 
-alert(
-"Logout failed:\n\n"+
+console.log(
+"Notifications:",
 error.message
 );
 
@@ -5892,96 +3767,532 @@ return;
 
 }
 
+renderNotifications(
+data||[]
+);
+
+}
+
+function renderNotifications(
+notifications
+){
+
+const list=
+document.getElementById(
+"notificationList"
+);
+
+const badge=
+document.getElementById(
+"notificationBadge"
+);
+
+if(!notifications.length){
+
+list.innerHTML=`
+<div class="no-notifications">
+🔔 No notifications yet.
+</div>
+`;
+
+badge.style.display="none";
+
+return;
+
+}
+
+const unread=
+notifications.filter(
+n=>!n.is_read
+).length;
+
+if(unread){
+
+badge.textContent=
+unread>99
+?
+"99+"
+:
+unread;
+
+badge.style.display="flex";
+
+}else{
+
+badge.style.display="none";
+
+}
+
+list.innerHTML="";
+
+notifications.forEach(
+notification=>{
+
+const item=
+document.createElement(
+"div"
+);
+
+item.className=
+"notification-item"+
+(
+notification.is_read
+?
+""
+:
+" unread"
+);
+
+item.innerHTML=`
+
+<div class="notification-icon">
+${notificationIcon(
+notification.type
+)}
+</div>
+
+<div class="notification-content">
+
+<div class="notification-title">
+${escapeHtml(
+notification.title||
+"Notification"
+)}
+</div>
+
+<div class="notification-body">
+${escapeHtml(
+notification.body||
+""
+)}
+</div>
+
+<div class="notification-time">
+${escapeHtml(
+formatPostTime(
+notification.created_at
+)
+)}
+</div>
+
+</div>
+`;
+
+item.addEventListener(
+"click",
+async()=>{
+
+if(!notification.is_read){
+
+await markNotificationRead(
+notification.id
+);
+
+}
+
+if(notification.link){
+
 window.location.href=
-"login.html";
+notification.link;
+
+}else{
+
+openMessages();
+
+}
+
+}
+);
+
+list.appendChild(item);
+
+}
+);
+
+}
+
+function notificationIcon(type){
+
+switch(type){
+
+case"message":
+return"💬";
+
+case"like":
+return"❤️";
+
+case"comment":
+return"💬";
+
+case"follow":
+return"👤";
+
+case"wallet":
+return"💵";
+
+case"deposit":
+return"💵";
+
+case"withdraw":
+return"💵";
+
+case"transfer":
+return"💵";
+
+case"trade":
+return"🔄";
+
+case"premium":
+return"⭐";
+
+case"live":
+return"🔴";
+
+case"verification":
+return"🪪";
+
+case"security":
+return"🔐";
+
+default:
+return"🔔";
+
+}
+
+}
+
+async function markNotificationRead(id){
+
+if(!currentSession)return;
+
+const{error}=
+await supabaseClient
+.from("notifications")
+.update({
+is_read:true
+})
+.eq(
+"id",
+id
+)
+.eq(
+"user_id",
+currentSession.user.id
+);
+
+if(error){
+
+console.error(
+"Notification read:",
+error
+);
+
+}
+
+await loadNotifications();
+
+}
+
+async function markAllNotificationsRead(){
+
+if(!currentSession)return;
+
+const{error}=
+await supabaseClient
+.from("notifications")
+.update({
+is_read:true
+})
+.eq(
+"user_id",
+currentSession.user.id
+)
+.eq(
+"is_read",
+false
+);
+
+if(error){
+
+alert(
+"Could not mark notifications as read."
+);
+
+return;
+
+}
+
+await loadNotifications();
+
+}
+
+function resetNotifications(){
+
+document.getElementById(
+"notificationBadge"
+).style.display="none";
+
+document.getElementById(
+"notificationList"
+).innerHTML=`
+<div class="no-notifications">
+Login to see notifications.
+</div>
+`;
+
+}
+
+function toggleNotificationPanel(event){
+
+if(event){
+event.stopPropagation();
+}
+
+if(!requireLogin())return;
+
+const panel=
+document.getElementById(
+"notificationPanel"
+);
+
+panel.classList.toggle(
+"open"
+);
+
+if(
+panel.classList.contains("open")
+){
+
+loadNotifications();
+
+}
+
+}
+
+function subscribeToNotifications(){
+
+if(!currentSession)return;
+
+if(notificationChannel){
+
+supabaseClient.removeChannel(
+notificationChannel
+);
+
+}
+
+const userId=
+currentSession.user.id;
+
+notificationChannel=
+supabaseClient
+.channel(
+"notifications-"+userId
+)
+.on(
+"postgres_changes",
+{
+event:"INSERT",
+schema:"public",
+table:"notifications",
+filter:
+"user_id=eq."+userId
+},
+payload=>{
+
+loadNotifications();
+
+if(!document.hidden){
+
+showNewNotificationPopup(
+payload.new
+);
+
+}
+
+}
+)
+.subscribe();
+
+}
+
+function showNewNotificationPopup(
+notification
+){
+
+if(
+"Notification" in window&&
+Notification.permission==="granted"
+){
+
+try{
+
+new Notification(
+notification.title||
+"New notification",
+{
+body:
+notification.body||
+""
+}
+);
+
+}catch(error){
+
+console.log(error);
+
+}
+
+}
+
+}
+
+function getFirstValue(
+object,
+keys
+){
+
+if(!object)return null;
+
+for(const key of keys){
+
+if(
+Object.prototype.hasOwnProperty.call(
+object,
+key
+)
+){
+
+if(
+object[key]!==null&&
+object[key]!==undefined&&
+object[key]!==""
+){
+
+return object[key];
+
+}
+
+}
+
+}
+
+return null;
 
 }
 
 function formatNumber(value){
 
 const number=
-Number(value||0);
+Number(value);
 
-if(!Number.isFinite(number))
-return"0.00";
+if(Number.isNaN(number)){
+
+return String(value);
+
+}
 
 return number.toLocaleString(
 undefined,
 {
-minimumFractionDigits:2,
 maximumFractionDigits:8
 }
 );
 
 }
 
-function formatTime(dateString){
+function formatStatus(value){
 
-const date=
-new Date(dateString);
+return String(value||"")
+.replace(
+/_/g,
+" "
+)
+.replace(
+/\b\w/g,
+letter=>letter.toUpperCase()
+);
 
-if(isNaN(date.getTime()))
+}
+
+function formatPostTime(date){
+
+if(!date)return"";
+
+const d=
+new Date(date);
+
+if(
+Number.isNaN(
+d.getTime()
+)
+){
+
 return"";
+
+}
 
 const now=
 new Date();
 
-const seconds=
+const diff=
 Math.floor(
-(now-date)/1000
+(now-d)/1000
 );
 
-if(seconds<60)
-return"now";
+if(diff<60)return"just now";
 
-const minutes=
-Math.floor(
-seconds/60
-);
+if(diff<3600)
+return Math.floor(
+diff/60
+)+"m ago";
 
-if(minutes<60)
-return minutes+"m";
+if(diff<86400)
+return Math.floor(
+diff/3600
+)+"h ago";
 
-const hours=
-Math.floor(
-minutes/60
-);
+if(diff<604800)
+return Math.floor(
+diff/86400
+)+"d ago";
 
-if(hours<24)
-return hours+"h";
-
-const days=
-Math.floor(
-hours/24
-);
-
-if(days<7)
-return days+"d";
-
-return date.toLocaleDateString();
+return d.toLocaleDateString();
 
 }
 
-function escapeHtml(text){
-
-const div=
-document.createElement("div");
-
-div.textContent=
-text==null?
-"":
-String(text);
-
-return div.innerHTML;
-
-}
-
-function escapeJs(text){
+function escapeHtml(value){
 
 return String(
-text==null?
-"":
-text
+value??""
+)
+.replace(
+/&/g,
+"&amp;"
+)
+.replace(
+/</g,
+"&lt;"
+)
+.replace(
+/>/g,
+"&gt;"
+)
+.replace(
+/"/g,
+"&quot;"
+)
+.replace(
+/'/g,
+"&#039;"
+);
+
+}
+
+function escapeJs(value){
+
+return String(
+value??""
 )
 .replace(
 /\\/g,
@@ -5996,41 +4307,106 @@ text
 '\\"'
 )
 .replace(
-/\r/g,
-"\\r"
-)
-.replace(
 /\n/g,
 "\\n"
+)
+.replace(
+/\r/g,
+"\\r"
 );
 
 }
 
-supabaseClient.auth.onAuthStateChange(
-(event,session)=>{
+document.addEventListener(
+"click",
+event=>{
 
-currentSession=session;
+const panel=
+document.getElementById(
+"notificationPanel"
+);
 
-if(!session){
-
-window.location.href=
-"login.html";
-
-return;
-
-}
+const button=
+document.getElementById(
+"notificationButton"
+);
 
 if(
-!permanentUsername&&
-session.user.user_metadata?.username
+panel&&
+!panel.contains(event.target)&&
+button&&
+!button.contains(event.target)
 ){
 
-permanentUsername=
-String(
-session.user.user_metadata.username
-).trim();
+panel.classList.remove(
+"open"
+);
 
 }
+
+const modalIds=[
+"verifyModal",
+"referralModal",
+"transferModal",
+"supportModal",
+"twoFAModal",
+"createPostModal"
+];
+
+modalIds.forEach(
+id=>{
+
+const modal=
+document.getElementById(id);
+
+if(
+modal&&
+event.target===modal
+){
+
+modal.style.display=
+"none";
+
+}
+
+}
+);
+
+}
+);
+
+document.addEventListener(
+"keydown",
+event=>{
+
+if(
+event.key!=="Escape"
+)return;
+
+const modalIds=[
+"verifyModal",
+"referralModal",
+"transferModal",
+"supportModal",
+"twoFAModal",
+"createPostModal"
+];
+
+modalIds.forEach(
+id=>{
+
+const modal=
+document.getElementById(id);
+
+if(modal){
+
+modal.style.display=
+"none";
+
+}
+
+}
+);
 
 }
 );

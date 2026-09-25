@@ -191,101 +191,31 @@ const amount=Number(document.getElementById("orderAmount").value)
 const price=Number(document.getElementById("orderPrice").value)
 const payment=document.getElementById("orderPayment").value
 
-if(!pair){alert("Please select a trading pair.");return}
-if(!Number.isFinite(amount)||amount<=0){alert("Please enter a valid USDT amount.");return}
-if(!Number.isFinite(price)||price<=0){alert("Please enter a valid price.");return}
-if(payment!=="Bank Transfer"){alert("Only Bank Transfer is supported.");return}
+if(!pair){
+alert("Please select a trading pair.")
+return
+}
 
-const walletAddress=getConnectedTonAddress()
+if(!Number.isFinite(amount)||amount<=0){
+alert("Please enter a valid USDT amount.")
+return
+}
 
-if(!walletAddress){
-alert("Please connect Tonkeeper first.\n\nThe 1% Create Order fee is paid from your connected TON wallet.")
+if(!Number.isFinite(price)||price<=0){
+alert("Please enter a valid price.")
+return
+}
+
+if(payment!=="Bank Transfer"){
+alert("Only Bank Transfer is supported.")
 return
 }
 
 const b=document.getElementById("submitOrderButton")
 b.disabled=true
-b.textContent="Checking Fee..."
+b.textContent="Creating..."
 
 try{
-
-const feeResponse=await fetch(
-"/api/ton/create-order-fee?wallet_address="+
-encodeURIComponent(walletAddress)+
-"&order_amount="+
-encodeURIComponent(amount)
-)
-
-const feeData=await feeResponse.json()
-
-if(!feeResponse.ok||!feeData.success){
-throw new Error(
-feeData.error||
-"Could not calculate Create Order fee."
-)
-}
-
-const fee=Number(feeData.fee_amount)
-
-if(!Number.isFinite(fee)||fee<=0){
-throw new Error("Invalid Create Order fee.")
-}
-
-if(Number(feeData.wallet_usdt_balance||0)<fee){
-throw new Error(
-"Insufficient USDT in your connected TON wallet for the 1% Create Order fee."
-)
-}
-
-const since=Math.floor(Date.now()/1000)
-
-b.textContent="Pay 1% Fee..."
-
-await sendConnectedUSDT(
-walletAddress,
-feeData.platform_wallet,
-fee
-)
-
-b.textContent="Verifying Fee..."
-
-let verified=false
-
-for(let i=0;i<12;i++){
-
-await new Promise(resolve=>setTimeout(resolve,5000))
-
-const verifyResponse=await fetch(
-"/api/ton/create-order-fee-confirm",
-{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-wallet_address:walletAddress,
-fee_amount:fee,
-since:since
-})
-}
-)
-
-const verifyData=await verifyResponse.json()
-
-if(verifyData.verified===true){
-verified=true
-break
-}
-
-}
-
-if(!verified){
-throw new Error(
-"Your 1% fee payment has not been confirmed yet.\n\nYour order was NOT created."
-)
-}
-
-b.textContent="Creating Order..."
 
 const{error}=await supabaseClient.rpc(
 "create_p2p_order",
@@ -298,9 +228,7 @@ p_payment_method:payment
 }
 )
 
-if(error){
-throw error
-}
+if(error)throw error
 
 document.getElementById("orderAmount").value=""
 document.getElementById("orderPrice").value=""
@@ -313,12 +241,7 @@ await loadUSDTBalance()
 await loadLockedUSDTFromOrders()
 await loadTradeStats()
 
-alert(
-"Order created successfully.\n\n"+
-"Create Order Fee: "+
-formatNumber(fee)+
-" USDT"
-)
+alert("Order created successfully.")
 
 }catch(e){
 

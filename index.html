@@ -287,7 +287,7 @@ function updateMediaControls(){
  const type=document.getElementById("mediaType").value,c=document.getElementById("mediaControls"),n=document.getElementById("promotionNotice");c.innerHTML="";n.innerHTML="";
  if(type==="text"){n.innerHTML='<div class="info-box">⚪ Text posts are available.</div>';return}
  if(type==="image"){
-  c.innerHTML='<label class="media-label">Picture URL</label><input id="mediaUrlInput" class="media-input" type="url" placeholder="https://example.com/image.jpg" oninput="previewMedia()"><div class="media-note">Use a publicly accessible image URL or connect this field to your Supabase Storage upload system.</div><div id="mediaPreview" class="media-preview"></div>';
+  c.innerHTML='<label class="media-label">Select Picture</label><input id="mediaFileInput" class="media-input" type="file" accept="image/*" onchange="previewMedia()"><div class="media-note">Select a picture from your device. Images are compressed to a maximum of 100 KB.</div><div id="mediaPreview" class="media-preview"></div>';
   n.innerHTML='<div class="info-box">🖼️ Picture post enabled.</div>';return
  }
  if(!canPostVideo()){c.innerHTML='<div class="locked-feature">🔒 <strong>Video posts require Premium+.</strong><br><br>Your account does not currently have permission to publish video posts.</div>';return}
@@ -295,23 +295,38 @@ function updateMediaControls(){
  n.innerHTML='<div class="info-box">🎥 Video post enabled for your account.</div>'
 }
 function previewMedia(){
- const type=document.getElementById("mediaType").value,input=document.getElementById("mediaUrlInput"),preview=document.getElementById("mediaPreview");if(!input||!preview)return;
- const url=input.value.trim();if(!url)return preview.innerHTML="";
- preview.innerHTML=type==="image"?`<img src="${escapeHtml(url)}" alt="Preview">`:`<video src="${escapeHtml(url)}" controls playsinline></video>`
+ const type=document.getElementById("mediaType").value,preview=document.getElementById("mediaPreview");if(!preview)return;
+ if(type==="image"){
+  const file=document.getElementById("mediaFileInput")?.files?.[0];if(!file)return preview.innerHTML="";
+  const url=URL.createObjectURL(file);preview.innerHTML=`<img src="${escapeHtml(url)}" alt="Preview">`;return
+ }
+ const input=document.getElementById("mediaUrlInput"),url=input?.value.trim()||"";preview.innerHTML=url?`<video src="${escapeHtml(url)}" controls playsinline></video>`:""
 }
 async function createPost(){
  if(!requireLogin())return;
  const content=document.getElementById("postContentInput").value.trim(),visibility=document.getElementById("postVisibility").value,type=document.getElementById("mediaType").value;
  if(!content)return alert("Write something first.");
  if(type==="video"&&!canPostVideo())return alert("Video posts require Premium+.");
- let mediaUrl="";
- if(type!=="text"){mediaUrl=document.getElementById("mediaUrlInput")?.value.trim()||"";if(!mediaUrl)return alert("Add a media URL first.")}
+ let mediaUrl="",mediaFile=null;
+ if(type==="image"){
+  mediaFile=document.getElementById("mediaFileInput")?.files?.[0]||null;
+  if(!mediaFile)return alert("Select a picture first.");
+  try{mediaFile=await compressImageTo100KB(mediaFile)}catch(error){return alert(error.message)}
+ }
+ if(type==="video"){mediaUrl=document.getElementById("mediaUrlInput")?.value.trim()||"";if(!mediaUrl)return alert("Add a media URL first.")}
  const button=document.getElementById("publishPostBtn");button.disabled=true;button.textContent="Publishing...";
- const payload={user_id:currentSession.user.id,content,visibility};if(type!=="text")Object.assign(payload,{media_url:mediaUrl,media_type:type});
- const{error}=await supabaseClient.from("posts").insert(payload);
- button.disabled=false;button.textContent="Publish Post";
- if(error)return alert("Could not publish post: "+error.message);
- document.getElementById("postContentInput").value="";document.getElementById("postVisibility").value="public";document.getElementById("mediaType").value="text";closeCreatePost();await loadPosts()
+ try{
+  if(type==="image"){
+   const path=`${currentSession.user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
+   const upload=await supabaseClient.storage.from("post-images").upload(path,mediaFile,{contentType:"image/webp",upsert:false});
+   if(upload.error)throw upload.error;
+   const{data}=supabaseClient.storage.from("post-images").getPublicUrl(path);mediaUrl=data.publicUrl;
+  }
+  const payload={user_id:currentSession.user.id,content,visibility};if(type!=="text")Object.assign(payload,{media_url:mediaUrl,media_type:type});
+  const{error}=await supabaseClient.from("posts").insert(payload);if(error)throw error;
+  document.getElementById("postContentInput").value="";document.getElementById("postVisibility").value="public";document.getElementById("mediaType").value="text";closeCreatePost();await loadPosts()
+ }catch(error){alert("Could not publish post: "+error.message)}
+ finally{button.disabled=false;button.textContent="Publish Post"}
 }
 async function deletePost(postId){
  if(!requireLogin())return;

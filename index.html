@@ -119,7 +119,7 @@ function getUserLevel(profile){for(const v of[profile.level,profile.user_level,p
 function detectAdmin(profile){return!!profile&&(profile.is_admin===true||["admin","owner"].includes(String(profile.role||"").toLowerCase())||["admin","owner"].includes(String(profile.account_role||"").toLowerCase()))}
 function hasPremium(){return["premium","premium_plus","premium_max"].includes(currentPremiumTier)}
 function hasPremiumPlus(){return["premium_plus","premium_max"].includes(currentPremiumTier)}
-function canPostImage(){return hasPremium()}
+function canPostImage(){return true}
 function canPostVideo(){return hasPremiumPlus()}
 function updatePremiumBadge(){const e=document.getElementById("headerPremiumBadge");if(!e)return;e.textContent=currentPremiumTier==="premium"?"🟢 Premium":currentPremiumTier==="premium_plus"?"🔵 Premium+":currentPremiumTier==="premium_max"?"🟣 Premium Max":""}
 
@@ -287,9 +287,8 @@ function updateMediaControls(){
  const type=document.getElementById("mediaType").value,c=document.getElementById("mediaControls"),n=document.getElementById("promotionNotice");c.innerHTML="";n.innerHTML="";
  if(type==="text"){n.innerHTML='<div class="info-box">⚪ Text posts are available.</div>';return}
  if(type==="image"){
-  if(!canPostImage()){c.innerHTML='<div class="locked-feature">🔒 <strong>Picture posts require Premium.</strong><br><br>Your account does not currently have permission to publish picture posts.</div>';return}
   c.innerHTML='<label class="media-label">Picture URL</label><input id="mediaUrlInput" class="media-input" type="url" placeholder="https://example.com/image.jpg" oninput="previewMedia()"><div class="media-note">Use a publicly accessible image URL or connect this field to your Supabase Storage upload system.</div><div id="mediaPreview" class="media-preview"></div>';
-  n.innerHTML='<div class="info-box">🖼️ Picture post enabled for your account.</div>';return
+  n.innerHTML='<div class="info-box">🖼️ Picture post enabled.</div>';return
  }
  if(!canPostVideo()){c.innerHTML='<div class="locked-feature">🔒 <strong>Video posts require Premium+.</strong><br><br>Your account does not currently have permission to publish video posts.</div>';return}
  c.innerHTML='<label class="media-label">Video URL</label><input id="mediaUrlInput" class="media-input" type="url" placeholder="https://example.com/video.mp4" oninput="previewMedia()"><div class="media-note">Use a publicly accessible video URL or connect this field to your Supabase Storage upload system.</div><div id="mediaPreview" class="media-preview"></div>';
@@ -304,7 +303,6 @@ async function createPost(){
  if(!requireLogin())return;
  const content=document.getElementById("postContentInput").value.trim(),visibility=document.getElementById("postVisibility").value,type=document.getElementById("mediaType").value;
  if(!content)return alert("Write something first.");
- if(type==="image"&&!canPostImage())return alert("Picture posts require Premium.");
  if(type==="video"&&!canPostVideo())return alert("Video posts require Premium+.");
  let mediaUrl="";
  if(type!=="text"){mediaUrl=document.getElementById("mediaUrlInput")?.value.trim()||"";if(!mediaUrl)return alert("Add a media URL first.")}

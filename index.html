@@ -53,28 +53,7 @@ section{padding:18px 18px 5px}.posts-section{padding-top:18px}.posts-title{displ
 <script>
 const SUPABASE_URL="https://mbsvuwrgigqfporxwpfr.supabase.co",SUPABASE_PUBLISHABLE_KEY="sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa",supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY),ADMIN_USERNAME="P2P_Social_Admin",POST_IMAGE_BUCKET="post-images";
 let currentSession=null,currentProfile=null,currentPremiumTier="free",currentLevel=0,isAdmin=false,allPosts=[],displayedPostCount=10,commentsOpen={},notificationChannel=null,tonConnectUI=null,connectedTonWallet=null;
-const INITIAL_POST_LIMIT=10,MAX_IMAGE_SIZE=100*1024,MAX_IMAGE_DIMENSION=1200;
-
-async function compressImageTo100KB(file){
- if(!file)return null;
- if(!file.type.startsWith("image/"))throw new Error("Please select an image.");
- const image=new Image(),url=URL.createObjectURL(file);
- await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(new Error("Could not read image."));image.src=url});
- URL.revokeObjectURL(url);
- let width=image.width,height=image.height;
- if(width>MAX_IMAGE_DIMENSION||height>MAX_IMAGE_DIMENSION){
-  const scale=Math.min(MAX_IMAGE_DIMENSION/width,MAX_IMAGE_DIMENSION/height);
-  width=Math.round(width*scale);height=Math.round(height*scale)
- }
- const canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;
- const ctx=canvas.getContext("2d");ctx.drawImage(image,0,0,width,height);
- if(file.size<=MAX_IMAGE_SIZE&&file.type==="image/webp")return file;
- for(let quality=.85;quality>=.1;quality-=.05){
-  const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/webp",quality));
-  if(blob&&blob.size<=MAX_IMAGE_SIZE)return new File([blob],"post.webp",{type:"image/webp"})
- }
- throw new Error("Could not compress image below 100 KB.")
-}
+const INITIAL_POST_LIMIT=10;
 
 function initializeTonConnect(){
  if(typeof TON_CONNECT_UI==="undefined")return console.error("TON Connect UI failed to load.");
@@ -306,7 +285,7 @@ async function addComment(postId){
  if(!requireLogin())return;
  const input=document.getElementById("comment-input-"+postId),text=input?.value.trim();
  if(!text)return;
- const{data,error}=await supabaseClient.from("post_comments").insert({post_id:postId,user_id:currentSession.user.id,comment:text}).select("id,post_id,user_id,comment,content,created_at").single();
+ const{data,error}=await supabaseClient.from("post_comments").insert({post_id:postId,user_id:currentSession.user.id,comment:text,content:text}).select("id,post_id,user_id,comment,content,created_at").single();
  if(error)return alert("Could not add comment: "+error.message);
  if(!data)return alert("Comment was not returned by the database.");
  if(input)input.value="";
@@ -334,7 +313,9 @@ function openCreatePost(){
 function closeCreatePost(){
  document.getElementById("createPostModal").style.display="none";
  const input=document.getElementById("mediaFileInput");
- if(input)input.value=""
+ if(input)input.value="";
+ const preview=document.getElementById("mediaPreview");
+ if(preview?.dataset.previewUrl){URL.revokeObjectURL(preview.dataset.previewUrl);delete preview.dataset.previewUrl}
 }
 
 function updateMediaControls(){
@@ -342,7 +323,7 @@ function updateMediaControls(){
  c.innerHTML="";n.innerHTML="";
  if(type==="text"){n.innerHTML='<div class="info-box">⚪ Text posts are available.</div>';return}
  if(type==="image"){
-  c.innerHTML='<label class="media-label">Select Picture</label><input id="mediaFileInput" class="media-input" type="file" accept="image/*" onchange="previewMedia()"><div class="media-note">Select a picture from your device. Images are compressed to a maximum of 100 KB.</div><div id="mediaPreview" class="media-preview"></div>';
+  c.innerHTML='<label class="media-label">Select Picture</label><input id="mediaFileInput" class="media-input" type="file" accept="image/*" onchange="previewMedia()"><div class="media-note">Select a picture from your device. The original image is uploaded directly to Supabase Storage.</div><div id="mediaPreview" class="media-preview"></div>';
   n.innerHTML='<div class="info-box">🖼️ Picture post enabled.</div>';return
  }
  if(!canPostVideo()){
@@ -382,7 +363,7 @@ async function createPost(){
  if(type==="image"){
   mediaFile=document.getElementById("mediaFileInput")?.files?.[0]||null;
   if(!mediaFile)return alert("Select a picture first.");
-  try{mediaFile=await compressImageTo100KB(mediaFile)}catch(error){return alert(error.message)}
+  if(!mediaFile.type.startsWith("image/"))return alert("Please select an image file.");
  }
 
  if(type==="video"){
@@ -396,8 +377,9 @@ async function createPost(){
 
  try{
   if(type==="image"){
-   const path=`${currentSession.user.id}/${crypto.randomUUID()}.webp`;
-   const upload=await supabaseClient.storage.from(POST_IMAGE_BUCKET).upload(path,mediaFile,{contentType:"image/webp",upsert:false});
+   const extension=(mediaFile.name.split(".").pop()||"jpg").replace(/[^a-z0-9]/gi,"").toLowerCase()||"jpg";
+   const path=`${currentSession.user.id}/${crypto.randomUUID()}.${extension}`;
+   const upload=await supabaseClient.storage.from(POST_IMAGE_BUCKET).upload(path,mediaFile,{contentType:mediaFile.type,upsert:false});
    if(upload.error)throw upload.error;
    const{data}=supabaseClient.storage.from(POST_IMAGE_BUCKET).getPublicUrl(path);
    if(!data?.publicUrl)throw new Error("Could not create image URL.");

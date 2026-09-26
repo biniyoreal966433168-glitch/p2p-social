@@ -44,122 +44,336 @@ section{padding:18px 18px 5px}.posts-section{padding-top:18px}.posts-title{displ
 <script>
 const SUPABASE_URL="https://mbsvuwrgigqfporxwpfr.supabase.co",SUPABASE_PUBLISHABLE_KEY="sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa",supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY),ADMIN_USERNAME="P2P_Social_Admin";
 let currentSession=null,currentProfile=null,currentPremiumTier="free",currentLevel=0,isAdmin=false,allPosts=[],displayedPostCount=10,commentsOpen={},notificationChannel=null,tonConnectUI=null,connectedTonWallet=null;
-const INITIAL_POST_LIMIT=10;
+const INITIAL_POST_LIMIT=10,MAX_IMAGE_SIZE=100*1024,MAX_IMAGE_DIMENSION=1200;
 
-function initializeTonConnect(){if(typeof TON_CONNECT_UI==="undefined"){console.error("TON Connect UI failed to load.");return}const buttonRoot=document.getElementById("ton-connect");if(!buttonRoot){console.error("TON Connect button container not found.");return}try{tonConnectUI=new TON_CONNECT_UI.TonConnectUI({manifestUrl:window.location.origin+"/tonconnect-manifest.json",buttonRootId:"ton-connect"});tonConnectUI.onStatusChange(wallet=>{connectedTonWallet=wallet||null;const walletInfo=document.getElementById("ton-wallet-info"),address=document.getElementById("ton-wallet-address");if(!wallet){walletInfo.style.display="none";address.textContent="";return}const rawAddress=wallet.account?.address||"";address.textContent=shortenTonAddress(rawAddress);walletInfo.style.display=rawAddress?"block":"none";console.log("TON wallet connected:",rawAddress)})}catch(error){console.error("TON Connect initialization failed:",error)}}
-function shortenTonAddress(address){if(!address)return"";if(address.length<=20)return address;return address.slice(0,8)+"…"+address.slice(-8)}
-async function disconnectTonWallet(){if(!tonConnectUI)return;try{await tonConnectUI.disconnect()}catch(error){console.error("TON wallet disconnect:",error)}}
-async function startApp(){try{const{data,error}=await supabaseClient.auth.getSession();if(error){console.error(error);redirectToLogin();return}if(!data||!data.session){redirectToLogin();return}currentSession=data.session;document.getElementById("checkingAuth").style.display="none";document.getElementById("app").style.display="block";initializeTonConnect();await initializeDashboard()}catch(error){console.error("Authentication error:",error);redirectToLogin()}}
+async function compressImageTo100KB(file){
+ if(!file)return null;
+ if(file.size<=MAX_IMAGE_SIZE)return file;
+ const image=new Image(),url=URL.createObjectURL(file);
+ await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=url});
+ URL.revokeObjectURL(url);
+ const canvas=document.createElement("canvas");
+ let width=image.width,height=image.height;
+ if(width>MAX_IMAGE_DIMENSION||height>MAX_IMAGE_DIMENSION){
+  const scale=Math.min(MAX_IMAGE_DIMENSION/width,MAX_IMAGE_DIMENSION/height);
+  width=Math.round(width*scale);height=Math.round(height*scale);
+ }
+ canvas.width=width;canvas.height=height;
+ const ctx=canvas.getContext("2d");ctx.drawImage(image,0,0,width,height);
+ for(let quality=.85;quality>=.1;quality-=.05){
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/webp",quality));
+  if(blob&&blob.size<=MAX_IMAGE_SIZE)return new File([blob],"comment.webp",{type:"image/webp"});
+ }
+ throw new Error("Could not compress image below 100 KB.");
+}
+
+function initializeTonConnect(){
+ if(typeof TON_CONNECT_UI==="undefined")return console.error("TON Connect UI failed to load.");
+ const buttonRoot=document.getElementById("ton-connect");if(!buttonRoot)return;
+ try{
+  tonConnectUI=new TON_CONNECT_UI.TonConnectUI({manifestUrl:window.location.origin+"/tonconnect-manifest.json",buttonRootId:"ton-connect"});
+  tonConnectUI.onStatusChange(wallet=>{
+   connectedTonWallet=wallet||null;
+   const info=document.getElementById("ton-wallet-info"),address=document.getElementById("ton-wallet-address");
+   if(!wallet){info.style.display="none";address.textContent="";return}
+   const raw=wallet.account?.address||"";address.textContent=shortenTonAddress(raw);info.style.display=raw?"block":"none";
+  });
+ }catch(error){console.error("TON Connect initialization failed:",error)}
+}
+function shortenTonAddress(address){return!address?"":address.length<=20?address:address.slice(0,8)+"…"+address.slice(-8)}
+async function disconnectTonWallet(){if(!tonConnectUI)return;try{await tonConnectUI.disconnect()}catch(error){console.error(error)}}
+async function startApp(){
+ try{
+  const{data,error}=await supabaseClient.auth.getSession();
+  if(error||!data?.session){redirectToLogin();return}
+  currentSession=data.session;
+  document.getElementById("checkingAuth").style.display="none";
+  document.getElementById("app").style.display="block";
+  initializeTonConnect();await initializeDashboard();
+ }catch(error){console.error(error);redirectToLogin()}
+}
 function redirectToLogin(){window.location.replace("./login.html")}
-supabaseClient.auth.onAuthStateChange(async(event,session)=>{if(event==="SIGNED_OUT"){currentSession=null;redirectToLogin();return}if(event==="SIGNED_IN"&&session)currentSession=session});
-async function initializeDashboard(){if(!currentSession){redirectToLogin();return}await updateUserUI();await Promise.allSettled([loadNotifications(),loadPosts(false),loadLiveRate()]);subscribeToNotifications()}
-async function updateUserUI(){if(!currentSession){redirectToLogin();return}const user=currentSession.user;let username=user.user_metadata?.username||user.email?.split("@")[0]||"User",profile=null;const{data,error}=await supabaseClient.from("profiles").select("*").eq("id",user.id).maybeSingle();if(error)console.log("Profile:",error.message);profile=data||null;currentProfile=profile||{};if(profile){username=profile.username||username;currentPremiumTier=normalizePremiumTier(profile);currentLevel=getUserLevel(profile);isAdmin=detectAdmin(profile)}else{currentPremiumTier="free";currentLevel=0;isAdmin=false}document.getElementById("usernameDisplay").textContent=username;updatePremiumBadge();updateVerificationStatus()}
-function normalizePremiumTier(profile){if(!profile)return"free";const values=[profile.premium_tier,profile.subscription_tier,profile.membership,profile.plan,profile.premium_plan,profile.account_tier];let value=values.find(v=>v!==null&&v!==undefined&&String(v).trim()!=="");if(!value)return"free";value=String(value).toLowerCase().trim().replace(/\s+/g,"");if(value==="premiummax"||value==="max"||value==="premium_max")return"premium_max";if(value==="premium+"||value==="premiumplus"||value==="premium_plus"||value==="plus")return"premium_plus";if(value==="premium")return"premium";return"free"}
-function getUserLevel(profile){const values=[profile.level,profile.user_level,profile.account_level,profile.rank_level];for(const value of values)if(value!==null&&value!==undefined&&value!==""){const number=Number(value);if(!Number.isNaN(number))return number}return 0}
-function detectAdmin(profile){if(!profile)return false;if(profile.is_admin===true)return true;if(String(profile.role||"").toLowerCase()==="admin"||String(profile.role||"").toLowerCase()==="owner")return true;if(String(profile.account_role||"").toLowerCase()==="admin"||String(profile.account_role||"").toLowerCase()==="owner")return true;return false}
+supabaseClient.auth.onAuthStateChange((event,session)=>{if(event==="SIGNED_OUT"){currentSession=null;redirectToLogin()}else if(event==="SIGNED_IN"&&session)currentSession=session});
+async function initializeDashboard(){if(!currentSession)return redirectToLogin();await updateUserUI();await Promise.allSettled([loadNotifications(),loadPosts(),loadLiveRate()]);subscribeToNotifications()}
+async function updateUserUI(){
+ if(!currentSession)return redirectToLogin();
+ const user=currentSession.user;
+ let username=user.user_metadata?.username||user.email?.split("@")[0]||"User";
+ const{data,error}=await supabaseClient.from("profiles").select("*").eq("id",user.id).maybeSingle();
+ if(error)console.log("Profile:",error.message);
+ currentProfile=data||{};
+ username=currentProfile.username||username;
+ currentPremiumTier=normalizePremiumTier(currentProfile);currentLevel=getUserLevel(currentProfile);isAdmin=detectAdmin(currentProfile);
+ document.getElementById("usernameDisplay").textContent=username;updatePremiumBadge();updateVerificationStatus();
+}
+function normalizePremiumTier(profile){
+ if(!profile)return"free";
+ let value=[profile.premium_tier,profile.subscription_tier,profile.membership,profile.plan,profile.premium_plan,profile.account_tier].find(v=>v!==null&&v!==undefined&&String(v).trim());
+ if(!value)return"free";
+ value=String(value).toLowerCase().trim().replace(/\s+/g,"");
+ if(["premiummax","max","premium_max"].includes(value))return"premium_max";
+ if(["premium+","premiumplus","premium_plus","plus"].includes(value))return"premium_plus";
+ return value==="premium"?"premium":"free";
+}
+function getUserLevel(profile){for(const v of[profile.level,profile.user_level,profile.account_level,profile.rank_level]){const n=Number(v);if(v!==null&&v!==undefined&&v!==""&&!Number.isNaN(n))return n}return 0}
+function detectAdmin(profile){return!!profile&&(profile.is_admin===true||["admin","owner"].includes(String(profile.role||"").toLowerCase())||["admin","owner"].includes(String(profile.account_role||"").toLowerCase()))}
 function hasPremium(){return["premium","premium_plus","premium_max"].includes(currentPremiumTier)}
 function hasPremiumPlus(){return["premium_plus","premium_max"].includes(currentPremiumTier)}
 function canPostImage(){return hasPremium()}
 function canPostVideo(){return hasPremiumPlus()}
-function updatePremiumBadge(){const header=document.getElementById("headerPremiumBadge");if(!header)return;if(currentPremiumTier==="premium")header.textContent="🟢 Premium";else if(currentPremiumTier==="premium_plus")header.textContent="🔵 Premium+";else if(currentPremiumTier==="premium_max")header.textContent="🟣 Premium Max";else header.textContent=""}
+function updatePremiumBadge(){const e=document.getElementById("headerPremiumBadge");if(!e)return;e.textContent=currentPremiumTier==="premium"?"🟢 Premium":currentPremiumTier==="premium_plus"?"🔵 Premium+":currentPremiumTier==="premium_max"?"🟣 Premium Max":""}
 
-async function loadLiveRate(){const valueElement=document.getElementById("liveRateValue"),unitElement=document.getElementById("liveRateUnit"),changeElement=document.getElementById("liveRateChange");try{let data=null;const result=await supabaseClient.from("market_rates").select("*").order("created_at",{ascending:false}).limit(1).maybeSingle();if(!result.error&&result.data)data=result.data;if(!data){const fallback=await supabaseClient.from("rates").select("*").order("created_at",{ascending:false}).limit(1).maybeSingle();if(!fallback.error&&fallback.data)data=fallback.data}if(!data){valueElement.textContent="—";unitElement.textContent="USDT unavailable";changeElement.textContent="Offline";return}const rate=getFirstValue(data,["rate","price","exchange_rate","usdt_price","usdt_rate","price_per_usdt"]),change=getFirstValue(data,["change_percent","change","percentage_change"]);valueElement.textContent=rate!==null?formatNumber(rate):"—";unitElement.textContent="USDT";changeElement.textContent=change!==null?String(change).includes("%")?String(change):String(change)+"%":"Live"}catch(error){console.error("Live rate:",error);valueElement.textContent="—";unitElement.textContent="USDT unavailable";changeElement.textContent="Offline"}}
+async function loadLiveRate(){
+ const v=document.getElementById("liveRateValue"),u=document.getElementById("liveRateUnit"),c=document.getElementById("liveRateChange");
+ try{
+  let data=null,r=await supabaseClient.from("market_rates").select("*").order("created_at",{ascending:false}).limit(1).maybeSingle();
+  if(!r.error)data=r.data;
+  if(!data){r=await supabaseClient.from("rates").select("*").order("created_at",{ascending:false}).limit(1).maybeSingle();if(!r.error)data=r.data}
+  if(!data){v.textContent="—";u.textContent="USDT unavailable";c.textContent="Offline";return}
+  const rate=getFirstValue(data,["rate","price","exchange_rate","usdt_price","usdt_rate","price_per_usdt"]),change=getFirstValue(data,["change_percent","change","percentage_change"]);
+  v.textContent=rate!==null?formatNumber(rate):"—";u.textContent="USDT";c.textContent=change!==null?(String(change).includes("%")?change:String(change)+"%"):"Live";
+ }catch(error){console.error(error);v.textContent="—";u.textContent="USDT unavailable";c.textContent="Offline"}
+}
 function openLiveRate(){document.querySelector(".rate-box")?.scrollIntoView({behavior:"smooth",block:"center"});loadLiveRate()}
 function openVerifyIdentity(){if(!requireLogin())return;document.getElementById("verifyModal").style.display="flex";updateVerificationStatus()}
 function closeVerifyIdentity(){document.getElementById("verifyModal").style.display="none"}
-function formatVerificationStatus(value){const status=String(value||"").toLowerCase().trim();if(status==="verified_plus")return"Verified+";if(status==="verified")return"Verified";return"Unverified"}
-
-async function updateVerificationStatus(){if(!currentSession)return;const statusElement=document.getElementById("verificationStatus");if(!statusElement)return;const button=document.getElementById("verificationRequestBtn"),profileStatus=String(currentProfile?.verification_status||"").toLowerCase().trim();if(profileStatus==="verified"||profileStatus==="verified_plus"){statusElement.textContent=formatVerificationStatus(profileStatus);if(button){button.disabled=true;button.textContent="Already Verified"}return}if(button){button.disabled=true;button.textContent="Checking..."}const{data,error}=await supabaseClient.from("verification_requests").select("id,status,created_at").eq("requester_id",currentSession.user.id).order("created_at",{ascending:false}).limit(1).maybeSingle();if(error){console.error("Verification status:",error);statusElement.textContent="Unverified";if(button){button.disabled=false;button.textContent="Send Verification Request"}return}if(!data){statusElement.textContent="Unverified";if(button){button.disabled=false;button.textContent="Send Verification Request"}return}const status=String(data.status||"").toLowerCase();if(status==="pending"){statusElement.textContent="Verification Pending";if(button){button.disabled=true;button.textContent="Verification Pending"}return}if(status==="approved"){statusElement.textContent="Verified";if(button){button.disabled=true;button.textContent="Already Verified"}return}if(status==="rejected"){statusElement.textContent="Unverified";if(button){button.disabled=false;button.textContent="Send New Verification Request"}return}statusElement.textContent="Unverified";if(button){button.disabled=false;button.textContent="Send Verification Request"}}
-
-async function sendVerificationRequest(){if(!requireLogin())return;const button=document.getElementById("verificationRequestBtn");button.disabled=true;button.textContent="Checking...";try{const profileStatus=String(currentProfile?.verification_status||"").toLowerCase().trim();if(profileStatus==="verified"||profileStatus==="verified_plus"){alert("Your account is already verified.");return}const{data:existing,error:existingError}=await supabaseClient.from("verification_requests").select("id,status").eq("requester_id",currentSession.user.id).eq("status","pending").maybeSingle();if(existingError){console.error("Verification request check:",existingError);alert("Could not check your verification request: "+existingError.message);return}if(existing){window.location.href="./message.html?username="+encodeURIComponent(ADMIN_USERNAME)+"&verification_request="+encodeURIComponent(existing.id);return}button.textContent="Sending...";const{data:requestId,error:requestError}=await supabaseClient.rpc("create_verification_request");if(requestError){console.error("Verification request:",requestError);alert("Could not send verification request: "+requestError.message);return}if(!requestId){alert("Verification request could not be created.");return}closeVerifyIdentity();window.location.href="./message.html?username="+encodeURIComponent(ADMIN_USERNAME)+"&verification_request="+encodeURIComponent(requestId)}catch(error){console.error("Verification request:",error);alert("Verification request could not be sent.")}finally{button.disabled=false;button.textContent="Send Verification Request"}}
+function formatVerificationStatus(v){v=String(v||"").toLowerCase().trim();return v==="verified_plus"?"Verified+":v==="verified"?"Verified":"Unverified"}
+async function updateVerificationStatus(){
+ if(!currentSession)return;
+ const status=document.getElementById("verificationStatus"),button=document.getElementById("verificationRequestBtn"),profileStatus=String(currentProfile?.verification_status||"").toLowerCase().trim();
+ if(["verified","verified_plus"].includes(profileStatus)){status.textContent=formatVerificationStatus(profileStatus);button.disabled=true;button.textContent="Already Verified";return}
+ button.disabled=true;button.textContent="Checking...";
+ const{data,error}=await supabaseClient.from("verification_requests").select("id,status,created_at").eq("requester_id",currentSession.user.id).order("created_at",{ascending:false}).limit(1).maybeSingle();
+ if(error||!data){status.textContent="Unverified";button.disabled=false;button.textContent="Send Verification Request";return}
+ const s=String(data.status||"").toLowerCase();
+ if(s==="pending"){status.textContent="Verification Pending";button.textContent="Verification Pending"}
+ else if(s==="approved"){status.textContent="Verified";button.textContent="Already Verified"}
+ else{status.textContent="Unverified";button.disabled=false;button.textContent=s==="rejected"?"Send New Verification Request":"Send Verification Request"}
+}
+async function sendVerificationRequest(){
+ if(!requireLogin())return;
+ const b=document.getElementById("verificationRequestBtn");b.disabled=true;b.textContent="Checking...";
+ try{
+  if(["verified","verified_plus"].includes(String(currentProfile?.verification_status||"").toLowerCase())){alert("Your account is already verified.");return}
+  const{data:existing,error}=await supabaseClient.from("verification_requests").select("id,status").eq("requester_id",currentSession.user.id).eq("status","pending").maybeSingle();
+  if(error){alert("Could not check your verification request: "+error.message);return}
+  if(existing){location.href="./message.html?username="+encodeURIComponent(ADMIN_USERNAME)+"&verification_request="+encodeURIComponent(existing.id);return}
+  b.textContent="Sending...";
+  const{data:id,error:rpcError}=await supabaseClient.rpc("create_verification_request");
+  if(rpcError||!id){alert("Could not send verification request: "+(rpcError?.message||"request failed"));return}
+  closeVerifyIdentity();location.href="./message.html?username="+encodeURIComponent(ADMIN_USERNAME)+"&verification_request="+encodeURIComponent(id);
+ }catch(error){console.error(error);alert("Verification request could not be sent.")}finally{b.disabled=false;b.textContent="Send Verification Request"}
+}
 
 function openReferral(){if(!requireLogin())return;document.getElementById("referralModal").style.display="flex";loadReferral()}
 function closeReferral(){document.getElementById("referralModal").style.display="none"}
-async function loadReferral(){const element=document.getElementById("referralCode"),user=currentSession.user;let username=currentProfile?.username||user.user_metadata?.username||"";if(!username)username=user.email?.split("@")[0]||"User";element.textContent=window.location.origin+"/register.html?ref="+encodeURIComponent(username)}
-async function copyReferralCode(){const value=document.getElementById("referralCode").textContent;try{await navigator.clipboard.writeText(value);alert("Referral link copied.")}catch(error){prompt("Copy referral link:",value)}}
-function openReferralBalance(){closeReferral();if(!requireLogin())return;window.location.href="./profile.html?referral=balance"}
+async function loadReferral(){
+ const e=document.getElementById("referralCode"),u=currentSession.user;
+ let username=currentProfile?.username||u.user_metadata?.username||u.email?.split("@")[0]||"User";
+ e.textContent=window.location.origin+"/register.html?ref="+encodeURIComponent(username)
+}
+async function copyReferralCode(){const v=document.getElementById("referralCode").textContent;try{await navigator.clipboard.writeText(v);alert("Referral link copied.")}catch(error){prompt("Copy referral link:",v)}}
+function openReferralBalance(){closeReferral();if(requireLogin())location.href="./profile.html?referral=balance"}
 function openTransfer(){if(!requireLogin())return;document.getElementById("transferModal").style.display="flex"}
 function closeTransfer(){document.getElementById("transferModal").style.display="none"}
+async function submitUSDTTransfer(){
+ if(!requireLogin())return;
+ let recipient=document.getElementById("transferRecipient").value.trim().replace(/^@/,""),amount=Number(document.getElementById("transferAmount").value),button=document.getElementById("transferSubmitBtn");
+ if(!recipient)return alert("Enter the recipient username.");
+ if(!Number.isFinite(amount)||amount<=0)return alert("Enter a valid USDT amount.");
+ const me=String(currentProfile?.username||currentSession.user.user_metadata?.username||"").toLowerCase();
+ if(me&&recipient.toLowerCase()===me)return alert("You cannot transfer USDT to yourself.");
+ button.disabled=true;button.textContent="Processing...";
+ try{
+  const{error}=await supabaseClient.rpc("transfer_usdt_by_username",{p_recipient_username:recipient,p_amount:amount});
+  if(error){alert("Transfer failed: "+error.message);return}
+  alert("USDT transfer completed.");document.getElementById("transferRecipient").value="";document.getElementById("transferAmount").value="";closeTransfer();
+ }catch(error){console.error(error);alert("Transfer could not be processed.")}finally{button.disabled=false;button.textContent="Transfer USDT"}
+}
 
-async function submitUSDTTransfer(){if(!requireLogin())return;let recipient=document.getElementById("transferRecipient").value.trim();const amount=Number(document.getElementById("transferAmount").value),button=document.getElementById("transferSubmitBtn");recipient=recipient.replace(/^@/,"").trim();if(!recipient){alert("Enter the recipient username.");return}if(!Number.isFinite(amount)||amount<=0){alert("Enter a valid USDT amount.");return}const myUsername=String(currentProfile?.username||currentSession.user.user_metadata?.username||"").trim().toLowerCase();if(myUsername&&recipient.toLowerCase()===myUsername){alert("You cannot transfer USDT to yourself.");return}button.disabled=true;button.textContent="Processing...";try{const{error}=await supabaseClient.rpc("transfer_usdt_by_username",{p_recipient_username:recipient,p_amount:amount});if(error){console.error("USDT transfer:",error);alert("Transfer failed: "+error.message);return}alert("USDT transfer completed.");document.getElementById("transferRecipient").value="";document.getElementById("transferAmount").value="";closeTransfer()}catch(error){console.error("USDT transfer:",error);alert("Transfer could not be processed.")}finally{button.disabled=false;button.textContent="Transfer USDT"}}
-
-function openSupport(){if(!requireLogin())return;document.getElementById("supportModal").style.display="flex"}
+function openSupport(){if(requireLogin())document.getElementById("supportModal").style.display="flex"}
 function closeSupport(){document.getElementById("supportModal").style.display="none"}
-function openAdminMessage(type){if(!requireLogin())return;window.location.href="./message.html?username="+encodeURIComponent(ADMIN_USERNAME)+"&support="+encodeURIComponent(type||"support")}
+function openAdminMessage(type){if(requireLogin())location.href="./message.html?username="+encodeURIComponent(ADMIN_USERNAME)+"&support="+encodeURIComponent(type||"support")}
 function openSupportContact(){closeSupport();openAdminMessage("support")}
 function openP2PHelp(){closeSupport();openAdminMessage("p2p")}
 function openSecurityHelp(){closeSupport();openAdminMessage("security")}
-function openTwoFA(){if(!requireLogin())return;document.getElementById("twoFAModal").style.display="flex"}
+function openTwoFA(){if(requireLogin())document.getElementById("twoFAModal").style.display="flex"}
 function closeTwoFA(){document.getElementById("twoFAModal").style.display="none"}
-async function enableTwoFA(){if(!requireLogin())return;const button=document.getElementById("twoFAButton");button.disabled=true;button.textContent="Opening security settings...";try{window.location.href="./profile.html?security=2fa"}catch(error){console.error(error);button.disabled=false;button.textContent="Enable 2FA"}}
+async function enableTwoFA(){if(!requireLogin())return;const b=document.getElementById("twoFAButton");b.disabled=true;b.textContent="Opening security settings...";location.href="./profile.html?security=2fa"}
 function requireLogin(){if(!currentSession){redirectToLogin();return false}return true}
-function goHome(){if(!requireLogin())return;window.scrollTo({top:0,behavior:"smooth"})}
-function openBuy(){if(!requireLogin())return;window.location.href="./live.html"}
-function openSell(){if(!requireLogin())return;window.location.href="./wallet.html"}
-function openMessages(){if(!requireLogin())return;window.location.href="./message.html"}
-function openProfile(){if(!requireLogin())return;window.location.href="./profile.html"}
-function openUserProfile(username){if(!requireLogin())return;const cleanUsername=String(username||"").replace(/^@/,"").trim();if(!cleanUsername)return;window.location.href="./profile.html?username="+encodeURIComponent(cleanUsername)}
+function goHome(){if(requireLogin())scrollTo({top:0,behavior:"smooth"})}
+function openBuy(){if(requireLogin())location.href="./live.html"}
+function openSell(){if(requireLogin())location.href="./wallet.html"}
+function openMessages(){if(requireLogin())location.href="./message.html"}
+function openProfile(){if(requireLogin())location.href="./profile.html"}
+function openUserProfile(username){if(!requireLogin())return;username=String(username||"").replace(/^@/,"").trim();if(username)location.href="./profile.html?username="+encodeURIComponent(username)}
+async function logout(){try{const{error}=await supabaseClient.auth.signOut();if(error)return alert("Logout failed: "+error.message);currentSession=null;await disconnectTonWallet();redirectToLogin()}catch(error){redirectToLogin()}}
 
-async function logout(){try{const{error}=await supabaseClient.auth.signOut();if(error){alert("Logout failed: "+error.message);return}currentSession=null;if(tonConnectUI)try{await tonConnectUI.disconnect()}catch(error){console.error("TON wallet disconnect:",error)}redirectToLogin()}catch(error){console.error(error);redirectToLogin()}}
-
-async function loadPosts(shuffle=false){if(!requireLogin())return;const feed=document.getElementById("postsFeed");feed.innerHTML=`<div class="loading-posts">Loading public posts...</div>`;const{data:posts,error}=await supabaseClient.from("posts").select("*").or("visibility.eq.public,visibility.is.null").order("created_at",{ascending:false}).limit(100);if(error){console.error("Posts:",error);feed.innerHTML=`<div class="no-posts">Could not load posts.<br><small>${escapeHtml(error.message)}</small></div>`;return}allPosts=posts||[];if(shuffle)allPosts.sort(()=>Math.random()-.5);displayedPostCount=INITIAL_POST_LIMIT;await renderPosts()}
-async function loadMorePosts(){if(displayedPostCount>=allPosts.length)return;displayedPostCount+=INITIAL_POST_LIMIT;await renderPosts()}
-
-async function renderPosts(){if(!requireLogin())return;const feed=document.getElementById("postsFeed"),visiblePosts=allPosts.slice(0,displayedPostCount);if(!visiblePosts.length){feed.innerHTML=`<div class="no-posts">No public posts yet.</div>`;document.getElementById("loadMoreBtn").style.display="none";return}const postIds=visiblePosts.map(p=>p.id),userIds=[...new Set(visiblePosts.map(p=>p.user_id).filter(Boolean))],profileMap={};if(userIds.length){const{data}=await supabaseClient.from("profiles").select("id,username,avatar_url").in("id",userIds);(data||[]).forEach(profile=>profileMap[profile.id]=profile)}let likes=[];if(postIds.length){const{data}=await supabaseClient.from("post_likes").select("post_id,user_id").in("post_id",postIds);likes=data||[]}const likeCount={};likes.forEach(like=>likeCount[like.post_id]=(likeCount[like.post_id]||0)+1);const myLikes=new Set(likes.filter(like=>like.user_id===currentSession.user.id).map(like=>like.post_id));let comments=[];if(postIds.length){const{data}=await supabaseClient.from("post_comments").select("id,post_id,user_id,comment,created_at").in("post_id",postIds).order("created_at",{ascending:true});comments=data||[]}const commentUserIds=[...new Set(comments.map(c=>c.user_id).filter(Boolean))];if(commentUserIds.length){const{data}=await supabaseClient.from("profiles").select("id,username,avatar_url").in("id",commentUserIds);(data||[]).forEach(profile=>profileMap[profile.id]=profile)}feed.innerHTML="";visiblePosts.forEach(post=>{const profile=profileMap[post.user_id]||{},username=profile.username||"User",avatar=profile.avatar_url||"",initial=username.charAt(0).toUpperCase()||"U",postComments=comments.filter(c=>String(c.post_id)===String(post.id)),isOwner=currentSession.user.id===post.user_id,card=document.createElement("article");card.className="post-card";const avatarHTML=avatar?`<div class="post-avatar"><img src="${escapeHtml(avatar)}" alt="Profile"></div>`:`<div class="post-avatar">${escapeHtml(initial)}</div>`,mediaHTML=renderPostMedia(post),isPinned=Boolean(post.is_pinned||post.pinned);card.innerHTML=`
-${isPinned?`<div class="post-pin">📌 Pinned</div>`:""}
-<div class="post-header" onclick="openUserProfile('${escapeJs(username)}')">
-${avatarHTML}<div class="post-user-info"><div class="post-name">@${escapeHtml(username)}</div><div class="post-handle">@${escapeHtml(username)}</div></div><div class="post-time">${escapeHtml(formatPostTime(post.created_at))}</div>
-${isOwner?`<button class="post-menu" onclick="event.stopPropagation();deletePost('${escapeJs(post.id)}');">🗑️</button>`:""}
-</div>
-<div class="post-content">${escapeHtml(post.content||"")}</div>${mediaHTML}
-<div class="post-actions"><button class="post-action ${myLikes.has(post.id)?"liked":""}" onclick="event.stopPropagation();likePost('${escapeJs(post.id)}');">${myLikes.has(post.id)?"♥ Liked":"♡ Like"} <span>${likeCount[post.id]||0}</span></button><button class="post-action" onclick="event.stopPropagation();toggleComments('${escapeJs(post.id)}');">💬 Comments <span>${postComments.length}</span></button><button class="post-action" onclick="event.stopPropagation();sharePost('${escapeJs(post.id)}');">↗ Share</button></div>
-<div id="comments-${escapeHtml(post.id)}" class="comments-box" style="display:${commentsOpen[post.id]?"block":"none"};">${renderComments(post.id,postComments,profileMap)}</div>`;feed.appendChild(card)});document.getElementById("loadMoreBtn").style.display=displayedPostCount<allPosts.length?"block":"none"}
-
-function renderPostMedia(post){const mediaUrl=post.media_url||post.image_url||post.video_url||"";if(!mediaUrl)return"";const type=String(post.media_type||post.post_type||"").toLowerCase();if(type==="video"||post.video_url)return`<div class="post-media"><video src="${escapeHtml(mediaUrl)}" controls playsinline preload="metadata"></video></div><div class="post-type-label">🎥 Video</div>`;return`<div class="post-media"><img src="${escapeHtml(mediaUrl)}" alt="Post image" loading="lazy"></div><div class="post-type-label">🖼️ Picture</div>`}
-
-async function likePost(postId){if(!requireLogin())return;const userId=currentSession.user.id,{data:existing,error:checkError}=await supabaseClient.from("post_likes").select("post_id").eq("post_id",postId).eq("user_id",userId).maybeSingle();if(checkError){alert("Could not check reaction.");return}if(existing){const{error}=await supabaseClient.from("post_likes").delete().eq("post_id",postId).eq("user_id",userId);if(error){alert(error.message);return}}else{const{error}=await supabaseClient.from("post_likes").insert({post_id:postId,user_id:userId});if(error){alert(error.message);return}}await renderPosts()}
+async function loadPosts(shuffle=false){
+ if(!requireLogin())return;
+ const feed=document.getElementById("postsFeed");feed.innerHTML='<div class="loading-posts">Loading public posts...</div>';
+ const{data:posts,error}=await supabaseClient.from("posts").select("*").or("visibility.eq.public,visibility.is.null").order("created_at",{ascending:false}).limit(100);
+ if(error){feed.innerHTML=`<div class="no-posts">Could not load posts.<br><small>${escapeHtml(error.message)}</small></div>`;return}
+ allPosts=posts||[];if(shuffle)allPosts.sort(()=>Math.random()-.5);displayedPostCount=INITIAL_POST_LIMIT;await renderPosts()
+}
+async function loadMorePosts(){if(displayedPostCount<allPosts.length){displayedPostCount+=INITIAL_POST_LIMIT;await renderPosts()}}
+async function renderPosts(){
+ if(!requireLogin())return;
+ const feed=document.getElementById("postsFeed"),posts=allPosts.slice(0,displayedPostCount);
+ if(!posts.length){feed.innerHTML='<div class="no-posts">No public posts yet.</div>';document.getElementById("loadMoreBtn").style.display="none";return}
+ const ids=posts.map(p=>p.id),userIds=[...new Set(posts.map(p=>p.user_id).filter(Boolean))],profiles={};
+ if(userIds.length){const{data}=await supabaseClient.from("profiles").select("id,username,avatar_url").in("id",userIds);(data||[]).forEach(p=>profiles[p.id]=p)}
+ const{data:likes}=await supabaseClient.from("post_likes").select("post_id,user_id").in("post_id",ids),likeRows=likes||[],likeCount={},myLikes=new Set();
+ likeRows.forEach(l=>{likeCount[l.post_id]=(likeCount[l.post_id]||0)+1;if(l.user_id===currentSession.user.id)myLikes.add(l.post_id)});
+ const{data:commentRows}=await supabaseClient.from("post_comments").select("id,post_id,user_id,comment,created_at").in("post_id",ids).order("created_at",{ascending:true}),comments=commentRows||[],commentIds=[...new Set(comments.map(c=>c.user_id).filter(Boolean))];
+ if(commentIds.length){const{data}=await supabaseClient.from("profiles").select("id,username,avatar_url").in("id",commentIds);(data||[]).forEach(p=>profiles[p.id]=p)}
+ feed.innerHTML="";
+ posts.forEach(post=>{
+  const p=profiles[post.user_id]||{},username=p.username||"User",avatar=p.avatar_url||"",initial=username[0]?.toUpperCase()||"U",pc=comments.filter(c=>String(c.post_id)===String(post.id)),owner=currentSession.user.id===post.user_id,card=document.createElement("article");
+  card.className="post-card";
+  card.innerHTML=`${post.is_pinned||post.pinned?'<div class="post-pin">📌 Pinned</div>':""}<div class="post-header" onclick="openUserProfile('${escapeJs(username)}')">${avatar?`<div class="post-avatar"><img src="${escapeHtml(avatar)}" alt="Profile"></div>`:`<div class="post-avatar">${escapeHtml(initial)}</div>`}<div class="post-user-info"><div class="post-name">@${escapeHtml(username)}</div><div class="post-handle">@${escapeHtml(username)}</div></div><div class="post-time">${escapeHtml(formatPostTime(post.created_at))}</div>${owner?`<button class="post-menu" onclick="event.stopPropagation();deletePost('${escapeJs(post.id)}')">🗑️</button>`:""}</div><div class="post-content">${escapeHtml(post.content||"")}</div>${renderPostMedia(post)}<div class="post-actions"><button class="post-action ${myLikes.has(post.id)?"liked":""}" onclick="event.stopPropagation();likePost('${escapeJs(post.id)}')">${myLikes.has(post.id)?"♥ Liked":"♡ Like"} <span>${likeCount[post.id]||0}</span></button><button class="post-action" onclick="event.stopPropagation();toggleComments('${escapeJs(post.id)}')">💬 Comments <span>${pc.length}</span></button><button class="post-action" onclick="event.stopPropagation();sharePost('${escapeJs(post.id)}')">↗ Share</button></div><div id="comments-${escapeHtml(post.id)}" class="comments-box" style="display:${commentsOpen[post.id]?"block":"none"}">${renderComments(post.id,pc,profiles)}</div>`;
+  feed.appendChild(card)
+ });
+ document.getElementById("loadMoreBtn").style.display=displayedPostCount<allPosts.length?"block":"none"
+}
+function renderPostMedia(post){
+ const url=post.media_url||post.image_url||post.video_url||"";if(!url)return"";
+ const type=String(post.media_type||post.post_type||"").toLowerCase();
+ return type==="video"||post.video_url?`<div class="post-media"><video src="${escapeHtml(url)}" controls playsinline preload="metadata"></video></div><div class="post-type-label">🎥 Video</div>`:`<div class="post-media"><img src="${escapeHtml(url)}" alt="Post image" loading="lazy"></div><div class="post-type-label">🖼️ Picture</div>`
+}
+async function likePost(postId){
+ if(!requireLogin())return;
+ const uid=currentSession.user.id,{data:existing,error}=await supabaseClient.from("post_likes").select("post_id").eq("post_id",postId).eq("user_id",uid).maybeSingle();
+ if(error)return alert("Could not check reaction.");
+ const result=existing?await supabaseClient.from("post_likes").delete().eq("post_id",postId).eq("user_id",uid):await supabaseClient.from("post_likes").insert({post_id:postId,user_id:uid});
+ if(result.error)alert(result.error.message);else await renderPosts()
+}
 function toggleComments(postId){commentsOpen[postId]=!commentsOpen[postId];const box=document.getElementById("comments-"+postId);if(box)box.style.display=commentsOpen[postId]?"block":"none";if(commentsOpen[postId])refreshSinglePostComments(postId)}
-
-async function refreshSinglePostComments(postId){const box=document.getElementById("comments-"+postId);if(!box)return;const{data,error}=await supabaseClient.from("post_comments").select("id,post_id,user_id,comment,created_at").eq("post_id",postId).order("created_at",{ascending:true});if(error){console.error(error);return}const comments=data||[],userIds=[...new Set(comments.map(c=>c.user_id).filter(Boolean))],profileMap={};if(userIds.length){const{data:profiles}=await supabaseClient.from("profiles").select("id,username,avatar_url").in("id",userIds);(profiles||[]).forEach(profile=>profileMap[profile.id]=profile)}box.innerHTML=renderComments(postId,comments,profileMap)}
-
-function renderComments(postId,comments,profileMap){let html="";comments.forEach(comment=>{const profile=profileMap[comment.user_id]||{},username=profile.username||"User",avatar=profile.avatar_url||"",initial=username.charAt(0).toUpperCase()||"U",isOwner=currentSession&&currentSession.user.id===comment.user_id,avatarHTML=avatar?`<div class="comment-avatar" onclick="event.stopPropagation();openUserProfile('${escapeJs(username)}')" style="cursor:pointer;"><img src="${escapeHtml(avatar)}" alt="Profile"></div>`:`<div class="comment-avatar" onclick="event.stopPropagation();openUserProfile('${escapeJs(username)}')" style="cursor:pointer;">${escapeHtml(initial)}</div>`;html+=`<div class="comment">${avatarHTML}<div class="comment-body"><div class="comment-name" onclick="event.stopPropagation();openUserProfile('${escapeJs(username)}')" style="cursor:pointer;">@${escapeHtml(username)}</div><div class="comment-text">${escapeHtml(comment.comment||"")}</div>${isOwner?`<button class="comment-delete" onclick="deleteComment('${escapeJs(comment.id)}','${escapeJs(postId)}');">Delete</button>`:""}</div></div>`});return html+`<div class="comment-input-row"><input id="comment-input-${escapeHtml(postId)}" class="comment-input" maxlength="1000" placeholder="Write a comment..."><button class="comment-send" onclick="addComment('${escapeJs(postId)}');">Send</button></div>`}
-
-async function addComment(postId){if(!requireLogin())return;const input=document.getElementById("comment-input-"+postId);if(!input)return;const text=input.value.trim();if(!text)return;const{error}=await supabaseClient.from("post_comments").insert({post_id:postId,user_id:currentSession.user.id,comment:text});if(error){alert("Could not add comment: "+error.message);return}input.value="";await refreshSinglePostComments(postId);await renderPosts()}
-
-async function deleteComment(commentId,postId){if(!requireLogin())return;const{data:comment,error:loadError}=await supabaseClient.from("post_comments").select("user_id").eq("id",commentId).maybeSingle();if(loadError||!comment){alert("Comment not found.");return}if(comment.user_id!==currentSession.user.id){alert("You can only delete your own comment.");return}if(!confirm("Delete this comment?"))return;const{error}=await supabaseClient.from("post_comments").delete().eq("id",commentId).eq("user_id",currentSession.user.id);if(error){alert(error.message);return}await refreshSinglePostComments(postId);await renderPosts()}
+async function refreshSinglePostComments(postId){
+ const box=document.getElementById("comments-"+postId);if(!box)return;
+ const{data,error}=await supabaseClient.from("post_comments").select("id,post_id,user_id,comment,created_at").eq("post_id",postId).order("created_at",{ascending:true});if(error)return console.error(error);
+ const comments=data||[],ids=[...new Set(comments.map(c=>c.user_id).filter(Boolean))],profiles={};
+ if(ids.length){const{data}=await supabaseClient.from("profiles").select("id,username,avatar_url").in("id",ids);(data||[]).forEach(p=>profiles[p.id]=p)}
+ box.innerHTML=renderComments(postId,comments,profiles)
+}
+function renderComments(postId,comments,profiles){
+ let html="";
+ comments.forEach(c=>{
+  const p=profiles[c.user_id]||{},username=p.username||"User",avatar=p.avatar_url||"",initial=username[0]?.toUpperCase()||"U",owner=currentSession?.user.id===c.user_id;
+  html+=`<div class="comment">${avatar?`<div class="comment-avatar" onclick="openUserProfile('${escapeJs(username)}')" style="cursor:pointer"><img src="${escapeHtml(avatar)}" alt="Profile"></div>`:`<div class="comment-avatar" onclick="openUserProfile('${escapeJs(username)}')" style="cursor:pointer">${escapeHtml(initial)}</div>`}<div class="comment-body"><div class="comment-name" onclick="openUserProfile('${escapeJs(username)}')" style="cursor:pointer">@${escapeHtml(username)}</div><div class="comment-text">${escapeHtml(c.comment||"")}</div>${owner?`<button class="comment-delete" onclick="deleteComment('${escapeJs(c.id)}','${escapeJs(postId)}')">Delete</button>`:""}</div></div>`
+ });
+ return html+`<div class="comment-input-row"><input id="comment-input-${escapeHtml(postId)}" class="comment-input" maxlength="1000" placeholder="Write a comment..."><button class="comment-send" onclick="addComment('${escapeJs(postId)}')">Send</button></div>`
+}
+async function addComment(postId){
+ if(!requireLogin())return;
+ const input=document.getElementById("comment-input-"+postId),text=input?.value.trim();if(!text)return;
+ const{error}=await supabaseClient.from("post_comments").insert({post_id:postId,user_id:currentSession.user.id,comment:text});
+ if(error)return alert("Could not add comment: "+error.message);
+ input.value="";await refreshSinglePostComments(postId);await renderPosts()
+}
+async function deleteComment(commentId,postId){
+ if(!requireLogin())return;
+ const{data,error}=await supabaseClient.from("post_comments").select("user_id").eq("id",commentId).maybeSingle();
+ if(error||!data)return alert("Comment not found.");
+ if(data.user_id!==currentSession.user.id)return alert("You can only delete your own comment.");
+ if(!confirm("Delete this comment?"))return;
+ const result=await supabaseClient.from("post_comments").delete().eq("id",commentId).eq("user_id",currentSession.user.id);
+ if(result.error)alert(result.error.message);else{await refreshSinglePostComments(postId);await renderPosts()}
+}
 
 function openCreatePost(){if(!requireLogin())return;document.getElementById("createPostModal").style.display="flex";document.getElementById("postContentInput").focus();document.getElementById("mediaType").value="text";updateMediaControls()}
 function closeCreatePost(){document.getElementById("createPostModal").style.display="none"}
+function updateMediaControls(){
+ const type=document.getElementById("mediaType").value,c=document.getElementById("mediaControls"),n=document.getElementById("promotionNotice");c.innerHTML="";n.innerHTML="";
+ if(type==="text"){n.innerHTML='<div class="info-box">⚪ Text posts are available.</div>';return}
+ if(type==="image"){
+  if(!canPostImage()){c.innerHTML='<div class="locked-feature">🔒 <strong>Picture posts require Premium.</strong><br><br>Your account does not currently have permission to publish picture posts.</div>';return}
+  c.innerHTML='<label class="media-label">Picture URL</label><input id="mediaUrlInput" class="media-input" type="url" placeholder="https://example.com/image.jpg" oninput="previewMedia()"><div class="media-note">Use a publicly accessible image URL or connect this field to your Supabase Storage upload system.</div><div id="mediaPreview" class="media-preview"></div>';
+  n.innerHTML='<div class="info-box">🖼️ Picture post enabled for your account.</div>';return
+ }
+ if(!canPostVideo()){c.innerHTML='<div class="locked-feature">🔒 <strong>Video posts require Premium+.</strong><br><br>Your account does not currently have permission to publish video posts.</div>';return}
+ c.innerHTML='<label class="media-label">Video URL</label><input id="mediaUrlInput" class="media-input" type="url" placeholder="https://example.com/video.mp4" oninput="previewMedia()"><div class="media-note">Use a publicly accessible video URL or connect this field to your Supabase Storage upload system.</div><div id="mediaPreview" class="media-preview"></div>';
+ n.innerHTML='<div class="info-box">🎥 Video post enabled for your account.</div>'
+}
+function previewMedia(){
+ const type=document.getElementById("mediaType").value,input=document.getElementById("mediaUrlInput"),preview=document.getElementById("mediaPreview");if(!input||!preview)return;
+ const url=input.value.trim();if(!url)return preview.innerHTML="";
+ preview.innerHTML=type==="image"?`<img src="${escapeHtml(url)}" alt="Preview">`:`<video src="${escapeHtml(url)}" controls playsinline></video>`
+}
+async function createPost(){
+ if(!requireLogin())return;
+ const content=document.getElementById("postContentInput").value.trim(),visibility=document.getElementById("postVisibility").value,type=document.getElementById("mediaType").value;
+ if(!content)return alert("Write something first.");
+ if(type==="image"&&!canPostImage())return alert("Picture posts require Premium.");
+ if(type==="video"&&!canPostVideo())return alert("Video posts require Premium+.");
+ let mediaUrl="";
+ if(type!=="text"){mediaUrl=document.getElementById("mediaUrlInput")?.value.trim()||"";if(!mediaUrl)return alert("Add a media URL first.")}
+ const button=document.getElementById("publishPostBtn");button.disabled=true;button.textContent="Publishing...";
+ const payload={user_id:currentSession.user.id,content,visibility};if(type!=="text")Object.assign(payload,{media_url:mediaUrl,media_type:type});
+ const{error}=await supabaseClient.from("posts").insert(payload);
+ button.disabled=false;button.textContent="Publish Post";
+ if(error)return alert("Could not publish post: "+error.message);
+ document.getElementById("postContentInput").value="";document.getElementById("postVisibility").value="public";document.getElementById("mediaType").value="text";closeCreatePost();await loadPosts()
+}
+async function deletePost(postId){
+ if(!requireLogin())return;
+ const{data,error}=await supabaseClient.from("posts").select("user_id").eq("id",postId).maybeSingle();
+ if(error||!data)return alert("Post not found.");
+ if(data.user_id!==currentSession.user.id)return alert("You can only delete your own post.");
+ if(!confirm("Delete this post?"))return;
+ const result=await supabaseClient.from("posts").delete().eq("id",postId).eq("user_id",currentSession.user.id);
+ if(result.error)alert(result.error.message);else await loadPosts()
+}
+async function sharePost(postId){
+ if(!requireLogin())return;
+ const url=location.origin+location.pathname+"?post="+encodeURIComponent(postId);
+ if(navigator.share){try{await navigator.share({title:"P2P Social",text:"Check out this post on P2P Social",url})}catch(error){if(error.name!=="AbortError")console.log(error)}return}
+ try{await navigator.clipboard.writeText(url);alert("Post link copied.")}catch(error){prompt("Copy this post link:",url)}
+}
 
-function updateMediaControls(){const type=document.getElementById("mediaType").value,controls=document.getElementById("mediaControls"),notice=document.getElementById("promotionNotice");controls.innerHTML="";notice.innerHTML="";if(type==="text"){notice.innerHTML=`<div class="info-box">⚪ Text posts are available.</div>`;return}if(type==="image"){if(!canPostImage()){controls.innerHTML=`<div class="locked-feature">🔒 <strong>Picture posts require Premium.</strong><br><br>Your account does not currently have permission to publish picture posts.</div>`;return}controls.innerHTML=`<label class="media-label">Picture URL</label><input id="mediaUrlInput" class="media-input" type="url" placeholder="https://example.com/image.jpg" oninput="previewMedia()"><div class="media-note">Use a publicly accessible image URL or connect this field to your Supabase Storage upload system.</div><div id="mediaPreview" class="media-preview"></div>`;notice.innerHTML=`<div class="info-box">🖼️ Picture post enabled for your account.</div>`;return}if(type==="video"){if(!canPostVideo()){controls.innerHTML=`<div class="locked-feature">🔒 <strong>Video posts require Premium+.</strong><br><br>Your account does not currently have permission to publish video posts.</div>`;return}controls.innerHTML=`<label class="media-label">Video URL</label><input id="mediaUrlInput" class="media-input" type="url" placeholder="https://example.com/video.mp4" oninput="previewMedia()"><div class="media-note">Use a publicly accessible video URL or connect this field to your Supabase Storage upload system.</div><div id="mediaPreview" class="media-preview"></div>`;notice.innerHTML=`<div class="info-box">🎥 Video post enabled for your account.</div>`}}
+async function loadNotifications(){
+ if(!currentSession)return resetNotifications();
+ const{data,error}=await supabaseClient.from("notifications").select("id,user_id,type,title,body,link,is_read,created_at").eq("user_id",currentSession.user.id).order("created_at",{ascending:false}).limit(50);
+ if(error)return console.log("Notifications:",error.message);
+ renderNotifications(data||[])
+}
+function renderNotifications(list){
+ const e=document.getElementById("notificationList"),badge=document.getElementById("notificationBadge");
+ if(!list.length){e.innerHTML='<div class="no-notifications">🔔 No notifications yet.</div>';badge.style.display="none";return}
+ const unread=list.filter(n=>!n.is_read).length;
+ if(unread){badge.textContent=unread>99?"99+":unread;badge.style.display="flex"}else badge.style.display="none";
+ e.innerHTML="";
+ list.forEach(n=>{
+  const item=document.createElement("div");item.className="notification-item"+(n.is_read?"":" unread");
+  item.innerHTML=`<div class="notification-icon">${notificationIcon(n.type)}</div><div class="notification-content"><div class="notification-title">${escapeHtml(n.title||"Notification")}</div><div class="notification-body">${escapeHtml(n.body||"")}</div><div class="notification-time">${escapeHtml(formatPostTime(n.created_at))}</div></div>`;
+  item.onclick=async()=>{if(!n.is_read)await markNotificationRead(n.id);if(n.link)location.href=n.link;else openMessages()};e.appendChild(item)
+ })
+}
+function notificationIcon(type){return{message:"💬",like:"❤️",comment:"💬",follow:"👤",wallet:"💵",deposit:"💵",withdraw:"💵",transfer:"💵",trade:"🔄",premium:"⭐",live:"🔴",verification:"🪪",security:"🔐"}[type]||"🔔"}
+async function markNotificationRead(id){if(!currentSession)return;const{error}=await supabaseClient.from("notifications").update({is_read:true}).eq("id",id).eq("user_id",currentSession.user.id);if(error)console.error(error);await loadNotifications()}
+async function markAllNotificationsRead(){if(!currentSession)return;const{error}=await supabaseClient.from("notifications").update({is_read:true}).eq("user_id",currentSession.user.id).eq("is_read",false);if(error)return alert("Could not mark notifications as read.");await loadNotifications()}
+function resetNotifications(){document.getElementById("notificationBadge").style.display="none";document.getElementById("notificationList").innerHTML='<div class="no-notifications">Login to see notifications.</div>'}
+function toggleNotificationPanel(event){event?.stopPropagation();if(!requireLogin())return;const p=document.getElementById("notificationPanel");p.classList.toggle("open");if(p.classList.contains("open"))loadNotifications()}
+function subscribeToNotifications(){
+ if(!currentSession)return;
+ if(notificationChannel)supabaseClient.removeChannel(notificationChannel);
+ const uid=currentSession.user.id;
+ notificationChannel=supabaseClient.channel("notifications-"+uid).on("postgres_changes",{event:"INSERT",schema:"public",table:"notifications",filter:"user_id=eq."+uid},payload=>{loadNotifications();if(!document.hidden)showNewNotificationPopup(payload.new)}).subscribe()
+}
+function showNewNotificationPopup(n){if("Notification"in window&&Notification.permission==="granted")try{new Notification(n.title||"New notification",{body:n.body||""})}catch(error){}}
 
-function previewMedia(){const type=document.getElementById("mediaType").value,input=document.getElementById("mediaUrlInput"),preview=document.getElementById("mediaPreview");if(!input||!preview)return;const url=input.value.trim();if(!url){preview.innerHTML="";return}if(type==="image")preview.innerHTML=`<img src="${escapeHtml(url)}" alt="Preview">`;if(type==="video")preview.innerHTML=`<video src="${escapeHtml(url)}" controls playsinline></video>`}
+function getFirstValue(o,keys){if(!o)return null;for(const k of keys)if(o[k]!==null&&o[k]!==undefined&&o[k]!=="")return o[k];return null}
+function formatNumber(v){const n=Number(v);return Number.isNaN(n)?String(v):n.toLocaleString(undefined,{maximumFractionDigits:8})}
+function formatPostTime(date){if(!date)return"";const d=new Date(date),diff=Math.floor((Date.now()-d)/1000);if(Number.isNaN(d.getTime()))return"";if(diff<60)return"just now";if(diff<3600)return Math.floor(diff/60)+"m ago";if(diff<86400)return Math.floor(diff/3600)+"h ago";if(diff<604800)return Math.floor(diff/86400)+"d ago";return d.toLocaleDateString()}
+function escapeHtml(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}
+function escapeJs(v){return String(v??"").replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,'\\"').replace(/\n/g,"\\n").replace(/\r/g,"\\r")}
 
-async function createPost(){if(!requireLogin())return;const content=document.getElementById("postContentInput").value.trim(),visibility=document.getElementById("postVisibility").value,mediaType=document.getElementById("mediaType").value;if(!content){alert("Write something first.");return}if(mediaType==="image"&&!canPostImage()){alert("Picture posts require Premium.");return}if(mediaType==="video"&&!canPostVideo()){alert("Video posts require Premium+.");return}let mediaUrl="";if(mediaType==="image"||mediaType==="video"){const input=document.getElementById("mediaUrlInput");mediaUrl=input?.value.trim()||"";if(!mediaUrl){alert("Add a media URL first.");return}}const button=document.getElementById("publishPostBtn");button.disabled=true;button.textContent="Publishing...";const payload={user_id:currentSession.user.id,content,visibility};if(mediaType!=="text"){payload.media_url=mediaUrl;payload.media_type=mediaType}const{error}=await supabaseClient.from("posts").insert(payload);button.disabled=false;button.textContent="Publish Post";if(error){console.error(error);alert("Could not publish post: "+error.message);return}document.getElementById("postContentInput").value="";document.getElementById("postVisibility").value="public";document.getElementById("mediaType").value="text";closeCreatePost();await loadPosts(false)}
-
-async function deletePost(postId){if(!requireLogin())return;const{data:post,error:loadError}=await supabaseClient.from("posts").select("user_id").eq("id",postId).maybeSingle();if(loadError||!post){alert("Post not found.");return}if(post.user_id!==currentSession.user.id){alert("You can only delete your own post.");return}if(!confirm("Delete this post?"))return;const{error}=await supabaseClient.from("posts").delete().eq("id",postId).eq("user_id",currentSession.user.id);if(error){alert(error.message);return}await loadPosts(false)}
-
-async function sharePost(postId){if(!requireLogin())return;const shareUrl=window.location.origin+window.location.pathname+"?post="+encodeURIComponent(postId);if(navigator.share){try{await navigator.share({title:"P2P Social",text:"Check out this post on P2P Social",url:shareUrl})}catch(error){if(error.name!=="AbortError")console.log(error)}return}try{await navigator.clipboard.writeText(shareUrl);alert("Post link copied.")}catch(error){prompt("Copy this post link:",shareUrl)}}
-
-async function loadNotifications(){if(!currentSession){resetNotifications();return}const{data,error}=await supabaseClient.from("notifications").select("id,user_id,type,title,body,link,is_read,created_at").eq("user_id",currentSession.user.id).order("created_at",{ascending:false}).limit(50);if(error){console.log("Notifications:",error.message);return}renderNotifications(data||[])}
-function renderNotifications(notifications){const list=document.getElementById("notificationList"),badge=document.getElementById("notificationBadge");if(!notifications.length){list.innerHTML=`<div class="no-notifications">🔔 No notifications yet.</div>`;badge.style.display="none";return}const unread=notifications.filter(n=>!n.is_read).length;if(unread){badge.textContent=unread>99?"99+":unread;badge.style.display="flex"}else badge.style.display="none";list.innerHTML="";notifications.forEach(notification=>{const item=document.createElement("div");item.className="notification-item"+(notification.is_read?"":" unread");item.innerHTML=`<div class="notification-icon">${notificationIcon(notification.type)}</div><div class="notification-content"><div class="notification-title">${escapeHtml(notification.title||"Notification")}</div><div class="notification-body">${escapeHtml(notification.body||"")}</div><div class="notification-time">${escapeHtml(formatPostTime(notification.created_at))}</div></div>`;item.addEventListener("click",async()=>{if(!notification.is_read)await markNotificationRead(notification.id);if(notification.link)window.location.href=notification.link;else openMessages()});list.appendChild(item)})}
-function notificationIcon(type){switch(type){case"message":return"💬";case"like":return"❤️";case"comment":return"💬";case"follow":return"👤";case"wallet":return"💵";case"deposit":return"💵";case"withdraw":return"💵";case"transfer":return"💵";case"trade":return"🔄";case"premium":return"⭐";case"live":return"🔴";case"verification":return"🪪";case"security":return"🔐";default:return"🔔"}}
-async function markNotificationRead(id){if(!currentSession)return;const{error}=await supabaseClient.from("notifications").update({is_read:true}).eq("id",id).eq("user_id",currentSession.user.id);if(error)console.error("Notification read:",error);await loadNotifications()}
-async function markAllNotificationsRead(){if(!currentSession)return;const{error}=await supabaseClient.from("notifications").update({is_read:true}).eq("user_id",currentSession.user.id).eq("is_read",false);if(error){alert("Could not mark notifications as read.");return}await loadNotifications()}
-function resetNotifications(){document.getElementById("notificationBadge").style.display="none";document.getElementById("notificationList").innerHTML=`<div class="no-notifications">Login to see notifications.</div>`}
-function toggleNotificationPanel(event){if(event)event.stopPropagation();if(!requireLogin())return;const panel=document.getElementById("notificationPanel");panel.classList.toggle("open");if(panel.classList.contains("open"))loadNotifications()}
-function subscribeToNotifications(){if(!currentSession)return;if(notificationChannel)supabaseClient.removeChannel(notificationChannel);const userId=currentSession.user.id;notificationChannel=supabaseClient.channel("notifications-"+userId).on("postgres_changes",{event:"INSERT",schema:"public",table:"notifications",filter:"user_id=eq."+userId},payload=>{loadNotifications();if(!document.hidden)showNewNotificationPopup(payload.new)}).subscribe()}
-function showNewNotificationPopup(notification){if("Notification"in window&&Notification.permission==="granted")try{new Notification(notification.title||"New notification",{body:notification.body||""})}catch(error){console.log(error)}}
-
-function getFirstValue(object,keys){if(!object)return null;for(const key of keys)if(Object.prototype.hasOwnProperty.call(object,key)&&object[key]!==null&&object[key]!==undefined&&object[key]!=="")return object[key];return null}
-function formatNumber(value){const number=Number(value);if(Number.isNaN(number))return String(value);return number.toLocaleString(undefined,{maximumFractionDigits:8})}
-function formatStatus(value){return String(value||"").replace(/_/g," ").replace(/\b\w/g,letter=>letter.toUpperCase())}
-function formatPostTime(date){if(!date)return"";const d=new Date(date);if(Number.isNaN(d.getTime()))return"";const diff=Math.floor((new Date()-d)/1000);if(diff<60)return"just now";if(diff<3600)return Math.floor(diff/60)+"m ago";if(diff<86400)return Math.floor(diff/3600)+"h ago";if(diff<604800)return Math.floor(diff/86400)+"d ago";return d.toLocaleDateString()}
-function escapeHtml(value){return String(value??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}
-function escapeJs(value){return String(value??"").replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,'\\"').replace(/\n/g,"\\n").replace(/\r/g,"\\r")}
-
-document.addEventListener("click",event=>{const panel=document.getElementById("notificationPanel"),button=document.getElementById("notificationButton");if(panel&&!panel.contains(event.target)&&button&&!button.contains(event.target))panel.classList.remove("open");["verifyModal","referralModal","transferModal","supportModal","twoFAModal","createPostModal"].forEach(id=>{const modal=document.getElementById(id);if(modal&&event.target===modal)modal.style.display="none"})});
-document.addEventListener("keydown",event=>{if(event.key!=="Escape")return;["verifyModal","referralModal","transferModal","supportModal","twoFAModal","createPostModal"].forEach(id=>{const modal=document.getElementById(id);if(modal)modal.style.display="none"})});
+document.addEventListener("click",event=>{
+ const panel=document.getElementById("notificationPanel"),button=document.getElementById("notificationButton");
+ if(panel&&!panel.contains(event.target)&&button&&!button.contains(event.target))panel.classList.remove("open");
+ ["verifyModal","referralModal","transferModal","supportModal","twoFAModal","createPostModal"].forEach(id=>{const modal=document.getElementById(id);if(modal&&event.target===modal)modal.style.display="none"})
+});
+document.addEventListener("keydown",event=>{if(event.key==="Escape")["verifyModal","referralModal","transferModal","supportModal","twoFAModal","createPostModal"].forEach(id=>{const modal=document.getElementById(id);if(modal)modal.style.display="none"})});
 startApp();
 </script>
 </body>

@@ -127,110 +127,80 @@ border-radius:8px;
 font-weight:bold
 }
 
-.offer-list{display:flex;flex-direction:column;gap:10px}
+.offer-list{
+display:grid;
+grid-template-columns:repeat(3,minmax(0,1fr));
+gap:8px
+}
 
 .offer-card{
 background:#fff;
 border:1px solid #dfe7e9;
-border-radius:15px;
-overflow:hidden
+border-radius:12px;
+overflow:hidden;
+min-width:0
 }
 
-.offer-main{padding:16px}
-
-.row{
-display:flex;
-justify-content:space-between;
-align-items:center;
-gap:10px
+.offer-main{
+padding:10px
 }
 
-.offer-user{font-weight:bold}
-.offer-meta{color:#7b8790;font-size:12px;margin-top:5px}
-
-.offer-price{
-font-size:18px;
+.offer-user{
+width:100%;
+border:0;
+background:transparent;
+padding:0;
+text-align:left;
+font-size:13px;
 font-weight:bold;
-color:#087f73;
-text-align:right
+color:#172033;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis
+}
+
+.offer-user:hover{
+color:#087f73
 }
 
 .offer-amount{
-margin-top:10px;
+margin-top:8px;
 font-size:13px;
-color:#596579
+font-weight:bold;
+color:#596579;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis
+}
+
+.offer-price{
+margin-top:5px;
+font-size:14px;
+font-weight:bold;
+color:#087f73;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis
 }
 
 .offer-trade{
 width:100%;
-margin-top:12px;
+margin-top:9px;
 border:none;
-padding:11px;
-border-radius:9px;
+padding:8px 5px;
+border-radius:8px;
 background:#087f73;
 color:#fff;
-font-weight:bold
-}
-
-.offer-type{
-padding:6px 9px;
-border-radius:8px;
 font-size:12px;
-font-weight:bold;
-white-space:nowrap;
-background:#e2f5ef;
-color:#087f73
-}
-
-.profile-btn{
-margin-top:10px;
-width:100%;
-padding:9px;
-border:1px solid #d7ebe7;
-background:#f7fbfa;
-color:#087f73;
-border-radius:9px;
 font-weight:bold
 }
 
-.status{
-display:inline-block;
-padding:6px 9px;
-border-radius:8px;
-font-size:11px;
-font-weight:bold;
-background:#edf3f3;
-color:#596579;
-text-transform:capitalize
-}
-
-.status.active,
-.status.open{
-background:#e2f5ef;
-color:#087f73
-}
-
-.status.expired,
-.status.cancelled,
-.status.closed{
-background:#fde8ed;
-color:#d72c50
-}
-
-.status.disputed{
-background:#fff2d9;
-color:#a56a00
-}
-
-.status.completed,
-.status.released,
-.status.paid,
-.status.payment_confirmed{
-background:#e9f7eb;
-color:#159447
+.offer-trade:hover{
+background:#076f65
 }
 
 .empty{
+grid-column:1/-1;
 background:#fff;
 border:1px dashed #ccd8da;
 border-radius:15px;
@@ -427,13 +397,32 @@ text-align:center
 .container{padding:14px}
 .brand-name{font-size:17px}
 .security{font-size:11px}
-.offer-price{font-size:16px}
+.offer-list{
+grid-template-columns:repeat(3,minmax(0,1fr));
+gap:6px
+}
+.offer-main{padding:8px}
+.offer-user{font-size:11px}
+.offer-amount{font-size:11px;margin-top:6px}
+.offer-price{font-size:12px;margin-top:4px}
+.offer-trade{
+font-size:10px;
+padding:7px 3px;
+margin-top:7px
+}
 .bottom-nav{height:70px}
 .section-title h2{font-size:17px}
 .view-btn,.refresh-btn{
 padding:6px 7px;
 font-size:11px
 }
+}
+
+@media(max-width:330px){
+.offer-user{font-size:10px}
+.offer-amount{font-size:10px}
+.offer-price{font-size:11px}
+.offer-trade{font-size:9px}
 }
 </style>
 </head>
@@ -1316,7 +1305,7 @@ filteredOffers
 :
 filteredOffers.slice(
 0,
-3
+15
 );
 
 items.forEach(
@@ -1335,17 +1324,6 @@ return;
 
 }
 
-const parts =
-getPairParts(
-offer.pair ||
-offer.trading_pair
-);
-
-const status =
-normalizeStatus(
-offer.status
-);
-
 const username =
 usernameCache.get(
 String(
@@ -1353,17 +1331,6 @@ offer.user_id
 )
 ) ||
 "Buyer";
-
-const country =
-getOfferCountry(
-offer,
-parts.quote
-);
-
-const bankName =
-getOfferBankName(
-offer
-);
 
 const card =
 document.createElement(
@@ -1377,122 +1344,30 @@ card.innerHTML = `
 
 <div class="offer-main">
 
-<div class="row">
-
-<div>
-
-<div class="offer-user">
+<button
+type="button"
+class="offer-user"
+onclick="viewUser('${escapeJs(offer.user_id)}')"
+>
 👤 ${escapeHtml(username)}
-</div>
-
-<div class="offer-meta">
-${country ? "🟢 " + escapeHtml(country) + " · " : ""}
-${escapeHtml(
-formatPair(offer)
-)}
-</div>
-
-</div>
-
-<span class="offer-type">
-🔴 Sell
-</span>
-
-</div>
-
-<div
-style="
-display:flex;
-justify-content:space-between;
-align-items:center;
-gap:10px;
-margin-top:12px;
-"
->
-
-<div>
-
-<div
-style="
-color:#7b8790;
-font-size:12px;
-"
->
-Buying price
-</div>
-
-<div
-class="offer-price"
-style="
-text-align:left;
-margin-top:3px;
-"
->
-${money(offer.price)}
-${escapeHtml(
-parts.quote ||
-"ETB"
-)}
-</div>
-
-</div>
-
-<span class="status ${statusClass(status)}">
-${escapeHtml(status)}
-</span>
-
-</div>
+</button>
 
 <div class="offer-amount">
-
-Available:
-
-<strong>
 ${escapeHtml(
 formatAmount(offer)
 )}
-</strong>
-
 </div>
 
-<div
-style="
-margin-top:9px;
-color:#596579;
-font-size:13px;
-"
->
-
-🏦 Transfer
-
-${
-bankName
-?
-`
-<strong>
-· ${escapeHtml(bankName)}
-</strong>
-`
-:
-""
-}
-
+<div class="offer-price">
+${money(offer.price)}
 </div>
-
-<button
-type="button"
-class="profile-btn"
-onclick="viewUser('${escapeJs(offer.user_id)}')"
->
-👤 View Buyer
-</button>
 
 <button
 type="button"
 class="offer-trade"
 onclick="openTrade('${escapeJs(offer.id)}')"
 >
-🤝 Sell USDT
+🤝 Sell
 </button>
 
 </div>
@@ -1911,15 +1786,11 @@ document.getElementById(
 if(!button)return;
 
 if(
-filteredOffers.length <= 3
+filteredOffers.length <= 15
 ){
 
 button.style.display =
-filteredOffers.length
-?
-"none"
-:
-"block";
+"none";
 
 button.textContent =
 "View All";
@@ -1934,7 +1805,7 @@ button.style.display =
 button.textContent =
 offersExpanded
 ?
-"Show 3"
+"Show 15"
 :
 "View All";
 

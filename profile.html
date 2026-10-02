@@ -237,7 +237,6 @@ header{padding:12px}.profile-card,.section,.order-section{margin-left:12px;margi
 
 <section class="section">
 <div class="section-title"><h2>💰 Wallet</h2></div>
-
 <div class="wallet">
 
 <div class="wallet-header">
@@ -272,7 +271,6 @@ header{padding:12px}.profile-card,.section,.order-section{margin-left:12px;margi
 <button class="wallet-action withdraw-btn" onclick="openWithdraw()">⬆️ Withdrawal</button>
 <button class="wallet-action transfer-btn" onclick="openTransfer()">💵 Transfer USDT</button>
 </div>
-
 </div>
 </section>
 
@@ -492,7 +490,7 @@ Username → Username uses P2P Social internal USDT balance.
 <div class="bank-modal-note">Only Bank Transfer is supported.</div>
 
 <label class="form-label">Country</label>
-<select id="bankCountryInput" onchange="updateBankCountryCurrency()">
+<select id="bankCountryInput" onchange="updateBankCountryCurrency">
 <option value="">Select country</option>
 </select>
 
@@ -1560,16 +1558,69 @@ if(depositAddressLoading)return;
 
 depositAddressLoading=true;
 currentDepositAddress="";
+addressBox.textContent="Checking saved TON deposit address...";
+
+if(copyButton){
+copyButton.disabled=true;
+copyButton.textContent="Loading..."
+}
+
+try{
+
+const userId=currentSession.user.id;
+
+/*
+  First use the address already saved in Supabase.
+  The user keeps the same deposit address after reload.
+*/
+const saved=await supabaseClient
+.from("deposit_addresses")
+.select("*")
+.eq("user_id",userId)
+.eq("currency","USDT")
+.eq("network","TON")
+.maybeSingle();
+
+if(saved.error){
+console.error("Saved deposit address lookup failed:",saved.error);
+}
+
+/*
+  Support the common address column names without changing
+  the rest of the deposit flow.
+*/
+const savedAddress=String(
+saved.data?.address||
+saved.data?.deposit_address||
+saved.data?.receive_address||
+saved.data?.wallet_address||
+""
+).trim();
+
+if(savedAddress){
+
+console.log("Using saved Supabase deposit address:",savedAddress);
+
+currentDepositAddress=savedAddress;
+addressBox.textContent=savedAddress;
+
+if(copyButton){
+copyButton.disabled=false;
+copyButton.textContent="📋 Copy Address"
+}
+
+return
+}
+
+/*
+  No saved address exists, so Bicycle is called only once.
+*/
 addressBox.textContent="Generating TON deposit address...";
 
 if(copyButton){
 copyButton.disabled=true;
 copyButton.textContent="Generating..."
 }
-
-try{
-
-const userId=currentSession.user.id;
 
 const requestBody={
 action:"address",
@@ -1649,6 +1700,67 @@ throw new Error(
 "Bicycle response did not contain address. Check console for the full response."
 );
 
+/*
+  Save the newly generated Bicycle address in Supabase.
+  Future loads will use this saved address instead of
+  requesting a new address from Bicycle.
+*/
+const saveAddress=await supabaseClient
+.from("deposit_addresses")
+.insert({
+user_id:userId,
+currency:"USDT",
+network:"TON",
+address:address
+});
+
+if(saveAddress.error){
+
+/*
+  If another request already created the address at the
+  same time, try loading the saved address again rather
+  than replacing it.
+*/
+console.error(
+"Could not save new deposit address:",
+saveAddress.error
+);
+
+const retrySaved=await supabaseClient
+.from("deposit_addresses")
+.select("*")
+.eq("user_id",userId)
+.eq("currency","USDT")
+.eq("network","TON")
+.maybeSingle();
+
+const retryAddress=String(
+retrySaved.data?.address||
+retrySaved.data?.deposit_address||
+retrySaved.data?.receive_address||
+retrySaved.data?.wallet_address||
+""
+).trim();
+
+if(retryAddress){
+
+currentDepositAddress=retryAddress;
+addressBox.textContent=retryAddress;
+
+if(copyButton){
+copyButton.disabled=false;
+copyButton.textContent="📋 Copy Address"
+}
+
+return
+}
+
+throw new Error(
+"Deposit address was generated but could not be saved in Supabase: "+
+saveAddress.error.message
+)
+}
+
 currentDepositAddress=address;
 addressBox.textContent=address;
 
@@ -1705,6 +1817,7 @@ document.getElementById("depositAddress")?.textContent||
 if(
 !a||
 a==="Loading..."||
+a==="Checking saved TON deposit address..."||
 a==="Generating TON deposit address..."||
 a==="Address unavailable. Please try again."||
 a==="Please login first."||
@@ -1974,7 +2087,7 @@ title=sent?
 
 displayAmount=sent?
 "-"+formatNumber(item.amount)+" USDT":
-"+"+formatNumber(item.recipient_amount||item.amount)+" USDT";
+" "+formatNumber(item.recipient_amount||item.amount)+" USDT";
 
 amountClass=sent?"negative":"positive"
 }
@@ -2583,7 +2696,8 @@ card.className="post-card";
 
 card.innerHTML=
 `<div class="post-header">
-${avatar?
+${
+avatar?
 `<img class="post-avatar" src="${escapeHtml(avatar)}" alt="Profile">`:
 `<div class="post-avatar">${escapeHtml(initial)}</div>`
 }
@@ -2653,7 +2767,8 @@ owner=c.user_id===currentSession.user.id;
 return`
 <div class="comment">
 
-${a?
+${
+a?
 `<img class="comment-avatar" src="${escapeHtml(a)}" alt="Profile">`:
 `<div class="comment-avatar">${escapeHtml(i)}</div>`
 }
@@ -2663,9 +2778,11 @@ ${a?
 <div class="comment-top">
 <div class="comment-name">@${escapeHtml(u)}</div>
 
-${owner?
+${
+owner?
 `<button class="comment-delete" onclick="deleteComment('${escapeJs(c.id)}')">Delete</button>`:
-""}
+""
+}
 </div>
 
 <div class="comment-text">${escapeHtml(c.comment||"")}</div>
@@ -3159,6 +3276,5 @@ session.user.user_metadata.username
 
 startApp();
 </script>
-
 </body>
 </html>

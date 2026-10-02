@@ -199,14 +199,24 @@ function updateVerificationUI(){const b=document.getElementById("verificationBad
 
 async function loadUSDTBalance(){
 if(!currentSession)return 0;
-const{data,error}=await supabaseClient.rpc("get_my_usdt_balance");
-if(error){console.error("USDT balance RPC failed:",error);internalUSDTBalance=0}
-else{
-const raw=Array.isArray(data)?data[0]:data;
-internalUSDTBalance=Number(typeof raw==="object"&&raw!==null?(raw.usdt_balance??raw.available??raw.balance??0):raw??0);
-if(!Number.isFinite(internalUSDTBalance))internalUSDTBalance=0
+
+const{data,error}=await supabaseClient
+.from("usdt_balances")
+.select("usdt_balance")
+.eq("user_id",currentSession.user.id)
+.maybeSingle();
+
+if(error){
+console.error("USDT balance read failed:",error);
+internalUSDTBalance=0;
+}else{
+internalUSDTBalance=Number(data?.usdt_balance??0);
+if(!Number.isFinite(internalUSDTBalance))internalUSDTBalance=0;
 }
-currentUSDTBalance=internalUSDTBalance;renderUSDTBalance();return internalUSDTBalance
+
+currentUSDTBalance=internalUSDTBalance;
+renderUSDTBalance();
+return internalUSDTBalance
 }
 
 async function loadLockedUSDTFromOrders(){

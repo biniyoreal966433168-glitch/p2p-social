@@ -128,7 +128,7 @@ header{padding:12px}.profile-card,.section,.order-section{margin-left:12px;margi
 
 <section class="section"><div class="section-title"><h2>📄 Your Posts</h2><div class="section-title-actions"><div class="list-controls"><button id="postsViewButton" class="list-control-btn" onclick="togglePostsView()">Show 3</button><button id="postsRefreshButton" class="list-control-btn" onclick="refreshPosts()">🔃 Refresh</button></div><button id="postsCollapseButton" class="collapse-btn" onclick="toggleSection('postsContent','postsCollapseButton')">⌃</button></div></div><div id="postsContent" class="collapsible-content"><div id="postsFeed" class="posts-feed"><div class="empty">Loading posts...</div></div></div></section>
 
-<div id="depositModal" class="modal"><div class="modal-box"><h3>⬇️ Deposit USDT</h3><div class="deposit-bonus-modal"><h4>Deposit Bonus</h4><div class="deposit-bonus-modal-row"><span>1 USDT</span><strong>+100%</strong></div><div class="deposit-bonus-modal-row"><span>5 USDT</span><strong>+150%</strong></div><div class="deposit-bonus-modal-row"><span>10 USDT</span><strong>+200%</strong></div><div class="deposit-bonus-modal-row"><span>25 USDT</span><strong>+300%</strong></div><div class="deposit-bonus-modal-row"><span>50 USDT</span><strong>+400%</strong></div><div class="deposit-bonus-modal-row"><span>100 USDT</span><strong>+500%</strong></div></div><div class="money-modal-info">USDT Deposit Network<select id="depositNetwork" onchange="updateDepositAddress()"><option value="TON">TON</option></select>Supported network only.<div class="deposit-address" id="depositAddress">Loading...</div><button id="copyDepositAddressButton" class="copy-address-btn" onclick="copyDepositAddress()">📋 Copy Address</button></div><div class="money-modal-info">Send USDT to the displayed TON address.<br><br>No transaction hash is required from you.<br><br>After blockchain/backend verification is completed, the verified deposit is credited to your USDT balance.</div><div class="modal-buttons"><button class="cancel-btn" onclick="closeDeposit()">Close</button></div></div></div>
+<div id="depositModal" class="modal"><div class="modal-box"><h3>⬇️ Deposit USDT</h3><div class="deposit-bonus-modal"><h4>Deposit Bonus</h4><div class="deposit-bonus-modal-row"><span>1 USDT</span><strong>+100%</strong></div><div class="deposit-bonus-modal-row"><span>5 USDT</span><strong>+150%</strong></div><div class="deposit-bonus-modal-row"><span>10 USDT</span><strong>+200%</strong></div><div class="deposit-bonus-modal-row"><span>25 USDT</span><strong>+300%</strong></div><div class="deposit-bonus-modal-row"><span>50 USDT</span><strong>+400%</strong></div><div class="deposit-bonus-modal-row"><span>100 USDT</span><strong>+500%</strong></div></div><div class="money-modal-info">USDT Deposit Network<select id="depositNetwork" onchange="updateDepositAddress()"><option value="TON">TON</option></select>Supported network only.<div class="deposit-address" id="depositAddress">Loading...</div><button id="copyDepositAddressButton" class="copy-address-btn" onclick="copyDepositAddress()">📋 Copy Address</button></div><div class="money-modal-info">Blockchain USDT Balance<div id="bicycleUSDTBalance" class="money-balance">0 USDT</div></div><div class="money-modal-info">Send USDT to the displayed TON address.<br><br>No transaction hash is required from you.<br><br>After blockchain/backend verification is completed, the verified deposit is credited to your USDT balance.</div><div class="modal-buttons"><button class="cancel-btn" onclick="closeDeposit()">Close</button></div></div></div>
 
 <div id="withdrawModal" class="modal"><div class="modal-box"><h3>⬆️ Withdrawal USDT</h3><div class="money-modal-info">Available P2P USDT<div id="withdrawBalance" class="money-balance">0.00 USDT</div></div><div class="withdraw-pending-note">After submitting, your withdrawal remains <strong>Pending...</strong> until backend/admin approval and processing are completed.</div><label class="form-label">Network</label><select id="withdrawNetwork"><option value="TON">TON</option></select><label class="form-label">Withdrawal Address</label><input id="withdrawAddress" type="text" maxlength="150" placeholder="Enter TON address"><label class="form-label">Amount (USDT)</label><input id="withdrawAmount" type="number" min="10" step="any" placeholder="Minimum 10 USDT"><div class="money-modal-info">Minimum Withdrawal: <strong>10 USDT</strong><br>Withdrawal Fee: <strong>3%</strong></div><div class="modal-buttons"><button class="cancel-btn" onclick="closeWithdraw()">Cancel</button><button id="withdrawSubmitButton" class="save-btn" onclick="submitWithdrawal()">Submit Withdrawal</button></div></div></div>
 
@@ -157,7 +157,7 @@ let currentSession=null,currentProfile=null,internalUSDTBalance=0,currentUSDTBal
 allProfiles={},allComments=[],orderType="buy",balanceVisible=true,permanentUsername="",balanceChannel=null,
 currentHistoryType="all",showAllHistory=false,showAllOrders=false,showAllPosts=false,
 currentBankTransferDetails=null,currentPaymentCountry=null,backendCurrencies=[],
-currentDepositAddress="",depositAddressLoading=false;
+currentDepositAddress="",depositAddressLoading=false,bicycleUSDTBalance=0;
 
 function toggleSection(c,b){c=document.getElementById(c);b=document.getElementById(b);if(!c||!b)return;const x=c.classList.toggle("collapsed");b.textContent=x?"⌄":"⌃"}
 function updateListViewButton(id,all){const b=document.getElementById(id);if(b)b.textContent=all?"View All":"Show 3"}
@@ -189,11 +189,7 @@ const{data,error}=await supabaseClient.rpc("get_my_usdt_balance");
 if(error){console.error("USDT balance RPC failed:",error);internalUSDTBalance=0}
 else{
 const raw=Array.isArray(data)?data[0]:data;
-internalUSDTBalance=Number(
-typeof raw==="object"&&raw!==null
-?(raw.usdt_balance??raw.available??raw.balance??0)
-:raw??0
-);
+internalUSDTBalance=Number(typeof raw==="object"&&raw!==null?(raw.usdt_balance??raw.available??raw.balance??0):raw??0);
 if(!Number.isFinite(internalUSDTBalance))internalUSDTBalance=0
 }
 currentUSDTBalance=internalUSDTBalance;renderUSDTBalance();return internalUSDTBalance
@@ -376,39 +372,199 @@ if(error||!data?.user){currentSession=null;return{user:null,error:error||new Err
 currentSession=currentSession||{};currentSession.user=data.user;return{user:data.user,error:null}
 }
 
-async function updateDepositAddress(){
-const network=document.getElementById("depositNetwork")?.value||"TON",addressBox=document.getElementById("depositAddress"),copyButton=document.getElementById("copyDepositAddressButton");
-if(!addressBox)return;
-if(!SUPPORTED_DEPOSIT_NETWORKS[network]){currentDepositAddress="";addressBox.textContent="Network not supported.";if(copyButton)copyButton.disabled=true;return}
-const{user,error}=await getAuthenticatedBicycleUser();
-if(error||!user){currentDepositAddress="";addressBox.textContent="Please login first.";if(copyButton)copyButton.disabled=true;return}
-if(depositAddressLoading)return;
-depositAddressLoading=true;currentDepositAddress="";addressBox.textContent="Checking saved TON deposit address...";
-if(copyButton){copyButton.disabled=true;copyButton.textContent="Loading..."}
-try{
-const saved=await supabaseClient.from("bicycle_deposit_addresses").select("address").eq("user_id",user.id).eq("currency","USDT").eq("network","TON").maybeSingle();
-if(saved.error)throw new Error("Could not check saved deposit address: "+saved.error.message);
-const savedAddress=String(saved.data?.address||"").trim();
-if(savedAddress){currentDepositAddress=savedAddress;addressBox.textContent=savedAddress;if(copyButton){copyButton.disabled=false;copyButton.textContent="📋 Copy Address"}return}
-addressBox.textContent="Generating TON deposit address...";
-if(copyButton){copyButton.disabled=true;copyButton.textContent="Generating..."}
-const response=await fetch(BICYCLE_API_URL,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json","Authorization":"Bearer "+user.access_token,"apikey":SUPABASE_PUBLISHABLE_KEY},body:JSON.stringify({action:"address",currency:"USDT"})});
-const rawResponse=await response.text();let result=null;try{result=rawResponse?JSON.parse(rawResponse):null}catch(e){}
-if(!response.ok){throw new Error("Bicycle API "+response.status+": "+(result?.error||result?.message||result?.detail||rawResponse||"Could not generate deposit address."))}
-const address=String(result?.address||result?.deposit_address||result?.receive_address||result?.wallet_address||result?.data?.address||result?.data?.deposit_address||result?.data?.receive_address||"").trim();
-if(!address)throw new Error("Bicycle response did not contain address.");
-const saveAddress=await supabaseClient.from("bicycle_deposit_addresses").insert({user_id:user.id,currency:"USDT",network:"TON",address});
-if(saveAddress.error){
-const retry=await supabaseClient.from("bicycle_deposit_addresses").select("address").eq("user_id",user.id).eq("currency","USDT").eq("network","TON").maybeSingle(),retryAddress=String(retry.data?.address||"").trim();
-if(retryAddress){currentDepositAddress=retryAddress;addressBox.textContent=retryAddress;if(copyButton){copyButton.disabled=false;copyButton.textContent="📋 Copy Address"}return}
-throw new Error("Deposit address was generated but could not be saved in Supabase: "+saveAddress.error.message)
-}
-currentDepositAddress=address;addressBox.textContent=address;if(copyButton){copyButton.disabled=false;copyButton.textContent="📋 Copy Address"}
-}catch(e){console.error("TON deposit address error:",e);currentDepositAddress="";addressBox.textContent="Address unavailable. Please try again.";if(copyButton){copyButton.disabled=false;copyButton.textContent="🔄 Try Again"}}finally{depositAddressLoading=false}
+async function bicycleRequest(body,user){
+const response=await fetch(BICYCLE_API_URL,{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+"Accept":"application/json",
+"Authorization":"Bearer "+user.access_token,
+"apikey":SUPABASE_PUBLISHABLE_KEY
+},
+body:JSON.stringify({...body,user_id:user.id})
+});
+const raw=await response.text();
+let result=null;
+try{result=raw?JSON.parse(raw):null}catch(e){}
+if(!response.ok)throw new Error("Bicycle API "+response.status+": "+(result?.error||result?.message||result?.detail||raw||"Request failed."));
+return result||{}
 }
 
-async function openDeposit(){const{user,error}=await getAuthenticatedBicycleUser();if(error||!user){showLogin();return}document.getElementById("depositModal").classList.add("show");await updateDepositAddress()}
+function getBicycleAddress(result){
+return String(
+result?.address||
+result?.deposit_address||
+result?.receive_address||
+result?.wallet_address||
+result?.data?.address||
+result?.data?.deposit_address||
+result?.data?.receive_address||
+""
+).trim()
+}
+
+function getBicycleBalance(result){
+const raw=Array.isArray(result?.data)?result.data[0]:result?.data;
+const value=typeof raw==="object"&&raw!==null
+?(raw.usdt_balance??raw.balance??raw.available??raw.amount??0)
+:(result?.usdt_balance??result?.balance??result?.available??result?.amount??raw??0);
+const n=Number(value);
+return Number.isFinite(n)?n:0
+}
+
+async function loadBicycleUSDTBalance(){
+const box=document.getElementById("bicycleUSDTBalance");
+if(box)box.textContent="Loading...";
+const{user,error}=await getAuthenticatedBicycleUser();
+if(error||!user){bicycleUSDTBalance=0;if(box)box.textContent="0 USDT";return 0}
+try{
+const result=await bicycleRequest({action:"balance",currency:"USDT"},user);
+bicycleUSDTBalance=getBicycleBalance(result);
+if(box)box.textContent=formatNumber(bicycleUSDTBalance)+" USDT";
+return bicycleUSDTBalance
+}catch(e){
+console.error("Bicycle USDT balance error:",e);
+bicycleUSDTBalance=0;
+if(box)box.textContent="0 USDT";
+return 0
+}
+}
+
+async function updateDepositAddress(){
+const network=document.getElementById("depositNetwork")?.value||"TON",
+addressBox=document.getElementById("depositAddress"),
+copyButton=document.getElementById("copyDepositAddressButton");
+if(!addressBox)return;
+if(!SUPPORTED_DEPOSIT_NETWORKS[network]){
+currentDepositAddress="";addressBox.textContent="Network not supported.";if(copyButton)copyButton.disabled=true;return
+}
+
+const{user,error}=await getAuthenticatedBicycleUser();
+if(error||!user){
+currentDepositAddress="";addressBox.textContent="Please login first.";if(copyButton)copyButton.disabled=true;return
+}
+
+if(depositAddressLoading)return;
+depositAddressLoading=true;
+currentDepositAddress="";
+addressBox.textContent="Checking saved TON deposit address...";
+if(copyButton){copyButton.disabled=true;copyButton.textContent="Loading..."}
+
+try{
+let savedAddress="";
+
+const savedTON=await supabaseClient
+.from("bicycle_deposit_addresses")
+.select("address")
+.eq("user_id",user.id)
+.eq("currency","TON")
+.eq("network","TON")
+.maybeSingle();
+
+if(!savedTON.error)savedAddress=String(savedTON.data?.address||"").trim();
+
+if(!savedAddress){
+const savedUSDT=await supabaseClient
+.from("bicycle_deposit_addresses")
+.select("address")
+.eq("user_id",user.id)
+.eq("currency","USDT")
+.eq("network","TON")
+.maybeSingle();
+
+if(!savedUSDT.error)savedAddress=String(savedUSDT.data?.address||"").trim();
+}
+
+if(savedAddress){
+currentDepositAddress=savedAddress;
+addressBox.textContent=savedAddress;
+if(copyButton){copyButton.disabled=false;copyButton.textContent="📋 Copy Address"}
+await loadBicycleUSDTBalance();
+return
+}
+
+addressBox.textContent="Generating TON deposit address...";
+if(copyButton){copyButton.disabled=true;copyButton.textContent="Generating..."}
+
+const result=await bicycleRequest({action:"address",currency:"TON"},user);
+const address=getBicycleAddress(result);
+if(!address)throw new Error("Bicycle response did not contain address.");
+
+let saveAddress=await supabaseClient
+.from("bicycle_deposit_addresses")
+.insert({
+user_id:user.id,
+currency:"TON",
+network:"TON",
+address
+});
+
+if(saveAddress.error){
+const retryTON=await supabaseClient
+.from("bicycle_deposit_addresses")
+.select("address")
+.eq("user_id",user.id)
+.eq("currency","TON")
+.eq("network","TON")
+.maybeSingle();
+
+const retryAddress=String(retryTON.data?.address||"").trim();
+
+if(retryAddress){
+currentDepositAddress=retryAddress;
+addressBox.textContent=retryAddress;
+if(copyButton){copyButton.disabled=false;copyButton.textContent="📋 Copy Address"}
+await loadBicycleUSDTBalance();
+return
+}
+
+const legacy=await supabaseClient
+.from("bicycle_deposit_addresses")
+.select("address")
+.eq("user_id",user.id)
+.eq("currency","USDT")
+.eq("network","TON")
+.maybeSingle();
+
+const legacyAddress=String(legacy.data?.address||"").trim();
+
+if(legacyAddress){
+currentDepositAddress=legacyAddress;
+addressBox.textContent=legacyAddress;
+if(copyButton){copyButton.disabled=false;copyButton.textContent="📋 Copy Address"}
+await loadBicycleUSDTBalance();
+return
+}
+
+throw new Error("Deposit address was generated but could not be saved in Supabase: "+saveAddress.error.message)
+}
+
+currentDepositAddress=address;
+addressBox.textContent=address;
+if(copyButton){copyButton.disabled=false;copyButton.textContent="📋 Copy Address"}
+await loadBicycleUSDTBalance();
+
+}catch(e){
+console.error("TON deposit address error:",e);
+currentDepositAddress="";
+addressBox.textContent="Address unavailable. Please try again.";
+if(copyButton){copyButton.disabled=false;copyButton.textContent="🔄 Try Again"}
+await loadBicycleUSDTBalance();
+}finally{
+depositAddressLoading=false
+}
+}
+
+async function openDeposit(){
+const{user,error}=await getAuthenticatedBicycleUser();
+if(error||!user){showLogin();return}
+document.getElementById("depositModal").classList.add("show");
+await updateDepositAddress();
+await loadBicycleUSDTBalance()
+}
+
 function closeDeposit(){document.getElementById("depositModal").classList.remove("show")}
+
 async function copyDepositAddress(){
 const a=String(currentDepositAddress||document.getElementById("depositAddress")?.textContent||"").trim();
 if(!a||a.includes("Loading")||a.includes("Checking")||a.includes("Generating")||a.includes("unavailable")||a.includes("login")||a.includes("supported"))return;

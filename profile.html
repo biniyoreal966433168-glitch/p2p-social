@@ -197,16 +197,39 @@ function showLogin(){alert("Please login first.");window.location.href="login.ht
 function getVerificationStatus(){return currentSession&&Boolean(currentProfile&&(currentProfile.verified===true||currentProfile.is_verified===true||currentProfile.user_verified===true||currentProfile.verification_status==="verified"))}
 function updateVerificationUI(){const b=document.getElementById("verificationBadge");if(!b)return;if(getVerificationStatus()){b.textContent="✓ Verified";b.className="verification-badge"}else{b.textContent="Unverified";b.className="verification-badge unverified"}}
 
+/* AVAILABLE USDT = secure RPC -> usdt_balances.usdt_balance */
 async function loadUSDTBalance(){
 if(!currentSession)return 0;
+
 const{data,error}=await supabaseClient.rpc("get_my_usdt_balance");
-if(error){console.error("USDT balance RPC failed:",error);internalUSDTBalance=0}
-else{
-const raw=Array.isArray(data)?data[0]:data;
-internalUSDTBalance=Number(typeof raw==="object"&&raw!==null?(raw.usdt_balance??raw.available??raw.balance??0):raw??0);
-if(!Number.isFinite(internalUSDTBalance))internalUSDTBalance=0
+
+if(error){
+console.error("USDT balance RPC failed:",error);
+internalUSDTBalance=0;
+}else{
+let raw=Array.isArray(data)?data[0]:data;
+
+let value=0;
+
+if(typeof raw==="number"||typeof raw==="string"){
+value=raw;
+}else if(raw&&typeof raw==="object"){
+value=
+raw.usdt_balance??
+raw.get_my_usdt_balance??
+raw.available??
+raw.balance??
+raw.amount??
+0;
 }
-currentUSDTBalance=internalUSDTBalance;renderUSDTBalance();return internalUSDTBalance
+
+const n=Number(value);
+internalUSDTBalance=Number.isFinite(n)?n:0;
+}
+
+currentUSDTBalance=internalUSDTBalance;
+renderUSDTBalance();
+return internalUSDTBalance
 }
 
 async function loadLockedUSDTFromOrders(){
@@ -215,7 +238,12 @@ const{data,error}=await supabaseClient.from("p2p_orders").select("remaining_amou
 if(error){console.error("Locked order load failed:",error);return}
 currentLockedUSDT=(data||[]).reduce((t,o)=>{const a=Number(o.remaining_amount||0);return t+(Number.isFinite(a)&&a>0?a:0)},0);renderUSDTBalance()
 }
-async function refreshWallet(){await loadUSDTBalance();await loadLockedUSDTFromOrders();await loadMyOrders()}
+
+async function refreshWallet(){
+await loadUSDTBalance();
+await loadLockedUSDTFromOrders();
+await loadMyOrders()
+}
 
 function setupUSDTBalanceRealtime(){
 if(!currentSession)return;
@@ -247,11 +275,23 @@ document.getElementById("editBio").value=currentProfile.bio||"";updateLockUI();a
 function renderUSDTBalance(){
 const a=document.getElementById("usdtBalance"),l=document.getElementById("lockedUSDTBalance");if(!a||!l)return;
 currentUSDTBalance=internalUSDTBalance;
-if(!balanceVisible){a.textContent="•••••• USDT";l.textContent="•••••• USDT"}
-else{a.textContent=formatNumber(internalUSDTBalance)+" USDT";l.textContent=formatNumber(currentLockedUSDT)+" USDT"}
-const w=document.getElementById("withdrawBalance");if(w)w.textContent=formatNumber(internalUSDTBalance)+" USDT"
+if(!balanceVisible){
+a.textContent="•••••• USDT";
+l.textContent="•••••• USDT"
+}else{
+a.textContent=formatNumber(internalUSDTBalance)+" USDT";
+l.textContent=formatNumber(currentLockedUSDT)+" USDT"
 }
-function toggleBalanceVisibility(){balanceVisible=!balanceVisible;renderUSDTBalance();const b=document.getElementById("balanceToggleButton");if(b)b.textContent=balanceVisible?"👁️":"🙈"}
+const w=document.getElementById("withdrawBalance");
+if(w)w.textContent=formatNumber(internalUSDTBalance)+" USDT"
+}
+
+function toggleBalanceVisibility(){
+balanceVisible=!balanceVisible;
+renderUSDTBalance();
+const b=document.getElementById("balanceToggleButton");
+if(b)b.textContent=balanceVisible?"👁️":"🙈"
+}
 
 function setProfilePhoto(avatar,username){
 const old=document.getElementById("profilePhotoBox");if(!old)return;
@@ -632,7 +672,10 @@ if(!a||a.includes("Loading")||a.includes("Checking")||a.includes("Generating")||
 try{await navigator.clipboard.writeText(a);alert("TON deposit address copied.")}catch(e){alert(a)}
 }
 
-function openWithdraw(){document.getElementById("withdrawBalance").textContent=formatNumber(internalUSDTBalance)+" USDT";document.getElementById("withdrawModal").classList.add("show")}
+function openWithdraw(){
+document.getElementById("withdrawBalance").textContent=formatNumber(internalUSDTBalance)+" USDT";
+document.getElementById("withdrawModal").classList.add("show")
+}
 function closeWithdraw(){document.getElementById("withdrawModal").classList.remove("show")}
 
 async function submitWithdrawal(){

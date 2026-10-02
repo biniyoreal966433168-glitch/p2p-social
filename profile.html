@@ -389,7 +389,7 @@ header{padding:12px}.profile-card,.section,.order-section{margin-left:12px;margi
 </div>
 <div class="money-modal-info">
 USDT Deposit Network
-<select id="depositNetwork"><option value="TON">TON</option></select>
+<select id="depositNetwork" onchange="updateDepositAddress()"><option value="TON">TON</option></select>
 Supported network only.
 <div class="deposit-address" id="depositAddress">Loading...</div>
 <button id="copyDepositAddressButton" class="copy-address-btn" onclick="copyDepositAddress()">📋 Copy Address</button>
@@ -778,8 +778,6 @@ b.disabled=false;b.textContent="Transfer";document.getElementById("transferAmoun
 }catch(e){console.error("USDT transfer failed:",e);alert("Could not complete transfer:\n\n"+(e?.message||"Transfer failed."));b.disabled=false;b.textContent="Transfer"}
 }
 
-/* UPDATED: authenticated user is obtained directly from Supabase.
-   No manual user ID is required. */
 async function updateDepositAddress(){
 const network=document.getElementById("depositNetwork")?.value||"TON",
 addressBox=document.getElementById("depositAddress"),
@@ -788,7 +786,8 @@ copyButton=document.getElementById("copyDepositAddressButton");
 if(!addressBox)return;
 
 if(!SUPPORTED_DEPOSIT_NETWORKS[network]){
-currentDepositAddress="";addressBox.textContent="Network not supported.";
+currentDepositAddress="";
+addressBox.textContent="Network not supported.";
 if(copyButton)copyButton.disabled=true;
 return
 }
@@ -818,14 +817,13 @@ copyButton.textContent="Loading..."
 
 try{
 const saved=await supabaseClient
-.from("deposit_addresses")
+.from("bicycle_deposit_addresses")
 .select("*")
 .eq("user_id",user.id)
 .eq("currency","USDT")
-.eq("network","TON")
 .maybeSingle();
 
-if(saved.error)console.error("Saved deposit address lookup failed:",saved.error);
+if(saved.error)console.error("Saved Bicycle deposit address lookup failed:",saved.error);
 
 const savedAddress=String(
 saved.data?.address||
@@ -855,16 +853,14 @@ copyButton.textContent="Generating..."
 const requestBody={
 action:"address",
 user_id:user.id,
-currency:"USDT",
-network:"TON"
+currency:"USDT"
 };
 
 console.log("Bicycle URL:",BICYCLE_API_URL);
 console.log("Bicycle request:",{
 action:requestBody.action,
 user_id:requestBody.user_id,
-currency:requestBody.currency,
-network:requestBody.network
+currency:requestBody.currency
 });
 
 const response=await fetch(
@@ -913,23 +909,21 @@ if(!address)
 throw new Error("Bicycle response did not contain address. Check console for the full response.");
 
 const saveAddress=await supabaseClient
-.from("deposit_addresses")
+.from("bicycle_deposit_addresses")
 .insert({
 user_id:user.id,
 currency:"USDT",
-network:"TON",
 address:address
 });
 
 if(saveAddress.error){
-console.error("Could not save new deposit address:",saveAddress.error);
+console.error("Could not save new Bicycle deposit address:",saveAddress.error);
 
 const retrySaved=await supabaseClient
-.from("deposit_addresses")
+.from("bicycle_deposit_addresses")
 .select("*")
 .eq("user_id",user.id)
 .eq("currency","USDT")
-.eq("network","TON")
 .maybeSingle();
 
 const retryAddress=String(

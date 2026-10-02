@@ -778,6 +778,17 @@ b.disabled=false;b.textContent="Transfer";document.getElementById("transferAmoun
 }catch(e){console.error("USDT transfer failed:",e);alert("Could not complete transfer:\n\n"+(e?.message||"Transfer failed."));b.disabled=false;b.textContent="Transfer"}
 }
 
+async function getAuthenticatedBicycleUser(){
+const{data,error}=await supabaseClient.auth.getUser();
+if(error||!data?.user){
+currentSession=null;
+return{user:null,error:error||new Error("Not authenticated.")};
+}
+currentSession=currentSession||{};
+currentSession.user=data.user;
+return{user:data.user,error:null}
+}
+
 async function updateDepositAddress(){
 const network=document.getElementById("depositNetwork")?.value||"TON",
 addressBox=document.getElementById("depositAddress"),
@@ -792,7 +803,10 @@ if(copyButton)copyButton.disabled=true;
 return
 }
 
-const{data:{user},error:userError}=await supabaseClient.auth.getUser();
+const{user,userError}=await(async()=>{
+const r=await getAuthenticatedBicycleUser();
+return{user:r.user,userError:r.error}
+})();
 
 if(userError||!user){
 currentDepositAddress="";
@@ -800,9 +814,6 @@ addressBox.textContent="Please login first.";
 if(copyButton)copyButton.disabled=true;
 return
 }
-
-currentSession=currentSession||{user};
-currentSession.user=user;
 
 if(depositAddressLoading)return;
 
@@ -850,17 +861,24 @@ copyButton.disabled=true;
 copyButton.textContent="Generating..."
 }
 
+/*
+  IMPORTANT:
+  Do NOT send user_id from the browser.
+
+  bicycle-api receives the authenticated Supabase JWT and must identify
+  the logged-in user from that JWT on the backend. This prevents one
+  account from requesting/using another account's deposit address.
+*/
 const requestBody={
 action:"address",
-user_id:user.id,
 currency:"USDT"
 };
 
 console.log("Bicycle URL:",BICYCLE_API_URL);
 console.log("Bicycle request:",{
 action:requestBody.action,
-user_id:requestBody.user_id,
-currency:requestBody.currency
+currency:requestBody.currency,
+authenticated_user_id:user.id
 });
 
 const response=await fetch(
@@ -969,11 +987,8 @@ depositAddressLoading=false
 }
 
 async function openDeposit(){
-if(!currentSession){
-const{data:{user}}=await supabaseClient.auth.getUser();
-if(!user){showLogin();return}
-currentSession={user}
-}
+const{user,error}=await getAuthenticatedBicycleUser();
+if(error||!user){showLogin();return}
 document.getElementById("depositModal").classList.add("show");
 await updateDepositAddress()
 }

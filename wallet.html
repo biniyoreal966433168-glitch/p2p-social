@@ -2,3354 +2,432 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Sell USDT • P2P Social</title>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
 html{scroll-behavior:smooth}
 body{background:#f4f7f8;color:#172033;min-height:100vh;padding-bottom:90px}
-button,input,select,textarea{font-family:Arial,sans-serif}
-button{cursor:pointer}
-button:disabled{opacity:.6;cursor:not-allowed}
-
-header{
-height:68px;
-background:#fff;
-border-bottom:1px solid #e2e8ea;
-display:flex;
-align-items:center;
-justify-content:space-between;
-padding:0 18px;
-position:sticky;
-top:0;
-z-index:100
-}
-
-.brand{display:flex;align-items:center;gap:10px}
-
-.brand-logo{
-width:42px;
-height:42px;
-border-radius:13px;
-background:linear-gradient(135deg,#064e46,#10a889);
-position:relative;
-display:flex;
-align-items:center;
-justify-content:center;
-box-shadow:0 4px 12px rgba(0,0,0,.12);
-flex-shrink:0
-}
-
-.p-left{
-position:absolute;
-left:8px;
-top:10px;
-width:13px;
-height:23px;
-border:4px solid #fff;
-border-right:0;
-border-radius:8px 0 0 8px
-}
-
-.p-right{
-position:absolute;
-right:8px;
-top:10px;
-width:13px;
-height:23px;
-border:4px solid #fff;
-border-left:0;
-border-radius:0 8px 8px 0
-}
-
-.center-dot{
-width:10px;
-height:10px;
-background:#fff;
-border-radius:50%;
-position:absolute
-}
-
-.brand-name{font-size:19px;font-weight:800}
-.brand-name span{color:#087f73}
-.security{color:#087f73;font-size:13px;font-weight:bold}
-
-.container{
-width:100%;
-max-width:850px;
-margin:auto;
-padding:18px
-}
-
-.search-box{
-background:#fff;
-border:1px solid #dfe7e9;
-border-radius:13px;
-padding:12px;
-margin-top:4px
-}
-
-.search-box input{
-width:100%;
-border:1px solid #dfe4eb;
-border-radius:10px;
-padding:11px;
-outline:none;
-font-size:14px
-}
-
-.search-box input:focus{
-border-color:#087f73;
-box-shadow:0 0 0 3px rgba(8,127,115,.08)
-}
-
-.section-title{
-display:flex;
-justify-content:space-between;
-align-items:center;
-gap:10px;
-margin:22px 0 12px
-}
-
-.section-title h2{font-size:20px}
-.section-title span{color:#087f73;font-size:13px;font-weight:bold}
-.section-actions{display:flex;align-items:center;gap:7px}
-
-.view-btn,.refresh-btn{
-border:none;
-background:#edf7f5;
-color:#087f73;
-padding:7px 10px;
-border-radius:8px;
-font-weight:bold
-}
-
-.offer-list{
-display:grid;
-grid-template-columns:repeat(3,minmax(0,1fr));
-gap:8px
-}
-
-.offer-card{
-background:#fff;
-border:1px solid #dfe7e9;
-border-radius:12px;
-overflow:hidden;
-min-width:0
-}
-
-.offer-main{
-padding:10px
-}
-
-.offer-user{
-width:100%;
-border:0;
-background:transparent;
-padding:0;
-text-align:left;
-font-size:13px;
-font-weight:bold;
-color:#172033;
-white-space:nowrap;
-overflow:hidden;
-text-overflow:ellipsis
-}
-
-.offer-user:hover{
-color:#087f73
-}
-
-.offer-label{
-margin-top:8px;
-font-size:11px;
-font-weight:bold;
-color:#7b8790;
-white-space:nowrap;
-overflow:hidden;
-text-overflow:ellipsis
-}
-
-.offer-amount{
-margin-top:3px;
-font-size:13px;
-font-weight:bold;
-color:#596579;
-white-space:nowrap;
-overflow:hidden;
-text-overflow:ellipsis
-}
-
-.offer-price-label{
-margin-top:7px;
-font-size:11px;
-font-weight:bold;
-color:#7b8790;
-white-space:nowrap;
-overflow:hidden;
-text-overflow:ellipsis
-}
-
-.offer-price{
-margin-top:3px;
-font-size:14px;
-font-weight:bold;
-color:#087f73;
-white-space:nowrap;
-overflow:hidden;
-text-overflow:ellipsis
-}
-
-.offer-trade{
-width:100%;
-margin-top:9px;
-border:none;
-padding:8px 5px;
-border-radius:8px;
-background:#b4233f;
-color:#fff;
-font-size:12px;
-font-weight:bold
-}
-
-.offer-trade:hover{
-background:#941d35
-}
-
-.empty{
-grid-column:1/-1;
-background:#fff;
-border:1px dashed #ccd8da;
-border-radius:15px;
-padding:30px 18px;
-text-align:center;
-color:#7b8790
-}
-
-.empty-icon{font-size:34px;margin-bottom:10px}
-
-.modal{
-display:none;
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.5);
-z-index:500;
-align-items:center;
-justify-content:center;
-padding:18px
-}
-
-.modal.show{display:flex}
-
-.modal-box{
-width:100%;
-max-width:430px;
-max-height:90vh;
-overflow:auto;
-background:#fff;
-border-radius:18px;
-padding:20px;
-box-shadow:0 20px 50px rgba(0,0,0,.2)
-}
-
-.modal-box h3{margin-bottom:15px}
-
-.modal-box input,
-.modal-box textarea{
-width:100%;
-border:1px solid #dfe4eb;
-border-radius:10px;
-padding:11px;
-margin-bottom:10px;
-outline:none;
-font-size:14px
-}
-
-.modal-box input:focus,
-.modal-box textarea:focus{
-border-color:#087f73;
-box-shadow:0 0 0 3px rgba(8,127,115,.08)
-}
-
-.modal-box input[readonly]{
-background:#f7fbfa;
-color:#172033;
-font-weight:bold
-}
-
-.modal-actions{
-display:flex;
-gap:8px;
-margin-top:5px
-}
-
-.modal-actions button{
-flex:1;
-padding:11px;
-border:none;
-border-radius:10px;
-font-weight:bold
-}
-
-.close-btn{background:#edf0f4;color:#172033}
-.confirm-btn{background:#087f73;color:#fff}
-
-.details{
-padding:15px 16px;
-border-top:1px solid #e5ebec;
-background:#fafcfc
-}
-
-.detail-row{
-display:flex;
-justify-content:space-between;
-gap:10px;
-margin-bottom:9px;
-font-size:13px
-}
-
-.detail-row:last-child{margin-bottom:0}
-.detail-row span:first-child{color:#7a8790}
-.detail-row strong{text-align:right;overflow-wrap:anywhere}
-
-.trade-value-card{
-margin-top:4px;
-margin-bottom:12px;
-background:#f7fbfa;
-border:1px solid #d7ebe7;
-border-radius:13px;
-padding:14px
-}
-
-.trade-value-title{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:10px
-}
-
-.trade-value-badge{
-background:#e2f5ef;
-color:#087f73;
-border-radius:7px;
-padding:5px 8px;
-font-size:11px;
-font-weight:bold
-}
-
-.trade-value-row{
-display:flex;
-justify-content:space-between;
-align-items:center;
-gap:10px;
-padding:6px 0;
-font-size:13px
-}
-
-.trade-value-row span:first-child{color:#71808a}
-.trade-value-row strong{text-align:right}
-
-.trade-value-total{
-border-top:1px solid #dce9e7;
-margin-top:5px;
-padding-top:10px
-}
-
-.bottom-nav{
-position:fixed;
-left:0;
-right:0;
-bottom:0;
-height:72px;
-background:#fff;
-border-top:1px solid #dfe7e9;
-display:flex;
-justify-content:space-around;
-align-items:center;
-z-index:300;
-box-shadow:0 -4px 15px rgba(0,0,0,.05)
-}
-
-.bottom-nav a{
-color:#7b8790;
-text-decoration:none;
-text-align:center;
-font-size:11px;
-min-width:55px
-}
-
-.bottom-nav a.active{
-color:#087f73;
-font-weight:bold
-}
-
-.nav-icon{
-display:block;
-font-size:21px;
-margin-bottom:4px
-}
-
-.toast{
-position:fixed;
-left:50%;
-bottom:90px;
-transform:translateX(-50%);
-background:#172033;
-color:#fff;
-padding:12px 16px;
-border-radius:10px;
-font-size:13px;
-z-index:1000;
-display:none;
-max-width:90%;
-text-align:center
-}
-
-.toast.show{display:block}
-.toast.success{background:#087f73}
-.toast.error{background:#b4233f}
-.toast.warning{background:#9a6500}
-
-@media(max-width:450px){
-.container{padding:14px}
-.brand-name{font-size:17px}
-.security{font-size:11px}
-.offer-list{
-grid-template-columns:repeat(3,minmax(0,1fr));
-gap:6px
-}
-.offer-main{padding:8px}
-.offer-user{font-size:11px}
-.offer-label{font-size:10px;margin-top:6px}
-.offer-amount{font-size:11px;margin-top:3px}
-.offer-price-label{font-size:10px;margin-top:6px}
-.offer-price{font-size:12px;margin-top:3px}
-.offer-trade{
-font-size:10px;
-padding:7px 3px;
-margin-top:7px
-}
-.bottom-nav{height:70px}
-.section-title h2{font-size:17px}
-.view-btn,.refresh-btn{
-padding:6px 7px;
-font-size:11px
-}
-}
-
-@media(max-width:330px){
-.offer-user{font-size:10px}
-.offer-label{font-size:9px}
-.offer-amount{font-size:10px}
-.offer-price-label{font-size:9px}
-.offer-price{font-size:11px}
-.offer-trade{font-size:9px}
-}
+button,input,select,textarea{font-family:Arial,sans-serif}button{cursor:pointer}button:disabled{opacity:.6;cursor:not-allowed}
+header{height:68px;background:#fff;border-bottom:1px solid #e2e8ea;display:flex;align-items:center;justify-content:space-between;padding:0 18px;position:sticky;top:0;z-index:100}
+.brand{display:flex;align-items:center;gap:10px}.brand-logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#064e46,#10a889);position:relative;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.12);flex-shrink:0}
+.p-left{position:absolute;left:8px;top:10px;width:13px;height:23px;border:4px solid #fff;border-right:0;border-radius:8px 0 0 8px}.p-right{position:absolute;right:8px;top:10px;width:13px;height:23px;border:4px solid #fff;border-left:0;border-radius:0 8px 8px 0}.center-dot{width:10px;height:10px;background:#fff;border-radius:50%;position:absolute}
+.brand-name{font-size:19px;font-weight:800}.brand-name span{color:#087f73}.security{color:#b4233f;font-size:13px;font-weight:bold}
+.container{width:100%;max-width:850px;margin:auto;padding:18px}
+.search-box{background:#fff;border:1px solid #dfe7e9;border-radius:13px;padding:12px;margin-top:4px}.search-box input{width:100%;border:1px solid #dfe4eb;border-radius:10px;padding:11px;outline:none;font-size:14px}.search-box input:focus,.modal-box input:focus,.modal-box textarea:focus{border-color:#087f73;box-shadow:0 0 0 3px rgba(8,127,115,.08)}
+.section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:22px 0 12px}.section-title h2{font-size:20px}.section-title span{color:#b4233f;font-size:13px;font-weight:bold}.section-actions{display:flex;align-items:center;gap:7px}.view-btn,.refresh-btn{border:none;background:#fbecef;color:#b4233f;padding:7px 10px;border-radius:8px;font-weight:bold}
+.offer-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.offer-card{background:#fff;border:1px solid #dfe7e9;border-radius:12px;overflow:hidden;min-width:0}.offer-main{padding:10px}
+.offer-user{width:100%;border:0;background:transparent;padding:0;text-align:left;font-size:13px;font-weight:bold;color:#172033;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.offer-user:hover{color:#087f73}
+.offer-label,.offer-price-label{margin-top:8px;font-size:11px;font-weight:bold;color:#7b8790;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.offer-amount{margin-top:3px;font-size:13px;font-weight:bold;color:#596579;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.offer-price-label{margin-top:7px}.offer-price{margin-top:3px;font-size:14px;font-weight:bold;color:#b4233f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.offer-method{margin-top:7px;font-size:10px;font-weight:bold;color:#596579;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pending-badge{margin-top:7px;background:#fff4db;color:#9a6500;border:1px solid #efdca8;border-radius:7px;padding:6px 5px;text-align:center;font-size:9px;font-weight:bold}.offer-trade{width:100%;margin-top:9px;border:none;padding:8px 5px;border-radius:8px;background:#b4233f;color:#fff;font-size:12px;font-weight:bold}.offer-trade:hover{background:#941d35}.offer-trade.pending{background:#edf0f4;color:#596579}.offer-trade.continue{background:#087f73}.offer-trade.continue:hover{background:#06695f}
+.empty{grid-column:1/-1;background:#fff;border:1px dashed #ccd8da;border-radius:15px;padding:30px 18px;text-align:center;color:#7b8790}.empty-icon{font-size:34px;margin-bottom:10px}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center;padding:18px}.modal.show{display:flex}.modal-box{width:100%;max-width:430px;max-height:90vh;overflow:auto;background:#fff;border-radius:18px;padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.2)}.modal-box h3{margin-bottom:15px}.modal-box input,.modal-box textarea{width:100%;border:1px solid #dfe4eb;border-radius:10px;padding:11px;margin-bottom:10px;outline:none;font-size:14px}.modal-box input[readonly]{background:#f7fbfa;color:#172033;font-weight:bold}.modal-actions{display:flex;gap:8px;margin-top:5px}.modal-actions button{flex:1;padding:11px;border:none;border-radius:10px;font-weight:bold}.close-btn{background:#edf0f4;color:#172033}.confirm-btn{background:#b4233f;color:#fff}
+.details{padding:15px 16px;border-top:1px solid #e5ebec;background:#fafcfc}.detail-row{display:flex;justify-content:space-between;gap:10px;margin-bottom:9px;font-size:13px}.detail-row:last-child{margin-bottom:0}.detail-row span:first-child{color:#7a8790}.detail-row strong{text-align:right;overflow-wrap:anywhere}
+.trade-value-card{margin-top:4px;margin-bottom:12px;background:#f7fbfa;border:1px solid #d7ebe7;border-radius:13px;padding:14px}.trade-value-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.trade-value-badge{background:#e2f5ef;color:#087f73;border-radius:7px;padding:5px 8px;font-size:11px;font-weight:bold}.trade-value-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;font-size:13px}.trade-value-row span:first-child{color:#71808a}.trade-value-row strong{text-align:right}.trade-value-total{border-top:1px solid #dce9e7;margin-top:5px;padding-top:10px}
+.bottom-nav{position:fixed;left:0;right:0;bottom:0;height:72px;background:#fff;border-top:1px solid #dfe7e9;display:flex;justify-content:space-around;align-items:center;z-index:300;box-shadow:0 -4px 15px rgba(0,0,0,.05)}.bottom-nav a{color:#7b8790;text-decoration:none;text-align:center;font-size:11px;min-width:55px}.bottom-nav a.active{color:#b4233f;font-weight:bold}.nav-icon{display:block;font-size:21px;margin-bottom:4px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#172033;color:#fff;padding:12px 16px;border-radius:10px;font-size:13px;z-index:1000;display:none;max-width:90%;text-align:center}.toast.show{display:block}.toast.success{background:#087f73}.toast.error{background:#b4233f}.toast.warning{background:#9a6500}
+@media(max-width:450px){.container{padding:14px}.brand-name{font-size:17px}.security{font-size:11px}.offer-list{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.offer-main{padding:8px}.offer-user{font-size:11px}.offer-label,.offer-method{font-size:10px;margin-top:6px}.offer-amount{font-size:11px;margin-top:3px}.offer-price-label{font-size:10px;margin-top:6px}.offer-price{font-size:12px;margin-top:3px}.offer-trade{font-size:10px;padding:7px 3px;margin-top:7px}.bottom-nav{height:70px}.section-title h2{font-size:17px}.view-btn,.refresh-btn{padding:6px 7px;font-size:11px}.pending-badge{font-size:8px;padding:5px 2px}}
+@media(max-width:330px){.offer-user{font-size:10px}.offer-label,.offer-method{font-size:9px}.offer-amount{font-size:10px}.offer-price-label{font-size:9px}.offer-price{font-size:11px}.offer-trade{font-size:9px}}
 </style>
 </head>
-
 <body>
 
 <header>
-
 <div class="brand">
-
-<div class="brand-logo" aria-label="P2P Social logo">
-<div class="p-left"></div>
-<div class="p-right"></div>
-<div class="center-dot"></div>
+<div class="brand-logo" aria-label="P2P Social logo"><div class="p-left"></div><div class="p-right"></div><div class="center-dot"></div></div>
+<div class="brand-name">P2P <span>Social</span></div>
 </div>
-
-<div class="brand-name">
-P2P <span>Social</span>
-</div>
-
-</div>
-
 <div class="security">🔴 Sell Market</div>
-
 </header>
 
 <main class="container">
-
-<div class="search-box">
-
-<input
-id="usdtSearch"
-type="number"
-min="0"
-step="0.01"
-inputmode="decimal"
-placeholder="Search USDT Amount"
-oninput="searchUSDTAmount()"
->
-
-</div>
+<div class="search-box"><input id="usdtSearch" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Search USDT Amount" oninput="searchUSDTAmount()"></div>
 
 <div class="section-title">
-
-<h2>
-🔴 (<span id="offerCount">0</span>)
-</h2>
-
+<h2>🔴 Available Buy (<span id="offerCount">0</span>)</h2>
 <div class="section-actions">
-
-<button
-type="button"
-id="offerViewButton"
-class="view-btn"
-onclick="toggleOffers()"
->
-View All
-</button>
-
-<button
-type="button"
-class="refresh-btn"
-onclick="loadSellMarket()"
->
-Refresh
-</button>
-
+<button type="button" id="offerViewButton" class="view-btn" onclick="toggleOffers()">View All</button>
+<button type="button" class="refresh-btn" onclick="loadSellMarket()">Refresh</button>
 </div>
-
 </div>
 
 <section id="offers" class="offer-list">
-
-<div class="empty">
-
-<div class="empty-icon">
-🔴
-</div>
-
-<strong>
-Loading available buy...
-</strong>
-
-</div>
-
+<div class="empty"><div class="empty-icon">🔴</div><strong>Loading available buy...</strong></div>
 </section>
-
 </main>
 
-<div
-id="tradeModal"
-class="modal"
-role="dialog"
-aria-modal="true"
->
-
+<div id="tradeModal" class="modal" role="dialog" aria-modal="true">
 <div class="modal-box">
-
-<h3>
-Sell USDT to Buyer
-</h3>
-
+<h3>Sell USDT to Buyer</h3>
 <div id="tradeSummary"></div>
-
-<input
-id="tradeAmount"
-type="number"
-min="0"
-step="0.01"
-placeholder="Available USDT"
-readonly
->
+<input id="tradeAmount" type="number" min="0" step="0.01" placeholder="Available USDT" readonly>
 
 <div class="trade-value-card">
-
-<div class="trade-value-title">
-
-<strong>
-Trade Value
-</strong>
-
-<span class="trade-value-badge">
-USDT
-</span>
-
-</div>
-
-<div class="trade-value-row">
-
-<span>
-USDT amount
-</span>
-
-<strong id="tradeAmountPreview">
-0.000000
-</strong>
-
-</div>
-
-<div class="trade-value-row">
-
-<span>
-Trade value
-</span>
-
-<strong id="tradeValuePreview">
-0.00
-</strong>
-
-</div>
-
-<div class="trade-value-row trade-value-total">
-
-<span>
-You receive
-</span>
-
-<strong id="tradeTotalPreview">
-0.00
-</strong>
-
-</div>
-
+<div class="trade-value-title"><strong>Trade Value</strong><span class="trade-value-badge">USDT</span></div>
+<div class="trade-value-row"><span>USDT amount</span><strong id="tradeAmountPreview">0.000000</strong></div>
+<div class="trade-value-row"><span>Trade value</span><strong id="tradeValuePreview">0.00</strong></div>
+<div class="trade-value-row trade-value-total"><span>You receive</span><strong id="tradeTotalPreview">0.00</strong></div>
 </div>
 
 <div class="modal-actions">
-
-<button
-type="button"
-class="close-btn"
-onclick="closeModal('tradeModal')"
->
-Cancel
-</button>
-
-<button
-type="button"
-class="confirm-btn"
-id="tradeSubmitButton"
-onclick="submitTrade()"
->
-Start Trade
-</button>
-
+<button type="button" class="close-btn" onclick="closeModal('tradeModal')">Cancel</button>
+<button type="button" class="confirm-btn" id="tradeSubmitButton" onclick="submitTrade()">Start Trade</button>
+</div>
+</div>
 </div>
 
-</div>
-
-</div>
-
-<div
-id="toast"
-class="toast"
-role="status"
-aria-live="polite"
-></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <nav class="bottom-nav">
-
-<a href="index.html">
-<span class="nav-icon">🏠</span>
-Home
-</a>
-
-<a href="live.html">
-<span class="nav-icon">🟢</span>
-Buy
-</a>
-
-<a href="wallet.html" class="active">
-<span class="nav-icon">🔴</span>
-Sell
-</a>
-
-<a href="message.html">
-<span class="nav-icon">💬</span>
-Messages
-</a>
-
-<a href="profile.html">
-<span class="nav-icon">👤</span>
-Profile
-</a>
-
+<a href="index.html"><span class="nav-icon">🏠</span>Home</a>
+<a href="live.html"><span class="nav-icon">🟢</span>Buy</a>
+<a href="wallet.html" class="active"><span class="nav-icon">🔴</span>Sell</a>
+<a href="message.html"><span class="nav-icon">💬</span>Messages</a>
+<a href="profile.html"><span class="nav-icon">👤</span>Profile</a>
 </nav>
 
 <script>
+const SUPABASE_URL="https://mbsvuwrgigqfporxwpfr.supabase.co",
+SUPABASE_PUBLISHABLE_KEY="sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa",
+supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 
-const SUPABASE_URL =
-"https://mbsvuwrgigqfporxwpfr.supabase.co";
+let currentSession=null,currentUser=null,currentUsername=null,availableOffers=[],filteredOffers=[],selectedOffer=null,offersExpanded=false,realtimeChannel=null,tradeRealtimeChannel=null,toastTimer=null,isLoading=false,actionLoading=false;
+const usernameCache=new Map,pendingTrades=new Map();
 
-const SUPABASE_PUBLISHABLE_KEY =
-"sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
-
-const supabaseClient =
-window.supabase.createClient(
-SUPABASE_URL,
-SUPABASE_PUBLISHABLE_KEY
-);
-
-let currentSession = null;
-let currentUser = null;
-let currentUsername = null;
-
-let availableOffers = [];
-let filteredOffers = [];
-let selectedOffer = null;
-
-let offersExpanded = false;
-
-let realtimeChannel = null;
-let tradeRealtimeChannel = null;
-
-let toastTimer = null;
-let isLoading = false;
-let actionLoading = false;
-
-const usernameCache = new Map();
-
-document.addEventListener(
-"DOMContentLoaded",
-startApp
-);
+document.addEventListener("DOMContentLoaded",startApp);
 
 async function startApp(){
-
-try{
-
-const {
-data,
-error
-} =
-await supabaseClient.auth.getSession();
-
-if(error){
-
-console.error(
-"SESSION ERROR:",
-error
-);
-
-showLogin();
-return;
-
+ try{
+  const {data,error}=await supabaseClient.auth.getSession();
+  if(error)throw error;
+  currentSession=data.session;
+  if(!currentSession)return showLogin();
+  currentUser=currentSession.user;
+  await loadCurrentUsername();
+  await loadSellMarket();
+  setupRealtime();
+ }catch(e){console.error(e);toast(getErrorMessage(e),"error")}
 }
 
-currentSession =
-data.session;
+function showLogin(){alert("Please login first.");location.href="login.html"}
 
-if(!currentSession){
-
-showLogin();
-return;
-
-}
-
-currentUser =
-currentSession.user;
-
-await loadCurrentUsername();
-
-await loadSellMarket();
-
-setupRealtime();
-
-}catch(error){
-
-console.error(
-"START ERROR:",
-error
-);
-
-toast(
-getErrorMessage(error),
-"error"
-);
-
-}
-
-}
-
-function showLogin(){
-
-alert(
-"Please login first."
-);
-
-window.location.href =
-"login.html";
-
-}
-
-supabaseClient.auth.onAuthStateChange(
-(event,session)=>{
-
-currentSession =
-session;
-
-currentUser =
-session?.user ||
-null;
-
-if(!currentUser){
-
-currentUsername =
-null;
-
-}
-
-if(
-event ===
-"SIGNED_OUT"
-){
-
-if(realtimeChannel){
-
-supabaseClient.removeChannel(
-realtimeChannel
-);
-
-realtimeChannel =
-null;
-
-}
-
-if(tradeRealtimeChannel){
-
-supabaseClient.removeChannel(
-tradeRealtimeChannel
-);
-
-tradeRealtimeChannel =
-null;
-
-}
-
-window.location.href =
-"login.html";
-
-}
-
-}
-);
+supabaseClient.auth.onAuthStateChange((event,session)=>{
+ currentSession=session;currentUser=session?.user||null;
+ if(!currentUser)currentUsername=null;
+ if(event==="SIGNED_OUT"){
+  if(realtimeChannel)supabaseClient.removeChannel(realtimeChannel);
+  if(tradeRealtimeChannel)supabaseClient.removeChannel(tradeRealtimeChannel);
+  location.href="login.html";
+ }
+});
 
 async function loadCurrentUsername(){
-
-if(!currentUser)return;
-
-try{
-
-const {
-data,
-error
-} =
-await supabaseClient
-.from("profiles")
-.select("username")
-.eq(
-"id",
-currentUser.id
-)
-.maybeSingle();
-
-if(error)throw error;
-
-currentUsername =
-data?.username ||
-currentUser
-.user_metadata
-?.username ||
-null;
-
-if(currentUsername){
-
-usernameCache.set(
-String(currentUser.id),
-currentUsername
-);
-
+ if(!currentUser)return;
+ try{
+  const {data,error}=await supabaseClient.from("profiles").select("username").eq("id",currentUser.id).maybeSingle();
+  if(error)throw error;
+  currentUsername=data?.username||currentUser.user_metadata?.username||null;
+  if(currentUsername)usernameCache.set(String(currentUser.id),currentUsername);
+ }catch(e){currentUsername=currentUser.user_metadata?.username||null}
 }
 
-}catch(error){
-
-console.error(
-"USERNAME ERROR:",
-error
-);
-
-currentUsername =
-currentUser
-.user_metadata
-?.username ||
-null;
-
-}
-
-}
-
-async function getUsername(userId){
-
-if(!userId){
-
-return "User";
-
-}
-
-const key =
-String(userId);
-
-if(
-usernameCache.has(key)
-){
-
-return usernameCache.get(
-key
-);
-
-}
-
-try{
-
-const {
-data,
-error
-} =
-await supabaseClient
-.from("profiles")
-.select("username")
-.eq(
-"id",
-userId
-)
-.maybeSingle();
-
-if(
-!error &&
-data?.username
-){
-
-usernameCache.set(
-key,
-data.username
-);
-
-return data.username;
-
-}
-
-}catch(error){
-
-console.error(
-"PROFILE USERNAME ERROR:",
-error
-);
-
-}
-
-return "User";
-
+async function getUsername(id){
+ if(!id)return"User";
+ const k=String(id);
+ if(usernameCache.has(k))return usernameCache.get(k);
+ try{
+  const {data}=await supabaseClient.from("profiles").select("username").eq("id",id).maybeSingle();
+  if(data?.username){usernameCache.set(k,data.username);return data.username}
+ }catch(e){}
+ return"User";
 }
 
 async function loadOfferUsernames(){
-
-const ids = [
-...new Set(
-availableOffers
-.map(
-offer =>
-offer.user_id
-)
-.filter(Boolean)
-.map(String)
-)
-];
-
-const missing =
-ids.filter(
-id =>
-!usernameCache.has(id)
-);
-
-if(!missing.length)return;
-
-try{
-
-const {
-data,
-error
-} =
-await supabaseClient
-.from("profiles")
-.select(
-"id,username"
-)
-.in(
-"id",
-missing
-);
-
-if(error)throw error;
-
-(data || []).forEach(
-profile => {
-
-if(
-profile.id &&
-profile.username
-){
-
-usernameCache.set(
-String(profile.id),
-profile.username
-);
-
+ const ids=[...new Set(availableOffers.map(x=>x.user_id).filter(Boolean).map(String))],
+ missing=ids.filter(x=>!usernameCache.has(x));
+ if(!missing.length)return;
+ try{
+  const {data,error}=await supabaseClient.from("profiles").select("id,username").in("id",missing);
+  if(error)throw error;
+  (data||[]).forEach(x=>x.id&&x.username&&usernameCache.set(String(x.id),x.username));
+ }catch(e){console.error(e)}
 }
 
-}
-);
-
-}catch(error){
-
-console.error(
-"BUY USERNAMES ERROR:",
-error
-);
-
-}
-
+async function loadPendingTrades(ids){
+ pendingTrades.clear();
+ if(!ids.length)return;
+ try{
+  const {data,error}=await supabaseClient.from("p2p_trades").select("id,order_id,buyer_id,seller_id,amount,status,payment_confirmed,expires_at").in("order_id",ids);
+  if(error)throw error;
+  (data||[]).forEach(t=>{
+   const s=normalizeStatus(t.status);
+   if(!["completed","released","cancelled","canceled","expired","closed"].includes(s)&&t.order_id!=null)
+    pendingTrades.set(String(t.order_id),t);
+  });
+ }catch(e){console.error("PENDING TRADE ERROR:",e)}
 }
 
 async function loadSellMarket(){
+ if(!currentUser)return showLogin();
+ if(isLoading)return;
+ isLoading=true;
+ const box=document.getElementById("offers");
+ if(box)box.innerHTML='<div class="empty">Loading available buy...</div>';
 
-if(!currentUser){
+ try{
+  const {data,error}=await supabaseClient.from("p2p_orders").select("*").eq("order_type","buy").in("status",["active","open"]).neq("user_id",currentUser.id).order("created_at",{ascending:false});
+  if(error)throw error;
 
-showLogin();
-return;
+  const orders=(data||[]).filter(o=>String(o.user_id)!==String(currentUser.id)&&["active","open"].includes(normalizeStatus(o.status)));
+  await loadPendingTrades(orders.map(o=>o.id));
 
-}
+  availableOffers=orders.filter(o=>getOfferAvailableAmount(o)>0||pendingTrades.has(String(o.id)));
+  availableOffers.sort((a,b)=>{
+   const pa=Number(a.price),pb=Number(b.price);
+   if(Number.isFinite(pa)&&Number.isFinite(pb)&&pa!==pb)return pa-pb;
+   if(Number.isFinite(pa)&&!Number.isFinite(pb))return-1;
+   if(!Number.isFinite(pa)&&Number.isFinite(pb))return 1;
+   return (Date.parse(b.created_at||"")||0)-(Date.parse(a.created_at||"")||0);
+  });
 
-if(isLoading)return;
-
-isLoading = true;
-
-const container =
-document.getElementById(
-"offers"
-);
-
-if(container){
-
-container.innerHTML =
-'<div class="empty">Loading available buy...</div>';
-
-}
-
-try{
-
-const {
-data,
-error
-} =
-await supabaseClient
-.from("p2p_orders")
-.select("*")
-.eq(
-"order_type",
-"buy"
-)
-.in(
-"status",
-[
-"active",
-"open"
-]
-)
-.gt(
-"remaining_amount",
-0
-)
-.neq(
-"user_id",
-currentUser.id
-)
-.order(
-"created_at",
-{
-ascending:false
-}
-);
-
-if(error){
-
-console.error(
-"SELL MARKET ERROR:",
-error
-);
-
-availableOffers = [];
-filteredOffers = [];
-
-if(container){
-
-container.innerHTML =
-emptyHtml(
-"⚠️",
-"Could not load available buy.",
-getErrorMessage(error)
-);
-
-}
-
-return;
-
-}
-
-availableOffers =
-(data || []).filter(
-offer =>
-String(
-offer.user_id
-) !==
-String(
-currentUser.id
-)
-&&
-["active","open"].includes(
-normalizeStatus(
-offer.status
-)
-)
-&&
-getOfferAvailableAmount(
-offer
-) > 0
-);
-
-availableOffers.sort(
-(a,b) => {
-
-const priceA =
-Number(a?.price);
-
-const priceB =
-Number(b?.price);
-
-const validA =
-Number.isFinite(priceA);
-
-const validB =
-Number.isFinite(priceB);
-
-if(validA && validB){
-
-if(priceA !== priceB){
-
-return priceA - priceB;
-
-}
-
-}else if(validA && !validB){
-
-return -1;
-
-}else if(!validA && validB){
-
-return 1;
-
-}
-
-const pairA =
-getPairSortKey(a);
-
-const pairB =
-getPairSortKey(b);
-
-if(pairA < pairB)return -1;
-if(pairA > pairB)return 1;
-
-const timeA =
-Date.parse(
-a?.created_at ||
-""
-);
-
-const timeB =
-Date.parse(
-b?.created_at ||
-""
-);
-
-return (
-Number.isFinite(timeB)
-?
-timeB
-:
-0
-) -
-(
-Number.isFinite(timeA)
-?
-timeA
-:
-0
-);
-
-}
-);
-
-await loadOfferUsernames();
-
-searchUSDTAmount();
-
-}catch(error){
-
-console.error(
-"SELL MARKET ERROR:",
-error
-);
-
-if(container){
-
-container.innerHTML =
-emptyHtml(
-"⚠️",
-"Could not load available buy.",
-getErrorMessage(error)
-);
-
-}
-
-}finally{
-
-isLoading = false;
-
-}
-
+  await loadOfferUsernames();
+  searchUSDTAmount();
+ }catch(e){
+  console.error(e);
+  availableOffers=[];filteredOffers=[];
+  if(box)box.innerHTML=emptyHtml("⚠️","Could not load available buy.",getErrorMessage(e));
+ }finally{isLoading=false}
 }
 
 function searchUSDTAmount(){
-
-const input =
-document.getElementById(
-"usdtSearch"
-);
-
-const value =
-Number(
-input?.value
-);
-
-if(
-input &&
-input.value.trim() !== "" &&
-Number.isFinite(value) &&
-value > 0
-){
-
-filteredOffers =
-availableOffers.filter(
-offer =>
-getOfferAvailableAmount(
-offer
-) >= value
-);
-
-}else{
-
-filteredOffers =
-[...availableOffers];
-
-}
-
-offersExpanded = false;
-
-const count =
-document.getElementById(
-"offerCount"
-);
-
-if(count){
-
-count.textContent =
-filteredOffers.length;
-
-}
-
-renderSellMarket();
-
+ const input=document.getElementById("usdtSearch"),v=Number(input?.value);
+ filteredOffers=input&&input.value.trim()!==""&&Number.isFinite(v)&&v>0
+  ?availableOffers.filter(o=>getOfferAvailableAmount(o)>=v||pendingTrades.has(String(o.id)))
+  :[...availableOffers];
+ offersExpanded=false;
+ const c=document.getElementById("offerCount");if(c)c.textContent=filteredOffers.length;
+ renderSellMarket();
 }
 
 function renderSellMarket(){
-
-const container =
-document.getElementById(
-"offers"
-);
-
-if(!container)return;
-
-if(!filteredOffers.length){
-
-const searchValue =
-document.getElementById(
-"usdtSearch"
-)?.value.trim();
-
-if(searchValue){
-
-container.innerHTML =
-emptyHtml(
-"🔎",
-"No buy available for this USDT amount.",
-"Try a smaller USDT amount."
-);
-
-}else{
-
-container.innerHTML =
-emptyHtml(
-"🔴",
-"No available buy.",
-"Active buyers will appear here."
-);
-
+ const box=document.getElementById("offers");if(!box)return;
+ if(!filteredOffers.length){
+  const q=document.getElementById("usdtSearch")?.value.trim();
+  box.innerHTML=emptyHtml(q?"🔎":"🔴",q?"No buy available for this USDT amount.":"No available buy.",q?"Try a smaller USDT amount.":"Active buyers will appear here.");
+  updateOfferButton();return;
+ }
+ box.innerHTML="";
+ (offersExpanded?filteredOffers:filteredOffers.slice(0,15)).forEach(o=>{
+  if(String(o.user_id)===String(currentUser.id))return;
+  const username=usernameCache.get(String(o.user_id))||"Buyer",pending=pendingTrades.get(String(o.id)),
+  mine=pending&&String(pending.seller_id)===String(currentUser.id),
+  amount=getOfferAvailableAmount(o),display=amount>0?amount:Number(pending?.amount||0),
+  card=document.createElement("div");
+  card.className="offer-card";
+  const parts=getPairParts(o.pair||o.trading_pair);
+  let statusText="Pending Payment";
+  if(pending){
+   const s=normalizeStatus(pending.status);
+   if(s==="paid"||s==="payment_confirmed"||pending.payment_confirmed)statusText="Payment Confirmed";
+   else if(s==="disputed")statusText="Trade Disputed";
+  }
+  card.innerHTML=`<div class="offer-main">
+   <button type="button" class="offer-user" onclick="viewUser('${escapeJs(o.user_id)}')">👤 ${escapeHtml(username)}</button>
+   <div class="offer-label">USDT</div>
+   <div class="offer-amount">${escapeHtml((display||0).toLocaleString(undefined,{maximumFractionDigits:6}))} USDT</div>
+   <div class="offer-price-label">Price</div>
+   <div class="offer-price">${escapeHtml(money(o.price))} ${escapeHtml(parts.quote||"ETB")}</div>
+   <div class="offer-method">Payment: ${escapeHtml(o.payment_method||"Bank Transfer")}</div>
+   ${pending?`<div class="pending-badge">⏳ ${escapeHtml(statusText)}</div>`:""}
+   <button type="button" class="offer-trade ${pending?(mine?"continue":"pending"):""}" ${pending&&!mine?"disabled":""} onclick="${pending?mine?`openExistingTrade('${escapeJs(pending.id)}')`:"":`openTrade('${escapeJs(o.id)}')`}">${pending?(mine?"Continue Trade":"Pending Payment"):"Sell"}</button>
+  </div>`;
+  box.appendChild(card);
+ });
+ updateOfferButton();
 }
 
-updateOfferButton();
-
-return;
-
-}
-
-container.innerHTML =
-"";
-
-const items =
-offersExpanded
-?
-filteredOffers
-:
-filteredOffers.slice(
-0,
-15
-);
-
-items.forEach(
-offer => {
-
-if(
-String(
-offer.user_id
-) ===
-String(
-currentUser.id
-)
-){
-
-return;
-
-}
-
-const username =
-usernameCache.get(
-String(
-offer.user_id
-)
-) ||
-"Buyer";
-
-const card =
-document.createElement(
-"div"
-);
-
-card.className =
-"offer-card";
-
-const amount =
-getOfferAvailableAmount(
-offer
-);
-
-const amountText =
-amount.toLocaleString(
-undefined,
-{
-maximumFractionDigits:6
-}
-) +
-" USDT";
-
-card.innerHTML = `
-
-<div class="offer-main">
-
-<button
-type="button"
-class="offer-user"
-onclick="viewUser('${escapeJs(offer.user_id)}')"
->
-👤 ${escapeHtml(username)}
-</button>
-
-<div class="offer-label">
-USDT
-</div>
-
-<div class="offer-amount">
-${escapeHtml(amountText)}
-</div>
-
-<div class="offer-price-label">
-Price
-</div>
-
-<div class="offer-price">
-${escapeHtml(money(offer.price))}
-</div>
-
-<button
-type="button"
-class="offer-trade"
-onclick="openTrade('${escapeJs(offer.id)}')"
->
-Sell
-</button>
-
-</div>
-`;
-
-container.appendChild(
-card
-);
-
-}
-);
-
-updateOfferButton();
-
-}
-
-function getPairSortKey(offer){
-
-const pair =
-String(
-offer?.pair ||
-offer?.trading_pair ||
-""
-)
-.trim()
-.toUpperCase();
-
-return pair || "USDT_ETB";
-
-}
-
-function getOfferCountry(
-offer,
-quoteCurrency
-){
-
-const direct =
-offer?.country_name ||
-offer?.country ||
-offer?.countryName ||
-offer?.payment_country_name;
-
-if(direct){
-
-return String(direct);
-
-}
-
-const countries = {
-
-ETB:" ",
-NGN:"Nigeria",
-KES:"Kenya",
-UGX:"Uganda",
-TZS:"Tanzania",
-GHS:"Ghana",
-ZAR:"South Africa",
-EGP:"Egypt",
-MAD:"Morocco",
-AED:"United Arab Emirates",
-SAR:"Saudi Arabia",
-INR:"India",
-PKR:"Pakistan",
-BDT:"Bangladesh",
-IDR:"Indonesia",
-MYR:"Malaysia",
-THB:"Thailand",
-PHP:"Philippines",
-VND:"Vietnam",
-TRY:"Türkiye",
-USD:"United States",
-CAD:"Canada",
-GBP:"United Kingdom",
-AUD:"Australia",
-NZD:"New Zealand",
-BRL:"Brazil",
-MXN:"Mexico",
-ARS:"Argentina",
-COP:"Colombia",
-JPY:"Japan",
-KRW:"South Korea",
-SGD:"Singapore",
-CHF:"Switzerland"
-
-};
-
-return countries[
-String(
-quoteCurrency ||
-""
-).toUpperCase()
-] ||
-"";
-
-}
-
-function getOfferBankName(offer){
-
-return (
-offer?.bank_name ||
-offer?.bankName ||
-offer?.payment_details?.bank_name ||
-offer?.payment_details?.bankName ||
-""
-);
-
-}
-
-function getOfferAccountName(offer){
-
-return (
-offer?.account_name ||
-offer?.accountName ||
-offer?.payment_details?.account_name ||
-offer?.payment_details?.accountName ||
-""
-);
-
-}
-
-function getOfferAccountNumber(offer){
-
-return (
-offer?.account_number ||
-offer?.accountNumber ||
-offer?.payment_details?.account_number ||
-offer?.payment_details?.accountNumber ||
-""
-);
-
-}
-
-function viewUser(userId){
-
-if(!userId)return;
-
-window.location.href =
-"profile.html?user_id=" +
-encodeURIComponent(
-userId
-);
-
-}
-
-async function openMessagesForTrade(
-tradeId,
-offer
-){
-
-if(
-!tradeId ||
-!offer ||
-!offer.user_id
-){
-
-toast(
-"Trade started, but buyer information is missing.",
-"error"
-);
-
-return;
-
-}
-
-if(!currentUser){
-
-showLogin();
-return;
-
-}
-
-try{
-
-const buyerId =
-offer.user_id;
-
-let conversation =
-null;
-
-let {
-data,
-error
-} =
-await supabaseClient
-.from("conversations")
-.select("id")
-.eq(
-"user_one",
-currentUser.id
-)
-.eq(
-"user_two",
-buyerId
-)
-.maybeSingle();
-
-if(error)throw error;
-
-conversation =
-data;
-
-if(!conversation){
-
-const reverseResult =
-await supabaseClient
-.from("conversations")
-.select("id")
-.eq(
-"user_one",
-buyerId
-)
-.eq(
-"user_two",
-currentUser.id
-)
-.maybeSingle();
-
-if(
-reverseResult.error
-)throw reverseResult.error;
-
-conversation =
-reverseResult.data;
-
-}
-
-if(!conversation){
-
-const createResult =
-await supabaseClient
-.from("conversations")
-.insert({
-user_one:
-currentUser.id,
-
-user_two:
-buyerId
-})
-.select("id")
-.single();
-
-if(
-createResult.error
-){
-
-const retryResult =
-await supabaseClient
-.from("conversations")
-.select("id")
-.eq(
-"user_one",
-buyerId
-)
-.eq(
-"user_two",
-currentUser.id
-)
-.maybeSingle();
-
-if(
-retryResult.error
-)throw createResult.error;
-
-conversation =
-retryResult.data;
-
-if(!conversation){
-
-throw createResult.error;
-
-}
-
-}else{
-
-conversation =
-createResult.data;
-
-}
-
-}
-
-if(
-!conversation ||
-!conversation.id
-){
-
-throw new Error(
-"Conversation could not be created."
-);
-
-}
-
-const orderMessage =
-"🔴 P2P Sell started. Please complete the payment for this trade.";
-
-const {
-data:existingMessage,
-error:existingMessageError
-} =
-await supabaseClient
-.from("messages")
-.select("id")
-.eq(
-"conversation_id",
-conversation.id
-)
-.eq(
-"sender_id",
-currentUser.id
-)
-.eq(
-"message_type",
-"order"
-)
-.eq(
-"order_id",
-tradeId
-)
-.maybeSingle();
-
-if(
-existingMessageError
-){
-
-throw existingMessageError;
-
-}
-
-if(!existingMessage){
-
-const {
-error:messageError
-} =
-await supabaseClient
-.from("messages")
-.insert({
-conversation_id:
-conversation.id,
-
-sender_id:
-currentUser.id,
-
-content:
-orderMessage,
-
-message_type:
-"order",
-
-order_id:
-tradeId
-});
-
-if(messageError){
-
-throw messageError;
-
-}
-
-}
-
-const username =
-await getUsername(
-buyerId
-);
-
-const params =
-new URLSearchParams();
-
-params.set(
-"trade_id",
-String(tradeId)
-);
-
-params.set(
-"order_id",
-String(tradeId)
-);
-
-if(username){
-
-params.set(
-"username",
-username
-);
-
-}
-
-window.location.href =
-"message.html?" +
-params.toString();
-
-}catch(error){
-
-console.error(
-"P2P MESSAGE ERROR:",
-error
-);
-
-toast(
-"Trade started, but the P2P trade message could not be created: " +
-getErrorMessage(error),
-"error"
-);
-
-}
-
+function openExistingTrade(id){location.href="message.html?trade_id="+encodeURIComponent(id)+"&order_id="+encodeURIComponent(id)}
+
+function getPairSortKey(o){return String(o?.pair||o?.trading_pair||"").trim().toUpperCase()||"USDT_ETB"}
+function getOfferCountry(o,c){return o?.country_name||o?.country||o?.countryName||o?.payment_country_name||({ETB:"Ethiopia",NGN:"Nigeria",KES:"Kenya",UGX:"Uganda",TZS:"Tanzania",GHS:"Ghana",ZAR:"South Africa",EGP:"Egypt",INR:"India"}[String(c||"").toUpperCase()]||"")}
+function getOfferBankName(o){return o?.bank_name||o?.bankName||o?.payment_details?.bank_name||o?.payment_details?.bankName||""}
+function getOfferAccountName(o){return o?.account_name||o?.accountName||o?.payment_details?.account_name||o?.payment_details?.accountName||""}
+function getOfferAccountNumber(o){return o?.account_number||o?.accountNumber||o?.payment_details?.account_number||o?.payment_details?.accountNumber||""}
+
+function viewUser(id){if(id)location.href="profile.html?user_id="+encodeURIComponent(id)}
+
+async function openMessagesForTrade(tradeId,offer){
+ if(!tradeId||!offer?.user_id)return toast("Trade started, but buyer information is missing.","error");
+ if(!currentUser)return showLogin();
+ try{
+  const buyerId=offer.user_id;
+  let {data:conversation,error}=await supabaseClient.from("conversations").select("id").eq("user_one",currentUser.id).eq("user_two",buyerId).maybeSingle();
+  if(error)throw error;
+  if(!conversation){
+   const r=await supabaseClient.from("conversations").select("id").eq("user_one",buyerId).eq("user_two",currentUser.id).maybeSingle();
+   if(r.error)throw r.error;conversation=r.data;
+  }
+  if(!conversation){
+   const r=await supabaseClient.from("conversations").insert({user_one:currentUser.id,user_two:buyerId}).select("id").single();
+   if(r.error){
+    const x=await supabaseClient.from("conversations").select("id").eq("user_one",buyerId).eq("user_two",currentUser.id).maybeSingle();
+    if(x.error)throw r.error;conversation=x.data;
+   }else conversation=r.data;
+  }
+  if(!conversation?.id)throw new Error("Conversation could not be created.");
+
+  const bankName=getOfferBankName(offer),accountName=getOfferAccountName(offer),accountNumber=getOfferAccountNumber(offer);
+  let orderMessage="🔴 P2P Sell started. Please complete the payment for this trade.";
+  if(bankName||accountName||accountNumber)orderMessage+="\n\n🏦 Bank Transfer\n"+(bankName?"Bank Name: "+bankName+"\n":"")+(accountName?"Account Name: "+accountName+"\n":"")+(accountNumber?"Account Number: "+accountNumber:"");
+
+  const {data:existingMessage,error:me}=await supabaseClient.from("messages").select("id").eq("conversation_id",conversation.id).eq("sender_id",currentUser.id).eq("message_type","order").eq("order_id",tradeId).maybeSingle();
+  if(me)throw me;
+  if(!existingMessage){
+   const {error:e}=await supabaseClient.from("messages").insert({conversation_id:conversation.id,sender_id:currentUser.id,content:orderMessage,message_type:"order",order_id:tradeId});
+   if(e)throw e;
+  }
+  const username=await getUsername(buyerId),p=new URLSearchParams({trade_id:String(tradeId),order_id:String(tradeId)});
+  if(username)p.set("username",username);
+  location.href="message.html?"+p.toString();
+ }catch(e){
+  console.error(e);
+  toast("Trade started, but the P2P trade message could not be created: "+getErrorMessage(e),"error");
+ }
 }
 
 function updateOfferButton(){
+ const b=document.getElementById("offerViewButton");if(!b)return;
+ b.style.display=filteredOffers.length<=15?"none":"block";
+ b.textContent=offersExpanded?"Show 15":"View All";
+}
+function toggleOffers(){offersExpanded=!offersExpanded;renderSellMarket()}
 
-const button =
-document.getElementById(
-"offerViewButton"
-);
+async function openTrade(id){
+ selectedOffer=availableOffers.find(o=>String(o.id)===String(id));
+ if(!selectedOffer)return toast("This available buy is no longer available. Refresh.","warning");
+ const pending=pendingTrades.get(String(selectedOffer.id));
+ if(pending){
+  if(String(pending.seller_id)===String(currentUser.id))return openExistingTrade(pending.id);
+  return toast("This buy offer already has a pending trade.","warning");
+ }
+ if(String(selectedOffer.user_id)===String(currentUser.id))return toast("You cannot sell to your own buy offer.","warning");
+ if(!["active","open"].includes(normalizeStatus(selectedOffer.status)))return toast("This available buy is no longer available. Refresh.","warning");
 
-if(!button)return;
+ const available=getOfferAvailableAmount(selectedOffer);
+ if(available<=0)return toast("This available buy has no remaining amount.","warning");
 
-if(
-filteredOffers.length <= 15
-){
-
-button.style.display =
-"none";
-
-button.textContent =
-"View All";
-
-return;
-
+ const input=document.getElementById("tradeAmount");
+ input.value=available.toFixed(2);input.min="1";input.max=available.toFixed(2);
+ const parts=getPairParts(selectedOffer.pair||selectedOffer.trading_pair),username=usernameCache.get(String(selectedOffer.user_id))||"Buyer";
+ document.getElementById("tradeSummary").innerHTML=`<div class="details" style="margin-bottom:12px;">
+ ${detail("Buyer",username)}${getOfferCountry(selectedOffer,parts.quote)?detail("Country",getOfferCountry(selectedOffer,parts.quote)):""}${detail("Pair",formatPair(selectedOffer))}${detail("Buying price",money(selectedOffer.price)+" "+(parts.quote||"ETB"))}${detail("Available",formatAmount(selectedOffer))}${detail("Payment",selectedOffer.payment_method||"Bank Transfer")}
+ <div style="margin-top:12px;padding-top:12px;border-top:1px solid #e5ebec"><div style="font-weight:bold;color:#b4233f;margin-bottom:9px">🏦 Bank Transfer</div>${getOfferBankName(selectedOffer)?detail("Bank Name",getOfferBankName(selectedOffer)):""}${getOfferAccountName(selectedOffer)?detail("Account Name",getOfferAccountName(selectedOffer)):""}${getOfferAccountNumber(selectedOffer)?detail("Account Number",getOfferAccountNumber(selectedOffer)):""}</div></div>`;
+ updateTradeValuePreview();openModal("tradeModal");
 }
 
-button.style.display =
-"block";
-
-button.textContent =
-offersExpanded
-?
-"Show 15"
-:
-"View All";
-
+function getOfferAvailableAmount(o){
+ if(!o)return 0;
+ for(const v of [o.remaining_amount,o.available_amount,o.remaining]){
+  if(v!==null&&v!==undefined&&v!==""){const n=Number(v);if(Number.isFinite(n)&&n>=0)return n}
+ }
+ const n=Number(o.amount);return Number.isFinite(n)&&n>=0?n:0;
 }
-
-function toggleOffers(){
-
-offersExpanded =
-!offersExpanded;
-
-renderSellMarket();
-
+function getMinimumTradeAmount(o){
+ if(!o)return 1;
+ for(const v of [o.min_trade_amount,o.minimum_amount,o.min_amount]){
+  const n=Number(v);if(Number.isFinite(n)&&n>0)return n;
+ }
+ return 1;
 }
-
-function openTrade(
-offerId
-){
-
-selectedOffer =
-availableOffers.find(
-offer =>
-String(
-offer.id
-) ===
-String(
-offerId
-)
-);
-
-if(!selectedOffer){
-
-toast(
-"This available buy is no longer available. Refresh.",
-"warning"
-);
-
-return;
-
-}
-
-if(
-String(
-selectedOffer.user_id
-) ===
-String(
-currentUser.id
-)
-){
-
-toast(
-"You cannot sell to your own buy offer.",
-"warning"
-);
-
-return;
-
-}
-
-if(
-!["active","open"].includes(
-normalizeStatus(
-selectedOffer.status
-)
-)
-){
-
-toast(
-"This available buy is no longer available. Refresh.",
-"warning"
-);
-
-return;
-
-}
-
-const available =
-getOfferAvailableAmount(
-selectedOffer
-);
-
-if(available <= 0){
-
-toast(
-"This available buy has no remaining amount.",
-"warning"
-);
-
-return;
-
-}
-
-const input =
-document.getElementById(
-"tradeAmount"
-);
-
-input.value =
-available.toFixed(2);
-
-input.min =
-"1";
-
-input.max =
-available.toFixed(2);
-
-const parts =
-getPairParts(
-selectedOffer.pair ||
-selectedOffer.trading_pair
-);
-
-const username =
-usernameCache.get(
-String(
-selectedOffer.user_id
-)
-) ||
-"Buyer";
-
-const country =
-getOfferCountry(
-selectedOffer,
-parts.quote
-);
-
-const bankName =
-getOfferBankName(
-selectedOffer
-);
-
-const accountName =
-getOfferAccountName(
-selectedOffer
-);
-
-const accountNumber =
-getOfferAccountNumber(
-selectedOffer
-);
-
-document.getElementById(
-"tradeSummary"
-).innerHTML = `
-
-<div
-class="details"
-style="margin-bottom:12px;"
->
-
-${detail(
-"Buyer",
-username
-)}
-
-${
-country
-?
-detail(
-"Country",
-country
-)
-:
-""
-}
-
-${detail(
-"Pair",
-formatPair(
-selectedOffer
-)
-)}
-
-${detail(
-"Buying price",
-money(
-selectedOffer.price
-) +
-" " +
-(
-parts.quote ||
-"ETB"
-)
-)}
-
-${detail(
-"Available",
-formatAmount(
-selectedOffer
-)
-)}
-
-<div
-style="
-margin-top:12px;
-padding-top:12px;
-border-top:1px solid #e5ebec;
-"
->
-
-<div
-style="
-font-weight:bold;
-color:#087f73;
-margin-bottom:9px;
-"
->
-🏦 Bank Transfer
-</div>
-
-${
-bankName
-?
-detail(
-"Bank Name",
-bankName
-)
-:
-""
-}
-
-${
-accountName
-?
-detail(
-"Account Name",
-accountName
-)
-:
-""
-}
-
-${
-accountNumber
-?
-detail(
-"Account Number",
-accountNumber
-)
-:
-""
-}
-
-</div>
-
-</div>
-
-`;
-
-updateTradeValuePreview();
-
-openModal(
-"tradeModal"
-);
-
-}
-
-function getOfferAvailableAmount(
-offer
-){
-
-if(!offer)return 0;
-
-for(
-const value of [
-offer.remaining_amount,
-offer.available_amount,
-offer.remaining
-]
-){
-
-if(
-value !== null &&
-value !== undefined &&
-value !== ""
-){
-
-const n =
-Number(value);
-
-if(
-Number.isFinite(n) &&
-n >= 0
-){
-
-return n;
-
-}
-
-}
-
-}
-
-const n =
-Number(
-offer.amount
-);
-
-return Number.isFinite(n) &&
-n >= 0
-?
-n
-:
-0;
-
-}
-
-function getMinimumTradeAmount(
-offer
-){
-
-if(!offer)return 1;
-
-for(
-const value of [
-offer.min_trade_amount,
-offer.minimum_amount,
-offer.min_amount
-]
-){
-
-const n =
-Number(value);
-
-if(
-Number.isFinite(n) &&
-n > 0
-){
-
-return n;
-
-}
-
-}
-
-return 1;
-
-}
-
-function getTradeValue(){
-
-if(!selectedOffer)return 0;
-
-const amount =
-Number(
-document.getElementById(
-"tradeAmount"
-)?.value
-) || 0;
-
-const price =
-Number(
-selectedOffer.price
-) || 0;
-
-return amount * price;
-
-}
-
+function getTradeValue(){return selectedOffer?(Number(document.getElementById("tradeAmount")?.value)||0)*(Number(selectedOffer.price)||0):0}
 function updateTradeValuePreview(){
-
-const amount =
-Number(
-document.getElementById(
-"tradeAmount"
-)?.value
-) || 0;
-
-const value =
-getTradeValue();
-
-const parts =
-getPairParts(
-selectedOffer?.pair ||
-selectedOffer?.trading_pair
-);
-
-const currency =
-parts.quote ||
-"ETB";
-
-const amountElement =
-document.getElementById(
-"tradeAmountPreview"
-);
-
-const valueElement =
-document.getElementById(
-"tradeValuePreview"
-);
-
-const totalElement =
-document.getElementById(
-"tradeTotalPreview"
-);
-
-if(amountElement){
-
-amountElement.textContent =
-Number.isFinite(amount)
-?
-amount.toLocaleString(
-undefined,
-{
-minimumFractionDigits:6,
-maximumFractionDigits:6
-}
-)
-:
-"0.000000";
-
-}
-
-if(valueElement){
-
-valueElement.textContent =
-money(value) +
-" " +
-currency;
-
-}
-
-if(totalElement){
-
-totalElement.textContent =
-money(value) +
-" " +
-currency;
-
-}
-
+ const a=Number(document.getElementById("tradeAmount")?.value)||0,v=getTradeValue(),c=getPairParts(selectedOffer?.pair||selectedOffer?.trading_pair).quote||"ETB";
+ const ae=document.getElementById("tradeAmountPreview"),ve=document.getElementById("tradeValuePreview"),te=document.getElementById("tradeTotalPreview");
+ if(ae)ae.textContent=a.toLocaleString(undefined,{minimumFractionDigits:6,maximumFractionDigits:6});
+ if(ve)ve.textContent=money(v)+" "+c;if(te)te.textContent=money(v)+" "+c;
 }
 
 async function submitTrade(){
+ if(actionLoading)return;
+ if(!currentUser)return showLogin();
+ if(!selectedOffer)return toast("Select an available buy first.","warning");
+ const pending=pendingTrades.get(String(selectedOffer.id));
+ if(pending){
+  if(String(pending.seller_id)===String(currentUser.id))return openExistingTrade(pending.id);
+  return toast("This buy offer already has a pending trade.","warning");
+ }
 
-if(actionLoading)return;
+ try{
+  const {data,error}=await supabaseClient.from("p2p_orders").select("*").eq("id",selectedOffer.id).maybeSingle();
+  if(error)throw error;
+  if(!data){closeModal("tradeModal");await loadSellMarket();return toast("This available buy is no longer available.","warning")}
+  selectedOffer=data;
+  if(String(data.user_id)===String(currentUser.id)||String(data.order_type).toLowerCase()!=="buy")return closeModal("tradeModal");
+  if(!["active","open"].includes(normalizeStatus(data.status)))return closeModal("tradeModal"),toast("This available buy is no longer active.","warning");
+  const freshTrades=await supabaseClient.from("p2p_trades").select("id,order_id,buyer_id,seller_id,status,payment_confirmed").eq("order_id",data.id);
+  if(freshTrades.error)throw freshTrades.error;
+  const active=(freshTrades.data||[]).find(t=>!["completed","released","cancelled","canceled","expired","closed"].includes(normalizeStatus(t.status)));
+  if(active){
+   pendingTrades.set(String(data.id),active);
+   renderSellMarket();
+   return String(active.seller_id)===String(currentUser.id)?openExistingTrade(active.id):toast("This buy offer already has a pending trade.","warning");
+  }
 
-if(!currentUser){
+  const available=getOfferAvailableAmount(data);
+  if(available<=0)return closeModal("tradeModal"),toast("This available buy has no remaining amount.","warning");
+  const amount=Number(document.getElementById("tradeAmount").value),minimum=getMinimumTradeAmount(data);
+  if(!Number.isFinite(amount)||amount<=0)return toast("Invalid available amount.","warning");
+  if(amount<minimum)return toast("Trade amount must be at least "+minimum+" USDT.","warning");
+  const normalized=Number(available.toFixed(2));
+  if(Math.abs(amount-normalized)>0.000001){
+   document.getElementById("tradeAmount").value=normalized.toFixed(2);updateTradeValuePreview();
+   return toast("You must sell the full available amount.","warning");
+  }
+  if(!confirm("Sell the full available amount of USDT to the buyer?"))return;
 
-showLogin();
-return;
-
+  const button=document.getElementById("tradeSubmitButton");actionLoading=true;button.disabled=true;button.textContent="Starting...";
+  const {data:trade,error:rpcError}=await supabaseClient.rpc("create_p2p_trade",{p_order_id:data.id,p_amount:amount});
+  if(rpcError)throw rpcError;
+  const tradeId=extractId(trade);
+  if(!tradeId)throw new Error("Trade started, but the trade ID was not returned.");
+  const offer=data;closeModal("tradeModal");toast("Sell trade started successfully.","success");selectedOffer=null;
+  await loadSellMarket();await openMessagesForTrade(tradeId,offer);
+ }catch(e){console.error(e);toast(getErrorMessage(e),"error")}
+ finally{
+  actionLoading=false;
+  const b=document.getElementById("tradeSubmitButton");if(b){b.disabled=false;b.textContent="Start Trade"}
+ }
 }
 
-if(!selectedOffer){
-
-toast(
-"Select an available buy first.",
-"warning"
-);
-
-return;
-
-}
-
-if(
-String(
-selectedOffer.user_id
-) ===
-String(
-currentUser.id
-)
-){
-
-toast(
-"You cannot trade with your own offer.",
-"warning"
-);
-
-closeModal(
-"tradeModal"
-);
-
-return;
-
-}
-
-let freshOffer =
-null;
-
-try{
-
-const {
-data,
-error
-} =
-await supabaseClient
-.from("p2p_orders")
-.select("*")
-.eq(
-"id",
-selectedOffer.id
-)
-.maybeSingle();
-
-if(error){
-
-toast(
-getErrorMessage(error),
-"error"
-);
-
-return;
-
-}
-
-if(!data){
-
-toast(
-"This available buy is no longer available.",
-"warning"
-);
-
-closeModal(
-"tradeModal"
-);
-
-await loadSellMarket();
-
-return;
-
-}
-
-freshOffer =
-data;
-
-}catch(error){
-
-toast(
-getErrorMessage(error),
-"error"
-);
-
-return;
-
-}
-
-selectedOffer =
-freshOffer;
-
-if(
-String(
-selectedOffer.order_type
-).toLowerCase() !==
-"buy"
-){
-
-toast(
-"This is not a buy market entry.",
-"warning"
-);
-
-closeModal(
-"tradeModal"
-);
-
-return;
-
-}
-
-if(
-String(
-selectedOffer.user_id
-) ===
-String(
-currentUser.id
-)
-){
-
-toast(
-"You cannot trade with your own entry.",
-"warning"
-);
-
-closeModal(
-"tradeModal"
-);
-
-return;
-
-}
-
-const status =
-normalizeStatus(
-selectedOffer.status
-);
-
-if(
-![
-"active",
-"open"
-].includes(status)
-){
-
-toast(
-"This available buy is no longer active.",
-"warning"
-);
-
-closeModal(
-"tradeModal"
-);
-
-await loadSellMarket();
-
-return;
-
-}
-
-const available =
-getOfferAvailableAmount(
-selectedOffer
-);
-
-if(
-!Number.isFinite(available) ||
-available <= 0
-){
-
-toast(
-"This available buy has no remaining amount.",
-"warning"
-);
-
-closeModal(
-"tradeModal"
-);
-
-await loadSellMarket();
-
-return;
-
-}
-
-const amount =
-Number(
-document.getElementById(
-"tradeAmount"
-).value
-);
-
-if(
-!Number.isFinite(amount) ||
-amount <= 0
-){
-
-toast(
-"Invalid available amount.",
-"warning"
-);
-
-return;
-
-}
-
-const minimumTrade =
-getMinimumTradeAmount(
-selectedOffer
-);
-
-if(
-amount < minimumTrade
-){
-
-toast(
-"Trade amount must be at least " +
-minimumTrade +
-" USDT.",
-"warning"
-);
-
-return;
-
-}
-
-const normalizedAmount =
-Number(
-available.toFixed(2)
-);
-
-if(
-!Number.isFinite(
-normalizedAmount
-) ||
-normalizedAmount <= 0
-){
-
-toast(
-"Invalid available amount.",
-"warning"
-);
-
-return;
-
-}
-
-if(
-Math.abs(
-amount -
-normalizedAmount
-) >
-0.000001
-){
-
-toast(
-"You must sell the full available amount.",
-"warning"
-);
-
-document.getElementById(
-"tradeAmount"
-).value =
-normalizedAmount.toFixed(2);
-
-updateTradeValuePreview();
-
-return;
-
-}
-
-if(
-available > 0 &&
-Math.abs(
-amount -
-available
-) >
-0.01
-){
-
-toast(
-"You must sell the full available amount.",
-"warning"
-);
-
-return;
-
-}
-
-if(
-!confirm(
-"Sell the full available amount of USDT to the buyer?"
-)
-){
-
-return;
-
-}
-
-const button =
-document.getElementById(
-"tradeSubmitButton"
-);
-
-actionLoading =
-true;
-
-button.disabled =
-true;
-
-button.textContent =
-"Starting...";
-
-try{
-
-const {
-data,
-error
-} =
-await supabaseClient.rpc(
-"create_p2p_trade",
-{
-p_order_id:
-selectedOffer.id,
-
-p_amount:
-amount
-}
-);
-
-if(error){
-
-toast(
-getErrorMessage(error),
-"error"
-);
-
-return;
-
-}
-
-const tradeId =
-extractId(data);
-
-if(!tradeId){
-
-toast(
-"Trade started, but the trade ID was not returned.",
-"error"
-);
-
-return;
-
-}
-
-const tradeOffer =
-selectedOffer;
-
-closeModal(
-"tradeModal"
-);
-
-toast(
-"Sell trade started successfully.",
-"success"
-);
-
-selectedOffer =
-null;
-
-await loadSellMarket();
-
-await openMessagesForTrade(
-tradeId,
-tradeOffer
-);
-
-}catch(error){
-
-toast(
-getErrorMessage(error),
-"error"
-);
-
-}finally{
-
-actionLoading =
-false;
-
-button.disabled =
-false;
-
-button.textContent =
-"Start Trade";
-
-}
-
-}
-
-function extractId(data){
-
-if(
-data === null ||
-data === undefined
-){
-
-return null;
-
-}
-
-if(
-typeof data ===
-"string" ||
-typeof data ===
-"number"
-){
-
-return data;
-
-}
-
-if(
-typeof data ===
-"object"
-){
-
-return (
-data.id ||
-data.trade_id ||
-data.order_id ||
-data[0]?.id ||
-data[0]?.trade_id ||
-data[0]?.order_id ||
-null
-);
-
-}
-
-return null;
-
-}
-
+function extractId(d){if(d==null)return null;if(typeof d==="string"||typeof d==="number")return d;if(typeof d==="object")return d.id||d.trade_id||d.order_id||d[0]?.id||d[0]?.trade_id||d[0]?.order_id||null}
 function setupRealtime(){
-
-if(!currentUser)return;
-
-if(realtimeChannel){
-
-supabaseClient.removeChannel(
-realtimeChannel
-);
-
+ if(!currentUser)return;
+ if(realtimeChannel)supabaseClient.removeChannel(realtimeChannel);
+ realtimeChannel=supabaseClient.channel("sell-market-live-"+currentUser.id).on("postgres_changes",{event:"*",schema:"public",table:"p2p_orders"},()=>loadSellMarket()).subscribe();
+ if(tradeRealtimeChannel)supabaseClient.removeChannel(tradeRealtimeChannel);
+ tradeRealtimeChannel=supabaseClient.channel("sell-trades-live-"+currentUser.id).on("postgres_changes",{event:"*",schema:"public",table:"p2p_trades"},()=>loadSellMarket()).subscribe();
+}
+function openModal(id){const e=document.getElementById(id);if(!e)return;e.classList.add("show");setTimeout(()=>e.querySelector("input,textarea")?.focus(),50)}
+function closeModal(id){document.getElementById(id)?.classList.remove("show")}
+function formatPair(o){const p=String(o?.pair||o?.trading_pair||"");return p.includes("_")?p.replace("_"," / "):p.includes("/")?p:p||"P2P"}
+function formatAmount(o){const a=getOfferAvailableAmount(o),p=getPairParts(o?.pair||o?.trading_pair);return a.toLocaleString(undefined,{maximumFractionDigits:6})+" "+(p.base||"USDT")}
+function getPairParts(p){const x=String(p||"").trim().toUpperCase().replace("/","_").split("_");return{base:x[0]||"USDT",quote:x[1]||"ETB"}}
+function money(v){const n=Number(v);return Number.isFinite(n)?n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:6}):"0.00"}
+function normalizeStatus(s){return String(s||"").trim().toLowerCase()}
+function detail(l,v){return`<div class="detail-row"><span>${escapeHtml(l)}</span><strong>${escapeHtml(String(v??""))}</strong></div>`}
+function emptyHtml(i,t,m){return`<div class="empty"><div class="empty-icon">${escapeHtml(i||"ℹ️")}</div><strong>${escapeHtml(t||"")}</strong>${m?`<div style="margin-top:7px">${escapeHtml(m)}</div>`:""}</div>`}
+function escapeHtml(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}
+function escapeJs(v){return String(v??"").replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,'\\"').replace(/\r/g,"\\r").replace(/\n/g,"\\n")}
+function getErrorMessage(e){return e?.message||e?.details||e?.hint||"Something went wrong."}
+function toast(m,type="normal"){
+ const e=document.getElementById("toast");if(!e)return;clearTimeout(toastTimer);e.textContent=String(m||"");e.classList.remove("success","error","warning");if(["success","error","warning"].includes(type))e.classList.add(type);e.classList.add("show");toastTimer=setTimeout(()=>e.classList.remove("show"),3500)
 }
 
-realtimeChannel =
-supabaseClient
-.channel(
-"sell-market-live-" +
-currentUser.id
-)
-.on(
-"postgres_changes",
-{
-event:"*",
-schema:"public",
-table:"p2p_orders"
-},
-() => {
-
-loadSellMarket();
-
-}
-)
-.subscribe(
-status => {
-
-console.log(
-"Sell market realtime:",
-status
-);
-
-}
-);
-
-if(tradeRealtimeChannel){
-
-supabaseClient.removeChannel(
-tradeRealtimeChannel
-);
-
-}
-
-tradeRealtimeChannel =
-supabaseClient
-.channel(
-"sell-trades-live-" +
-currentUser.id
-)
-.on(
-"postgres_changes",
-{
-event:"*",
-schema:"public",
-table:"p2p_trades"
-},
-() => {
-
-loadSellMarket();
-
-}
-)
-.subscribe(
-status => {
-
-console.log(
-"Sell trades realtime:",
-status
-);
-
-}
-);
-
-}
-
-function openModal(id){
-
-const e =
-document.getElementById(
-id
-);
-
-if(!e)return;
-
-e.classList.add(
-"show"
-);
-
-setTimeout(
-() => {
-
-const input =
-e.querySelector(
-"input,textarea"
-);
-
-if(input){
-
-input.focus();
-
-}
-
-},
-50
-);
-
-}
-
-function closeModal(id){
-
-const e =
-document.getElementById(
-id
-);
-
-if(e){
-
-e.classList.remove(
-"show"
-);
-
-}
-
-}
-
-function formatPair(offer){
-
-const pair =
-String(
-offer?.pair ||
-offer?.trading_pair ||
-""
-);
-
-if(
-pair.includes("_")
-){
-
-return pair.replace(
-"_",
-" / "
-);
-
-}
-
-if(
-pair.includes("/")
-){
-
-return pair;
-
-}
-
-return pair ||
-"P2P";
-
-}
-
-function formatAmount(offer){
-
-const amount =
-getOfferAvailableAmount(
-offer
-);
-
-const parts =
-getPairParts(
-offer?.pair ||
-offer?.trading_pair ||
-""
-);
-
-return amount.toLocaleString(
-undefined,
-{
-maximumFractionDigits:6
-}
-) +
-" " +
-(
-parts.base ||
-"USDT"
-);
-
-}
-
-function getPairParts(pair){
-
-const normalized =
-String(
-pair ||
-""
-)
-.trim()
-.toUpperCase()
-.replace(
-"/",
-"_"
-);
-
-const parts =
-normalized.split("_");
-
-return {
-
-base:
-parts[0] ||
-"USDT",
-
-quote:
-parts[1] ||
-"ETB"
-
-};
-
-}
-
-function money(value){
-
-const number =
-Number(value);
-
-if(
-!Number.isFinite(number)
-){
-
-return "0.00";
-
-}
-
-return number.toLocaleString(
-undefined,
-{
-minimumFractionDigits:2,
-maximumFractionDigits:6
-}
-);
-
-}
-
-function normalizeStatus(status){
-
-return String(
-status ||
-""
-)
-.trim()
-.toLowerCase();
-
-}
-
-function statusClass(status){
-
-const value =
-normalizeStatus(
-status
-);
-
-if(
-[
-"active",
-"open",
-"paid",
-"payment_confirmed"
-].includes(value)
-){
-
-return value;
-
-}
-
-if(
-[
-"expired",
-"cancelled",
-"closed"
-].includes(value)
-){
-
-return value;
-
-}
-
-if(
-value ===
-"disputed"
-){
-
-return "disputed";
-
-}
-
-if(
-[
-"completed",
-"released"
-].includes(value)
-){
-
-return value;
-
-}
-
-return "";
-
-}
-
-function detail(
-label,
-value
-){
-
-const rendered =
-String(
-value ?? ""
-);
-
-return `
-<div class="detail-row">
-
-<span>
-${escapeHtml(label)}
-</span>
-
-<strong>
-${escapeHtml(rendered)}
-</strong>
-
-</div>
-`;
-
-}
-
-function emptyHtml(
-icon,
-title,
-message
-){
-
-return `
-<div class="empty">
-
-<div class="empty-icon">
-${escapeHtml(
-icon ||
-"ℹ️"
-)}
-</div>
-
-<strong>
-${escapeHtml(
-title ||
-""
-)}
-</strong>
-
-${
-message
-?
-`
-<div style="margin-top:7px;">
-${escapeHtml(
-message
-)}
-</div>
-`
-:
-""
-}
-
-</div>
-`;
-
-}
-
-function escapeHtml(value){
-
-return String(
-value ?? ""
-)
-.replace(
-/&/g,
-"&amp;"
-)
-.replace(
-/</g,
-"&lt;"
-)
-.replace(
-/>/g,
-"&gt;"
-)
-.replace(
-/"/g,
-"&quot;"
-)
-.replace(
-/'/g,
-"&#039;"
-);
-
-}
-
-function escapeJs(value){
-
-return String(
-value ?? ""
-)
-.replace(
-/\\/g,
-"\\\\"
-)
-.replace(
-/'/g,
-"\\'"
-)
-.replace(
-/"/g,
-'\\"'
-)
-.replace(
-/\r/g,
-"\\r"
-)
-.replace(
-/\n/g,
-"\\n"
-);
-
-}
-
-function getErrorMessage(error){
-
-if(!error){
-
-return "Something went wrong.";
-
-}
-
-return (
-error.message ||
-error.details ||
-error.hint ||
-"Something went wrong."
-);
-
-}
-
-function toast(
-message,
-type="normal"
-){
-
-const e =
-document.getElementById(
-"toast"
-);
-
-if(!e)return;
-
-clearTimeout(
-toastTimer
-);
-
-e.textContent =
-String(
-message ||
-""
-);
-
-e.classList.remove(
-"success",
-"error",
-"warning"
-);
-
-if(
-[
-"success",
-"error",
-"warning"
-].includes(type)
-){
-
-e.classList.add(
-type
-);
-
-}
-
-e.classList.add(
-"show"
-);
-
-toastTimer =
-setTimeout(
-() => {
-
-e.classList.remove(
-"show"
-);
-
-},
-3500
-);
-
-}
-
-document.addEventListener(
-"click",
-event => {
-
-if(
-event.target.classList.contains(
-"modal"
-)
-){
-
-event.target.classList.remove(
-"show"
-);
-
-}
-
-}
-);
-
-document.addEventListener(
-"keydown",
-event => {
-
-if(
-event.key ===
-"Escape"
-){
-
-document
-.querySelectorAll(
-".modal.show"
-)
-.forEach(
-modal =>
-modal.classList.remove(
-"show"
-)
-);
-
-}
-
-}
-);
-
-setInterval(
-async () => {
-
-if(
-currentUser &&
-document.visibilityState ===
-"visible"
-){
-
-try{
-
-await loadSellMarket();
-
-}catch(error){
-
-console.error(
-"AUTO REFRESH ERROR:",
-error
-);
-
-}
-
-}
-
-},
-30000
-);
-
-window.addEventListener(
-"beforeunload",
-() => {
-
-if(realtimeChannel){
-
-supabaseClient.removeChannel(
-realtimeChannel
-);
-
-}
-
-if(tradeRealtimeChannel){
-
-supabaseClient.removeChannel(
-tradeRealtimeChannel
-);
-
-}
-
-});
-
+document.addEventListener("click",e=>{if(e.target.classList.contains("modal"))e.target.classList.remove("show")});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")document.querySelectorAll(".modal.show").forEach(x=>x.classList.remove("show"))});
+setInterval(()=>{if(currentUser&&document.visibilityState==="visible")loadSellMarket().catch(console.error)},30000);
+window.addEventListener("beforeunload",()=>{if(realtimeChannel)supabaseClient.removeChannel(realtimeChannel);if(tradeRealtimeChannel)supabaseClient.removeChannel(tradeRealtimeChannel)});
 </script>
-
 </body>
 </html>

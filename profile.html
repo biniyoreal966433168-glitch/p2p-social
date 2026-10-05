@@ -40,7 +40,34 @@ function getVerificationStatus(){return!!(currentProfile&&(currentProfile.verifi
 async function getAuthenticatedBicycleUser(){const{data,error}=await supabaseClient.auth.getUser();if(error||!data?.user){currentSession=null;return{user:null,error:error||new Error("Not authenticated.")}}currentSession=currentSession||{};currentSession.user=data.user;const{data:s}=await supabaseClient.auth.getSession();currentSession.access_token=s?.session?.access_token;return{user:data.user,error:null}}
 async function bicycleRequest(body,user){const{data}=await supabaseClient.auth.getSession(),token=data?.session?.access_token||currentSession?.access_token;if(!token)throw new Error("Authentication required.");const r=await fetch(BICYCLE_API_URL,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json",Authorization:"Bearer "+token,apikey:SUPABASE_PUBLISHABLE_KEY},body:JSON.stringify({...body,user_id:user.id})}),raw=await r.text();let x={};try{x=raw?JSON.parse(raw):{}}catch{}if(!r.ok)throw new Error("Bicycle API "+r.status+": "+(x?.error||x?.message||x?.detail||raw||"Request failed."));return x}
 function numericBalance(r){const d=Array.isArray(r)?r[0]:r?.data&&Array.isArray(r.data)?r.data[0]:r?.data||r||{};for(const k of["ton_balance","balance_ton","usdt_balance","available_usdt","balance","available","amount","value"]){if(d?.[k]!=null&&Number.isFinite(Number(d[k])))return Number(d[k])}return 0}
-async function loadBlockchainBalances(){if(!currentSession?.user?.id)return;let u=await supabaseClient.from("usdt_balances").select("usdt_balance").eq("user_id",currentSession.user.id).maybeSingle();if(!u.error&&u.data)currentUSDTBalance=Number(u.data.usdt_balance)||0;let t=await supabaseClient.from("ton_balances").select("*").eq("user_id",currentSession.user.id).maybeSingle();if(!t.error&&t.data)currentTONBalance=numericBalance(t.data);bicycleUSDTBalance=currentUSDTBalance;bicycleTONBalance=currentTONBalance;renderBalances()}
+
+async function loadBlockchainBalances(){
+  if(!currentSession?.user?.id)return;
+  const{user,error}=await getAuthenticatedBicycleUser();
+  if(error||!user)return;
+
+  try{
+    const u=await bicycleRequest({action:"balance",currency:"USDT"},user);
+    currentUSDTBalance=Number(u?.usdt_balance??u?.balance??u?.available_usdt??0)||0;
+    bicycleUSDTBalance=currentUSDTBalance;
+  }catch(e){
+    console.error("Bicycle USDT balance:",e);
+    currentUSDTBalance=0;
+    bicycleUSDTBalance=0;
+  }
+
+  try{
+    const t=await bicycleRequest({action:"balance",currency:"TON"},user);
+    currentTONBalance=Number(t?.balance_ton??t?.ton_balance??t?.balance??0)||0;
+    bicycleTONBalance=currentTONBalance;
+  }catch(e){
+    console.error("Bicycle TON balance:",e);
+    currentTONBalance=0;
+    bicycleTONBalance=0;
+  }
+
+  renderBalances();
+}
 async function loadBicycleWallet(){return loadBlockchainBalances()}async function loadUSDTBalance(){return loadBlockchainBalances()}async function loadTONBalance(){return loadBlockchainBalances()}
 async function loadLockedBalances(){if(!currentSession)return;const r=await supabaseClient.from("p2p_orders").select("remaining_amount,amount,order_type,currency,status").eq("user_id",currentSession.user.id).eq("order_type","sell").in("status",["open","active","pending"]);if(r.error)return;currentLockedUSDT=(r.data||[]).filter(x=>String(x.currency||"USDT").toUpperCase()=="USDT").reduce((t,o)=>t+Math.max(0,Number(o.remaining_amount??o.amount??0)),0);currentLockedTON=(r.data||[]).filter(x=>String(x.currency||"USDT").toUpperCase()=="TON").reduce((t,o)=>t+Math.max(0,Number(o.remaining_amount??o.amount??0)),0);renderBalances()}
 async function refreshWallet(){await loadBlockchainBalances();await loadLockedBalances();await loadMyOrders()}

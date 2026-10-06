@@ -1,0 +1,101 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Profile • P2P Social</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}body{background:#f5f7fb;color:#17212b;padding-bottom:75px}.top{background:#087f73;color:#fff;padding:16px;text-align:center;font-size:20px;font-weight:700}.wrap{max-width:600px;margin:auto;padding:14px}.card,.section{background:#fff;border-radius:16px;margin-bottom:12px;padding:16px;box-shadow:0 2px 10px #0000000d}.profile{text-align:center}.avatar{width:82px;height:82px;border-radius:50%;object-fit:cover;background:#dfe8e6;margin:auto;display:block;border:3px solid #087f73}.username{font-size:21px;font-weight:700;margin-top:10px}.bio{color:#68747c;font-size:14px;margin-top:5px}.badge{display:inline-block;margin-top:7px;background:#e8f5f2;color:#087f73;border-radius:20px;padding:5px 10px;font-size:12px;font-weight:700}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:18px}.stat{padding:10px 4px;border-radius:12px;background:#f5f7fb}.stat b{display:block;font-size:18px}.stat span{font-size:12px;color:#68747c}.follow{width:100%;border:0;border-radius:12px;background:#087f73;color:#fff;padding:12px;margin-top:14px;font-size:15px;font-weight:700}.follow.following{background:#e5f2f0;color:#087f73}.section-title{font-size:17px;font-weight:700;margin-bottom:12px}.trade-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.trade{background:#f5f7fb;border-radius:12px;padding:13px}.trade span{display:block;color:#68747c;font-size:12px;margin-bottom:5px}.trade b{font-size:17px}.day{margin-top:9px;text-align:center;background:#e8f5f2;color:#087f73;padding:10px;border-radius:10px;font-size:13px;font-weight:700}.post{border-top:1px solid #edf0f2;padding:13px 0}.post:first-child{border-top:0;padding-top:0}.post-head{display:flex;align-items:center;gap:9px}.post-head img{width:38px;height:38px;border-radius:50%;object-fit:cover}.post-name{font-weight:700;font-size:14px}.post-time{font-size:11px;color:#89949b;margin-top:2px}.post-content{font-size:14px;line-height:1.5;margin-top:9px;white-space:pre-wrap}.post-actions{display:flex;gap:18px;margin-top:10px;color:#68747c;font-size:13px}.empty{text-align:center;color:#89949b;padding:20px;font-size:14px}.bottom{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e6eaec;height:65px;display:flex;justify-content:space-around;align-items:center;z-index:10}.bottom a{color:#68747c;text-decoration:none;text-align:center;font-size:11px}.bottom a.active{color:#087f73;font-weight:700}.bottom i{display:block;font-style:normal;font-size:20px;margin-bottom:3px}
+</style></head><body>
+<div class="top">👤 Profile</div><main class="wrap"><div id="loading" class="card empty">Loading...</div><div id="profilePage" style="display:none">
+<section class="card profile"><img id="avatar" class="avatar"><div id="username" class="username"></div><div id="bio" class="bio"></div><div id="badge" class="badge">User</div><div class="stats"><div class="stat"><b id="postCount">0</b><span>Posts</span></div><div class="stat"><b id="followerCount">0</b><span>Followers</span></div><div class="stat"><b id="followingCount">0</b><span>Following</span></div></div><button id="followBtn" class="follow">Follow</button></section>
+
+<section class="section"><div class="section-title">Trading Activity</div><div class="trade-grid"><div class="trade"><span>30 Day Complete</span><b id="complete30">0</b></div><div class="trade"><span>30 Day Trade</span><b id="trade30">0</b></div><div class="trade"><span>Total Trade</span><b id="totalTrade">0</b></div><div class="trade"><span>Day</span><b id="userDay">0</b></div></div><div id="completeRate" class="day">30 Day Completion: 0%</div></section>
+
+<section class="section"><div class="section-title">User Post</div><div id="posts"><div class="empty">No posts yet</div></div></section>
+</div></main>
+
+<nav class="bottom"><a href="index.html"><i>🏠</i>Home</a><a href="live.html"><i>🟢</i>Buy</a><a href="wallet.html"><i>🔴</i>Sell</a><a href="message.html"><i>💬</i>Messages</a><a href="profile.html" class="active"><i>👤</i>Profile</a></nav>
+
+<script>
+const S="https://mbsvuwrgigqfporxwpfr.supabase.co",K="sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa",sb=supabase.createClient(S,K),$=id=>document.getElementById(id),params=new URLSearchParams(location.search),viewedUserId=params.get("user_id");
+
+let me=null,user=null,following=false;
+
+async function start(){
+ let{data,error}=await sb.auth.getSession();
+ if(error||!data.session)return location.href="index.html";
+ me=data.session.user;
+ let id=viewedUserId||me.id;
+ let{data:p}=await sb.from("profiles").select("*").or(`id.eq.${id},user_id.eq.${id}`).maybeSingle();
+ if(!p)return $("loading").textContent="User not found";
+ user=p;
+ await Promise.all([loadFollow(),loadPosts(),loadStats()]);
+ render();
+ $("loading").style.display="none";
+ $("profilePage").style.display="block";
+}
+
+async function loadFollow(){
+ if(!me||!user)return;
+ let{data}=await sb.from("followers").select("id").eq("follower_id",me.id).eq("following_id",user.user_id||user.id).maybeSingle();
+ following=!!data;
+}
+
+async function loadPosts(){
+ let id=user.user_id||user.id;
+ let{data}=await sb.from("posts").select("*").eq("user_id",id).order("created_at",{ascending:false});
+ let posts=data||[];
+ $("postCount").textContent=posts.length;
+ $("posts").innerHTML=posts.length?posts.map(p=>`<article class="post"><div class="post-head"><img src="${esc(user.avatar_url||"")}"><div><div class="post-name">${esc(user.username||"User")}</div><div class="post-time">${time(p.created_at)}</div></div></div><div class="post-content">${esc(p.content||p.body||p.text||"")}</div><div class="post-actions"><span>♡ Like</span><span>💬 Comment</span><span>↗ Share</span></div></article>`).join(""):'<div class="empty">No posts yet</div>';
+}
+
+async function loadStats(){
+ let id=user.user_id||user.id;
+ let complete=[],trades=[];
+ let q=await sb.from("p2p_trades").select("*").or(`buyer_id.eq.${id},seller_id.eq.${id}`);
+ if(q.data)trades=q.data;
+ let now=Date.now(),thirty=now-30*86400000;
+ let recent=trades.filter(t=>new Date(t.created_at||t.completed_at||t.updated_at||0).getTime()>=thirty);
+ let completed=trades.filter(t=>String(t.status||"").toLowerCase()==="completed");
+ let recentCompleted=recent.filter(t=>String(t.status||"").toLowerCase()==="completed");
+ $("complete30").textContent=recentCompleted.length;
+ $("trade30").textContent=recent.length;
+ $("totalTrade").textContent=trades.length;
+ $("completeRate").textContent="30 Day Completion: "+(recent.length?Math.round(recentCompleted.length/recent.length*100):0)+"%";
+ let first=trades.map(t=>new Date(t.created_at||t.completed_at||t.updated_at||0).getTime()).filter(Boolean).sort()[0];
+ $("userDay").textContent=first?Math.max(1,Math.floor((now-first)/86400000)+1):0;
+
+ let f=await sb.from("followers").select("follower_id,following_id").or(`following_id.eq.${id},follower_id.eq.${id}`);
+ let rows=f.data||[];
+ $("followerCount").textContent=rows.filter(x=>x.following_id===id).length;
+ $("followingCount").textContent=rows.filter(x=>x.follower_id===id).length;
+}
+
+function render(){
+ $("avatar").src=user.avatar_url||"";
+ $("username").textContent="@"+(user.username||"user");
+ $("bio").textContent=user.bio||"";
+ $("badge").textContent=user.verification_status==="verified"?"✓ Verified":"User";
+ if((user.user_id||user.id)===me.id){
+  $("followBtn").style.display="none";
+ }else{
+  $("followBtn").style.display="block";
+  $("followBtn").textContent=following?"Following":"Follow";
+  $("followBtn").className="follow"+(following?" following":"");
+ }
+}
+
+$("followBtn").onclick=async()=>{
+ let id=user.user_id||user.id;
+ if(id===me.id)return;
+ if(following){
+  await sb.from("followers").delete().eq("follower_id",me.id).eq("following_id",id);
+  following=false;
+ }else{
+  let{error}=await sb.from("followers").insert({follower_id:me.id,following_id:id});
+  if(error)return;
+  following=true;
+ }
+ render();
+ await loadStats();
+};
+
+function esc(v){return String(v).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function time(v){if(!v)return"";let d=new Date(v);return isNaN(d)?"":d.toLocaleDateString()}
+start();
+</script></body></html>

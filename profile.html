@@ -73,10 +73,136 @@ async function saveDepositAddress(id,address){const r=await supabaseClient.from(
 function getBicycleAddress(r){return String(r?.address||r?.deposit_address||r?.receive_address||r?.wallet_address||r?.data?.address||r?.data?.deposit_address||r?.data?.receive_address||"").trim()}
 async function updateDepositAddress(){const box=$("depositAddress"),{user,error}=await getAuthenticatedBicycleUser();if(error||!user){box.textContent="Please login first.";return}box.textContent="Loading...";try{let a=currentDepositAddress||await findSavedDepositAddress(user.id);if(!a){a=getBicycleAddress(await bicycleRequest({action:"address",currency:"TON"},user));if(a){currentDepositAddress=a;await saveDepositAddress(user.id,a)}}currentDepositAddress=a;box.textContent=a||"Address unavailable."}catch(e){box.textContent="Address unavailable."}}
 async function openDeposit(){$("depositModal").classList.add("show");await updateDepositAddress()}function closeDeposit(){$("depositModal").classList.remove("show")}async function copyDepositAddress(){if(!currentDepositAddress)return;try{await navigator.clipboard.writeText(currentDepositAddress);alert("Address copied.")}catch{alert(currentDepositAddress)}}
-async function openWithdraw(c="USDT"){withdrawCurrency=c==="TON"?"TON":"USDT";$("withdrawNetwork").value=withdrawCurrency;$("withdrawTitle").textContent=" Withdrawal "+withdrawCurrency;$("withdrawAddress").placeholder=withdrawCurrency==="TON"?"Enter TON address":"Enter TON USDT address";updateWithdrawCurrency();$("withdrawModal").classList.add("show")}
-function updateWithdrawCurrency(){withdrawCurrency=$("withdrawNetwork").value;const b=withdrawCurrency==="TON"?currentTONBalance:currentUSDTBalance;$("withdrawBalance").textContent=formatNumber(b)+" "+withdrawCurrency;$("withdrawFeeInfo").textContent=withdrawCurrency==="USDT"?"Minimum 10 USDT • Withdrawal Fee 1%":"TON withdrawal • Withdrawal Fee 1%"}
+
+async function openWithdraw(c="USDT"){
+  withdrawCurrency=c==="TON"?"TON":"USDT";
+  $("withdrawNetwork").value=withdrawCurrency;
+  $("withdrawTitle").textContent=" Withdrawal "+withdrawCurrency;
+  $("withdrawAddress").placeholder=withdrawCurrency==="TON"?"Enter TON address":"Enter TON USDT address";
+  $("withdrawAddress").value="";
+  $("withdrawAmount").value="";
+  $("withdrawSubmitButton").disabled=false;
+  $("withdrawSubmitButton").textContent="Withdraw";
+  updateWithdrawCurrency();
+  $("withdrawModal").classList.add("show");
+}
+
+function updateWithdrawCurrency(){
+  withdrawCurrency=$("withdrawNetwork").value;
+  const b=withdrawCurrency==="TON"?currentTONBalance:currentUSDTBalance;
+  $("withdrawBalance").textContent=formatNumber(b)+" "+withdrawCurrency;
+  $("withdrawFeeInfo").textContent=withdrawCurrency==="USDT"?"Minimum 10 USDT • Withdrawal Fee 1%":"TON withdrawal • Withdrawal Fee 1%";
+}
+
 function closeWithdraw(){$("withdrawModal").classList.remove("show")}
-async function submitWithdrawal(){if(!currentSession)return showLogin();const address=$("withdrawAddress").value.trim(),amount=Number($("withdrawAmount").value),b=$("withdrawSubmitButton");if(!address)return alert("Please enter withdrawal address.");if(!Number.isFinite(amount)||amount<=0)return alert("Invalid amount.");const balance=withdrawCurrency==="TON"?currentTONBalance:currentUSDTBalance;if(withdrawCurrency==="USDT"&&(amount<10||amount>balance))return alert(amount<10?"Minimum withdrawal is 10 USDT.":"Insufficient USDT balance.");if(withdrawCurrency==="TON"&&amount>balance)return alert("Insufficient TON balance.");const{user,error}=await getAuthenticatedBicycleUser();if(error||!user)return alert("Please login again.");b.disabled=true;b.textContent="Sending...";try{await bicycleRequest({action:"withdrawal",currency:withdrawCurrency,amount,destination:address,fee_rate:WITHDRAWAL_FEE_RATE},user);closeWithdraw();await refreshWallet();await loadUSDTHistory();alert("Withdrawal sent successfully.")}catch(e){alert("Withdrawal failed:\n\n"+e.message)}finally{b.disabled=false;b.textContent="Withdraw"}}
+
+async function getWithdrawalStatus(queryId,user){
+  return bicycleRequest({
+    action:"withdrawal_status",
+    query_id:queryId
+  },user);
+}
+
+function getWithdrawalState(x){
+  const s=String(
+    x?.bicycle?.status||
+    x?.bicycle?.state||
+    x?.local?.status||
+    x?.status||
+    ""
+  ).toLowerCase();
+  if(["completed","complete","success","successful","confirmed","done","sent"].includes(s))return"success";
+  if(["failed","failure","error","rejected","cancelled","canceled"].includes(s))return"failed";
+  return"pending";
+}
+
+async function waitWithdrawalResult(queryId,user){
+  for(let i=0;i<6;i++){
+    try{
+      const r=await getWithdrawalStatus(queryId,user);
+      const state=getWithdrawalState(r);
+      if(state!=="pending")return r;
+    }catch{}
+    await new Promise(resolve=>setTimeout(resolve,3000));
+  }
+  return null;
+}
+
+async function submitWithdrawal(){
+  if(!currentSession)return showLogin();
+
+  const address=$("withdrawAddress").value.trim();
+  const amount=Number($("withdrawAmount").value);
+  const b=$("withdrawSubmitButton");
+
+  if(!address)return alert("Please enter withdrawal address.");
+  if(!Number.isFinite(amount)||amount<=0)return alert("Invalid amount.");
+
+  const balance=withdrawCurrency==="TON"?currentTONBalance:currentUSDTBalance;
+
+  if(withdrawCurrency==="USDT"&&(amount<MIN_WITHDRAWAL||amount>balance))
+    return alert(amount<MIN_WITHDRAWAL?"Minimum withdrawal is 10 USDT.":"Insufficient USDT balance.");
+
+  if(withdrawCurrency==="TON"&&amount>balance)
+    return alert("Insufficient TON balance.");
+
+  const{user,error}=await getAuthenticatedBicycleUser();
+  if(error||!user)return alert("Please login again.");
+
+  const queryId=crypto.randomUUID();
+
+  b.disabled=true;
+  b.textContent="Sending...";
+
+  try{
+    const result=await bicycleRequest({
+      action:"withdrawal",
+      currency:withdrawCurrency,
+      amount,
+      destination:address,
+      query_id:queryId,
+      fee_rate:WITHDRAWAL_FEE_RATE
+    },user);
+
+    closeWithdraw();
+    await refreshWallet();
+
+    b.disabled=false;
+    b.textContent="Withdraw";
+
+    const status=await waitWithdrawalResult(queryId,user);
+
+    if(status){
+      const state=getWithdrawalState(status);
+
+      if(state==="success"){
+        await refreshWallet();
+        await loadUSDTHistory();
+        return alert("Withdrawal completed successfully.");
+      }
+
+      if(state==="failed"){
+        await refreshWallet();
+        await loadUSDTHistory();
+        return alert("Withdrawal failed:\n\n"+(
+          status?.bicycle?.error||
+          status?.bicycle?.message||
+          status?.local?.error||
+          "Blockchain withdrawal failed."
+        ));
+      }
+    }
+
+    await loadUSDTHistory();
+    alert("Withdrawal submitted.\n\nStatus: Pending");
+  }catch(e){
+    alert("Withdrawal failed:\n\n"+e.message);
+  }finally{
+    b.disabled=false;
+    b.textContent="Withdraw";
+  }
+}
+
 function setProfilePhoto(avatar,username){const old=$("profilePhotoBox");if(!old)return;if(avatar){const img=document.createElement("img");img.id="profilePhotoBox";img.className="profile-photo";img.src=avatar;img.alt="Profile photo";old.replaceWith(img)}else{old.textContent=String(username||"U").charAt(0).toUpperCase();old.className="profile-photo"}}
 async function changeProfilePhoto(e){if(!currentSession)return;const file=e.target.files[0];if(!file)return;if(!file.type.startsWith("image/"))return alert("Please select an image.");if(file.size>5*1024*1024)return alert("Image must be smaller than 5 MB.");const id=currentSession.user.id,ext=file.name.split(".").pop().toLowerCase(),path=id+"/profile."+ext,r=await supabaseClient.storage.from("avatars").upload(path,file,{upsert:true,contentType:file.type});if(r.error)return alert("Photo upload failed.\n\n"+r.error.message);const{data}=supabaseClient.storage.from("avatars").getPublicUrl(path),url=data.publicUrl+"?t="+Date.now();let u=await supabaseClient.from("profiles").update({avatar_url:url}).eq("id",id);if(u.error)u=await supabaseClient.from("profiles").update({avatar_url:url}).eq("user_id",id);if(u.error)return alert("Could not save profile photo.\n\n"+u.error.message);await loadProfile();await loadPosts();e.target.value=""}
 async function loadProfile(){const user=currentSession.user;let r=await supabaseClient.from("profiles").select("*").eq("id",user.id).maybeSingle();if(r.error||!r.data)r=await supabaseClient.from("profiles").select("*").eq("user_id",user.id).maybeSingle();currentProfile=r.data||{};const u=currentProfile.username||user.user_metadata?.username||"";permanentUsername=String(u).trim();$("profileName").textContent=permanentUsername||"Username unavailable";$("profileId").textContent=permanentUsername?"Username: @"+permanentUsername:"Username: --";$("profileBio").textContent=currentProfile.bio||"No bio yet.";setProfilePhoto(currentProfile.avatar_url||"",u||"U");updateVerificationUI();$("permanentUsername").textContent=permanentUsername?"@"+permanentUsername:"--";$("editBio").value=currentProfile.bio||"";updateLockUI();await loadStats();await loadTradeStats()}

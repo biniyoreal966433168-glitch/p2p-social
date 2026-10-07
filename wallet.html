@@ -10,12 +10,12 @@
 </style>
 </head>
 <body>
-<header><div class="brand"><div class="brand-logo"><div class="p-left"></div><div class="p-right"></div><div class="center-dot"></div></div><div class="brand-name">P2P <span>Social</span></div></div><div class="security">🔴 Sell Market</div></header>
+<header><div class="brand"><div class="brand-logo"><div class="p-left"></div><div class="p-right"></div><div class="center-dot"></div></div><div class="brand-name">P2P <span>Social</span></div></div><div class="security">🔴</div></header>
 
 <main class="container">
 <div class="search-box"><input id="usdtSearch" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Search USDT Amount" oninput="searchUSDTAmount()"></div>
-<div class="section-title"><h2>🔴 Available Buy (<span id="offerCount">0</span>)</h2><div class="section-actions"><button id="offerViewButton" class="view-btn" onclick="toggleOffers()">View All</button><button class="refresh-btn" onclick="loadSellMarket()">Refresh</button></div></div>
-<section id="offers" class="offer-list"><div class="empty"><div class="empty-icon">🔴</div><strong>Loading available buy...</strong></div></section>
+<div class="section-title"><h2>🔴 (<span id="offerCount">0</span>)</h2><div class="section-actions"><button id="offerViewButton" class="view-btn" onclick="toggleOffers()">View All</button><button class="refresh-btn" onclick="loadSellMarket()">Refresh</button></div></div>
+<section id="offers" class="offer-list"><div class="empty"><div class="empty-icon">🔴</div><strong>Loading...</strong></div></section>
 </main>
 
 <div id="tradeModal" class="modal">
@@ -29,7 +29,7 @@
 </div>
 
 <div id="toast" class="toast"></div>
-<nav class="bottom-nav"><a href="index.html"><span class="nav-icon">🏠</span>Home</a><a href="live.html"><span class="nav-icon">🟢</span>Buy</a><a href="wallet.html" class="active"><span class="nav-icon">🔴</span>Sell</a><a href="message.html"><span class="nav-icon">💬</span>Messages</a><a href="profile.html"><span class="nav-icon">👤</span>Profile</a></nav>
+<nav class="bottom-nav"><a href="index.html"><span class="nav-icon">🏠</span>Home</a><a href="live.html"><span class="nav-icon">🟢</span></a><a href="wallet.html" class="active"><span class="nav-icon">🔴</span></a><a href="message.html"><span class="nav-icon">💬</span>Messages</a><a href="profile.html"><span class="nav-icon">👤</span>Profile</a></nav>
 
 <script>
 const SUPABASE_URL="https://mbsvuwrgigqfporxwpfr.supabase.co",SUPABASE_PUBLISHABLE_KEY="sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa",supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
@@ -56,13 +56,13 @@ await loadPendingTrades(orders.map(o=>o.id));
 availableOffers=orders.filter(o=>getOfferAvailableAmount(o)>0||pendingTrades.has(String(o.id)));
 availableOffers.sort((a,b)=>{let x=Number(a.price),y=Number(b.price);if(Number.isFinite(x)&&Number.isFinite(y)&&x!=y)return x-y;if(Number.isFinite(x)!=Number.isFinite(y))return Number.isFinite(x)?-1:1;return(Date.parse(b.created_at||"")||0)-(Date.parse(a.created_at||"")||0)});
 await loadOfferUsernames();searchUSDTAmount()
-}catch(e){console.error(e);availableOffers=[];filteredOffers=[];box.innerHTML=emptyHtml("⚠️","Could not load available buy.",getErrorMessage(e))}
+}catch(e){console.error(e);availableOffers=[];filteredOffers=[];box.innerHTML=emptyHtml("⚠️","Could not load .",getErrorMessage(e))}
 finally{isLoading=false}}
 
 function searchUSDTAmount(){let e=document.getElementById("usdtSearch"),v=Number(e?.value);filteredOffers=e&&e.value.trim()&&Number.isFinite(v)&&v>0?availableOffers.filter(o=>getOfferAvailableAmount(o)>=v||pendingTrades.has(String(o.id))):[...availableOffers];offersExpanded=false;document.getElementById("offerCount").textContent=filteredOffers.length;renderSellMarket()}
 
 function renderSellMarket(){
-let box=document.getElementById("offers");if(!filteredOffers.length){let q=document.getElementById("usdtSearch")?.value.trim();box.innerHTML=emptyHtml(q?"🔎":"🔴",q?"No buy available for this amount.":"No available buy.",q?"Try a smaller amount.":"Active buyers will appear here.");updateOfferButton();return}
+let box=document.getElementById("offers");if(!filteredOffers.length){let q=document.getElementById("usdtSearch")?.value.trim();box.innerHTML=emptyHtml(q?"🔎":"🔴",q?"No available for this amount.":"No available buy.",q?"Try a smaller amount.":"Active buyers will appear here.");updateOfferButton();return}
 box.innerHTML="";
 (offersExpanded?filteredOffers:filteredOffers.slice(0,15)).forEach(o=>{
 if(String(o.user_id)==String(currentUser.id))return;
@@ -85,7 +85,7 @@ let buyerId=offer.user_id,{data:conversation,error}=await supabaseClient.from("c
 if(!conversation){let r=await supabaseClient.from("conversations").select("id").eq("user_one",buyerId).eq("user_two",currentUser.id).maybeSingle();if(r.error)throw r.error;conversation=r.data}
 if(!conversation){let r=await supabaseClient.from("conversations").insert({user_one:currentUser.id,user_two:buyerId}).select("id").single();if(r.error){let x=await supabaseClient.from("conversations").select("id").eq("user_one",buyerId).eq("user_two",currentUser.id).maybeSingle();if(x.error)throw r.error;conversation=x.data}else conversation=r.data}
 if(!conversation?.id)throw Error("Conversation could not be created.");
-let b=getOfferBankName(offer),n=getOfferAccountName(offer),a=getOfferAccountNumber(offer),msg="🔴 P2P Sell started. Please complete the payment for this trade.";
+let b=getOfferBankName(offer),n=getOfferAccountName(offer),a=getOfferAccountNumber(offer),msg="🔴 P2P started. Please complete the payment for this trade.";
 if(b||n||a)msg+="\n\n🏦 Bank Transfer\n"+(b?"Bank Name: "+b+"\n":"")+(n?"Account Name: "+n+"\n":"")+(a?"Account Number: "+a:"");
 let{data:existingMessage,error:me}=await supabaseClient.from("messages").select("id").eq("conversation_id",conversation.id).eq("sender_id",currentUser.id).eq("message_type","order").eq("order_id",tradeId).maybeSingle();if(me)throw me;
 if(!existingMessage){let{error:e}=await supabaseClient.from("messages").insert({conversation_id:conversation.id,sender_id:currentUser.id,content:msg,message_type:"order",order_id:tradeId});if(e)throw e}

@@ -10,12 +10,12 @@
 </style>
 </head>
 <body>
-<header><div class="brand"><div class="brand-logo"><div class="p-left"></div><div class="p-right"></div><div class="center-dot"></div></div><div class="brand-name">P2P <span>Social</span></div></div><div class="security">🔴</div></header>
+<header><div class="brand"><div class="brand-logo"><div class="p-left"></div><div class="p-right"></div><div class="center-dot"></div></div><div class="brand-name">P2P <span>Social</span></div></div><div class="security"></div></header>
 
 <main class="container">
 <div class="search-box"><input id="usdtSearch" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Search USDT Amount" oninput="searchUSDTAmount()"></div>
-<div class="section-title"><h2>🔴 (<span id="offerCount">0</span>)</h2><div class="section-actions"><button id="offerViewButton" class="view-btn" onclick="toggleOffers()">View All</button><button class="refresh-btn" onclick="loadSellMarket()">Refresh</button></div></div>
-<section id="offers" class="offer-list"><div class="empty"><div class="empty-icon">🔴</div><strong>Loading...</strong></div></section>
+<div class="section-title"><h2> (<span id="offerCount">0</span>)</h2><div class="section-actions"><button id="offerViewButton" class="view-btn" onclick="toggleOffers()">View All</button><button class="refresh-btn" onclick="loadSellMarket()">Refresh</button></div></div>
+<section id="offers" class="offer-list"><div class="empty"><div class="empty-icon"></div><strong>Loading...</strong></div></section>
 </main>
 
 <div id="tradeModal" class="modal">
@@ -62,13 +62,13 @@ finally{isLoading=false}}
 function searchUSDTAmount(){let e=document.getElementById("usdtSearch"),v=Number(e?.value);filteredOffers=e&&e.value.trim()&&Number.isFinite(v)&&v>0?availableOffers.filter(o=>getOfferAvailableAmount(o)>=v||pendingTrades.has(String(o.id))):[...availableOffers];offersExpanded=false;document.getElementById("offerCount").textContent=filteredOffers.length;renderSellMarket()}
 
 function renderSellMarket(){
-let box=document.getElementById("offers");if(!filteredOffers.length){let q=document.getElementById("usdtSearch")?.value.trim();box.innerHTML=emptyHtml(q?"🔎":"🔴",q?"No available for this amount.":"No available buy.",q?"Try a smaller amount.":"Active buyers will appear here.");updateOfferButton();return}
+let box=document.getElementById("offers");if(!filteredOffers.length){let q=document.getElementById("usdtSearch")?.value.trim();box.innerHTML=emptyHtml(q?"":"",q?"No available for this amount.":"No available buy.",q?"Try a smaller amount.":"Active buyers will appear here.");updateOfferButton();return}
 box.innerHTML="";
 (offersExpanded?filteredOffers:filteredOffers.slice(0,15)).forEach(o=>{
 if(String(o.user_id)==String(currentUser.id))return;
 let username=usernameCache.get(String(o.user_id))||"Buyer",pending=pendingTrades.get(String(o.id)),mine=pending&&String(pending.seller_id)==String(currentUser.id),amount=getOfferAvailableAmount(o),display=amount>0?amount:Number(pending?.amount||0),parts=getPairParts(o.pair||o.trading_pair),base=parts.base||"USDT",card=document.createElement("div"),status="Pending Payment";
 if(pending){let s=normalizeStatus(pending.status);if(s=="paid"||s=="payment_confirmed"||pending.payment_confirmed)status="Payment Confirmed";else if(s=="disputed")status="Trade Disputed"}
-card.className="offer-card";card.innerHTML=`<div class="offer-main"><button class="offer-user" onclick="viewUser('${escapeJs(o.user_id)}')">👤 ${escapeHtml(username)}</button><div class="offer-label">${escapeHtml(base)}</div><div class="offer-amount">${escapeHtml((display||0).toLocaleString(undefined,{maximumFractionDigits:6}))} ${escapeHtml(base)}</div><div class="offer-price-label">Price</div><div class="offer-price">${escapeHtml(money(o.price))} ${escapeHtml(parts.quote||"ETB")}</div><div class="offer-method">Payment: ${escapeHtml(o.payment_method||"Bank Transfer")}</div>${pending?`<div class="pending-badge">⏳ ${escapeHtml(status)}</div>`:""}<button class="offer-trade ${pending?(mine?"continue":"pending"):""}" ${pending&&!mine?"disabled":""} onclick="${pending?mine?`openExistingTrade('${escapeJs(pending.id)}')`:"":`openTrade('${escapeJs(o.id)}')`}">${pending?(mine?"Continue Trade":"Pending Payment"):"Sell"}</button></div>`;box.appendChild(card)
+card.className="offer-card";card.innerHTML=`<div class="offer-main"><button class="offer-user" onclick="viewUser('${escapeJs(o.user_id)}')">👤 ${escapeHtml(username)}</button><div class="offer-label">${escapeHtml(base)}</div><div class="offer-amount">${escapeHtml((display||0).toLocaleString(undefined,{maximumFractionDigits:6}))} ${escapeHtml(base)}</div><div class="offer-price-label">Price</div><div class="offer-price">${escapeHtml(money(o.price))} ${escapeHtml(parts.quote||"ETB")}</div><div class="offer-method">Payment: ${escapeHtml(o.payment_method||"Bank Transfer")}</div>${pending?`<div class="pending-badge"> ${escapeHtml(status)}</div>`:""}<button class="offer-trade ${pending?(mine?"continue":"pending"):""}" ${pending&&!mine?"disabled":""} onclick="${pending?mine?`openExistingTrade('${escapeJs(pending.id)}')`:"":`openTrade('${escapeJs(o.id)}')`}">${pending?(mine?"Continue Trade":"Pending Payment"):"Sell"}</button></div>`;box.appendChild(card)
 });updateOfferButton()}
 
 function openExistingTrade(id){location.href="message.html?trade_id="+encodeURIComponent(id)+"&order_id="+encodeURIComponent(id)}
@@ -85,8 +85,8 @@ let buyerId=offer.user_id,{data:conversation,error}=await supabaseClient.from("c
 if(!conversation){let r=await supabaseClient.from("conversations").select("id").eq("user_one",buyerId).eq("user_two",currentUser.id).maybeSingle();if(r.error)throw r.error;conversation=r.data}
 if(!conversation){let r=await supabaseClient.from("conversations").insert({user_one:currentUser.id,user_two:buyerId}).select("id").single();if(r.error){let x=await supabaseClient.from("conversations").select("id").eq("user_one",buyerId).eq("user_two",currentUser.id).maybeSingle();if(x.error)throw r.error;conversation=x.data}else conversation=r.data}
 if(!conversation?.id)throw Error("Conversation could not be created.");
-let b=getOfferBankName(offer),n=getOfferAccountName(offer),a=getOfferAccountNumber(offer),msg="🔴 P2P started. Please complete the payment for this trade.";
-if(b||n||a)msg+="\n\n🏦 Bank Transfer\n"+(b?"Bank Name: "+b+"\n":"")+(n?"Account Name: "+n+"\n":"")+(a?"Account Number: "+a:"");
+let b=getOfferBankName(offer),n=getOfferAccountName(offer),a=getOfferAccountNumber(offer),msg=" P2P started. Please complete the payment for this trade.";
+if(b||n||a)msg+="\n\n Bank Transfer\n"+(b?"Bank Name: "+b+"\n":"")+(n?"Account Name: "+n+"\n":"")+(a?"Account Number: "+a:"");
 let{data:existingMessage,error:me}=await supabaseClient.from("messages").select("id").eq("conversation_id",conversation.id).eq("sender_id",currentUser.id).eq("message_type","order").eq("order_id",tradeId).maybeSingle();if(me)throw me;
 if(!existingMessage){let{error:e}=await supabaseClient.from("messages").insert({conversation_id:conversation.id,sender_id:currentUser.id,content:msg,message_type:"order",order_id:tradeId});if(e)throw e}
 let username=await getUsername(buyerId),p=new URLSearchParams({trade_id:String(tradeId),order_id:String(tradeId)});if(username)p.set("username",username);location.href="message.html?"+p

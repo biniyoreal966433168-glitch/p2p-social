@@ -1,1 +1,577 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>P2P Social</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}body{background:#f5f7fb;color:#17212b;padding-bottom:20px}.wrap{max-width:600px;margin:auto;padding:14px}.card,.section{background:#fff;border-radius:16px;margin-bottom:12px;padding:16px;box-shadow:0 2px 10px #0000000d}.profile{text-align:center}.avatar{width:82px;height:82px;border-radius:50%;object-fit:cover;background:#dfe8e6;margin:auto;display:block;border:3px solid #087f73}.name{font-size:20px;font-weight:700;margin-top:10px}.username{font-size:14px;color:#68747c;margin-top:4px}.info{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:7px;font-size:12px}.info span{background:#f5f7fb;padding:5px 8px;border-radius:8px;color:#68747c}.bio{font-size:14px;color:#68747c;line-height:1.5;margin-top:10px;white-space:pre-wrap}.badges{display:flex;justify-content:center;gap:5px;flex-wrap:wrap;margin-top:8px}.badge{display:inline-block;border-radius:20px;padding:5px 9px;font-size:11px;font-weight:700;background:#eef1f3;color:#9aa3a8}.badge.on.level{background:#e8f5f2;color:#087f73}.badge.on.basic{background:#eef1f3;color:#68747c}.badge.on.verified{background:#e8f5f2;color:#087f73}.badge.on.merchant{background:#eef5ff;color:#2764b8}.badge.on.famous{background:#fff0f5;color:#b43b70}.badge.on.rich{background:#fff5df;color:#a86a00}.badge.on.online{background:#e8f5f2;color:#087f73}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:18px}.stat{padding:10px 4px;border-radius:12px;background:#f5f7fb}.stat b{display:block;font-size:18px}.stat span{font-size:12px;color:#68747c}.actions{display:flex;gap:6px;margin-top:14px}.actions button{flex:1;min-width:0;border:0;border-radius:12px;padding:11px 3px;margin:0;font-size:12px;font-weight:700;white-space:nowrap}.follow{background:#087f73;color:#fff}.follow.following{background:#e5f2f0;color:#087f73}.feedback,.offer,.message{background:#f5f7fb;color:#087f73}.trade-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.trade{background:#f5f7fb;border-radius:12px;padding:13px}.trade span{display:block;color:#68747c;font-size:12px;margin-bottom:5px}.trade b{font-size:17px}.post{border-top:1px solid #edf0f2;padding:13px 0}.post:first-child{border-top:0;padding-top:0}.post-head{display:flex;align-items:center;gap:9px}.post-head img{width:38px;height:38px;border-radius:50%;object-fit:cover}.post-name{font-weight:700;font-size:14px}.post-time{font-size:11px;color:#89949b;margin-top:2px}.post-content{font-size:14px;line-height:1.5;margin-top:9px;white-space:pre-wrap}.post-actions{display:flex;gap:18px;margin-top:10px;color:#68747c;font-size:13px}.empty{text-align:center;color:#89949b;padding:20px;font-size:14px}</style></head><body><main class="wrap"><div id="loading" class="card empty">Loading...</div><div id="profilePage" style="display:none"><section class="card profile"><img id="avatar" class="avatar"><div id="name" class="name"></div><div id="username" class="username"></div><div class="info"><span id="userId">ID:000000000000</span></div><div id="badges" class="badges"></div><div id="bio" class="bio"></div><div class="stats"><div class="stat"><b id="postCount">0</b><span>Posts</span></div><div class="stat"><b id="followerCount">0</b><span>Followers</span></div><div class="stat"><b id="followingCount">0</b><span>Following</span></div></div><div class="actions"><button id="followBtn" class="follow">Follow</button><button id="messageBtn" class="message">Message</button><button id="offerBtn" class="offer">Offer</button><button id="feedbackBtn" class="feedback" style="display:none">Feedback</button></div></section><section class="section"><div class="trade-grid"><div class="trade"><span>30 Day Complete</span><b id="complete30">0</b></div><div class="trade"><span>30 Day Trade</span><b id="trade30">0</b></div><div class="trade"><span>Total Trade</span><b id="totalTrade">0</b></div><div class="trade"><span>Day</span><b id="userDay">0</b></div></div></section><section class="section"><div class="section-title">User Post</div><div id="posts"><div class="empty">No posts yet</div></div></section></div></main><script>const S="https://mbsvuwrgigqfporxwpfr.supabase.co",K="sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa",sb=supabase.createClient(S,K),$=id=>document.getElementById(id),params=new URLSearchParams(location.search),viewedUserId=params.get("user_id");let me=null,user=null,following=false,trades=[],feedbackAllowed=false;async function start(){let{data,error}=await sb.auth.getSession();if(error||!data.session)return location.href="index.html";me=data.session.user;let id=viewedUserId||me.id,{data:p}=await sb.from("profiles").select("*").or(`id.eq.${id},user_id.eq.${id}`).maybeSingle();if(!p)return $("loading").textContent="User not found";user=p;await Promise.all([loadFollow(),loadPosts(),loadStats()]);render();$("loading").style.display="none";$("profilePage").style.display="block"}async function loadFollow(){let{data}=await sb.from("followers").select("id").eq("follower_id",me.id).eq("following_id",user.user_id||user.id).maybeSingle();following=!!data}async function loadPosts(){let id=user.user_id||user.id,{data}=await sb.from("posts").select("*").eq("user_id",id).order("created_at",{ascending:false}),posts=data||[];$("postCount").textContent=posts.length;$("posts").innerHTML=posts.length?posts.map(p=>`<article class="post"><div class="post-head"><img src="${esc(user.avatar_url||"")}"><div><div class="post-name">${esc(user.username||"User")}</div><div class="post-time">${time(p.created_at)}</div></div></div><div class="post-content">${esc(p.content||p.body||p.text||"")}</div><div class="post-actions"><span>Like</span><span>Comment</span><span>Share</span></div></article>`).join(""):'<div class="empty">No posts yet</div>'}async function loadStats(){let id=user.user_id||user.id,{data:t}=await sb.from("p2p_trades").select("*").or(`buyer_id.eq.${id},seller_id.eq.${id}`);trades=t||[];let now=Date.now(),thirty=now-30*86400000,recent=trades.filter(t=>new Date(t.created_at||t.completed_at||t.updated_at||0).getTime()>=thirty),done=trades.filter(t=>String(t.status||"").toLowerCase()==="completed"),recentDone=recent.filter(t=>String(t.status||"").toLowerCase()==="completed");$("complete30").textContent=recentDone.length;$("trade30").textContent=recent.length;$("totalTrade").textContent=trades.length;let first=trades.map(t=>new Date(t.created_at||t.completed_at||t.updated_at||0).getTime()).filter(Boolean).sort()[0];$("userDay").textContent=first?Math.max(1,Math.floor((now-first)/86400000)+1):0;let{data:f}=await sb.from("followers").select("follower_id,following_id").or(`following_id.eq.${id},follower_id.eq.${id}`),rows=f||[];$("followerCount").textContent=rows.filter(x=>x.following_id===id).length;$("followingCount").textContent=rows.filter(x=>x.follower_id===id).length;user._done=done.length;user._trades=trades.length;user._followers=rows.filter(x=>x.following_id===id).length;feedbackAllowed=trades.some(t=>{let a=t.buyer_id===me.id||t.seller_id===me.id,b=t.buyer_id===id||t.seller_id===id,s=String(t.status||"").toLowerCase();return a&&b&&(s==="completed"||s==="canceled"||s==="cancelled")})}function render(){let id=user.user_id||user.id,spending=Number(user.spending||user.total_spending||user.spent||user.fee_spending||user.spending_usdt||0),level=spending>=1?Math.floor(Math.log2(spending))+1:1,followers=Number(user._followers||0),verified=String(user.verification_status||"").toLowerCase()==="verified"||!!user.kyc_verified,merchant=!!user.merchant||String(user.role||"").toLowerCase()==="merchant",famous=followers>=10,rich=spending>=10,last=user.last_seen||user.last_active||user.updated_at,online=last?Date.now()-new Date(last).getTime()<60000:true,badges=[];badges.push(`<span class="badge level on">◇ Level: ${level}</span>`);badges.push('<span class="badge basic on">■ Basic</span>');badges.push(`<span class="badge verified ${verified?"on":""}">■ Verified</span>`);badges.push(`<span class="badge merchant ${merchant?"on":""}">■ Merchant</span>`);badges.push(`<span class="badge famous ${famous?"on":""}">♡ Famous</span>`);badges.push(`<span class="badge rich ${rich?"on":""}">◆ Rich</span>`);badges.push(`<span class="badge online ${online?"on":""}">● ${online?"Online":"Offline"}</span>`);$("avatar").src=user.avatar_url||"";$("name").textContent=user.name||user.full_name||user.display_name||user.username||"User";$("username").textContent="@"+(user.username||"user");$("userId").textContent="ID:"+String(user.user_number||"0").replace(/\D/g,"").padStart(12,"0");$("badges").innerHTML=badges.join("");$("bio").textContent=user.bio||"";$("feedbackBtn").style.display=id!==me.id&&feedbackAllowed?"block":"none";if(id===me.id){$("followBtn").style.display="none";$("offerBtn").style.display="none"}else{$("followBtn").style.display="block";$("offerBtn").style.display="block";$("followBtn").textContent=following?"Following":"Follow";$("followBtn").className="follow"+(following?" following":"")}}$("followBtn").onclick=async()=>{let id=user.user_id||user.id;if(id===me.id)return;if(following){await sb.from("followers").delete().eq("follower_id",me.id).eq("following_id",id);following=false}else{let{error}=await sb.from("followers").insert({follower_id:me.id,following_id:id});if(error)return;following=true}await loadStats();render()};$("messageBtn").onclick=()=>location.href="./message.html";$("offerBtn").onclick=()=>location.href="./live.html";$("feedbackBtn").onclick=()=>location.href="./message.html";function esc(v){return String(v).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}function time(v){if(!v)return"";let d=new Date(v);return isNaN(d)?"":d.toLocaleDateString()}start();</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>P2P Social — User Profile</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
+body{background:#f5f7fb;color:#17212b;padding-bottom:24px}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer;border:0}
+.wrap{max-width:600px;margin:auto;padding:14px}
+.card,.section{background:#fff;border-radius:16px;margin-bottom:12px;padding:16px;box-shadow:0 2px 10px #0000000d}
+.profile{text-align:center}
+.avatar{width:82px;height:82px;border-radius:50%;object-fit:cover;background:#dfe8e6;margin:auto;display:block;border:3px solid #087f73}
+.name{font-size:20px;font-weight:700;margin-top:10px;overflow-wrap:anywhere}
+.username{font-size:14px;color:#68747c;margin-top:4px}
+.info,.badges{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:8px}
+.info span{background:#f5f7fb;padding:5px 8px;border-radius:8px;color:#68747c;font-size:12px}
+.bio{font-size:14px;color:#68747c;line-height:1.5;margin-top:10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.badge{display:inline-block;border-radius:20px;padding:6px 9px;font-size:11px;font-weight:700;background:#eef1f3;color:#9aa3a8;border:1px solid transparent}
+.badge.on.basic{background:#eef1f3;color:#68747c}
+.badge.on.verified{background:#e8f5f2;color:#087f73;border-color:#087f73}
+.badge.on.merchant{background:#eef5ff;color:#2764b8;border-color:#2764b8}
+.badge.on.famous{background:#fff0f5;color:#b43b70;border-color:#ed8db2}
+.badge.on.rich{background:#fff5df;color:#a86a00;border-color:#e8b84e}
+.badge.on.online{background:#e8f5f2;color:#087f73}
+.badge.level{background:#eef1f3;color:#68747c}
+.badge.level.l1{background:#e8f5f2;color:#087f73}
+.badge.level.l2{background:linear-gradient(110deg,#d8f5ff,#e8dcff,#ffe0ef);color:#7138b7;border-color:#a58be9}
+.badge.level.l3{background:linear-gradient(110deg,#ffdf69,#ff91d4,#a99aff,#77e6e1);color:#302052;border-color:#8756cf;box-shadow:0 0 12px #bc83ff}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:18px}
+.stat{padding:12px 4px;border-radius:12px;background:#f5f7fb;cursor:pointer}
+.stat b{display:block;font-size:18px}
+.stat span{font-size:12px;color:#68747c}
+.actions{display:flex;gap:6px;margin-top:14px}
+.actions button{flex:1;min-width:0;border-radius:12px;padding:11px 3px;font-size:12px;font-weight:700}
+.follow{background:#087f73;color:#fff}
+.follow.following{background:#e5f2f0;color:#087f73}
+.message,.offer,.feedback{background:#f5f7fb;color:#087f73}
+.trade-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.trade{background:#f5f7fb;border-radius:12px;padding:13px}
+.trade span{display:block;color:#68747c;font-size:12px;margin-bottom:5px}
+.trade b{font-size:17px}
+.section-title{font-weight:700;margin-bottom:12px}
+.post{border-top:1px solid #edf0f2;padding:13px 0}
+.post:first-child{border-top:0;padding-top:0}
+.post-head{display:flex;align-items:center;gap:9px}
+.post-head img{width:38px;height:38px;border-radius:50%;object-fit:cover;background:#edf0f2}
+.post-name{font-weight:700;font-size:14px}
+.post-time{font-size:11px;color:#89949b;margin-top:2px}
+.post-content{font-size:14px;line-height:1.5;margin-top:9px;white-space:pre-wrap;overflow-wrap:anywhere}
+.empty{text-align:center;color:#89949b;padding:20px;font-size:14px}
+.feedback-item{border-top:1px solid #edf0f2;padding:12px 0}
+.feedback-item:first-child{border-top:0}
+.feedback-stars{color:#d99b00;letter-spacing:2px}
+.modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:16px;z-index:10}
+.modal.show{display:flex}
+.modal-box{background:white;border-radius:16px;padding:18px;width:100%;max-width:420px;max-height:90vh;overflow:auto}
+.modal-box h3{margin-bottom:14px}
+.modal-box label{display:block;font-size:13px;margin:12px 0 6px}
+.modal-box select,.modal-box textarea{width:100%;border:1px solid #dce2e6;border-radius:10px;padding:10px;background:#fff}
+.modal-box textarea{min-height:100px;resize:vertical}
+.modal-buttons{display:flex;gap:8px;margin-top:14px}
+.modal-buttons button{flex:1;border-radius:10px;padding:12px;font-weight:700}
+.primary{background:#087f73;color:white}
+.secondary{background:#eef1f3;color:#52606a}
+.notice{font-size:13px;color:#68747c;margin-top:10px;line-height:1.5}
+@media(max-width:380px){.wrap{padding:9px}.card,.section{padding:12px}.actions{flex-wrap:wrap}.actions button{min-width:42%}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<div id="loading" class="card empty">Loading profile…</div>
+
+<div id="profilePage" style="display:none">
+<section class="card profile">
+<img id="avatar" class="avatar" alt="Profile picture">
+<div id="name" class="name"></div>
+<div id="username" class="username"></div>
+<div class="info"><span id="userId">ID:000000000000</span></div>
+<div id="badges" class="badges"></div>
+<div id="lastSeen" class="notice"></div>
+<div id="bio" class="bio"></div>
+
+<div class="stats">
+<div class="stat" id="postsStat"><b id="postCount">0</b><span>Posts</span></div>
+<div class="stat" id="followersStat"><b id="followerCount">0</b><span>Followers</span></div>
+<div class="stat" id="followingStat"><b id="followingCount">0</b><span>Following</span></div>
+</div>
+
+<div class="actions">
+<button id="followBtn" class="follow">Follow</button>
+<button id="messageBtn" class="message">Message</button>
+<button id="offerBtn" class="offer">Offer</button>
+<button id="feedbackBtn" class="feedback" style="display:none">Leave feedback</button>
+</div>
+<div id="actionNotice" class="notice"></div>
+</section>
+
+<section class="section">
+<div class="section-title">Trading activity</div>
+<div class="trade-grid">
+<div class="trade"><span>30-day completed</span><b id="complete30">0</b></div>
+<div class="trade"><span>30-day trades</span><b id="trade30">0</b></div>
+<div class="trade"><span>Total trades</span><b id="totalTrade">0</b></div>
+<div class="trade"><span>Member days</span><b id="userDay">0</b></div>
+</div>
+</section>
+
+<section class="section">
+<div class="section-title">Posts</div>
+<div id="posts"><div class="empty">No posts yet</div></div>
+</section>
+
+<section class="section">
+<div class="section-title">Public feedback</div>
+<div id="feedbackList"><div class="empty">No feedback yet</div></div>
+</section>
+</div>
+</main>
+
+<div id="feedbackModal" class="modal">
+<div class="modal-box">
+<h3>Leave trade feedback</h3>
+<form id="feedbackForm">
+<label for="tradeSelect">Eligible trade</label>
+<select id="tradeSelect" required></select>
+<label for="rating">Rating</label>
+<select id="rating" required>
+<option value="5">★★★★★ — Excellent</option>
+<option value="4">★★★★ — Good</option>
+<option value="3">★★★ — Average</option>
+<option value="2">★★ — Poor</option>
+<option value="1">★ — Very poor</option>
+</select>
+<label for="feedbackComment">Comment</label>
+<textarea id="feedbackComment" maxlength="1000" placeholder="Write your feedback…"></textarea>
+<div id="feedbackError" class="notice"></div>
+<div class="modal-buttons">
+<button type="button" id="cancelFeedback" class="secondary">Cancel</button>
+<button type="submit" id="submitFeedback" class="primary">Submit</button>
+</div>
+</form>
+</div>
+</div>
+
+<script>
+"use strict";
+
+const SUPABASE_URL = "https://mbsvuwrgigqfporxwpfr.supabase.co";
+const SUPABASE_KEY = "sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = id => document.getElementById(id);
+const params = new URLSearchParams(location.search);
+const requestedUserId = params.get("user_id");
+
+let me = null;
+let user = null;
+let following = false;
+let trades = [];
+let eligibleTrades = [];
+let feedbackAllowed = false;
+let heartbeatStarted = false;
+
+async function start() {
+  try {
+    const {data: sessionData, error: sessionError} = await sb.auth.getSession();
+    if (sessionError || !sessionData.session) {
+      location.href = "index.html";
+      return;
+    }
+
+    me = sessionData.session.user;
+
+    const targetId = requestedUserId || me.id;
+    const {data: profile, error} = await sb
+      .from("profiles")
+      .select("*")
+      .or(`id.eq.${targetId},user_id.eq.${targetId}`)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!profile) {
+      $("loading").textContent = "User not found";
+      return;
+    }
+
+    user = profile;
+
+    await Promise.all([
+      loadFollow(),
+      loadPosts(),
+      loadStats(),
+      loadFeedback()
+    ]);
+
+    renderProfile();
+    $("loading").style.display = "none";
+    $("profilePage").style.display = "block";
+
+    if (isOwnProfile()) startHeartbeat();
+  } catch (error) {
+    console.error("Profile loading error:", error);
+    $("loading").textContent = "Unable to load profile. Please try again.";
+  }
+}
+
+function userIdOf(profile) {
+  return profile.user_id || profile.id;
+}
+
+function isOwnProfile() {
+  return userIdOf(user) === me.id;
+}
+
+async function loadFollow() {
+  if (isOwnProfile()) return;
+
+  const {data, error} = await sb
+    .from("followers")
+    .select("id")
+    .eq("follower_id", me.id)
+    .eq("following_id", userIdOf(user))
+    .maybeSingle();
+
+  if (!error) following = !!data;
+}
+
+async function loadPosts() {
+  const {data, error} = await sb
+    .from("posts")
+    .select("*")
+    .eq("user_id", userIdOf(user))
+    .order("created_at", {ascending:false});
+
+  if (error) {
+    console.warn("Could not load posts:", error.message);
+    $("posts").innerHTML = '<div class="empty">Posts are unavailable.</div>';
+    return;
+  }
+
+  const posts = data || [];
+  $("postCount").textContent = posts.length;
+
+  if (!posts.length) {
+    $("posts").innerHTML = '<div class="empty">No posts yet</div>';
+    return;
+  }
+
+  $("posts").innerHTML = posts.map(post => `
+    <article class="post">
+      <div class="post-head">
+        <img src="${esc(user.avatar_url || "")}" alt="">
+        <div>
+          <div class="post-name">${esc(user.name || user.full_name || user.username || "User")}</div>
+          <div class="post-time">${esc(formatDate(post.created_at))}</div>
+        </div>
+      </div>
+      <div class="post-content">${esc(post.content || post.body || post.text || "")}</div>
+    </article>
+  `).join("");
+}
+
+async function loadStats() {
+  const id = userIdOf(user);
+
+  const [tradeResult, followerResult, followingResult] = await Promise.all([
+    sb.from("p2p_trades")
+      .select("*")
+      .or(`buyer_id.eq.${id},seller_id.eq.${id}`),
+    sb.from("followers")
+      .select("id", {count:"exact", head:true})
+      .eq("following_id", id),
+    sb.from("followers")
+      .select("id", {count:"exact", head:true})
+      .eq("follower_id", id)
+  ]);
+
+  if (tradeResult.error) {
+    console.warn("Trade stats unavailable:", tradeResult.error.message);
+  }
+
+  trades = tradeResult.data || [];
+  $("followerCount").textContent = followerResult.count ?? 0;
+  $("followingCount").textContent = followingResult.count ?? 0;
+
+  const now = Date.now();
+  const thirtyDaysAgo = now - 30 * 86400000;
+
+  const recent = trades.filter(t =>
+    timestampOf(t) >= thirtyDaysAgo
+  );
+
+  const completed = trades.filter(t =>
+    String(t.status || "").toLowerCase() === "completed"
+  );
+
+  $("complete30").textContent = recent.filter(t =>
+    String(t.status || "").toLowerCase() === "completed"
+  ).length;
+
+  $("trade30").textContent = recent.length;
+  $("totalTrade").textContent = trades.length;
+
+  const dates = trades.map(timestampOf).filter(t => t > 0);
+  const created = user.created_at ? new Date(user.created_at).getTime() : 0;
+  const first = dates.length ? Math.min(...dates) : created;
+
+  $("userDay").textContent = first
+    ? Math.max(1, Math.floor((now - first) / 86400000) + 1)
+    : 0;
+
+  eligibleTrades = trades.filter(t => {
+    const status = String(t.status || "").toLowerCase();
+    const participants =
+      (t.buyer_id === me.id && t.seller_id === id) ||
+      (t.seller_id === me.id && t.buyer_id === id);
+
+    return !isOwnProfile() &&
+      participants &&
+      ["completed","canceled","cancelled"].includes(status);
+  });
+
+  feedbackAllowed = eligibleTrades.length > 0;
+}
+
+async function loadFeedback() {
+  const {data, error} = await sb
+    .from("profile_feedback")
+    .select("*")
+    .eq("reviewed_user_id", userIdOf(user))
+    .order("created_at", {ascending:false});
+
+  if (error) {
+    console.warn("Feedback unavailable:", error.message);
+    $("feedbackList").innerHTML =
+      '<div class="empty">Feedback is not available yet.</div>';
+    return;
+  }
+
+  const feedback = data || [];
+
+  if (!feedback.length) {
+    $("feedbackList").innerHTML =
+      '<div class="empty">No feedback yet</div>';
+    return;
+  }
+
+  $("feedbackList").innerHTML = feedback.map(item => `
+    <article class="feedback-item">
+      <div class="feedback-stars">${"★".repeat(Number(item.rating) || 0)}${"☆".repeat(5-(Number(item.rating) || 0))}</div>
+      <div class="post-content">${esc(item.comment || "")}</div>
+      <div class="post-time">${esc(formatDate(item.created_at))}</div>
+    </article>
+  `).join("");
+}
+
+function renderProfile() {
+  const id = userIdOf(user);
+  const spending = Number(user.verified_fee_spending || 0);
+  const level = spending >= 4 ? 3 : spending >= 2 ? 2 : spending >= 1 ? 1 : 0;
+  const followers = Number($("followerCount").textContent || 0);
+  const verified = String(user.verification_status || "").toLowerCase() === "verified";
+  const merchant = user.merchant === true || String(user.role || "").toLowerCase() === "merchant";
+  const famous = followers >= 10;
+  const rich = spending >= 10;
+
+  $("avatar").src = user.avatar_url || "";
+  $("name").textContent = user.name || user.full_name || user.display_name || user.username || "User";
+  $("username").textContent = "@" + (user.username || "user");
+
+  const digits = String(user.user_number || "0").replace(/\D/g, "");
+  $("userId").textContent = "ID:" + digits.slice(-12).padStart(12, "0");
+  $("bio").textContent = user.bio || "";
+
+  const levelClass = level === 3 ? "l3" : level === 2 ? "l2" : level === 1 ? "l1" : "";
+  const badges = [];
+
+  if (level > 0) {
+    badges.push(`<span class="badge level ${levelClass}">◇ Level ${level}</span>`);
+  }
+
+  badges.push('<span class="badge on basic">■ Basic</span>');
+  badges.push(`<span class="badge ${verified ? "on" : ""} verified">■ Verified</span>`);
+  badges.push(`<span class="badge ${merchant ? "on" : ""} merchant">■ Merchant</span>`);
+  badges.push(`<span class="badge ${famous ? "on" : ""} famous">♡ Famous</span>`);
+  badges.push(`<span class="badge ${rich ? "on" : ""} rich">◆ Rich</span>`);
+
+  const lastSeen = user.last_seen_at || user.last_seen || user.last_active;
+  const lastSeenMs = lastSeen ? new Date(lastSeen).getTime() : 0;
+  const online = lastSeenMs > 0 && Date.now() - lastSeenMs < 6 * 60 * 60 * 1000;
+
+  badges.push(`<span class="badge ${online ? "on" : ""} online">● ${online ? "Online" : "Offline"}</span>`);
+  $("badges").innerHTML = badges.join("");
+
+  $("lastSeen").textContent = online
+    ? "Online"
+    : lastSeenMs > 0
+      ? "Last seen " + relativeTime(lastSeenMs)
+      : "Last seen unavailable";
+
+  $("followBtn").style.display = isOwnProfile() ? "none" : "";
+  $("offerBtn").style.display = isOwnProfile() ? "none" : "";
+  $("feedbackBtn").style.display = feedbackAllowed ? "" : "none";
+
+  $("followBtn").textContent = following ? "Following" : "Follow";
+  $("followBtn").className = "follow" + (following ? " following" : "");
+}
+
+async function startHeartbeat() {
+  if (heartbeatStarted) return;
+  heartbeatStarted = true;
+
+  async function heartbeat() {
+    const {error} = await sb.rpc("profile_heartbeat");
+    if (error) console.warn("Profile heartbeat failed:", error.message);
+  }
+
+  await heartbeat();
+  setInterval(heartbeat, 60000);
+}
+
+$("followBtn").addEventListener("click", async () => {
+  if (isOwnProfile()) return;
+
+  $("followBtn").disabled = true;
+
+  try {
+    if (following) {
+      const {error} = await sb.from("followers")
+        .delete()
+        .eq("follower_id", me.id)
+        .eq("following_id", userIdOf(user));
+
+      if (error) throw error;
+      following = false;
+    } else {
+      const {error} = await sb.from("followers")
+        .insert({follower_id:me.id, following_id:userIdOf(user)});
+
+      if (error) throw error;
+      following = true;
+    }
+
+    await loadStats();
+    renderProfile();
+  } catch (error) {
+    $("actionNotice").textContent = error.message || "Unable to update follow.";
+  } finally {
+    $("followBtn").disabled = false;
+  }
+});
+
+$("messageBtn").addEventListener("click", () => {
+  if (isOwnProfile()) return;
+  location.href = "./message.html?user_id=" +
+    encodeURIComponent(userIdOf(user));
+});
+
+$("offerBtn").addEventListener("click", () => {
+  if (isOwnProfile()) return;
+  location.href = "./live.html?user_id=" +
+    encodeURIComponent(userIdOf(user));
+});
+
+$("feedbackBtn").addEventListener("click", openFeedback);
+
+$("cancelFeedback").addEventListener("click", () => {
+  $("feedbackModal").classList.remove("show");
+});
+
+function openFeedback() {
+  const select = $("tradeSelect");
+  select.innerHTML = "";
+
+  eligibleTrades.forEach(trade => {
+    const option = document.createElement("option");
+    option.value = String(trade.id);
+    option.textContent = `Trade ${trade.id} — ${trade.status}`;
+    select.appendChild(option);
+  });
+
+  $("feedbackError").textContent = "";
+  $("feedbackModal").classList.add("show");
+}
+
+$("feedbackForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const tradeId = $("tradeSelect").value;
+  const trade = eligibleTrades.find(t => String(t.id) === tradeId);
+
+  if (!trade) {
+    $("feedbackError").textContent = "No eligible trade selected.";
+    return;
+  }
+
+  $("submitFeedback").disabled = true;
+  $("feedbackError").textContent = "";
+
+  try {
+    const {error} = await sb.from("profile_feedback").insert({
+      trade_id: String(trade.id),
+      reviewer_id: me.id,
+      reviewed_user_id: userIdOf(user),
+      rating: Number($("rating").value),
+      comment: $("feedbackComment").value.trim()
+    });
+
+    if (error) throw error;
+
+    $("feedbackModal").classList.remove("show");
+    $("feedbackComment").value = "";
+    await loadFeedback();
+    $("actionNotice").textContent = "Feedback submitted.";
+  } catch (error) {
+    $("feedbackError").textContent =
+      error.message || "Feedback could not be submitted.";
+  } finally {
+    $("submitFeedback").disabled = false;
+  }
+});
+
+$("postsStat").addEventListener("click", () => {
+  $("posts").scrollIntoView({behavior:"smooth",block:"start"});
+});
+
+$("followersStat").addEventListener("click", () => {
+  $("actionNotice").textContent =
+    "Followers: " + $("followerCount").textContent;
+});
+
+$("followingStat").addEventListener("click", () => {
+  $("actionNotice").textContent =
+    "Following: " + $("followingCount").textContent;
+});
+
+function timestampOf(trade) {
+  const value = trade.created_at || trade.completed_at || trade.updated_at;
+  if (!value) return 0;
+  const time = new Date(value).getTime();
+  return Number.isFinite(time) ? time : 0;
+}
+
+function relativeTime(value) {
+  const seconds = Math.max(0, Math.floor((Date.now() - value) / 1000));
+  if (seconds < 60) return "less than a minute ago";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return minutes + " minute" + (minutes === 1 ? "" : "s") + " ago";
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return hours + " hour" + (hours === 1 ? "" : "s") + " ago";
+  const days = Math.floor(hours / 24);
+  return days + " day" + (days === 1 ? "" : "s") + " ago";
+}
+
+function formatDate(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString();
+}
+
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, character => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#039;"
+  })[character]);
+}
+
+start();
+</script>
+</body>
+</html>

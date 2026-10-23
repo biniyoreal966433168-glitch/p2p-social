@@ -955,7 +955,7 @@ document.addEventListener(
 
     /*
       Only load wallet data when
-      wallet.html is open.
+      🔴.html is open.
     */
 
     if (

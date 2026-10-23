@@ -1,4 +1,4 @@
-const CACHE_NAME = "p2p-social-v1";
+const CACHE_NAME = "p2p-social-v2";
 
 const FILES_TO_CACHE = [
   "./",
@@ -35,6 +35,19 @@ self.addEventListener("fetch", event => {
   event.respondWith(
     caches.match(event.request).then(cachedResponse => {
       return cachedResponse || fetch(event.request);
+    }).then(async response => {
+      if (!response || !response.ok) return response;
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("text/html")) return response;
+      const html = await response.clone().text();
+      if (html.includes("/js/theme.js") || html.includes("p2p-global-theme-script")) return response;
+      const injected = html.replace(/<\\/body\\s*>/i, '<script src="/js/theme.js" defer></script>\\n</body>');
+      if (injected === html) return response;
+      const headers = new Headers(response.headers);
+      headers.delete("content-length");
+      headers.delete("content-encoding");
+      headers.delete("etag");
+      return new Response(injected, { status: response.status, statusText: response.statusText, headers });
     })
   );
 });

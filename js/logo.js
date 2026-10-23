@@ -14,10 +14,10 @@
       img.style.cssText = "width:42px;height:42px;object-fit:contain;display:block;flex-shrink:0";
     });
 
-    document.querySelectorAll(".logo-area, .brand-header").forEach(area => {
-      area.style.backgroundColor = "#fff";
-      area.style.borderRadius = "12px";
-      area.style.padding = "3px 7px";
+    document.querySelectorAll("img.logo, img.logo-icon, img.logo-brand, img.brand-logo, img.brand-icon, img.logo-img").forEach(img => {
+      img.style.backgroundColor = "#fff";
+      img.style.borderRadius = "12px";
+      img.style.padding = "3px";
     });
   };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", applyLogo, { once: true });

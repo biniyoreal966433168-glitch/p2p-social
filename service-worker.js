@@ -41,8 +41,9 @@ self.addEventListener("fetch", event => {
       if (!contentType.includes("text/html")) return response;
       const html = await response.clone().text();
       if (html.includes("/js/theme.js") || html.includes("p2p-global-theme-script")) return response;
-      const injected = html.replace(/<\\/body\\s*>/i, '<script src="/js/theme.js" defer></script>\\n</body>');
-      if (injected === html) return response;
+      const bodyIndex = html.toLowerCase().lastIndexOf("</body>");
+      if (bodyIndex < 0) return response;
+      const injected = html.slice(0, bodyIndex) + '<script src="/js/theme.js" defer></script>\n' + html.slice(bodyIndex);
       const headers = new Headers(response.headers);
       headers.delete("content-length");
       headers.delete("content-encoding");

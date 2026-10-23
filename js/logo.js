@@ -5,7 +5,7 @@
       if (box.querySelector("img.brand-logo")) return;
       const img = document.createElement("img");
       img.className = "brand-logo";
-      img.src = "./p2p-logo.svg";
+      img.src = "/p2p-logo.svg";
       img.alt = "P2P Social";
       img.style.cssText = "width:42px;height:42px;object-fit:contain;display:block;flex-shrink:0";
       box.replaceChildren(img);

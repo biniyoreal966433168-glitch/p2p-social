@@ -1,4 +1,4 @@
-const CACHE_NAME = "p2p-social-v4";
+const CACHE_NAME = "p2p-social-v5";
 
 const FILES_TO_CACHE = [
   "./",

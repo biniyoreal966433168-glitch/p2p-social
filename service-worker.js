@@ -41,10 +41,10 @@ self.addEventListener("fetch", event => {
             if (bodyIndex >= 0) {
               let additions = "";
               if (!html.includes("/js/theme.js") && !html.includes("p2p-global-theme-script")) {
-                additions += '<script src="/js/theme.js" defer></script>\\n';
+                additions += '<script src="/js/theme.js" defer></script>\n';
               }
               if (!html.includes("/js/logo.js")) {
-                additions += '<script src="/js/logo.js" defer></script>\\n';
+                additions += '<script src="/js/logo.js" defer></script>\n';
               }
               if (additions) {
                 const injected = html.slice(0, bodyIndex) + additions + html.slice(bodyIndex);

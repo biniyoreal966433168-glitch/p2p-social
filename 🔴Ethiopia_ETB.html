@@ -117,6 +117,9 @@ header{height:68px;background:#fff;border-bottom:1px solid #e2e8ea;display:flex;
 .offer-trade{grid-column:2!important;grid-row:5!important;align-self:end!important;justify-self:end!important;width:100%!important;max-width:170px!important;margin-top:18px!important;padding:12px!important;border-radius:9px!important;background:#2eb889!important;font-size:14px!important}
 .pending-badge{grid-column:2!important;grid-row:4!important;margin-top:8px!important}
 @media(max-width:500px){.offer-main{grid-template-columns:minmax(0,1fr) minmax(100px,35%)!important;padding:17px 12px!important;min-height:225px!important;column-gap:9px!important}.offer-user{font-size:13px!important}.offer-price{font-size:23px!important}.offer-amount{font-size:11px!important}.offer-method{font-size:10px!important}.offer-trade{font-size:13px!important;padding:11px 7px!important}}
+
+/* Screenshot-inspired sell card profile and layout */
+.offer-list{display:flex!important;flex-direction:column!important;gap:0!important;background:#fff!important}.offer-card{border:0!important;border-bottom:1px solid #edf0f2!important;border-radius:0!important;box-shadow:none!important;background:#fff!important}.offer-main.reference-sell-card{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(120px,34%)!important;column-gap:12px!important;padding:18px 14px!important;min-height:245px!important}.reference-sell-left{min-width:0;display:flex;flex-direction:column}.reference-sell-left .offer-user{font-size:14px!important;white-space:normal!important;line-height:1.4!important}.reference-badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}.profile-badge{font-size:9px;font-weight:700;padding:4px 6px;border-radius:6px;background:#eef1f4;color:#596579}.profile-badge.verified{background:#e0f2fe;color:#0369a1}.profile-badge.merchant{background:#f3e8ff;color:#7e22ce}.profile-badge.active{background:#dcfce7;color:#166534}.profile-badge.level{background:#fff4db;color:#925f00}.reference-stats{font-size:11px;color:#9299a4;margin-top:7px;min-height:14px}.reference-price{font-size:28px;font-weight:750;color:#171d29;letter-spacing:-.5px;margin-top:24px;line-height:1.2}.reference-price small{font-size:12px;font-weight:400;color:#9299a4;letter-spacing:0}.reference-limits{display:flex;flex-direction:column;gap:7px;margin-top:18px}.reference-limits>div{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;font-size:12px}.reference-limits span{color:#9299a4}.reference-limits strong{font-weight:500;color:#343b47}.reference-sell-right{display:flex;flex-direction:column;min-width:0}.reference-sell-right .offer-method{text-align:right;white-space:normal;overflow:visible;font-size:11px;line-height:1.9;font-weight:400;color:#9299a4;margin:0}.reference-time{text-align:right;color:#9299a4;font-size:11px;margin-top:10px}.reference-sell-right .offer-trade{margin-top:auto!important;align-self:flex-end;width:100%;max-width:170px;padding:12px 8px;background:#2eb889;border-radius:9px;font-size:14px}.reference-sell-right .offer-trade.pending{background:#fff4db;color:#9a6500}.reference-sell-right .offer-trade.continue{background:#087f73;color:#fff}@media(max-width:500px){.offer-main.reference-sell-card{grid-template-columns:minmax(0,1fr) minmax(100px,35%)!important;padding:17px 12px!important;column-gap:9px!important;min-height:235px!important}.reference-sell-left .offer-user{font-size:13px!important}.reference-price{font-size:23px;margin-top:21px}.reference-price small{font-size:10px}.reference-limits>div{font-size:11px}.reference-sell-right .offer-method{font-size:10px}.reference-time{font-size:10px}.reference-sell-right .offer-trade{font-size:13px;padding:11px 7px}}
 </style>
 </head>
 <body>
@@ -319,36 +322,39 @@ updateOfferButton();return
 box.innerHTML="";
 (offersExpanded?filteredOffers:filteredOffers.slice(0,15)).forEach(o=>{
 if(String(o.user_id)===String(currentUser.id))return;
-let username=usernameCache.get(String(o.user_id))||"Buyer",
+let profile=profileCache.get(String(o.user_id))||{},
+name=profile.full_name||profile.display_name||profile.name||profile.real_name||"Buyer",
 pending=pendingTrades.get(String(o.id)),
 mine=pending&&String(pending.seller_id)===String(currentUser.id),
 amount=getOfferAvailableAmount(o),
 display=amount>0?amount:Number(pending?.amount||0),
 parts=getPairParts(o.pair||o.trading_pair),
 base=parts.base||marketPair.split("_")[0],
+completed=Number(profile.completed_trades??profile.trades_completed??profile.total_completed_trades??0),
+rate=Number(profile.completion_rate??profile.trade_completion_rate??profile.completed_rate??NaN),
+active=profile.is_online===true||profile.online===true||profile.active_now===true,
+verified=String(profile.verification_status||"").toLowerCase()==="verified"||profile.is_verified===true||profile.verified===true,
+merchant=String(profile.role||"").toLowerCase()==="merchant"||profile.is_merchant===true,
 card=document.createElement("div"),
 status="Pending Payment";
-if(pending){
-let s=normalizeStatus(pending.status);
-if(s==="paid"||s==="payment_confirmed"||pending.payment_confirmed)status="Payment Confirmed";
-else if(s==="disputed")status="Trade Disputed"
-}
+if(pending){let s=normalizeStatus(pending.status);if(s==="paid"||s==="payment_confirmed"||pending.payment_confirmed)status="Payment Confirmed";else if(s==="disputed")status="Trade Disputed"}
 card.className="offer-card";
-card.innerHTML=`<div class="offer-main">
-<button class="offer-user" onclick="viewUser('${escapeJs(o.user_id)}')">👤 ${escapeHtml(username)}</button>
-<div class="offer-label">${escapeHtml(base)}</div>
-<div class="offer-amount">${escapeHtml((display||0).toLocaleString(undefined,{maximumFractionDigits:6}))} ${escapeHtml(base)}</div>
-<div class="offer-price-label">Price</div>
-<div class="offer-price">${escapeHtml(money(o.price))} ${escapeHtml(parts.quote||"ETB")}</div>
-<div class="offer-method">Payment: ${escapeHtml(o.payment_method||"Bank Transfer")}</div>
-${pending?`<div class="pending-badge">⏳ ${escapeHtml(status)}</div>`:""}
-<button class="offer-trade ${pending?(mine?"continue":"pending"):""}" ${pending&&!mine?"disabled":""} onclick="${pending?mine?`openExistingTrade('${escapeJs(pending.id)}')`:"":`openTrade('${escapeJs(o.id)}')`}">${pending?(mine?"Continue Trade":"Pending Payment"):"Sell"}</button>
-</div>`;
+card.innerHTML='<div class="offer-main reference-sell-card">'+
+'<div class="reference-sell-left"><button class="offer-user" onclick="viewUser(\''+escapeJs(o.user_id)+'\')">👤 '+escapeHtml(name)+'</button>'+
+'<div class="reference-badges">'+(verified?'<span class="profile-badge verified">✓ Verified</span>':'')+(merchant?'<span class="profile-badge merchant">◆ Merchant</span>':'')+'<span class="profile-badge level">◆ Level '+escapeHtml(profile.level??profile.user_level??1)+'</span>'+(active?'<span class="profile-badge active">● Active</span>':'')+'</div>'+
+'<div class="reference-stats">'+(completed>0?'Trade(s) '+completed.toLocaleString():'')+(Number.isFinite(rate)?' · ✓ '+rate.toFixed(2)+'% completion':'')+'</div>'+
+'<div class="reference-price">'+escapeHtml(money(o.price))+' <small>'+escapeHtml(parts.quote||"ETB")+' / '+escapeHtml(base)+'</small></div>'+
+'<div class="reference-limits"><div><span>Limit</span><strong>'+escapeHtml(limitText(o))+'</strong></div><div><span>Available</span><strong>'+escapeHtml((display||0).toLocaleString(undefined,{maximumFractionDigits:6})+' '+base)+'</strong></div></div></div>'+
+'<div class="reference-sell-right"><div class="offer-method">'+escapeHtml(paymentMethods(o.payment_method||"Bank Transfer"))+'</div><div class="reference-time">◴ '+escapeHtml(timeLimit(o))+'</div>'+
+(pending?'<div class="pending-badge">⏳ '+escapeHtml(status)+'</div>':'')+
+'<button class="offer-trade '+(pending?(mine?"continue":"pending"):"")+'" '+(pending&&!mine?"disabled":"")+' onclick="'+(pending?(mine?'openExistingTrade(\''+escapeJs(pending.id)+'\')':''):'openTrade(\''+escapeJs(o.id)+'\')')+'">'+(pending?(mine?"Continue Trade":"Pending Payment"):"Sell")+'</button></div></div>';
 box.appendChild(card)
 });
 updateOfferButton()
 }
-
+function limitText(o){const min=o.min_amount??o.minimum_amount??o.min_limit??o.minimum_limit;const max=o.max_amount??o.maximum_amount??o.max_limit??o.maximum_limit;const fmt=v=>v===null||v===undefined||v===""?"":Number.isFinite(Number(v))?Number(v).toLocaleString(undefined,{maximumFractionDigits:2}):String(v);if(min!==undefined&&min!==null&&min!==""&&max!==undefined&&max!==null&&max!=="")return fmt(min)+" - "+fmt(max)+" ETB";if(min!==undefined&&min!==null&&min!=="")return "Min "+fmt(min)+" ETB";if(max!==undefined&&max!==null&&max!=="")return "Max "+fmt(max)+" ETB";return "1,000 - 10,000 ETB"}
+function paymentMethods(v){return Array.isArray(v)?v.join(" · "):String(v||"Bank Transfer").split(/[,;|]/).map(x=>x.trim()).filter(Boolean).join(" · ")}
+function timeLimit(o){const v=o.payment_time_limit??o.payment_window_minutes??o.time_limit_minutes??o.payment_minutes??o.time_limit;return v!==undefined&&v!==null&&v!==""?(String(v).includes("min")?String(v):String(v)+" min"):"15 min"}
 function openExistingTrade(id){location.href="message.html?trade_id="+encodeURIComponent(id)+"&order_id="+encodeURIComponent(id)}
 function viewUser(id){if(id)location.href="profile.html?user_id="+encodeURIComponent(id)}
 function getOfferBankName(o){return o?.bank_name||o?.bankName||o?.payment_details?.bank_name||o?.payment_details?.bankName||""}

@@ -179,7 +179,7 @@ header{height:68px;background:#fff;border-bottom:1px solid #e2e8ea;display:flex;
 <script>
 const U="https://mbsvuwrgigqfporxwpfr.supabase.co",K="sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa",supabaseClient=supabase.createClient(U,K);
 let currentSession=null,currentUser=null,currentUsername=null,availableOffers=[],filteredOffers=[],selectedOffer=null,offersExpanded=false,realtimeChannel=null,tradeRealtimeChannel=null,toastTimer=null,isLoading=false,actionLoading=false,marketPair="USDT_ETB";
-const usernameCache=new Map,pendingTrades=new Map;
+const usernameCache=new Map,profileCache=new Map,pendingTrades=new Map;
 
 document.addEventListener("DOMContentLoaded",startApp);
 
@@ -231,31 +231,24 @@ document.getElementById("tradeAmount").placeholder="Available "+asset
 async function loadCurrentUsername(){
 if(!currentUser)return;
 try{
-let{data}=await supabaseClient.from("profiles").select("username").eq("id",currentUser.id).maybeSingle();
+let{data}=await supabaseClient.from("profiles").select("*").eq("id",currentUser.id).maybeSingle();
 currentUsername=data?.username||currentUser.user_metadata?.username||null;
+if(data)profileCache.set(String(currentUser.id),data);
 if(currentUsername)usernameCache.set(String(currentUser.id),currentUsername)
 }catch(e){currentUsername=currentUser.user_metadata?.username||null}
 }
 
 async function getUsername(id){
-if(!id)return"User";
-let k=String(id);
-if(usernameCache.has(k))return usernameCache.get(k);
-try{
-let{data}=await supabaseClient.from("profiles").select("username").eq("id",id).maybeSingle();
-if(data?.username){usernameCache.set(k,data.username);return data.username}
-}catch(e){}
-return"User"
+if(!id)return"User";let k=String(id);
+if(profileCache.has(k))return profileCache.get(k).username||"User";
+try{let{data}=await supabaseClient.from("profiles").select("*").eq("id",id).maybeSingle();if(data){profileCache.set(k,data);if(data.username)usernameCache.set(k,data.username);return data.username||"User"}}catch(e){}
+return usernameCache.get(k)||"User"
 }
 
 async function loadOfferUsernames(){
-let ids=[...new Set(availableOffers.map(x=>x.user_id).filter(Boolean).map(String))],m=ids.filter(x=>!usernameCache.has(x));
+let ids=[...new Set(availableOffers.map(x=>x.user_id).filter(Boolean).map(String))],m=ids.filter(x=>!profileCache.has(x));
 if(!m.length)return;
-try{
-let{data,error}=await supabaseClient.from("profiles").select("id,username").in("id",m);
-if(error)throw error;
-(data||[]).forEach(x=>x.id&&x.username&&usernameCache.set(String(x.id),x.username))
-}catch(e){}
+try{let{data,error}=await supabaseClient.from("profiles").select("*").in("id",m);if(error)throw error;(data||[]).forEach(x=>{if(!x.id)return;profileCache.set(String(x.id),x);if(x.username)usernameCache.set(String(x.id),x.username)})}catch(e){}
 }
 
 async function loadPendingTrades(ids){

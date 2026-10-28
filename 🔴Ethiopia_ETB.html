@@ -193,6 +193,8 @@ const usernameCache=new Map,profileCache=new Map,pendingTrades=new Map;
 
 document.addEventListener("DOMContentLoaded",startApp);
 
+async function marketHeartbeat(){if(!currentUser)return;try{let p=profileCache.get(String(currentUser.id));if(!p){const{data}=await supabaseClient.from("profiles").select("show_online_status").eq("id",currentUser.id).maybeSingle();p=data||{}}if(p.show_online_status===false)return;await supabaseClient.rpc("profile_heartbeat")}catch(e){console.debug("Market presence update unavailable",e)}}
+function startMarketPresence(){marketHeartbeat();setInterval(()=>{if(!document.hidden)marketHeartbeat()},60000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)marketHeartbeat()})}
 async function startApp(){
 try{
 let{data,error}=await supabaseClient.auth.getSession();
@@ -202,6 +204,7 @@ if(!currentSession)return showLogin();
 currentUser=currentSession.user;
 updateMarketTabs();
 await loadCurrentUsername();
+startMarketPresence();
 await loadSellMarket();
 setupRealtime()
 }catch(e){console.error(e);toast(getErrorMessage(e),"error")}
@@ -347,7 +350,7 @@ status="Pending Payment";
 if(pending){let s=normalizeStatus(pending.status);if(s==="paid"||s==="payment_confirmed"||pending.payment_confirmed)status="Payment Confirmed";else if(s==="disputed")status="Trade Disputed"}
 card.className="offer-card";
 card.innerHTML='<div class="offer-main reference-sell-card">'+
-'<div class="reference-sell-left"><div class="market-profile"><img class="market-avatar" src="'+escapeHtml(avatar)+'" onerror="this.src=\'images/profile.png\'" onclick="viewUser(\''+escapeJs(o.user_id)+'\')" alt=""><div class="market-profile-info"><div class="market-name-line"><button class="offer-user" onclick="viewUser(\''+escapeJs(o.user_id)+'\')">'+escapeHtml(name)+'</button><span class="market-presence '+marketStatus(profile).toLowerCase()+'"'> '+lastSeenText(profile)+'</span></div></div></div>'+
+'<div class="reference-sell-left"><div class="market-profile"><img class="market-avatar" src="'+escapeHtml(avatar)+'" onerror="this.src=\'images/profile.png\'" onclick="viewUser(\''+escapeJs(o.user_id)+'\')" alt=""><div class="market-profile-info"><div class="market-name-line"><button class="offer-user" onclick="viewUser(\''+escapeJs(o.user_id)+'\')">'+escapeHtml(name)+'</button><span class="market-presence '+marketStatus(profile).toLowerCase()+'">'+escapeHtml(lastSeenText(profile))+'</span></div></div></div>'+
 '<div class="profile-tags">'+marketTags(profile)+'</div><div class="profile-status">'+marketStatus(profile)+'</div>'+
 '<div class="reference-stats">'+(completed>0?'Trade(s) '+completed.toLocaleString():'')+(Number.isFinite(rate)?' · ✓ '+rate.toFixed(2)+'% completion':'')+'</div>'+
 '<div class="reference-price">'+escapeHtml(money(o.price))+' <small>'+escapeHtml(parts.quote||"ETB")+' / '+escapeHtml(base)+'</small></div>'+

@@ -258,59 +258,7 @@ try{let{data}=await supabaseClient.from("profiles").select("*").eq("id",id).mayb
 return usernameCache.get(k)||"User"
 }
 
-async function loadOfferUsernames(){
-let ids=[...new Set(availableOffers.map(x=>x.user_id).filter(Boolean).map(String))],m=ids.filter(x=>!profileCache.has(x));
-if(!m.length)return;
-try{let{data,error}=await supabaseClient.from("profiles").select("*").in("id",m);if(error)throw error;(data||[]).forEach(x=>{if(!x.id)return;profileCache.set(String(x.id),x);if(x.username)usernameCache.set(String(x.id),x.username)})}catch(e){}
-}
-
-async function loadPendingTrades(ids){
-pendingTrades.clear();
-if(!ids.length)return;
-try{
-let{data,error}=await supabaseClient.from("p2p_trades").select("id,order_id,buyer_id,seller_id,amount,status,payment_confirmed,expires_at").in("order_id",ids);
-if(error)throw error;
-(data||[]).forEach(t=>{
-if(!["completed","released","cancelled","canceled","expired","closed"].includes(normalizeStatus(t.status))&&t.order_id!=null)pendingTrades.set(String(t.order_id),t)
-})
-}catch(e){console.error(e)}
-}
-
-async function loadSellMarket(){
-if(!currentUser)return showLogin();
-if(isLoading)return;
-isLoading=true;
-let box=document.getElementById("offers");
-box.innerHTML='<div class="empty">Loading available sell...</div>';
-try{
-let{data,error}=await supabaseClient.from("p2p_orders").select("*")
-.eq("order_type","buy")
-.in("status",["active","open"])
-.neq("user_id",currentUser.id)
-.order("created_at",{ascending:false});
-if(error)throw error;
-let orders=(data||[]).filter(o=>
-String(o.user_id)!==String(currentUser.id)&&
-["active","open"].includes(normalizeStatus(o.status))&&
-String(o.pair||o.trading_pair||"").toUpperCase().replace("/","_")===marketPair
-);
-await loadPendingTrades(orders.map(o=>o.id));
-availableOffers=orders.filter(o=>getOfferAvailableAmount(o)>0||pendingTrades.has(String(o.id)));
-availableOffers.sort((a,b)=>{
-let x=Number(a.price),y=Number(b.price);
-if(Number.isFinite(x)&&Number.isFinite(y)&&x!==y)return x-y;
-if(Number.isFinite(x)!==Number.isFinite(y))return Number.isFinite(x)?-1:1;
-return(Date.parse(b.created_at||"")||0)-(Date.parse(a.created_at||"")||0)
-});
-await loadOfferUsernames();
-searchUSDTAmount()
-}catch(e){
-console.error(e);
-availableOffers=[];filteredOffers=[];
-box.innerHTML=emptyHtml("⚠️","Could not load available sell.",getErrorMessage(e))
-}finally{isLoading=false}
-}
-
+async function loadOfferUsernames(){const ids=[...new Set(availableOffers.map(o=>o.user_id).filter(Boolean).map(String))];if(!ids.length)return;try{let{data,error}=await supabaseClient.from("profiles").select("*").in("id",ids);if(error)throw error;(data||[]).forEach(p=>{if(!p.id)return;profileCache.set(String(p.id),p);if(p.username)usernameCache.set(String(p.id),p.username)})}catch(e){console.debug("Could not refresh market profile presence",e)}}
 function searchUSDTAmount(){
 let e=document.getElementById("usdtSearch"),v=Number(e?.value);
 filteredOffers=e&&e.value.trim()&&Number.isFinite(v)&&v>0?
@@ -365,7 +313,7 @@ updateOfferButton()
 
 function marketFeeSpent(p){return Math.max(0,Number(p?.total_fees_paid??p?.fees_paid??p?.fee_spent??p?.total_fee_spent??p?.spending_fees??p?.fee_total??0)||0)}
 function marketTags(p){const role=String(p?.role??p?.account_type??"basic").toLowerCase(),verified=String(p?.verification_status||"").toLowerCase()==="verified"||p?.is_verified===true||p?.verified===true||p?.user_verified===true,merchant=role==="merchant"||p?.is_merchant===true||p?.merchant===true,followers=Number(p?.followers_count??p?.follower_count??p?.followers??0)||0,spent=marketFeeSpent(p),level=spent>=4?2:spent>=2?1:0,t=[];if(level>0)t.push('<span class="tag on level'+level+'">◇ Level: '+level+'</span>');if(role!=="merchant")t.push('<span class="tag on basic">■ Basic</span>');if(verified)t.push('<span class="tag on verified">■ Verified</span>');if(merchant)t.push('<span class="tag on merchant">■ Merchant</span>');if(followers>=10)t.push('<span class="tag on famous">♡ Famous</span>');if(spent>=10)t.push('<span class="tag on rich">◆ Rich</span>');return t.join("")}
-function lastSeenText(p){if(p?.show_online_status===false)return"";const raw=p?.last_seen||p?.last_seen_at||p?.last_active_at,ts=raw?Date.parse(raw):NaN;if(!Number.isFinite(ts))return"Offline";const age=Math.max(0,Date.now()-ts),mins=Math.floor(age/60000);if(age<60000||p?.is_online===true||p?.online===true)return"Online";if(age<3600000)return"Last seen "+Math.max(1,mins)+" min ago";if(age<21600000){const hrs=Math.floor(age/3600000),rem=Math.floor((age%3600000)/60000);return"Last seen "+hrs+"h"+(rem?" "+rem+"m":"")+" ago"}return"Offline · last seen "+new Date(ts).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}function marketStatus(p){return lastSeenText(p)==="Online"?"Online":"Offline"}
+function lastSeenText(p){if(p?.show_online_status===false)return"Last seen hidden";const raw=p?.last_seen_at||p?.last_seen||p?.last_active_at,ts=raw?Date.parse(raw):NaN;if(!Number.isFinite(ts))return"Offline";let n=Math.max(0,Date.now()-ts);if(n<120000||p?.is_online===true||p?.online===true||p?.active_now===true)return"Online";const units=[["year",365*86400000],["month",30*86400000],["week",7*86400000],["day",86400000],["hour",3600000],["minute",60000]];const parts=[];for(const [name,size] of units){const amount=Math.floor(n/size);if(amount>0){parts.push(amount+" "+name+(amount===1?"":"s"));n-=amount*size;if(parts.length===2)break}}return"Last seen "+(parts.length?parts.join(" "):"just now")+" ago"}function marketStatus(p){return lastSeenText(p)==="Online"?"Online":"Offline"}
 function limitText(o){const min=o.min_amount??o.minimum_amount??o.min_limit??o.minimum_limit??o.min_trade_amount??o.min_order_amount;const max=o.max_amount??o.maximum_amount??o.max_limit??o.maximum_limit??o.max_trade_amount??o.max_order_amount;const fmt=v=>v===null||v===undefined||v===""?"":Number.isFinite(Number(v))?Number(v).toLocaleString(undefined,{maximumFractionDigits:2}):String(v);if(min!==undefined&&min!==null&&min!==""&&max!==undefined&&max!==null&&max!=="")return fmt(min)+" - "+fmt(max)+" ETB";if(min!==undefined&&min!==null&&min!=="")return "Min "+fmt(min)+" ETB";if(max!==undefined&&max!==null&&max!=="")return "Max "+fmt(max)+" ETB";return "Not set"}
 function paymentMethods(v){const items=(Array.isArray(v)?v:typeof v==="string"?v.split(/[,;|]/):[]).map(x=>String(x).trim()).filter(Boolean);return items.length?items.join(" · "):"Not set"}
 function tradeTimerText(p,o){if(p?.expires_at){const end=Date.parse(p.expires_at);if(Number.isFinite(end)){const left=Math.max(0,Math.floor((end-Date.now())/1000));return String(Math.floor(left/60)).padStart(2,"0")+":"+String(left%60).padStart(2,"0")}return "Not set"}const v=o?.payment_time_limit??o?.payment_window_minutes??o?.time_limit_minutes??o?.payment_minutes??o?.time_limit;if(v!==undefined&&v!==null&&v!==""&&Number.isFinite(Number.parseFloat(v)))return String(v).includes("min")?String(v):String(v)+" min";return "Not set"}

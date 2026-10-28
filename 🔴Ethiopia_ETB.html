@@ -149,13 +149,13 @@ header{height:68px;background:#fff;border-bottom:1px solid #e2e8ea;display:flex;
 </div>
 
 <div class="section-title">
-<div class="market-heading"><h2>🔴 Offers (<span id="offerCount">0</span>)</h2><button type="button" class="market-action-btn" onclick="document.getElementById('offers').scrollIntoView({behavior:'smooth',block:'start'})">Sell</button><button type="button" class="market-action-btn" onclick="document.getElementById('offers').scrollIntoView({behavior:'smooth',block:'start'})">Sell</button></div>
+<div class="market-heading"><h2>🔴 Offers (<span id="offerCount">0</span>)</h2><button type="button" class="market-action-btn" onclick="document.getElementById('offers').scrollIntoView({behavior:'smooth',block:'start'})">Buy</button></div>
 <div class="section-actions">
 <button id="offerViewButton" class="view-btn" onclick="toggleOffers()">View All</button>
 <button class="refresh-btn" onclick="loadSellMarket()">Refresh</button>
 </div>
 </div>
-<section id="offers" class="offer-list"><div class="empty"><div class="empty-icon">🔴</div><strong>Loading available sell...</strong></div></section>
+<section id="offers" class="offer-list"><div class="empty"><div class="empty-icon">🔴</div><strong>Loading available buy...</strong></div></section>
 </main>
 
 <div id="tradeModal" class="modal">
@@ -278,7 +278,7 @@ if(!currentUser)return showLogin();
 if(isLoading)return;
 isLoading=true;
 let box=document.getElementById("offers");
-box.innerHTML='<div class="empty">Loading available sell...</div>';
+box.innerHTML='<div class="empty">Loading available buy...</div>';
 try{
 let{data,error}=await supabaseClient.from("p2p_orders").select("*")
 .eq("order_type","buy")
@@ -305,7 +305,7 @@ searchUSDTAmount()
 }catch(e){
 console.error(e);
 availableOffers=[];filteredOffers=[];
-box.innerHTML=emptyHtml("⚠️","Could not load available sell.",getErrorMessage(e))
+box.innerHTML=emptyHtml("⚠️","Could not load available buy.",getErrorMessage(e))
 }finally{isLoading=false}
 }
 
@@ -323,7 +323,7 @@ function renderSellMarket(){
 let box=document.getElementById("offers");
 if(!filteredOffers.length){
 let q=document.getElementById("usdtSearch")?.value.trim();
-box.innerHTML=emptyHtml(q?"🔎":"🔴",q?"No sell available for this amount.":"No available sell.",q?"Try a smaller amount.":"Available offers will appear here.");
+box.innerHTML=emptyHtml(q?"🔎":"🔴",q?"No buy available for this amount.":"No available buy.",q?"Try a smaller amount.":"Available offers will appear here.");
 updateOfferButton();return
 }
 box.innerHTML="";
@@ -461,7 +461,7 @@ document.getElementById("tradeTotalPreview").textContent=money(v)+" "+c
 async function submitTrade(){
 if(actionLoading)return;
 if(!currentUser)return showLogin();
-if(!selectedOffer)return toast("Select an available sell first.","warning");
+if(!selectedOffer)return toast("Select an available buy first.","warning");
 let pending=pendingTrades.get(String(selectedOffer.id));
 if(pending)return String(pending.seller_id)===String(currentUser.id)?openExistingTrade(pending.id):toast("This buy offer already has a pending trade.","warning");
 try{

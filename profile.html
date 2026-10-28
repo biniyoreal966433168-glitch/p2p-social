@@ -188,13 +188,14 @@ async function renderOrderEligibilityBadges(){
  const box=$("orderEligibilityBadges"),hidden=$("orderEligibility");if(!box||!hidden)return;
  const active=getActiveOrderBadges();
  const selected=new Set((hidden.value||"").split("|").filter(Boolean));
- const levelKey=[...selected].find(x=>/^level:[1-5]$/.test(x))||"";
+ const levelKey=[...selected].find(x=>/^level:\d+$/.test(x))||"";
  const levelValue=levelKey?levelKey.split(":")[1]:"";
- box.innerHTML='<div class="order-eligibility-level-row"><label for="orderEligibilityLevel">Level</label><input id="orderEligibilityLevel" type="number" min="1" max="5" step="1" inputmode="numeric" placeholder="Number (1–5)" value="'+levelValue+'"></div><div class="order-eligibility-badge-options">'+active.map(x=>'<button type="button" class="order-eligibility-option '+x.style+(selected.has(x.key)?" selected":"")+'" data-badge-key="'+x.key+'" aria-pressed="'+selected.has(x.key)+'">'+x.label+'</button>').join("")+'</div>';
+ box.innerHTML='<div class="order-eligibility-level-row"><label for="orderEligibilityLevel">Level</label><input id="orderEligibilityLevel" type="number" min="1" max="100" step="1" inputmode="numeric" placeholder="Number (1–100)" value="'+levelValue+'"></div><div class="order-eligibility-badge-options">'+active.map(x=>'<button type="button" class="order-eligibility-option '+x.style+(selected.has(x.key)?" selected":"")+'" data-badge-key="'+x.key+'" aria-pressed="'+selected.has(x.key)+'">'+x.label+'</button>').join("")+'</div>';
  const levelInput=$("orderEligibilityLevel");
  levelInput.addEventListener("input",()=>{
-  const n=Number(levelInput.value),keys=(hidden.value||"").split("|").filter(x=>x&&!/^level:[1-5]$/.test(x));
-  if(levelInput.value.trim()!==""&&Number.isInteger(n)&&n>=1&&n<=5)keys.unshift("level:"+n);
+  const keys=(hidden.value||"").split("|").filter(x=>x&&!/^level:\d+$/.test(x));
+  const raw=levelInput.value.trim(),n=Number(raw);
+  if(raw!==""&&Number.isInteger(n)&&n>=1&&n<=100)keys.unshift("level:"+n);
   hidden.value=keys.join("|");
  });
  box.querySelectorAll("[data-badge-key]").forEach(btn=>btn.addEventListener("click",()=>{

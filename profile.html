@@ -175,20 +175,20 @@ const ORDER_PAYMENT_METHODS={
 ET:["Telebirr","M-PESA Ethiopia","CBE Birr","CBE Bank Transfer","Awash Birr","Awash Bank Transfer","Coopay-Ebirr","Amole","HelloCash","Kacha","YaYa Wallet","M-Birr","Hibret Bank","Dashen Bank","Bank of Abyssinia","Oromia Bank","Wegagen Bank","NIB International Bank","Berhan Bank","Amhara Bank","Abay Bank","Enat Bank","Zemen Bank","Siinqee Bank","ZamZam Bank","Other Ethiopian Bank Transfer"],
 AR:["Bank Transfer","Mercado Pago","Ualá","Brubank","Cash Deposit"],AU:["Bank Transfer","PayID","PayPal"],BD:["Bank Transfer","bKash","Nagad","Rocket"],BR:["Bank Transfer","PIX","PicPay","Mercado Pago"],CA:["Bank Transfer","Interac e-Transfer","PayPal"],CO:["Bank Transfer","Nequi","Daviplata","Bancolombia"],DK:["Bank Transfer","MobilePay"],EG:["Bank Transfer","Vodafone Cash","Orange Cash","e& Cash","InstaPay"],GH:["Bank Transfer","MTN MoMo","Telecel Cash","AT Money"],IN:["Bank Transfer","UPI","IMPS","PhonePe","Google Pay","Paytm"],ID:["Bank Transfer","GoPay","OVO","DANA","ShopeePay"],JP:["Bank Transfer","PayPay","LINE Pay"],KE:["Bank Transfer","M-PESA Kenya","Airtel Money"],MY:["Bank Transfer","DuitNow","Touch 'n Go eWallet","GrabPay"],MX:["Bank Transfer","SPEI","Mercado Pago","OXXO Cash"],MA:["Bank Transfer","Cash Plus","Inwi Money"],NZ:["Bank Transfer","POLi","PayPal"],NG:["Bank Transfer","OPay","PalmPay","Moniepoint"],NO:["Bank Transfer","Vipps"],PK:["Bank Transfer","Easypaisa","JazzCash"],PH:["Bank Transfer","GCash","Maya","Coins.ph"],PL:["Bank Transfer","BLIK","Przelewy24"],RO:["Bank Transfer","Revolut"],SA:["Bank Transfer","STC Pay","Mada"],SG:["Bank Transfer","PayNow","GrabPay"],ZA:["Bank Transfer","EFT","FNB eWallet","Capitec Pay"],KR:["Bank Transfer","KakaoPay","Toss Pay"],LK:["Bank Transfer","FriMi","eZ Cash","mCash"],SE:["Bank Transfer","Swish"],CH:["Bank Transfer","TWINT"],TZ:["Bank Transfer","M-Pesa Tanzania","Airtel Money","Tigo Pesa"],TH:["Bank Transfer","PromptPay","TrueMoney"],TR:["Bank Transfer","FAST","Papara"],UG:["Bank Transfer","MTN MoMo","Airtel Money"],AE:["Bank Transfer","UAE Instant Payment","e& money"],GB:["Bank Transfer","Faster Payments","PayPal"],US:["Bank Transfer","Zelle","Cash App","PayPal","Venmo"]};
 function updateOrderPaymentMethods(){const country=$("orderCountry"),pay=$("orderPayment"),code=country?country.value:"ET",currency=ORDER_COUNTRY_CURRENCY[code]||"ETB",methods=ORDER_PAYMENT_METHODS[code]||["Bank Transfer"];if(pay){const old=pay.value;pay.innerHTML='<option value="">Choose a payment method</option>'+methods.map(m=>'<option value="'+m.replace(/&/g,"&amp;").replace(/"/g,"&quot;")+'">'+m+'</option>').join("");if(methods.includes(old))pay.value=old;}const priceCurrency=$("orderPriceCurrency");if(priceCurrency)priceCurrency.textContent=currency;document.querySelectorAll('label[for="orderMinLimit"],label[for="orderMaxLimit"]').forEach(el=>el.textContent=el.textContent.replace(/\([^)]*\)/, '('+currency+')'));const labels=document.querySelectorAll("#orderModal .form-label");labels.forEach(el=>{if(el.textContent.includes("Minimum Limit"))el.textContent="Minimum Limit ("+currency+")";if(el.textContent.includes("Maximum Limit"))el.textContent="Maximum Limit ("+currency+")";});}
-async function getActiveOrderBadges(){
- const p=currentProfile||{},followers=Number(p.followers_count??p.followers??0)||0,merchant=!!(p.merchant===true||p.is_merchant===true||String(p.role||"").toLowerCase()==="merchant"),spending=Number(window.currentProfileFeeSpending||0),level=getLevel(spending),online=await onlineNow(),items=[];
- if(level>0)items.push({key:"level"+level,label:"◇ Level: "+level,style:levelClass(level)});
- items.push({key:"basic",label:"■ Basic",style:"basic"});
- if(verified(p))items.push({key:"verified",label:"■ Verified",style:"verified"});
- if(merchant)items.push({key:"merchant",label:"■ Merchant",style:"merchant"});
- if(followers>=10)items.push({key:"famous",label:"♡ Famous",style:"famous"});
- if(spending>=10)items.push({key:"rich",label:"◆ Rich",style:"rich"});
- if(online)items.push({key:"online",label:"● Online",style:"online"});
- return items;
+function getActiveOrderBadges(){
+ return [
+  {key:"level1",label:"◇ Level: 1",style:levelClass(1)},
+  {key:"level2",label:"◇ Level: 2",style:levelClass(2)},
+  {key:"basic",label:"■ Basic",style:"basic"},
+  {key:"verified",label:"■ Verified",style:"verified"},
+  {key:"merchant",label:"■ Merchant",style:"merchant"},
+  {key:"famous",label:"♡ Famous",style:"famous"},
+  {key:"rich",label:"◆ Rich",style:"rich"}
+ ];
 }
 async function renderOrderEligibilityBadges(){
  const box=$("orderEligibilityBadges"),hidden=$("orderEligibility");if(!box||!hidden)return;
- const active=await getActiveOrderBadges();
+ const active=getActiveOrderBadges();
  if(!active.length){box.innerHTML='<div class="empty">No active profile badges found.</div>';hidden.value="";return}
  let selected=new Set((hidden.value||"").split("|").filter(Boolean));
  box.innerHTML=active.map(x=>'<button type="button" class="order-eligibility-option '+x.style+(selected.has(x.key)?" selected":"")+'" data-badge-key="'+x.key+'" aria-pressed="'+selected.has(x.key)+'">'+x.label+'</button>').join("");

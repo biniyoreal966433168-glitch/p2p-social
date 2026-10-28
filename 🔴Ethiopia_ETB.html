@@ -126,6 +126,7 @@ header{height:68px;background:#fff;border-bottom:1px solid #e2e8ea;display:flex;
 .profile-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}.tag{display:inline-flex;align-items:center;white-space:nowrap;padding:4px 6px;border-radius:7px;background:#f5f7fa;color:#788391;font-size:9px;font-weight:700;border:1px solid transparent}.tag.on.basic{background:#fde8e8;color:#b42318;border-color:#f5b8b8}.tag.on.verified{background:#e7f8f1;color:#087f73;border-color:#bfe9d8}.tag.on.merchant{background:#edf2ff;color:#3459a6;border-color:#d7e1ff}.tag.on.famous{background:#fff0f6;color:#b83270;border-color:#f7d1e2}.tag.on.rich{background:#fff7e4;color:#936000;border-color:#f2dfae}.tag.on.level1{background:#e8f8f3;color:#087f73}.tag.on.level2{background:linear-gradient(100deg,#6b3cff,#d83eae);color:#fff}.tag:not(.on){opacity:.72}.reference-sell-left .profile-status{font-size:10px;color:#16835e;margin-top:3px}
 
 .market-name-line{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.market-presence{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;white-space:nowrap}.market-presence:before{content:"";width:6px;height:6px;border-radius:50%;background:#9299a4}.market-presence.online{color:#16835e}.market-presence.online:before{background:#22c55e}.market-presence.offline{color:#9299a4}
+.market-heading{display:flex;align-items:center;gap:9px;min-width:0}.market-action-btn{border:0;background:linear-gradient(135deg,#a61f3d,#d73553);color:#fff;padding:8px 14px;border-radius:9px;font-weight:800;box-shadow:0 4px 10px rgba(190,35,65,.2);white-space:nowrap}.market-action-btn:active{transform:scale(.97)}
 </style>
 </head>
 <body>
@@ -148,13 +149,13 @@ header{height:68px;background:#fff;border-bottom:1px solid #e2e8ea;display:flex;
 </div>
 
 <div class="section-title">
-<h2>🔴 Available Buy (<span id="offerCount">0</span>)</h2>
+<div class="market-heading"><h2>🔴 Available Sell (<span id="offerCount">0</span>)</h2><button type="button" class="market-action-btn" onclick="document.getElementById('offers').scrollIntoView({behavior:'smooth',block:'start'})">Sell</button></div>
 <div class="section-actions">
 <button id="offerViewButton" class="view-btn" onclick="toggleOffers()">View All</button>
 <button class="refresh-btn" onclick="loadSellMarket()">Refresh</button>
 </div>
 </div>
-<section id="offers" class="offer-list"><div class="empty"><div class="empty-icon">🔴</div><strong>Loading available buy...</strong></div></section>
+<section id="offers" class="offer-list"><div class="empty"><div class="empty-icon">🔴</div><strong>Loading available sell...</strong></div></section>
 </main>
 
 <div id="tradeModal" class="modal">
@@ -277,7 +278,7 @@ if(!currentUser)return showLogin();
 if(isLoading)return;
 isLoading=true;
 let box=document.getElementById("offers");
-box.innerHTML='<div class="empty">Loading available buy...</div>';
+box.innerHTML='<div class="empty">Loading available sell...</div>';
 try{
 let{data,error}=await supabaseClient.from("p2p_orders").select("*")
 .eq("order_type","buy")
@@ -304,7 +305,7 @@ searchUSDTAmount()
 }catch(e){
 console.error(e);
 availableOffers=[];filteredOffers=[];
-box.innerHTML=emptyHtml("⚠️","Could not load available buy.",getErrorMessage(e))
+box.innerHTML=emptyHtml("⚠️","Could not load available sell.",getErrorMessage(e))
 }finally{isLoading=false}
 }
 
@@ -322,7 +323,7 @@ function renderSellMarket(){
 let box=document.getElementById("offers");
 if(!filteredOffers.length){
 let q=document.getElementById("usdtSearch")?.value.trim();
-box.innerHTML=emptyHtml(q?"🔎":"🔴",q?"No buy available for this amount.":"No available buy.",q?"Try a smaller amount.":"Active buyers will appear here.");
+box.innerHTML=emptyHtml(q?"🔎":"🔴",q?"No sell available for this amount.":"No available sell.",q?"Try a smaller amount.":"Available offers will appear here.");
 updateOfferButton();return
 }
 box.innerHTML="";
@@ -417,13 +418,13 @@ function toggleOffers(){offersExpanded=!offersExpanded;renderSellMarket()}
 
 async function openTrade(id){
 selectedOffer=availableOffers.find(o=>String(o.id)===String(id));
-if(!selectedOffer)return toast("This available buy is no longer available. Refresh.","warning");
+if(!selectedOffer)return toast("This available offer is no longer available. Refresh.","warning");
 let p=pendingTrades.get(String(selectedOffer.id));
 if(p)return String(p.seller_id)===String(currentUser.id)?openExistingTrade(p.id):toast("This buy offer already has a pending trade.","warning");
 if(String(selectedOffer.user_id)===String(currentUser.id))return toast("You cannot sell to your own buy offer.","warning");
-if(!["active","open"].includes(normalizeStatus(selectedOffer.status)))return toast("This available buy is no longer available. Refresh.","warning");
+if(!["active","open"].includes(normalizeStatus(selectedOffer.status)))return toast("This available offer is no longer available. Refresh.","warning");
 let available=getOfferAvailableAmount(selectedOffer);
-if(available<=0)return toast("This available buy has no remaining amount.","warning");
+if(available<=0)return toast("This available offer has no remaining amount.","warning");
 let input=document.getElementById("tradeAmount"),
 parts=getPairParts(selectedOffer.pair||selectedOffer.trading_pair),
 base=parts.base||marketPair.split("_")[0],
@@ -460,17 +461,17 @@ document.getElementById("tradeTotalPreview").textContent=money(v)+" "+c
 async function submitTrade(){
 if(actionLoading)return;
 if(!currentUser)return showLogin();
-if(!selectedOffer)return toast("Select an available buy first.","warning");
+if(!selectedOffer)return toast("Select an available sell first.","warning");
 let pending=pendingTrades.get(String(selectedOffer.id));
 if(pending)return String(pending.seller_id)===String(currentUser.id)?openExistingTrade(pending.id):toast("This buy offer already has a pending trade.","warning");
 try{
 let{data,error}=await supabaseClient.from("p2p_orders").select("*").eq("id",selectedOffer.id).maybeSingle();
 if(error)throw error;
-if(!data){closeModal("tradeModal");await loadSellMarket();return toast("This available buy is no longer available.","warning")}
+if(!data){closeModal("tradeModal");await loadSellMarket();return toast("This available offer is no longer available.","warning")}
 selectedOffer=data;
 if(String(data.user_id)===String(currentUser.id)||String(data.order_type).toLowerCase()!=="buy")return closeModal("tradeModal");
 if(String(data.pair||data.trading_pair||"").toUpperCase().replace("/","_")!==marketPair)return closeModal("tradeModal"),toast("This offer belongs to another market.","warning");
-if(!["active","open"].includes(normalizeStatus(data.status)))return closeModal("tradeModal"),toast("This available buy is no longer active.","warning");
+if(!["active","open"].includes(normalizeStatus(data.status)))return closeModal("tradeModal"),toast("This available offer is no longer active.","warning");
 let{data:ts,error:te}=await supabaseClient.from("p2p_trades").select("id,order_id,buyer_id,seller_id,status,payment_confirmed").eq("order_id",data.id);
 if(te)throw te;
 let active=(ts||[]).find(t=>!["completed","released","cancelled","canceled","expired","closed"].includes(normalizeStatus(t.status)));
@@ -479,7 +480,7 @@ pendingTrades.set(String(data.id),active);renderSellMarket();
 return String(active.seller_id)===String(currentUser.id)?openExistingTrade(active.id):toast("This buy offer already has a pending trade.","warning")
 }
 let available=getOfferAvailableAmount(data),amount=Number(document.getElementById("tradeAmount").value);
-if(available<=0)return closeModal("tradeModal"),toast("This available buy has no remaining amount.","warning");
+if(available<=0)return closeModal("tradeModal"),toast("This available offer has no remaining amount.","warning");
 if(!Number.isFinite(amount)||amount<=0)return toast("Invalid available amount.","warning");
 let normalized=Number(available.toFixed(2));
 if(Math.abs(amount-normalized)>.000001){

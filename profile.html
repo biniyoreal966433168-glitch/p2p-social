@@ -268,9 +268,9 @@ async function loadMyOrders(){
 }
 function setMyOrdersFilter(t){myOrdersFilter=["buy","sell"].includes(t)?t:"all";["all","buy","sell"].forEach(x=>{let id="ordersTab"+x.charAt(0).toUpperCase()+x.slice(1),b=$(id);if(b)b.classList.toggle("active",myOrdersFilter===x)});loadMyOrders()}
 async function cancelOrder(id){if(!confirm("Cancel this order?"))return;try{await p2pOrders({action:"cancel_order",order_id:id});await refreshWallet();await loadMyOrders();alert("Order cancelled.")}catch(e){alert("Could not cancel order: "+e.message)}}
-function openMyOrdersSection(){activeP2POnly=false;showAllOrders=true;$("myOrdersSectionModal").querySelector("h3").textContent="Order History";$("myOrdersSectionModal").querySelector(".history-tabs").style.display="grid";$("myOrdersSectionModal").querySelector(".list-controls").style.display="flex";$("ordersViewButton").style.display="";$("ordersViewButton").textContent="Show Latest 3";$("myOrdersSectionModal").classList.add("show");loadMyOrders()}
+function openMyOrdersSection(){const m=$("myOrdersSectionModal");activeP2POnly=false;showAllOrders=true;m.querySelector("h3").textContent="Order History";m.querySelector(".history-tabs").style.display="grid";m.querySelector(".list-controls").style.display="flex";$("ordersViewButton").style.display="";$("ordersViewButton").textContent="Show Latest 3";m.classList.add("show");m.style.display="flex";m.style.visibility="visible";m.style.opacity="1";m.setAttribute("aria-modal","true");m.setAttribute("role","dialog");loadMyOrders()}
 function openActiveP2POrders(){activeP2POnly=true;showAllOrders=true;$("myOrdersSectionModal").querySelector("h3").textContent="Active P2P Orders";$("myOrdersSectionModal").querySelector(".history-tabs").style.display="none";$("myOrdersSectionModal").querySelector(".list-controls").style.display="flex";$("ordersViewButton").style.display="none";$("myOrdersSectionModal").classList.add("show");loadMyOrders()}
-function closeMyOrdersSection(){activeP2POnly=false;$("ordersViewButton").style.display="";$("myOrdersSectionModal").querySelector(".history-tabs").style.display="grid";$("myOrdersSectionModal").querySelector(".list-controls").style.display="flex";$("myOrdersSectionModal").querySelector("h3").textContent="Order History";$("myOrdersSectionModal").classList.remove("show")}
+function closeMyOrdersSection(){activeP2POnly=false;const m=$("myOrdersSectionModal");$("ordersViewButton").style.display="";m.querySelector(".history-tabs").style.display="grid";m.querySelector(".list-controls").style.display="flex";m.querySelector("h3").textContent="Order History";m.classList.remove("show");m.style.display="none";m.style.visibility="";m.style.opacity="";m.removeAttribute("aria-modal");m.removeAttribute("role")}
 function toggleOrdersView(){showAllOrders=!showAllOrders;$("ordersViewButton").textContent=showAllOrders?"Show Latest 3":"View All History";loadMyOrders()}
 async function refreshOrders(){let b=$("ordersRefreshButton");b.disabled=true;await loadMyOrders();b.disabled=false}
 function updateFeePreview(){let a=Number($("orderAmount").value||0),p=Number($("orderPrice").value||0),v=a*p,f=orderType==="sell"?a*F:0,c=orderCurrency;$("orderTradeValue").textContent=num(v)+" "+$("orderPriceCurrency").textContent;$("orderFee").textContent=num(f)+" "+c;$("orderTotal").textContent=num(orderType==="sell"?a-f:a)+" "+c}
@@ -442,4 +442,26 @@ body.night-mode #myOrdersSectionModal .order-detail{background:#111827;border-co
  #myOrdersSectionModal .order-detail{padding:9px}
  #myOrdersSectionModal .order-detail-value{font-size:12px}
 }
+</style>
+
+<style>
+/* Reliable visible Order History overlay */
+#myOrdersSectionModal.show{display:flex!important;position:fixed!important;inset:0!important;z-index:99999!important;visibility:visible!important;opacity:1!important;background:rgba(15,23,42,.72)!important;align-items:center!important;justify-content:center!important;padding:12px!important;overflow-y:auto!important}
+#myOrdersSectionModal.show>.modal-box{display:block!important;visibility:visible!important;opacity:1!important;position:relative!important;width:min(1100px,98vw)!important;max-width:1100px!important;max-height:94dvh!important;overflow-y:auto!important;overscroll-behavior:contain!important;background:#fff!important;color:#172033!important;margin:auto!important;padding:22px!important;border-radius:18px!important;box-shadow:0 24px 80px rgba(0,0,0,.35)!important}
+#myOrdersSectionModal.show .orders-plain-heading{position:sticky!important;top:-22px!important;z-index:10!important;display:flex!important;align-items:center!important;justify-content:space-between!important;min-height:48px!important;background:#fff!important;padding:8px 0 14px!important;border-bottom:1px solid #e5eaf0!important}
+#myOrdersSectionModal.show .orders-plain-heading h3{display:block!important;font-size:22px!important;line-height:28px!important;color:#064e46!important}
+#myOrdersSectionModal.show .history-tabs,#myOrdersSectionModal.show .list-controls{visibility:visible!important;opacity:1!important}
+#myOrdersSectionModal.show .orders-list{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:12px!important}
+#myOrdersSectionModal.show .order-card{display:flex!important;visibility:visible!important;opacity:1!important;width:100%!important;min-height:0!important;height:auto!important;padding:16px!important;background:#fff!important;color:#172033!important;border:1px solid #e4e9ef!important;border-left:4px solid #087f73!important;border-radius:14px!important}
+#myOrdersSectionModal.show .order-detail{background:#f7fafc!important}
+#myOrdersSectionModal.show .order-detail-label{color:#667085!important}
+#myOrdersSectionModal.show .order-detail-value{color:#172033!important}
+#myOrdersSectionModal.show .order-empty{display:block!important;padding:24px!important;text-align:center!important;color:#475467!important;background:#f7fafc!important}
+body.night-mode #myOrdersSectionModal.show>.modal-box{background:#111827!important;color:#e5e7eb!important}
+body.night-mode #myOrdersSectionModal.show .orders-plain-heading{background:#111827!important;border-color:#374151!important}
+body.night-mode #myOrdersSectionModal.show .orders-plain-heading h3{color:#a7f3d0!important}
+body.night-mode #myOrdersSectionModal.show .order-card{background:#1f2937!important;color:#e5e7eb!important;border-color:#374151!important;border-left-color:#10a889!important}
+body.night-mode #myOrdersSectionModal.show .order-detail{background:#111827!important;border-color:#374151!important}
+body.night-mode #myOrdersSectionModal.show .order-detail-value{color:#e5e7eb!important}
+@media(max-width:700px){#myOrdersSectionModal.show{padding:6px!important}#myOrdersSectionModal.show>.modal-box{width:100%!important;max-height:96dvh!important;padding:14px!important;border-radius:14px!important}#myOrdersSectionModal.show .orders-plain-heading{top:-14px!important}#myOrdersSectionModal.show .orders-plain-heading h3{font-size:20px!important}#myOrdersSectionModal.show .order-card{padding:12px!important}}
 </style>

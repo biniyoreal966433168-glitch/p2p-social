@@ -206,6 +206,11 @@ async function loadMyOrders(){
   box.innerHTML=r.data.map(o=>{
    const type=String(o.order_type||"").toLowerCase();
    const isSell=type==="sell";
+   const typeLabel=type==="sell"?"🔴 Sell":type==="buy"?"🟢 Buy":"Order type: Not set";
+   const cardBg=document.body.classList.contains("night-mode")?"#1f2937":"#fff";
+   const detailBg=document.body.classList.contains("night-mode")?"#111827":"#f8fafc";
+   const detailBorder=document.body.classList.contains("night-mode")?"#374151":"#e5eaf0";
+   const detailLabelColor=document.body.classList.contains("night-mode")?"#9ca3af":"#667085";
    const rawPair=o.trading_pair??o.pair??"";
    const rawCurrency=o.currency??o.asset??(String(rawPair).toUpperCase().includes("TON")?"TON":String(rawPair).toUpperCase().includes("USDT")?"USDT":"");
    const currency=rawCurrency?String(rawCurrency).toUpperCase():"";
@@ -216,12 +221,12 @@ async function loadMyOrders(){
    const limits=(min==null||min==="")&&(max==null||max==="")?"Not set":(min==null||min===""?"Not set":esc(min))+" – "+(max==null||max===""?"Not set":esc(max));
    const created=o.created_at?esc(new Date(o.created_at).toLocaleString()):"Not set";
    const canCancel=["open","active"].includes(String(status).toLowerCase())&&o.id!=null;
-   return '<article class="order-card" style="display:block;width:100%;height:auto;min-height:0;margin:0 0 12px;padding:16px;border:1px solid #dce5e9;border-left:4px solid '+(isSell?'#d9485f':'#087f73')+';border-radius:12px;background:var(--order-history-card,#fff);box-shadow:none;box-sizing:border-box;color:inherit">'
+   return '<article class="order-card" style="display:block;width:100%;height:auto;min-height:0;margin:0 0 12px;padding:16px;border:1px solid #dce5e9;border-left:4px solid '+(isSell?'#d9485f':'#087f73')+';border-radius:12px;background:'+cardBg+';box-shadow:none;box-sizing:border-box;color:inherit">'
     +'<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding-bottom:10px;border-bottom:1px solid #e5e7eb">'
-    +'<strong style="font-size:15px">'+(type?((isSell?'🔴 Sell':'🟢 Buy')+(currency?' '+esc(currency):'')):'Order type: Not set')+'</strong>'
+    +'<strong style="font-size:15px">'+(typeLabel+(currency&&type?' '+esc(currency):''))+'</strong>'
     +'<span style="font-size:12px;font-weight:700">'+(status?esc(status):'Not set')+'</span></div>'
     +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:9px;margin-top:12px">'
-    +[['Amount',amount(o.amount)+(currency?' '+esc(currency):'')],['Remaining',amount(o.remaining_amount)+(currency?' '+esc(currency):'')],['Price',amount(o.price)],['Trading pair',present(rawPair)],['Payment timer',timer==null||timer===""?'Not set':esc(timer)+' minutes'],['Limits'+(fiat?' ('+esc(fiat)+')':''),limits],['Eligibility',present(o.eligibility)],['Created',created],['Order ID',present(o.id)]].map(([label,value])=>'<div style="min-width:0;padding:10px;border:1px solid #e5eaf0;border-radius:8px;background:var(--order-history-detail,#f8fafc);overflow-wrap:anywhere"><div style="font-size:10px;font-weight:700;color:#667085;text-transform:uppercase;letter-spacing:.25px;margin-bottom:5px">'+label+'</div><div style="font-size:13px;font-weight:600;line-height:1.4">'+value+'</div></div>').join("")
+    +[['Amount',amount(o.amount)+(currency?' '+esc(currency):'')],['Remaining',amount(o.remaining_amount)+(currency?' '+esc(currency):'')],['Price',amount(o.price)],['Trading pair',present(rawPair)],['Payment timer',timer==null||timer===""?'Not set':esc(timer)+' minutes'],['Limits'+(fiat?' ('+esc(fiat)+')':''),limits],['Eligibility',present(o.eligibility)],['Created',created],['Order ID',present(o.id)]].map(([label,value])=>'<div style="min-width:0;padding:10px;border:1px solid '+detailBorder+';border-radius:8px;background:'+detailBg+';overflow-wrap:anywhere"><div style="font-size:10px;font-weight:700;color:'+detailLabelColor+';text-transform:uppercase;letter-spacing:.25px;margin-bottom:5px">'+label+'</div><div style="font-size:13px;font-weight:600;line-height:1.4">'+value+'</div></div>').join("")
     +'</div>'
     +(canCancel?'<button class="cancel-order-btn" style="margin-top:12px" onclick="cancelOrder(\''+String(o.id).replace(/\\/g,"\\\\").replace(/'/g,"\\'")+'\')">Cancel Order</button>':'')
     +'</article>';

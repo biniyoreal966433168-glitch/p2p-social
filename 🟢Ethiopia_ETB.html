@@ -309,7 +309,7 @@ const U="https://mbsvuwrgigqfporxwpfr.supabase.co",K="sb_publishable_iclqtQHDwK5
 let currentUser=null,currentUsername=null,availableOffers=[],filteredOffers=[],selectedOffer=null,pendingTrades=new Map,offersExpanded=false,isLoading=false,actionLoading=false,toastTimer=null,realtimeChannel=null,tradeRealtimeChannel=null;
 const usernameCache=new Map,profileCache=new Map,activeBadgeCache=new Map,badgeEligibilityCache=new Map;
 document.addEventListener("DOMContentLoaded",startApp);
-async function marketHeartbeat(){if(!currentUser)return;try{let p=profileCache.get(String(currentUser.id));if(!p){const{data}=await sb.from("profiles").select("show_online_status").eq("id",currentUser.id).maybeSingle();p=data||{}}if(p.show_online_status===false)return;await sb.rpc("profile_heartbeat")}catch(e){console.debug("Market presence update unavailable",e)}}
+async function marketHeartbeat(){if(!currentUser)return;try{await sb.rpc("profile_heartbeat")}catch(e){console.debug("Historical online-time heartbeat unavailable",e)}}
 function startMarketPresence(){marketHeartbeat();setInterval(()=>{if(!document.hidden)marketHeartbeat()},30000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)marketHeartbeat()});window.addEventListener("focus",()=>marketHeartbeat())}
 async function startApp(){try{const{data,error}=await sb.auth.getSession();if(error)throw error;if(!data.session)return location.href="index.html";currentUser=data.session.user;await loadCurrentUsername();startMarketPresence();await loadBuyMarket();setupRealtime()}catch(e){toast(err(e),"error")}}
 sb.auth.onAuthStateChange((e,s)=>{currentUser=s?.user||null;if(e==="SIGNED_OUT")location.href="index.html"});

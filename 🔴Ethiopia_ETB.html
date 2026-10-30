@@ -324,7 +324,7 @@ body.night-mode .eligibility-required-badge{filter:brightness(.88)}
 <div class="modal-box">
 <h3 id="tradeTitle">Sell USDT to Buyer</h3>
 <div id="tradeSummary"></div>
-<input id="tradeAmount" type="number" min="0" step="0.01" placeholder="Available USDT" readonly>
+<input id="tradeAmount" type="number" min="1" step="0.01" placeholder="Enter trade amount" oninput="updateTradeValuePreview()">
 <div class="trade-value-card">
 <div class="trade-value-title"><strong>Trade Value</strong><span id="tradeAssetBadge" class="trade-value-badge">USDT</span></div>
 <div class="trade-value-row"><span id="tradeAmountLabel">USDT amount</span><strong id="tradeAmountPreview">0.000000</strong></div>
@@ -559,7 +559,7 @@ let input=document.getElementById("tradeAmount"),
 parts=getPairParts(selectedOffer.pair||selectedOffer.trading_pair),
 base=parts.base||marketPair.split("_")[0],
 username=usernameCache.get(String(selectedOffer.user_id))||"Buyer";
-input.value=available.toFixed(2);input.max=available.toFixed(2);
+input.value=available.toFixed(2);input.min="1";input.max=available.toFixed(2);
 document.getElementById("tradeTitle").textContent="Sell "+base+" to Buyer";
 document.getElementById("tradeAmount").placeholder="Available "+base;
 document.getElementById("tradeAssetBadge").textContent=base;
@@ -611,13 +611,9 @@ return String(active.seller_id)===String(currentUser.id)?openExistingTrade(activ
 }
 let available=getOfferAvailableAmount(data),amount=Number(document.getElementById("tradeAmount").value);
 if(available<=0)return closeModal("tradeModal"),toast("This available offer has no remaining amount.","warning");
-if(!Number.isFinite(amount)||amount<=0)return toast("Invalid available amount.","warning");
-let normalized=Number(available.toFixed(2));
-if(Math.abs(amount-normalized)>.000001){
-document.getElementById("tradeAmount").value=normalized.toFixed(2);updateTradeValuePreview();
-return toast("You must sell the full available amount.","warning")
-}
-if(!confirm("Sell the full available amount to the buyer?"))return;
+if(!Number.isFinite(amount)||amount<1)return toast("Trade amount must be at least 1.","warning");
+if(amount>available)return toast("Amount exceeds available amount.","warning");
+if(!confirm("Sell "+amount.toLocaleString(undefined,{maximumFractionDigits:6})+" "+getPairParts(data.pair||data.trading_pair).base+" to the buyer?"))return;
 let b=document.getElementById("tradeSubmitButton");
 actionLoading=true;b.disabled=true;b.textContent="Starting...";
 let{data:trade,error:rpcError}=await supabaseClient.rpc("create_p2p_trade",{p_order_id:data.id,p_amount:amount});

@@ -355,7 +355,7 @@ const usernameCache=new Map,profileCache=new Map,pendingTrades=new Map,activeBad
 
 document.addEventListener("DOMContentLoaded",startApp);
 
-async function marketHeartbeat(){if(!currentUser)return;try{let p=profileCache.get(String(currentUser.id));if(!p){const{data}=await supabaseClient.from("profiles").select("show_online_status").eq("id",currentUser.id).maybeSingle();p=data||{}}if(p.show_online_status===false)return;await supabaseClient.rpc("profile_heartbeat")}catch(e){console.debug("Market presence update unavailable",e)}}
+async function marketHeartbeat(){if(!currentUser)return;try{await supabaseClient.rpc("profile_heartbeat")}catch(e){console.debug("Historical online-time heartbeat unavailable",e)}}
 function startMarketPresence(){marketHeartbeat();setInterval(()=>{if(!document.hidden)marketHeartbeat()},30000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)marketHeartbeat()});window.addEventListener("focus",()=>marketHeartbeat())}
 async function startApp(){
 try{

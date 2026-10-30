@@ -289,7 +289,7 @@ body.night-mode .eligibility-required-badge{filter:brightness(.88)}
 .market-switch .sell-action.active{background:#c52d4c;color:#fff;box-shadow:0 2px 6px rgba(197,45,76,.2)}
 .market-switch .market-action-btn:active{transform:scale(.97)}
 @media(max-width:380px){.market-heading{gap:7px}.market-heading h2{font-size:16px;gap:6px}.market-switch{gap:2px;padding:3px}.market-switch .market-action-btn{min-width:54px;padding:8px 9px}}
-</style>
+</style><style>.trade-payment-field{margin:0 0 12px}.trade-payment-field label{display:block;font-size:12px;font-weight:700;color:#596579;margin:0 0 7px}.trade-payment-field select{width:100%;min-height:44px;padding:10px 12px;border:1px solid #dfe4eb;border-radius:10px;background:#fff;color:#172033;font-size:14px;outline:0}.trade-payment-field select:focus{border-color:#087f73;box-shadow:0 0 0 3px #087f7314}.trade-payment-note{font-size:11px;color:#7a8790;margin-top:6px}</style>
 </head>
 <body>
 <header>
@@ -323,7 +323,7 @@ body.night-mode .eligibility-required-badge{filter:brightness(.88)}
 <div id="tradeModal" class="modal">
 <div class="modal-box">
 <h3 id="tradeTitle">Sell USDT to Buyer</h3>
-<div id="tradeSummary"></div>
+<div id="tradeSummary"></div><div class="trade-payment-field"><label for="tradePaymentMethod">Choose payment method</label><select id="tradePaymentMethod"><option value="">Not set</option></select><div class="trade-payment-note">Choose one of the buyer’s listed payment methods. Payment details will be shared in Messages.</div></div>
 <input id="tradeAmount" type="number" min="0" step="any" placeholder="Enter trade amount" oninput="updateTradeValuePreview()">
 <div class="trade-value-card">
 <div class="trade-value-title"><strong>Trade Value</strong><span id="tradeAssetBadge" class="trade-value-badge">USDT</span></div>
@@ -503,7 +503,29 @@ function getOfferBankName(o){return o?.bank_name||o?.bankName||o?.payment_detail
 function getOfferAccountName(o){return o?.account_name||o?.accountName||o?.payment_details?.account_name||o?.payment_details?.accountName||""}
 function getOfferAccountNumber(o){return o?.account_number||o?.accountNumber||o?.payment_details?.account_number||o?.payment_details?.accountNumber||""}
 
-async function openMessagesForTrade(tradeId,offer){
+
+function tradePaymentOptions(offer){
+ const raw=offer?.payment_method;
+ const items=Array.isArray(raw)?raw:typeof raw==="string"?raw.split(/[,;|]/):[];
+ return [...new Set(items.map(x=>String(x).trim()).filter(Boolean))];
+}
+function setupTradePaymentMethod(offer){
+ const el=document.getElementById("tradePaymentMethod");if(!el)return;
+ const methods=tradePaymentOptions(offer);
+ el.innerHTML=methods.length?'<option value="">Choose payment method</option>'+methods.map(x=>'<option value="'+escapeHtml(x)+'">'+escapeHtml(x)+'</option>').join(""):'<option value="">Not set</option>';
+ el.disabled=methods.length===0;
+}
+function selectedTradePaymentMethod(){return document.getElementById("tradePaymentMethod")?.value||"Not set"}
+function tradePaymentMessage(method,details){
+ const d=details||{};
+ return "\\n\\nP2P PAYMENT DETAILS\\nPayment method: "+(method||"Not set")+"\\nBank / Provider: "+(d.bank_name||"Not set")+"\\nAccount name: "+(d.account_name||"Not set")+"\\nAccount number: "+(d.account_number||"Not set");
+}
+async function loadTradePaymentDetails(tradeId){
+ const {data,error}=await supabaseClient.rpc("get_trade_payment_details",{p_trade_id:tradeId});
+ if(error)throw error;return Array.isArray(data)?data[0]||{}:data||{};
+}
+
+async function openMessagesForTrade(tradeId,offer,paymentMethod){
 if(!tradeId||!offer?.user_id)return toast("Trade started, but buyer information is missing.","error");
 if(!currentUser)return showLogin();
 try{
@@ -521,7 +543,7 @@ if(x.error)throw r.error;conversation=x.data
 }else conversation=r.data
 }
 if(!conversation?.id)throw Error("Conversation could not be created.");
-let b=getOfferBankName(offer),n=getOfferAccountName(offer),a=getOfferAccountNumber(offer),msg="🔴 P2P Sell started. Please complete the payment for this trade.";
+let paymentDetails=await loadTradePaymentDetails(tradeId),msg="🔴 P2P Sell started. Please complete the payment for this trade."+tradePaymentMessage(paymentMethod,paymentDetails);
 if(b||n||a)msg+="\n\n🏦 Bank Transfer\n"+(b?"Bank Name: "+b+"\n":"")+(n?"Account Name: "+n+"\n":"")+(a?"Account Number: "+a:"");
 let{data:existingMessage,error:me}=await supabaseClient.from("messages").select("id").eq("conversation_id",conversation.id).eq("sender_id",currentUser.id).eq("message_type","order").eq("order_id",tradeId).maybeSingle();
 if(me)throw me;
@@ -559,12 +581,12 @@ let input=document.getElementById("tradeAmount"),
 parts=getPairParts(selectedOffer.pair||selectedOffer.trading_pair),
 base=parts.base||marketPair.split("_")[0],
 username=usernameCache.get(String(selectedOffer.user_id))||"Buyer";
-input.value=available.toFixed(2);input.min="1";input.max=available.toFixed(2);
+input.value=available.toFixed(2);input.min="0";input.max=available.toFixed(2);setupTradePaymentMethod(selectedOffer);
 document.getElementById("tradeTitle").textContent="Sell "+base+" to Buyer";
 document.getElementById("tradeAmount").placeholder="Available "+base;
 document.getElementById("tradeAssetBadge").textContent=base;
 document.getElementById("tradeAmountLabel").textContent=base+" amount";
-document.getElementById("tradeSummary").innerHTML=`<div class="details" style="margin-bottom:12px">${detail("Buyer",username)}${detail("Pair",formatPair(selectedOffer))}${detail("Buying price",money(selectedOffer.price)+" "+parts.quote)}${detail("Available",formatAmount(selectedOffer))}${detail("Payment",selectedOffer.payment_method||"Bank Transfer")}${getOfferBankName(selectedOffer)?detail("Bank Name",getOfferBankName(selectedOffer)):""}${getOfferAccountName(selectedOffer)?detail("Account Name",getOfferAccountName(selectedOffer)):""}${getOfferAccountNumber(selectedOffer)?detail("Account Number",getOfferAccountNumber(selectedOffer)):""}</div>`;
+document.getElementById("tradeSummary").innerHTML=`<div class="details" style="margin-bottom:12px">${detail("Buyer",username)}${detail("Pair",formatPair(selectedOffer))}${detail("Buying price",money(selectedOffer.price)+" "+parts.quote)}${detail("Available",formatAmount(selectedOffer))}${detail("Listed payment methods",paymentMethods(selectedOffer.payment_method))}${getOfferBankName(selectedOffer)?detail("Bank Name",getOfferBankName(selectedOffer)):""}${getOfferAccountName(selectedOffer)?detail("Account Name",getOfferAccountName(selectedOffer)):""}${getOfferAccountNumber(selectedOffer)?detail("Account Number",getOfferAccountNumber(selectedOffer)):""}</div>`;
 updateTradeValuePreview();openModal("tradeModal")
 }
 
@@ -612,6 +634,7 @@ return String(active.seller_id)===String(currentUser.id)?openExistingTrade(activ
 let available=getOfferAvailableAmount(data),amount=Number(document.getElementById("tradeAmount").value);
 if(available<=0)return closeModal("tradeModal"),toast("This available offer has no remaining amount.","warning");
 if(!Number.isFinite(amount)||amount<=0)return toast("Enter a valid trade amount greater than zero.","warning");
+if(tradePaymentOptions(data).length&&!selectedTradePaymentMethod())return toast("Choose a listed payment method to continue.","warning");
 if(amount>available)return toast("Amount exceeds available amount.","warning");
 if(!confirm("Sell "+amount.toLocaleString(undefined,{maximumFractionDigits:6})+" "+getPairParts(data.pair||data.trading_pair).base+" to the buyer?"))return;
 let b=document.getElementById("tradeSubmitButton");
@@ -620,9 +643,9 @@ let{data:trade,error:rpcError}=await supabaseClient.rpc("create_p2p_trade",{p_or
 if(rpcError)throw rpcError;
 let tradeId=extractId(trade);
 if(!tradeId)throw Error("Trade started, but the trade ID was not returned.");
-let offer=data;
+let offer=data,chosenPaymentMethod=selectedTradePaymentMethod();
 closeModal("tradeModal");toast("Sell trade started successfully.","success");selectedOffer=null;
-await loadSellMarket();await openMessagesForTrade(tradeId,offer)
+await loadSellMarket();await openMessagesForTrade(tradeId,offer,chosenPaymentMethod)
 }catch(e){console.error(e);toast(getErrorMessage(e),"error")}
 finally{
 actionLoading=false;

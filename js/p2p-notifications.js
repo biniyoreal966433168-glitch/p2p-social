@@ -18,7 +18,7 @@
     const text=String(message??"");
     if(!host){host=document.createElement("div");host.id="p2p-brand-toast-host";host.setAttribute("aria-live","polite");host.setAttribute("aria-atomic","false");(document.body||document.documentElement).appendChild(host)}
     const item=document.createElement("div");item.className="p2p-brand-toast";item.setAttribute("role","status");
-    const icon=document.createElement("span");icon.className="p2p-brand-toast-icon";icon.textContent=/fail|error|could not|invalid|insufficient|not found|unable/i.test(text)?"!":"✓";
+    const icon=document.createElement("img");icon.className="p2p-brand-toast-icon";icon.src="/p2p-logo.svg";icon.alt="P2P Social logo";icon.width=38;icon.height=38;icon.style.cssText="width:38px;height:38px;flex:0 0 38px;object-fit:contain;border-radius:0;background:transparent";
     const copy=document.createElement("div");copy.className="p2p-brand-toast-copy";
     const title=document.createElement("div");title.className="p2p-brand-toast-title";title.textContent="P2P Social";
     const body=document.createElement("div");body.className="p2p-brand-toast-message";body.textContent=text;

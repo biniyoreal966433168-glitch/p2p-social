@@ -18,4 +18,41 @@ async function createRoom(){const name=$("name").value.trim(),description=$("des
 async function openRoom(item){if(!item)return;selected=item;$("roomTitle").textContent=item.name;$("memberLabel").textContent=joined.has(item.id)?"MEMBER":"";$("sendForm").classList.toggle("hidden",!joined.has(item.id));document.querySelectorAll(".item").forEach(el=>el.classList.toggle("active",el.dataset.id===item.id));await loadMessages()}
 async function loadMessages(){const body=$("chatBody");body.innerHTML='<div class="empty">Loading messages…</div>';if(!selected)return;const r=await sb.from(CFG.messages).select("id,sender_id,content,created_at").eq(CFG.fk,selected.id).order("created_at",{ascending:true}).limit(200);if(r.error){body.innerHTML='<div class="empty">Could not load messages: '+esc(r.error.message)+'</div>';return}body.innerHTML=r.data?.length?r.data.map(m=>'<div class="bubble '+(m.sender_id===me.id?"mine":"")+'"><div class="meta">'+(m.sender_id===me.id?"You": "Member")+' · '+esc(new Date(m.created_at).toLocaleString())+'</div>'+esc(m.content)+'</div>').join(""):'<div class="empty">No messages yet. Start the conversation.</div>';body.scrollTop=body.scrollHeight}
 $("create").onclick=createRoom;$("refresh").onclick=loadList;$("sendForm").onsubmit=async e=>{e.preventDefault();if(!selected||!me)return;const input=$("message"),content=input.value.trim();if(!content)return;const payload={[CFG.fk]:selected.id,sender_id:me.id,content};const r=await sb.from(CFG.messages).insert(payload);if(r.error){say("Message failed: "+r.error.message);return}input.value="";say("");await loadMessages()};start();
-</script></body></html>
+</script><script id="p2p-profile-initials-fallback">
+(()=>{"use strict";
+const marker="data-p2p-initials";
+function initialsFor(img){
+ let raw="";
+ const selectors='[data-profile-name],.chat-name,.profile-name,.user-name,.post-author,.author-name,.search-name,.notification-text strong,.name,[class*="display-name"],[class*="user-name"]';
+ let node=img;
+ for(let depth=0;depth<5&&node;depth++,node=node.parentElement){
+  const found=node.querySelector?.(selectors);
+  if(found&&found.textContent.trim()){raw=found.textContent.trim();break}
+ }
+ raw=raw.replace(/^@+/,"").replace(/\s+/g," ").trim();
+ if(!raw||/^(user|unknown|profile)$/i.test(raw))raw="Name User";
+ const parts=raw.split(" ").filter(Boolean);
+ const letters=parts.length>1?parts[0][0]+parts[parts.length-1][0]:parts[0]?.[0]||"NU";
+ return {name:raw,letters:letters.toUpperCase().replace(/[^\p{L}\p{N}]/gu,"").slice(0,2)||"NU"};
+}
+function isAvatar(img){
+ const cls=typeof img.className==="string"?img.className.toLowerCase():"";
+ const id=(img.id||"").toLowerCase(),src=img.getAttribute("src")||"";
+ return /avatar|profile|user-photo|post-photo|comment-photo/.test(cls+" "+id)||
+  /(?:^|\/)(?:profile|avatar)(?:[-_.][^/]*)?\.(?:png|jpe?g|webp|svg)(?:[?#]|$)/i.test(src);
+}
+function apply(img){
+ if(!(img instanceof HTMLImageElement)||img.dataset[marker]==="1"||!isAvatar(img))return;
+ const src=img.getAttribute("src")||"";
+ const defaultImage=/(?:^|\/)(?:profile|avatar)(?:[-_.][^/]*)?\.(?:png|jpe?g|webp|svg)(?:[?#]|$)/i.test(src);
+ if(!defaultImage&&img.complete&&img.naturalWidth>0)return;
+ const {letters}=initialsFor(img);
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="60" fill="#087f73"/><text x="60" y="64" text-anchor="middle" dominant-baseline="middle" font-family="Arial,sans-serif" font-size="43" font-weight="700" fill="#fff">'+letters+'</text></svg>';
+ img.dataset[marker]="1";img.src="data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(svg);
+}
+function scan(root){if(root?.matches?.("img"))apply(root);root?.querySelectorAll?.("img").forEach(apply)}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>scan(document),{once:true});else scan(document);
+new MutationObserver(records=>records.forEach(r=>{r.addedNodes.forEach(n=>{if(n.nodeType===1)scan(n)});if(r.type==="attributes"&&r.target instanceof HTMLImageElement){delete r.target.dataset[marker];apply(r.target)}})).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:["src"]});
+})();
+</script>
+</body></html>

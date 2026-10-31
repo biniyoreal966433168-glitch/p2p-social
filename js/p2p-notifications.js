@@ -36,7 +36,7 @@
       panel.setAttribute("role","alertdialog");panel.setAttribute("aria-modal","true");panel.setAttribute("aria-labelledby","p2p-confirm-title");
       panel.style.cssText="width:min(100%,390px);background:var(--p2p-modal-bg,#fff);color:var(--p2p-modal-text,#172321);border:1px solid rgba(8,127,115,.18);border-radius:20px;padding:22px;box-shadow:0 24px 70px rgba(0,0,0,.28)";
       const heading=document.createElement("div");heading.style.cssText="display:flex;align-items:center;gap:10px;margin-bottom:12px";
-      const mark=document.createElement("span");mark.textContent="P";mark.style.cssText="width:34px;height:34px;border-radius:11px;background:#087f73;color:white;display:grid;place-items:center;font-weight:800";
+      const mark=document.createElement("img");mark.src="/p2p-logo.svg";mark.alt="P2P Social";mark.width=38;mark.height=38;mark.style.cssText="width:38px;height:38px;flex:0 0 38px;object-fit:contain;border:0;background:transparent";
       const title=document.createElement("strong");title.id="p2p-confirm-title";title.textContent=options.title||"P2P Social";title.style.cssText="font-size:16px;color:#087f73";
       heading.append(mark,title);
       const msg=document.createElement("p");msg.textContent=String(message??"");msg.style.cssText="font-size:15px;line-height:1.5;margin:0 0 22px;overflow-wrap:anywhere";
@@ -57,7 +57,7 @@
       panel.setAttribute("role","dialog");panel.setAttribute("aria-modal","true");panel.setAttribute("aria-labelledby","p2p-prompt-title");
       panel.style.cssText="width:min(100%,410px);background:var(--p2p-modal-bg,#fff);color:var(--p2p-modal-text,#172321);border:1px solid rgba(8,127,115,.18);border-radius:20px;padding:22px;box-shadow:0 24px 70px rgba(0,0,0,.28)";
       const heading=document.createElement("div");heading.style.cssText="display:flex;align-items:center;gap:10px;margin-bottom:12px";
-      const mark=document.createElement("span");mark.textContent="P";mark.style.cssText="width:34px;height:34px;border-radius:11px;background:#087f73;color:white;display:grid;place-items:center;font-weight:800";
+      const mark=document.createElement("img");mark.src="/p2p-logo.svg";mark.alt="P2P Social";mark.width=38;mark.height=38;mark.style.cssText="width:38px;height:38px;flex:0 0 38px;object-fit:contain;border:0;background:transparent";
       const title=document.createElement("strong");title.id="p2p-prompt-title";title.textContent=options.title||"P2P Social";title.style.cssText="font-size:16px;color:#087f73";
       heading.append(mark,title);
       const msg=document.createElement("p");msg.textContent=String(message??"");msg.style.cssText="font-size:15px;line-height:1.5;margin:0 0 14px";

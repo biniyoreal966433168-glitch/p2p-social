@@ -49,7 +49,31 @@
       actions.append(cancel,ok);panel.append(heading,msg,actions);overlay.appendChild(panel);document.body.appendChild(overlay);document.addEventListener("keydown",onKey);cancel.focus();
     });
   }
+  function promptAction(message,defaultValue="",options={}){
+    return new Promise(resolve=>{
+      const overlay=document.createElement("div");
+      overlay.style.cssText="position:fixed;inset:0;z-index:2147483646;background:rgba(8,18,16,.58);display:grid;place-items:center;padding:22px;font-family:inherit";
+      const panel=document.createElement("section");
+      panel.setAttribute("role","dialog");panel.setAttribute("aria-modal","true");panel.setAttribute("aria-labelledby","p2p-prompt-title");
+      panel.style.cssText="width:min(100%,410px);background:var(--p2p-modal-bg,#fff);color:var(--p2p-modal-text,#172321);border:1px solid rgba(8,127,115,.18);border-radius:20px;padding:22px;box-shadow:0 24px 70px rgba(0,0,0,.28)";
+      const heading=document.createElement("div");heading.style.cssText="display:flex;align-items:center;gap:10px;margin-bottom:12px";
+      const mark=document.createElement("span");mark.textContent="P";mark.style.cssText="width:34px;height:34px;border-radius:11px;background:#087f73;color:white;display:grid;place-items:center;font-weight:800";
+      const title=document.createElement("strong");title.id="p2p-prompt-title";title.textContent=options.title||"P2P Social";title.style.cssText="font-size:16px;color:#087f73";
+      heading.append(mark,title);
+      const msg=document.createElement("p");msg.textContent=String(message??"");msg.style.cssText="font-size:15px;line-height:1.5;margin:0 0 14px";
+      const field=document.createElement(options.multiline?"textarea":"input");if(!options.multiline)field.type="text";field.value=String(defaultValue??"");field.placeholder=options.placeholder||"Enter your response";field.maxLength=options.maxLength||1000;
+      field.style.cssText="box-sizing:border-box;width:100%;min-height:"+(options.multiline?"104px":"46px")+";padding:12px;border:1px solid #cbd9d5;border-radius:11px;background:transparent;color:inherit;font:14px inherit;outline-color:#087f73;resize:vertical";
+      const actions=document.createElement("div");actions.style.cssText="display:flex;justify-content:flex-end;gap:10px;margin-top:20px";
+      const cancel=document.createElement("button");cancel.type="button";cancel.textContent="Cancel";cancel.style.cssText="border:1px solid #d8e3e0;background:transparent;color:inherit;border-radius:11px;padding:10px 17px;font:600 14px inherit";
+      const ok=document.createElement("button");ok.type="button";ok.textContent=options.confirmText||"Submit";ok.style.cssText="border:0;background:#087f73;color:#fff;border-radius:11px;padding:10px 18px;font:650 14px inherit";
+      function finish(value){document.removeEventListener("keydown",onKey);overlay.remove();resolve(value)}
+      function onKey(e){if(e.key==="Escape")finish(null);if(e.key==="Enter"&&!options.multiline){e.preventDefault();finish(field.value)}}
+      cancel.onclick=()=>finish(null);ok.onclick=()=>finish(field.value);overlay.addEventListener("click",e=>{if(e.target===overlay)finish(null)});
+      actions.append(cancel,ok);panel.append(heading,msg,field,actions);overlay.appendChild(panel);document.body.appendChild(overlay);document.addEventListener("keydown",onKey);field.focus();
+    });
+  }
   window.p2pNotify=notify;
   window.p2pConfirm=confirmAction;
+  window.p2pPrompt=promptAction;
   window.alert=notify;
 })();

@@ -669,7 +669,23 @@ tradeRealtimeChannel=supabaseClient.channel("sell-trades-"+currentUser.id).on("p
 }
 
 function openModal(id){document.getElementById(id)?.classList.add("show")}
-function closeModal(id){document.getElementById(id)?.classList.remove("show")}
+function closeModal(id){
+ const modal=document.getElementById(id);
+ if(!modal)return;
+ modal.classList.remove("show");
+ modal.style.display="none";
+ modal.setAttribute("aria-hidden","true");
+}
+document.addEventListener("click",function(event){
+ const modal=event.target.closest(".modal");
+ if(modal&&event.target===modal)closeModal(modal.id);
+});
+document.addEventListener("keydown",function(event){
+ if(event.key==="Escape"){
+ const modal=document.querySelector(".modal.show");
+ if(modal)closeModal(modal.id);
+ }
+});
 function formatPair(o){
 let p=String(o?.pair||o?.trading_pair||"");
 return p.includes("_")?p.replace("_"," / "):p.includes("/")?p:p||"P2P"

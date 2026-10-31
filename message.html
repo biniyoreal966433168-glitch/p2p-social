@@ -69,7 +69,7 @@ const U="https://mbsvuwrgigqfporxwpfr.supabase.co",K="sb_publishable_iclqtQHDwK5
 const $=id=>document.getElementById(id),run=f=>{if(lock)return;lock=1;try{let r=f();r?.finally?.(()=>setTimeout(()=>lock=0,350))}catch(e){console.error(e);setTimeout(()=>lock=0,350)}},toast=m=>{toastEl.textContent=m;toastEl.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>toastEl.classList.remove("show"),2500)},notify=(ok,m)=>toast(m),norm=v=>String(v??"").trim().replace(/^@+/,""),esc=v=>{let d=document.createElement("div");d.textContent=v??"";return d.innerHTML},time=d=>{let v=new Date(d);return isNaN(v)?"":v.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})},fmt=(v,n=6)=>Number.isFinite(Number(v))?Number(v).toLocaleString(undefined,{maximumFractionDigits:n}):String(v),ext=n=>(n||"").split(".").pop().toLowerCase(),rnd=n=>Array.from({length:n},()=>Math.random().toString(36)[2]).join(""),duration=s=>String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
 async function updateMyLastSeen(){if(!user||document.hidden||profile?.show_online_status===false)return;const{error}=await s.rpc("profile_heartbeat");if(error)console.warn("Last-seen heartbeat failed:",error.message)}async function start(){try{let{data,error}=await s.auth.getSession();if(error)throw error;if(!data.session){location.replace("login.html");return}user=data.session.user;await profileLoad();await updateMyLastSeen();if(window.__p2pMessagePresenceTimer)clearInterval(window.__p2pMessagePresenceTimer);window.__p2pMessagePresenceTimer=setInterval(updateMyLastSeen,5000);authUI();await conversationsLoad();await unread();await notifications();globalRT();notificationRT();await urlOpen()}catch(e){console.error("Messages startup failed:",e);chatList.innerHTML='<div class="loading">Could not load messages.<br><small>'+esc(e?.message||"Please refresh and try again.")+"</small></div>";empty.style.display="none"}}
 async function profileLoad(){if(!user)return;let{data}=await s.from("profiles").select("*").eq("id",user.id).maybeSingle();profile=data||{id:user.id,username:user.user_metadata?.username||user.email?.split("@")[0]||"User",avatar_url:AV}}
-function displayProfileName(p){const n=displayFirstName(p);return n==="User"?"Name User":n}function avatarFallback(p){const name=displayProfileName(p),parts=name.trim().split(/\s+/).filter(Boolean),initials=parts.length>1?(parts[0][0]+parts[parts.length-1][0]):(parts[0]?.[0]||"N");const label=initials.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,2)||"NU";const svg='<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" rx="60" fill="#087f73"/><text x="60" y="65" text-anchor="middle" dominant-baseline="middle" font-family="Arial,sans-serif" font-size="42" font-weight="700" fill="#ffffff">'+label+'</text></svg>';return "data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(svg)}function profileAvatar(p){return p?.avatar_url||avatarFallback(p)}
+function displayProfileName(p){return displayFirstName(p)}function avatarFallback(p){const name=displayProfileName(p),parts=name.trim().split(/\s+/).filter(Boolean),initials=parts.length>1?(parts[0][0]+parts[parts.length-1][0]):(parts[0]?.[0]||"N");const label=initials.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,2)||"U";const svg='<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" rx="60" fill="#087f73"/><text x="60" y="65" text-anchor="middle" dominant-baseline="middle" font-family="Arial,sans-serif" font-size="42" font-weight="700" fill="#ffffff">'+label+'</text></svg>';return "data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(svg)}function profileAvatar(p){return p?.avatar_url||avatarFallback(p)}
 function firstNameOnly(value){if(value&&typeof value==="object")return displayFirstName(value);const raw=String(value||"").trim();return raw||"User"}function displayFirstName(p){const username=String(p?.username||"").trim().toLowerCase();const clean=v=>String(v||"").trim();const safe=v=>{v=clean(v);return v&&v.toLowerCase()!==username&&v.toLowerCase()!=="@"+username?v:""};for(const source of [p,p?.user_metadata,p?.raw_user_meta_data]){if(!source||typeof source!=="object")continue;let first=safe(source.first_name||source.firstName||source.given_name||source.givenName),last=safe(source.last_name||source.lastName||source.family_name||source.familyName);if(first||last){const pair=[first,last].filter(Boolean).join(" ");if(pair)return pair}for(const key of ["full_name","fullName","display_name","displayName","name"]){const raw=safe(source[key]);if(!raw)continue;const parts=raw.split(/\s+/);if(parts.length>1){const a=safe(parts[0]),b=safe(parts[parts.length-1]);if(a&&b)return a+" "+b;if(a||b)return a||b}if(parts.length===1&&safe(parts[0]))return parts[0]}}return "User"}function authUI(){if(loginBtn)loginBtn.style.display="none";if(registerBtn)registerBtn.style.display="none";if(logoutBtn)logoutBtn.style.display="none"}
 function val(o,keys,def=null){for(let k of keys)if(o?.[k]!==undefined&&o[k]!==null&&o[k]!=="")return o[k];return def}
 function feeSpent(p){let v=val(p,["total_fees_paid","fees_paid","fee_spent","total_fee_spent","spending_fees","fee_total"],0);return Math.max(0,Number(v)||0)}
@@ -130,41 +130,4 @@ function goHome(){location.href="index.html"}function goLive(){location.href="ðŸ
 async function logout(){if(!confirm("Do you want to log out?"))return;for(let c of[rt,urt,nrt,ort])if(c)await s.removeChannel(c);let{error}=await s.auth.signOut();if(error)return notify(0,"Logout failed: "+error.message);location.replace("index.html")}
 function scroll(){messagesContainer.scrollTop=messagesContainer.scrollHeight}
 loginBtn.onclick=()=>run(openLogin);registerBtn.onclick=()=>run(openRegister);logoutBtn.onclick=()=>run(logout);notificationButton.onclick=e=>{e.stopPropagation();run(toggleNotifications)};markAllNotifications.onclick=()=>run(markAll);newMessageButton.onclick=()=>searchInput.focus();allFilter.onclick=()=>filter(allFilter,"all");usersFilter.onclick=()=>filter(usersFilter,"users");robotFilter.onclick=()=>filter(robotFilter,"robot");backButton.onclick=()=>run(closeChat);chatHeaderInfo.onclick=profileOpen;chatMore.onclick=e=>{e.stopPropagation();chatMenu.classList.toggle("show")};menuP2PTrade.onclick=()=>{chatMenu.classList.remove("show");run(openOrder)};menuLogout.onclick=()=>{chatMenu.classList.remove("show");run(logout)};document.addEventListener("click",e=>{if(chatMenu&&!chatMenu.contains(e.target)&&!chatMore.contains(e.target))chatMenu.classList.remove("show")});closeOrderPanel.onclick=hideOrder;sendMessageButton.onclick=()=>run(send);searchInput.oninput=search;messageInput.onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();run(send)}};photoButton.onclick=()=>run(photoPicker);photoInput.onchange=photoSelected;removePreview.onclick=clearPhoto;voiceButton.onclick=()=>run(voice);stopRecording.onclick=()=>rec?.stop();cancelEdit.onclick=()=>{cancelEdit();messageInput.value=""};document.addEventListener("click",e=>{if(notificationPanel.classList.contains("show")&&!notificationPanel.contains(e.target)&&!notificationButton.contains(e.target))closeNotificationPanel()});s.auth.onAuthStateChange((e,se)=>{if(!se){user=null;location.replace("login.html")}else user=se.user});document.addEventListener("visibilitychange",async()=>{if(!document.hidden&&user){await profileLoad();await updateMyLastSeen();await unread();if(conversation)await read()}});const toastEl=$("toast");start();
-</script><script id="p2p-profile-initials-fallback">
-(()=>{"use strict";
-const marker="data-p2p-initials";
-function initialsFor(img){
- let raw="";
- const selectors='[data-profile-name],.chat-name,.profile-name,.user-name,.post-author,.author-name,.search-name,.notification-text strong,.name,[class*="display-name"],[class*="user-name"]';
- let node=img;
- for(let depth=0;depth<5&&node;depth++,node=node.parentElement){
-  const found=node.querySelector?.(selectors);
-  if(found&&found.textContent.trim()){raw=found.textContent.trim();break}
- }
- raw=raw.replace(/^@+/,"").replace(/\s+/g," ").trim();
- if(!raw||/^(user|unknown|profile)$/i.test(raw))raw="Name User";
- const parts=raw.split(" ").filter(Boolean);
- const letters=parts.length>1?parts[0][0]+parts[parts.length-1][0]:parts[0]?.[0]||"NU";
- return {name:raw,letters:letters.toUpperCase().replace(/[^\p{L}\p{N}]/gu,"").slice(0,2)||"NU"};
-}
-function isAvatar(img){
- const cls=typeof img.className==="string"?img.className.toLowerCase():"";
- const id=(img.id||"").toLowerCase(),src=img.getAttribute("src")||"";
- return /avatar|profile|user-photo|post-photo|comment-photo/.test(cls+" "+id)||
-  /(?:^|\/)(?:profile|avatar)(?:[-_.][^/]*)?\.(?:png|jpe?g|webp|svg)(?:[?#]|$)/i.test(src);
-}
-function apply(img){
- if(!(img instanceof HTMLImageElement)||img.dataset[marker]==="1"||!isAvatar(img))return;
- const src=img.getAttribute("src")||"";
- const defaultImage=/(?:^|\/)(?:profile|avatar)(?:[-_.][^/]*)?\.(?:png|jpe?g|webp|svg)(?:[?#]|$)/i.test(src);
- if(!defaultImage&&img.complete&&img.naturalWidth>0)return;
- const {letters}=initialsFor(img);
- const svg='<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="60" fill="#087f73"/><text x="60" y="64" text-anchor="middle" dominant-baseline="middle" font-family="Arial,sans-serif" font-size="43" font-weight="700" fill="#fff">'+letters+'</text></svg>';
- img.dataset[marker]="1";img.src="data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(svg);
-}
-function scan(root){if(root?.matches?.("img"))apply(root);root?.querySelectorAll?.("img").forEach(apply)}
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>scan(document),{once:true});else scan(document);
-new MutationObserver(records=>records.forEach(r=>{r.addedNodes.forEach(n=>{if(n.nodeType===1)scan(n)});if(r.type==="attributes"&&r.target instanceof HTMLImageElement){delete r.target.dataset[marker];apply(r.target)}})).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:["src"]});
-})();
-</script>
-</body></html>
+</script></body></html>

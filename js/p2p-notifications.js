@@ -28,6 +28,28 @@
     const timer=setTimeout(()=>{item.style.opacity="0";item.style.transform="translateY(-6px)";setTimeout(()=>item.remove(),180)},3000);
     close.addEventListener("click",()=>clearTimeout(timer),{once:true});
   }
+  function confirmAction(message,options={}){
+    return new Promise(resolve=>{
+      const overlay=document.createElement("div");
+      overlay.style.cssText="position:fixed;inset:0;z-index:2147483646;background:rgba(8,18,16,.58);display:grid;place-items:center;padding:22px;font-family:inherit";
+      const panel=document.createElement("section");
+      panel.setAttribute("role","alertdialog");panel.setAttribute("aria-modal","true");panel.setAttribute("aria-labelledby","p2p-confirm-title");
+      panel.style.cssText="width:min(100%,390px);background:var(--p2p-modal-bg,#fff);color:var(--p2p-modal-text,#172321);border:1px solid rgba(8,127,115,.18);border-radius:20px;padding:22px;box-shadow:0 24px 70px rgba(0,0,0,.28)";
+      const heading=document.createElement("div");heading.style.cssText="display:flex;align-items:center;gap:10px;margin-bottom:12px";
+      const mark=document.createElement("span");mark.textContent="P";mark.style.cssText="width:34px;height:34px;border-radius:11px;background:#087f73;color:white;display:grid;place-items:center;font-weight:800";
+      const title=document.createElement("strong");title.id="p2p-confirm-title";title.textContent=options.title||"P2P Social";title.style.cssText="font-size:16px;color:#087f73";
+      heading.append(mark,title);
+      const msg=document.createElement("p");msg.textContent=String(message??"");msg.style.cssText="font-size:15px;line-height:1.5;margin:0 0 22px;overflow-wrap:anywhere";
+      const actions=document.createElement("div");actions.style.cssText="display:flex;justify-content:flex-end;gap:10px";
+      const cancel=document.createElement("button");cancel.type="button";cancel.textContent=options.cancelText||"Cancel";cancel.style.cssText="border:1px solid #d8e3e0;background:transparent;color:inherit;border-radius:11px;padding:10px 17px;font:600 14px inherit";
+      const ok=document.createElement("button");ok.type="button";ok.textContent=options.confirmText||"Confirm";ok.style.cssText="border:0;background:#087f73;color:#fff;border-radius:11px;padding:10px 18px;font:650 14px inherit";
+      function finish(value){document.removeEventListener("keydown",onKey);overlay.remove();resolve(value)}
+      function onKey(e){if(e.key==="Escape")finish(false);if(e.key==="Enter")finish(true)}
+      cancel.onclick=()=>finish(false);ok.onclick=()=>finish(true);overlay.addEventListener("click",e=>{if(e.target===overlay)finish(false)});
+      actions.append(cancel,ok);panel.append(heading,msg,actions);overlay.appendChild(panel);document.body.appendChild(overlay);document.addEventListener("keydown",onKey);cancel.focus();
+    });
+  }
   window.p2pNotify=notify;
+  window.p2pConfirm=confirmAction;
   window.alert=notify;
 })();

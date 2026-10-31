@@ -289,6 +289,9 @@ body.night-mode .eligibility-required-badge{filter:brightness(.88)}
 .market-switch .sell-action.active{background:#c52d4c;color:#fff;box-shadow:0 2px 6px rgba(197,45,76,.2)}
 .market-switch .market-action-btn:active{transform:scale(.97)}
 @media(max-width:380px){.market-heading{gap:7px}.market-heading h2{font-size:16px;gap:6px}.market-switch{gap:2px;padding:3px}.market-switch .market-action-btn{min-width:54px;padding:8px 9px}}
+
+/* P2P Social branded trade navigation loader */
+#p2pBrandLoader{position:fixed;inset:0;z-index:50000;display:none;align-items:center;justify-content:center;background:rgba(245,247,251,.96);backdrop-filter:blur(7px)}#p2pBrandLoader.show{display:flex}.p2p-loader-card{display:flex;flex-direction:column;align-items:center;gap:15px;padding:28px 34px;border:1px solid #dcebe7;border-radius:22px;background:#fff;box-shadow:0 18px 55px rgba(7,94,84,.16);min-width:220px}.p2p-loader-logo{width:58px;height:58px;object-fit:contain;border-radius:16px;background:linear-gradient(135deg,#064e46,#10a889);padding:7px;box-shadow:0 7px 18px rgba(8,127,115,.2)}.p2p-loader-brand{font-size:20px;font-weight:800;color:#075e54;letter-spacing:-.4px}.p2p-loader-brand span{color:#10a889}.p2p-loader-message{font-size:13px;color:#667780;font-weight:600}.p2p-loader-spinner{width:25px;height:25px;border:3px solid #d8eee9;border-top-color:#087f73;border-radius:50%;animation:p2pLoaderSpin .75s linear infinite}@keyframes p2pLoaderSpin{to{transform:rotate(360deg)}}body.night-mode #p2pBrandLoader{background:rgba(15,23,42,.96)}body.night-mode .p2p-loader-card{background:#172033;border-color:#344b52}body.night-mode .p2p-loader-brand{color:#d8fff5}body.night-mode .p2p-loader-message{color:#b5c3c8}
 </style><style>.trade-payment-field{margin:14px 0;padding:14px;border:1px solid rgba(8,127,115,.2);border-radius:16px;background:linear-gradient(135deg,rgba(8,127,115,.07),rgba(8,127,115,.025))}.trade-payment-heading{display:flex;align-items:center;gap:9px;margin:0 0 10px}.trade-payment-heading label{display:block;font-size:13px;font-weight:750;color:#087f73;margin:0}.trade-payment-logo{width:30px;height:30px;object-fit:contain;flex:0 0 30px}.trade-payment-field select{box-sizing:border-box;width:100%;min-height:48px;padding:11px 42px 11px 13px;border:1px solid rgba(8,127,115,.3);border-radius:11px;background-color:#fff;color:#172033;font-size:14px;font-weight:600;outline:0}.trade-payment-field select:focus{border-color:#087f73;box-shadow:0 0 0 3px rgba(8,127,115,.13)}.trade-payment-note{font-size:11px;line-height:1.45;color:#71817d;margin-top:8px}@media(prefers-color-scheme:dark){.trade-payment-field{background:linear-gradient(135deg,rgba(8,127,115,.17),rgba(8,127,115,.07));border-color:rgba(16,168,137,.3)}.trade-payment-field label{color:#65d7c0}.trade-payment-field select{background-color:#202a28;color:#f3f7f6;border-color:rgba(16,168,137,.4)}.trade-payment-note{color:#a9bbb6}}
 /* Refined P2P Social trade modal */
 .modal{padding:18px;background:rgba(12,22,28,.64);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);overscroll-behavior:contain}
@@ -350,6 +353,7 @@ body.night-mode .modal-actions .confirm-btn{color:#fff!important}
 </style>
 </head>
 <body>
+<div id="p2pBrandLoader" role="status" aria-live="polite" aria-label="Loading P2P Social"><div class="p2p-loader-card"><img class="p2p-loader-logo" src="./p2p-logo.svg" alt="P2P Social"><div class="p2p-loader-brand">P2P <span>Social</span></div><div class="p2p-loader-spinner" aria-hidden="true"></div><div class="p2p-loader-message">Loading... please wait</div></div></div>
 <header>
 <div class="brand">
 <img class="brand-logo" src="./p2p-logo.svg" alt="P2P Social Logo">
@@ -555,7 +559,8 @@ function eligibilityBadges(o){
 function paymentMethods(v){const items=(Array.isArray(v)?v:typeof v==="string"?v.split(/[,;|]/):[]).map(x=>String(x).trim()).filter(Boolean);return items.length?items.join(" · "):"Not set"}
 function tradeTimerText(p,o){if(p?.expires_at){const end=Date.parse(p.expires_at);if(Number.isFinite(end)){const left=Math.max(0,Math.floor((end-Date.now())/1000));return String(Math.floor(left/60)).padStart(2,"0")+":"+String(left%60).padStart(2,"0")}return "Not set"}const v=o?.payment_time_limit??o?.payment_window_minutes??o?.time_limit_minutes??o?.payment_minutes??o?.time_limit;if(v!==undefined&&v!==null&&v!==""&&Number.isFinite(Number.parseFloat(v)))return String(v).includes("min")?String(v):String(v)+" min";return "Not set"}
 function timeLimit(o){const v=o.payment_time_limit??o.payment_window_minutes??o.time_limit_minutes??o.payment_minutes??o.time_limit;return v!==undefined&&v!==null&&v!==""?(String(v).includes("min")?String(v):String(v)+" min"):"15 min"}
-function openExistingTrade(id){location.href="message.html?trade_id="+encodeURIComponent(id)+"&order_id="+encodeURIComponent(id)}
+function showBrandLoading(){const el=document.getElementById("p2pBrandLoader");if(el)el.classList.add("show")}
+function openExistingTrade(id){showBrandLoading();location.href="message.html?trade_id="+encodeURIComponent(id)+"&order_id="+encodeURIComponent(id)}
 function viewUser(id){if(id)location.href="profile.html?user_id="+encodeURIComponent(id)}
 function getOfferBankName(o){return o?.bank_name||o?.bankName||o?.payment_details?.bank_name||o?.payment_details?.bankName||""}
 function getOfferAccountName(o){return o?.account_name||o?.accountName||o?.payment_details?.account_name||o?.payment_details?.accountName||""}
@@ -611,7 +616,7 @@ if(e)throw e
 }
 let username=await getUsername(buyerId),p=new URLSearchParams({trade_id:String(tradeId),order_id:String(tradeId)});
 if(username)p.set("username",username);
-location.href="message.html?"+p
+showBrandLoading();location.href="message.html?"+p
 }catch(e){
 console.error(e);
 toast("Trade started, but the P2P trade message could not be created: "+getErrorMessage(e),"error")

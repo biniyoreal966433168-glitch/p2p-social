@@ -94,4 +94,41 @@ document.getElementById("profileSearchClose").onclick=()=>{document.getElementBy
 document.getElementById("profileSearchInput").addEventListener("input",()=>{clearTimeout(profileSearchTimer);const term=document.getElementById("profileSearchInput").value.trim(),box=document.getElementById("profileSearchResults");if(term.length<2){box.classList.remove("show");box.innerHTML="";return}box.classList.add("show");box.innerHTML='<div class="profile-search-message">Searching…</div>';profileSearchTimer=setTimeout(()=>searchProfiles(term),250)});
 async function searchProfiles(term){const box=document.getElementById("profileSearchResults");try{const pattern="%"+term.replace(/[%,()]/g," ").trim()+"%";const r=await supabaseClient.from("profiles").select("id,user_id,username,first_name,last_name,display_name,avatar_url,user_number").or("username.ilike."+pattern+",first_name.ilike."+pattern+",last_name.ilike."+pattern+",display_name.ilike."+pattern).limit(12);if(r.error)throw r.error;if(!document.getElementById("profileSearchInput").value.trim())return;const rows=(r.data||[]).filter(p=>(p.id||p.user_id)!==currentSession?.user?.id);if(!rows.length){box.innerHTML='<div class="profile-search-message">No people found</div>';return}box.innerHTML=rows.map(p=>'<div class="profile-search-result" role="button" tabindex="0" data-profile-id="'+profileSearchEsc(p.id||p.user_id||"")+'" data-profile-name="'+profileSearchEsc(p.username||"")+'">'+(p.avatar_url?'<img src="'+profileSearchEsc(p.avatar_url)+'" alt="" loading="lazy">':'<div class="profile-search-result-avatar">'+profileSearchEsc(profileSearchName(p).charAt(0).toUpperCase())+'</div>')+'<div class="profile-search-result-copy"><div class="profile-search-result-name">'+profileSearchEsc(profileSearchName(p))+'</div><div class="profile-search-result-id">'+profileSearchEsc(p.username?"@"+String(p.username).replace(/^@/,""):"ID:"+String(p.user_number??"").padStart(12,"0"))+'</div></div></div>').join("");box.querySelectorAll(".profile-search-result").forEach(el=>{const go=()=>{const id=el.dataset.profileId,name=el.dataset.profileName;location.href="user_profile.html?"+(name?"username="+encodeURIComponent(name):"user_id="+encodeURIComponent(id))};el.addEventListener("click",go);el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}})})}catch(e){console.error("Profile search failed",e);box.innerHTML='<div class="profile-search-message">Search unavailable. Please try again.</div>'}}
 </script><script src="/js/theme.js" defer></script><script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("/service-worker.js").catch(function(e){console.warn("Theme worker registration failed",e)})})}</script>
+<script id="p2p-profile-initials-fallback">
+(()=>{"use strict";
+const marker="data-p2p-initials";
+function initialsFor(img){
+ let raw="";
+ const selectors='[data-profile-name],.chat-name,.profile-name,.user-name,.post-author,.author-name,.search-name,.notification-text strong,.name,[class*="display-name"],[class*="user-name"]';
+ let node=img;
+ for(let depth=0;depth<5&&node;depth++,node=node.parentElement){
+  const found=node.querySelector?.(selectors);
+  if(found&&found.textContent.trim()){raw=found.textContent.trim();break}
+ }
+ raw=raw.replace(/^@+/,"").replace(/\s+/g," ").trim();
+ if(!raw||/^(user|unknown|profile)$/i.test(raw))raw="Name User";
+ const parts=raw.split(" ").filter(Boolean);
+ const letters=parts.length>1?parts[0][0]+parts[parts.length-1][0]:parts[0]?.[0]||"NU";
+ return {name:raw,letters:letters.toUpperCase().replace(/[^\p{L}\p{N}]/gu,"").slice(0,2)||"NU"};
+}
+function isAvatar(img){
+ const cls=typeof img.className==="string"?img.className.toLowerCase():"";
+ const id=(img.id||"").toLowerCase(),src=img.getAttribute("src")||"";
+ return /avatar|profile|user-photo|post-photo|comment-photo/.test(cls+" "+id)||
+  /(?:^|\/)(?:profile|avatar)(?:[-_.][^/]*)?\.(?:png|jpe?g|webp|svg)(?:[?#]|$)/i.test(src);
+}
+function apply(img){
+ if(!(img instanceof HTMLImageElement)||img.dataset[marker]==="1"||!isAvatar(img))return;
+ const src=img.getAttribute("src")||"";
+ const defaultImage=/(?:^|\/)(?:profile|avatar)(?:[-_.][^/]*)?\.(?:png|jpe?g|webp|svg)(?:[?#]|$)/i.test(src);
+ if(!defaultImage&&img.complete&&img.naturalWidth>0)return;
+ const {letters}=initialsFor(img);
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="60" fill="#087f73"/><text x="60" y="64" text-anchor="middle" dominant-baseline="middle" font-family="Arial,sans-serif" font-size="43" font-weight="700" fill="#fff">'+letters+'</text></svg>';
+ img.dataset[marker]="1";img.src="data:image/svg+xml;charset=UTF-8,"+encodeURIComponent(svg);
+}
+function scan(root){if(root?.matches?.("img"))apply(root);root?.querySelectorAll?.("img").forEach(apply)}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>scan(document),{once:true});else scan(document);
+new MutationObserver(records=>records.forEach(r=>{r.addedNodes.forEach(n=>{if(n.nodeType===1)scan(n)});if(r.type==="attributes"&&r.target instanceof HTMLImageElement){delete r.target.dataset[marker];apply(r.target)}})).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:["src"]});
+})();
+</script>
 </body></html>

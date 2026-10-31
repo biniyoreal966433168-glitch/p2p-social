@@ -420,7 +420,23 @@ function html(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&
 function js(v){return String(v??"").replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,'\\"').replace(/\r/g,"\\r").replace(/\n/g,"\\n")}
 function err(e){return e?.message||e?.details||e?.hint||"Something went wrong."}
 function openModal(id){const modal=$(id);if(!modal)return false;modal.classList.add("show");modal.style.display="flex";modal.setAttribute("aria-hidden","false");return true}
-function closeModal(id){$(id)?.classList.remove("show")}
+function closeModal(id){
+ const modal=document.getElementById(id);
+ if(!modal)return;
+ modal.classList.remove("show");
+ modal.style.display="none";
+ modal.setAttribute("aria-hidden","true");
+}
+document.addEventListener("click",function(event){
+ const modal=event.target.closest(".modal");
+ if(modal&&event.target===modal)closeModal(modal.id);
+});
+document.addEventListener("keydown",function(event){
+ if(event.key==="Escape"){
+ const modal=document.querySelector(".modal.show");
+ if(modal)closeModal(modal.id);
+ }
+});
 function toast(m,t="normal"){const e=$("toast");clearTimeout(toastTimer);e.textContent=m;e.className="toast show"+(["success","error","warning"].includes(t)?" "+t:"");toastTimer=setTimeout(()=>e.classList.remove("show"),3500)}
 function setupRealtime(){if(realtimeChannel)sb.removeChannel(realtimeChannel);realtimeChannel=sb.channel("buy-market-live-"+currentUser.id).on("postgres_changes",{event:"*",schema:"public",table:"p2p_orders"},()=>loadBuyMarket()).subscribe();if(tradeRealtimeChannel)sb.removeChannel(tradeRealtimeChannel);tradeRealtimeChannel=sb.channel("buy-trades-live-"+currentUser.id).on("postgres_changes",{event:"*",schema:"public",table:"p2p_trades"},()=>loadBuyMarket()).subscribe()}
 document.addEventListener("click",e=>{if(e.target.classList.contains("modal"))e.target.classList.remove("show")});document.addEventListener("keydown",e=>{if(e.key==="Escape")document.querySelectorAll(".modal.show").forEach(x=>x.classList.remove("show"))});setInterval(()=>{document.querySelectorAll(".reference-time[data-countdown=\"true\"]").forEach(el=>{const end=Date.parse(el.dataset.expiry);if(Number.isFinite(end)){const left=Math.max(0,Math.floor((end-Date.now())/1000));el.textContent="◴ "+String(Math.floor(left/60)).padStart(2,"0")+":"+String(left%60).padStart(2,"0")}})},1000);setInterval(()=>{if(currentUser&&document.visibilityState==="visible")loadBuyMarket()},30000);window.addEventListener("beforeunload",()=>{if(realtimeChannel)sb.removeChannel(realtimeChannel);if(tradeRealtimeChannel)sb.removeChannel(tradeRealtimeChannel)});

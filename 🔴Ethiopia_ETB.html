@@ -417,7 +417,28 @@ body:not(.night-mode) .trade-bank-brand{background:linear-gradient(135deg,#effaf
 body:not(.night-mode) .trade-bank-brand-label{color:#66817a!important}
 body:not(.night-mode) .trade-bank-brand strong{color:#087f73!important}
 </style>
-<script>/* Sync market modal theme with the P2P Social Appearance setting. */document.addEventListener("DOMContentLoaded",function(){try{document.body.classList.toggle("night-mode",localStorage.getItem("p2p-social-theme")==="night")}catch(e){document.body.classList.remove("night-mode")}});</script></head>
+<script>/* Sync market modal theme with the P2P Social Appearance setting. */document.addEventListener("DOMContentLoaded",function(){try{document.body.classList.toggle("night-mode",localStorage.getItem("p2p-social-theme")==="night")}catch(e){document.body.classList.remove("night-mode")}});</script><style>
+.trade-confirm-overlay{display:none;position:fixed;inset:0;z-index:10050;align-items:center;justify-content:center;padding:20px;background:rgba(12,25,30,.48);backdrop-filter:blur(3px)}
+.trade-confirm-overlay.show{display:flex}
+.trade-confirm-card{width:min(100%,380px);padding:22px;border:1px solid #dce9e5;border-radius:18px;background:#fff;color:#172b29;box-shadow:0 20px 60px rgba(8,35,31,.24);animation:tradeConfirmIn .18s ease-out}
+@keyframes tradeConfirmIn{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+.trade-confirm-brand{display:flex;align-items:center;gap:9px;margin-bottom:18px;color:#17483f;font-size:14px;font-weight:800}
+.trade-confirm-brand img{width:28px;height:28px;object-fit:contain}
+.trade-confirm-brand b{color:#087f73}
+.trade-confirm-card h3{margin:0 0 9px;font-size:18px;font-weight:800;letter-spacing:-.3px}
+.trade-confirm-card p{margin:0;color:#52645f;font-size:14px;line-height:1.55;overflow-wrap:anywhere}
+.trade-confirm-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:24px}
+.trade-confirm-actions button{min-width:88px;min-height:42px;padding:0 17px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer}
+.trade-confirm-cancel{border:1px solid #d6e1dd;background:#fff;color:#40534d}
+.trade-confirm-ok{border:1px solid #087f73;background:#087f73;color:#fff;box-shadow:0 3px 8px rgba(8,127,115,.18)}
+.trade-confirm-ok:hover{background:#066b61}
+body.night-mode .trade-confirm-card{background:#172522;color:#edf7f4;border-color:#40564f}
+body.night-mode .trade-confirm-brand{color:#e3f5ef}
+body.night-mode .trade-confirm-brand b{color:#65d7c0}
+body.night-mode .trade-confirm-card p{color:#bdcbc6}
+body.night-mode .trade-confirm-cancel{background:#20332e;color:#e5f1ee;border-color:#45635b}
+</style>
+</head>
 <body>
 <header>
 <div class="brand">
@@ -466,6 +487,14 @@ body:not(.night-mode) .trade-bank-brand strong{color:#087f73!important}
 </div>
 </div>
 
+<div id="tradeConfirmModal" class="trade-confirm-overlay" aria-hidden="true">
+ <div class="trade-confirm-card" role="dialog" aria-modal="true" aria-labelledby="tradeConfirmTitle" aria-describedby="tradeConfirmMessage">
+  <div class="trade-confirm-brand"><img src="./p2p-logo.svg" alt=""><span>P2P <b>Social</b></span></div>
+  <h3 id="tradeConfirmTitle">Confirm trade</h3>
+  <p id="tradeConfirmMessage"></p>
+  <div class="trade-confirm-actions"><button type="button" class="trade-confirm-cancel" id="tradeConfirmCancel">Cancel</button><button type="button" class="trade-confirm-ok" id="tradeConfirmOk">OK</button></div>
+ </div>
+</div>
 <div id="toast" class="toast"></div>
 
 <nav class="bottom-nav">
@@ -756,6 +785,21 @@ document.getElementById("tradeTotalPreview").textContent=money(v)+" "+c;
 const conversion=document.getElementById("tradeAmountConversion");if(conversion){conversion.hidden=!(a>0&&selectedOffer);conversion.textContent=conversion.hidden?"":"≈ "+money(v)+" "+c}
 }
 
+let tradeConfirmResolver=null;
+function showTradeConfirmation(title,message){
+ const modal=document.getElementById("tradeConfirmModal");
+ if(!modal)return Promise.resolve(window.confirm(message));
+ document.getElementById("tradeConfirmTitle").textContent=title;
+ document.getElementById("tradeConfirmMessage").textContent=message;
+ modal.classList.add("show");modal.setAttribute("aria-hidden","false");
+ return new Promise(resolve=>{
+  const finish=value=>{modal.classList.remove("show");modal.setAttribute("aria-hidden","true");tradeConfirmResolver=null;resolve(value)};
+  tradeConfirmResolver=finish;
+  document.getElementById("tradeConfirmCancel").onclick=()=>finish(false);
+  document.getElementById("tradeConfirmOk").onclick=()=>finish(true);
+  modal.onclick=event=>{if(event.target===modal)finish(false)};
+ });
+}
 async function submitTrade(){
 if(actionLoading)return;
 if(!currentUser)return showLogin();
@@ -782,7 +826,7 @@ if(available<=0)return closeModal("tradeModal"),toast("This available offer has 
 if(!Number.isFinite(amount)||amount<=0)return toast("Enter a valid trade amount greater than zero.","warning");
 if(tradePaymentOptions(data).length&&!selectedTradePaymentMethod())return toast("Choose a listed payment method to continue.","warning");
 if(amount>available)return toast("Amount exceeds available amount.","warning");
-if(!confirm("Sell "+amount.toLocaleString(undefined,{maximumFractionDigits:6})+" "+getPairParts(data.pair||data.trading_pair).base+" to the buyer?"))return;
+if(!(await showTradeConfirmation("Confirm Sell","Sell "+amount.toLocaleString(undefined,{maximumFractionDigits:6})+" "+getPairParts(data.pair||data.trading_pair).base+" to the buyer?")))return;
 let b=document.getElementById("tradeSubmitButton");
 actionLoading=true;b.disabled=true;b.textContent="Starting...";
 let{data:trade,error:rpcError}=await supabaseClient.rpc("create_p2p_trade",{p_order_id:data.id,p_amount:amount});

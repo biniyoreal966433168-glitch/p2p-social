@@ -692,10 +692,10 @@ function setupTradePaymentMethod(offer){
 function selectedTradePaymentMethod(){return document.getElementById("tradePaymentMethod")?.value||"Not set"}
 function tradePaymentMessage(method,details){
  const d=details||{};
- return "\n\nP2P PAYMENT DETAILS\nPayment method: "+(method||"Not set")+"\nBank / Provider: "+(d.bank_name||"Not set")+"\nAccount name: "+(d.account_name||"Not set")+"\nAccount number: "+(d.account_number||"Not set");
+ return "\n\nP2P PAYMENT DETAILS\nPayment method: "+(method||"Not set")+"\nBank / Provider: "+(d.bank_name||"Not set")+"\nAccount name: "+(d.account_name||"Not set")+"\nAccount number: "+(d.account_number||"Not set")+"\nTransfer info: "+(d.transfer_info||"Not set");
 }
-async function loadTradePaymentDetails(tradeId){
- const {data,error}=await supabaseClient.rpc("get_trade_payment_details",{p_trade_id:tradeId});
+async function loadTradePaymentDetails(tradeId,paymentMethod){
+ const {data,error}=await supabaseClient.rpc("get_trade_payment_details",{p_trade_id:tradeId,p_payment_method:paymentMethod||null});
  if(error)throw error;return Array.isArray(data)?data[0]||{}:data||{};
 }
 
@@ -717,7 +717,7 @@ if(x.error)throw r.error;conversation=x.data
 }else conversation=r.data
 }
 if(!conversation?.id)throw Error("Conversation could not be created.");
-let paymentDetails=await loadTradePaymentDetails(tradeId),msg="🔴 P2P Sell started. Please complete the payment for this trade."+tradePaymentMessage(paymentMethod,paymentDetails);
+let paymentDetails=await loadTradePaymentDetails(tradeId,paymentMethod),msg="🔴 P2P Sell started. Please complete the payment for this trade."+tradePaymentMessage(paymentMethod,paymentDetails);
 
 let{data:existingMessage,error:me}=await supabaseClient.from("messages").select("id").eq("conversation_id",conversation.id).eq("sender_id",currentUser.id).eq("message_type","order").eq("order_id",tradeId).maybeSingle();
 if(me)throw me;

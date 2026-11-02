@@ -341,7 +341,7 @@ async function loadLockedBalances(){
  renderBalances();
 }
 function getAvailableBalance(currency){const c=String(currency||"").toUpperCase();return c==="TON"?Math.max(0,Number(bicycleTONBalance||0)-Number(currentLockedTON||0)):Math.max(0,Number(bicycleUSDTBalance||0)-Number(currentLockedUSDT||0))}
-async function refreshWallet(){await loadBlockchainBalances();await loadLockedBalances();await loadAdminTonWalletBalance();await loadMyOrders()}
+async function refreshWallet(){await loadBlockchainBalances();await loadLockedBalances();await loadMyOrders()}
 function renderBalances(){let[a,l,t,lt]=["usdtBalance","lockedUSDTBalance","tonBalance","lockedTONBalance"].map($);if(!a)return;let availableUSDT=getAvailableBalance("USDT"),availableTON=getAvailableBalance("TON");if(!balanceVisible)a.textContent=l.textContent=t.textContent=lt.textContent="••••••";else{a.textContent=num(availableUSDT)+" USDT";l.textContent=num(currentLockedUSDT)+" USDT";t.textContent=num(availableTON)+" TON";lt.textContent=num(currentLockedTON)+" TON"}if($("withdrawBalance"))$("withdrawBalance").textContent=(withdrawCurrency==="TON"?num(availableTON)+" TON":num(availableUSDT)+" USDT")}
 function toggleBalanceVisibility(){balanceVisible=!balanceVisible;$("balanceToggleButton").textContent=balanceVisible?"🐵":"🙈";renderBalances();loadAdminTonWalletBalance();updateSellOrderAvailableBalance()}
 async function findSavedDepositAddress(id,currency=currentDepositCurrency){let r=await supabaseClient.from("bicycle_deposit_addresses").select("address").eq("user_id",id).eq("currency",currency).maybeSingle();return!r.error&&r.data?.address?String(r.data.address).trim():""}

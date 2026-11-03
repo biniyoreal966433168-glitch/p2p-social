@@ -3,17 +3,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, error: "Method not allowed" });
   }
 
-  const allowedAddresses = [
-    "UQCt8Gf5ZHPmoXW_d6x0Ttt551tIg-KJZSx1CsSIIwE8NYUv",
-    "UQDYzZmfsrGzhObKJUw4gzdeIxEai3jAFbiGKGwxvxHinf4K"
-  ];
-  const requestedAddress = String(req.query.address || "").trim();
-  const address = requestedAddress || allowedAddresses[0];
-
-  if (!allowedAddresses.includes(address)) {
-    return res.status(403).json({ success: false, error: "Address not authorized" });
-  }
-
+  const address = "UQCt8Gf5ZHPmoXW_d6x0Ttt551tIg-KJZSx1CsSIIwE8NYUv";
   try {
     const response = await fetch(
       "https://toncenter.com/api/v2/getAddressBalance?address=" + encodeURIComponent(address),

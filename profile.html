@@ -430,8 +430,9 @@ async function openTransfer(c="USDT"){
  transferCurrency=c==="TON"?"TON":"USDT";
  $("transferTitle").textContent="Transfer "+transferCurrency;
  $("transferSender").textContent="Loading your personal wallet...";
- await loadBlockchainBalances();
- await loadLockedBalances();
+ $("transferAvailableAmount").textContent="Loading balance...";
+ $("transferModal").classList.add("show");
+ await Promise.allSettled([loadBlockchainBalances(),loadLockedBalances()]);
  const available=getAvailableBalance(transferCurrency);
  $("transferAvailableAmount").textContent=num(available)+" "+transferCurrency;
  const assetLogo=$("transferAvailableBalance").querySelector(".transfer-asset-logo");
@@ -445,7 +446,6 @@ async function openTransfer(c="USDT"){
  $("transferAmount").value="";
  $("transferResult").hidden=true;
  $("transferResult").replaceChildren();
- $("transferModal").classList.add("show");
  try{
   const {user,error}=await authUser();
   if(error||!user)throw error||new Error("Please login again.");
@@ -466,33 +466,27 @@ async function openTransfer(c="USDT"){
 }
 function closeTransfer(){$("transferModal").classList.remove("show")}
 async function submitTransfer(){
- if(!currentSession)return showLogin();
- const recipientUsername=$("transferUsername").value.trim().replace(/^@/,"");
- const amount=Number($("transferAmount").value);
  const button=$("transferSubmitButton");
  const result=$("transferResult");
+ if(button.disabled)return;
+ const recipientUsername=$("transferUsername").value.trim().replace(/^@/,"");
+ const amount=Number($("transferAmount").value);
  if(!recipientUsername)return alert("Enter the recipient username.");
  if(!Number.isFinite(amount)||amount<=0)return alert("Enter an amount greater than 0.");
- const{user,error}=await authUser();
- if(error||!user)return alert("Please login again.");
- // The authenticated wallet service performs the authoritative live-balance
- // and P2P-reservation check immediately before sending. Refresh the profile
- // display here, but do not reject using a potentially stale client-side cache.
- await loadBlockchainBalances();
- await loadLockedBalances();
- const queryId=crypto.randomUUID();
  button.disabled=true;
  button.textContent="Sending...";
  result.hidden=true;
  result.replaceChildren();
  try{
+  const{user,error}=await authUser();
+  if(error||!user)throw error||new Error("Please login again.");
+  const queryId=crypto.randomUUID();
   const response=await bicycle({action:"transfer",currency:transferCurrency,recipient_username:recipientUsername,amount,query_id:queryId},user);
-  await refreshWallet();
-  await loadUSDTHistory();
-  const status=String(response?.status||response?.bicycle?.status||"pending").toLowerCase();
+  const status=String(response?.status||response?.bicycle?.status||"").toLowerCase();
   const confirmed=["completed","complete","success","successful","confirmed","done","sent"].includes(status);
+  const failed=["failed","failure","error","rejected","cancelled","canceled"].includes(status);
   result.hidden=false;
-  result.textContent=confirmed?"Blockchain transfer status: "+status+". ":"Transfer submitted from your personal wallet. Check the destination wallet for confirmation. ";
+  result.textContent=failed?"Transfer failed. "+(response?.error||"The wallet service rejected the transfer."):(confirmed?"Blockchain transfer confirmed. ":"Transfer sent to the wallet service; blockchain confirmation may still be processing. ");
   const txHash=response?.bicycle?.transaction_hash||response?.bicycle?.tx_hash||response?.bicycle?.hash||response?.bicycle?.transaction?.hash||response?.bicycle?.data?.transaction_hash;
   if(txHash){
    const txLink=document.createElement("a");
@@ -501,16 +495,21 @@ async function submitTransfer(){
    txLink.rel="noopener noreferrer";
    txLink.textContent="View transaction on Tonviewer";
    result.append(document.createElement("br"),txLink);
-  }else{
+  }else if(response?.destination){
    const addressLink=document.createElement("a");
-   addressLink.href="https://tonviewer.com/"+encodeURIComponent(response?.destination||"");
+   addressLink.href="https://tonviewer.com/"+encodeURIComponent(response.destination);
    addressLink.target="_blank";
    addressLink.rel="noopener noreferrer";
    addressLink.textContent="View recipient wallet on Tonviewer";
    result.append(addressLink);
   }
+  if(!failed){
+   Promise.allSettled([refreshWallet(),loadUSDTHistory()]);
+  }
  }catch(e){
-  alert("Could not send blockchain transfer:\n\n"+(e.message||e));
+  result.hidden=false;
+  result.textContent="Transfer failed: "+(e.message||String(e));
+  console.error("Blockchain transfer failed:",e);
  }finally{
   button.disabled=false;
   button.textContent="Transfer";

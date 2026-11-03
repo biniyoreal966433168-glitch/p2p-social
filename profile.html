@@ -430,6 +430,8 @@ async function openTransfer(c="USDT"){
  transferCurrency=c==="TON"?"TON":"USDT";
  $("transferTitle").textContent="Transfer "+transferCurrency;
  $("transferSender").textContent="Loading your personal wallet...";
+ await loadBlockchainBalances();
+ await loadLockedBalances();
  const available=getAvailableBalance(transferCurrency);
  $("transferAvailableAmount").textContent=num(available)+" "+transferCurrency;
  const assetLogo=$("transferAvailableBalance").querySelector(".transfer-asset-logo");
@@ -473,10 +475,11 @@ async function submitTransfer(){
  if(!Number.isFinite(amount)||amount<=0)return alert("Enter an amount greater than 0.");
  const{user,error}=await authUser();
  if(error||!user)return alert("Please login again.");
+ // The authenticated wallet service performs the authoritative live-balance
+ // and P2P-reservation check immediately before sending. Refresh the profile
+ // display here, but do not reject using a potentially stale client-side cache.
  await loadBlockchainBalances();
  await loadLockedBalances();
- const available=getAvailableBalance(transferCurrency);
- if(amount>available)return alert("Insufficient available "+transferCurrency+" balance. Available: "+num(available)+" "+transferCurrency+".");
  const queryId=crypto.randomUUID();
  button.disabled=true;
  button.textContent="Sending...";

@@ -4,11 +4,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    const expectedAddress = "UQAShr7BUomDblYvGCTXYqZaxwXt0IA7c8fFJy2Fc31v6NfO";
+    const allowedAddresses = [
+      "UQAShr7BUomDblYvGCTXYqZaxwXt0IA7c8fFJy2Fc31v6NfO",
+      "UQCt8Gf5ZHPmoXW_d6x0Ttt551tIg-KJZSx1CsSIIwE8NYUv"
+    ];
     const usdtMaster = "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs";
     const address = String(req.query.address || "").trim();
 
-    if (address !== expectedAddress) {
+    if (!allowedAddresses.includes(address)) {
       return res.status(403).json({ success: false, error: "Address not authorized" });
     }
 
@@ -19,7 +22,7 @@ export default async function handler(req, res) {
 
     const url =
       "https://tonapi.io/v2/accounts/" +
-      encodeURIComponent(expectedAddress) +
+      encodeURIComponent(address) +
       "/jettons/" +
       encodeURIComponent(usdtMaster);
 
@@ -52,7 +55,7 @@ export default async function handler(req, res) {
       success: true,
       balance: rawBalance / Math.pow(10, decimals),
       currency: "USDT",
-      address: expectedAddress
+      address
     });
   } catch (error) {
     return res.status(500).json({

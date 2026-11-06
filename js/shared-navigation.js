@@ -205,7 +205,7 @@
     message:"💬",like:"❤️",comment:"🗨️",follow:"👤",wallet:"👛",
     deposit:"⬇️",withdraw:"⬆️",transfer:"↔️",trade:"🤝",premium:"✦",
     live:"🔴",verification:"✓",security:"🛡️"
-  }[String(type || "").toLowerCase()] || "🔔");
+  }[String(type || "").toLowerCase()] || "•");
   const timeFor = value => {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "";

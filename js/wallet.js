@@ -556,7 +556,7 @@ async function selectOffer(
       */
 
       window.location.href =
-        `🔴.html?order=${encodeURIComponent(
+        `sell.html?order=${encodeURIComponent(
           data.orderId
         )}`;
 

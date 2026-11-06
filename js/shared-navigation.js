@@ -179,7 +179,7 @@
   const host = document.createElement("div");
   host.className = "p2p-notification-host";
   const profileActions = header.querySelector(".profile-header-actions");
-  if (profileActions) { profileActions.style.display = "flex"; profileActions.style.alignItems = "center"; profileActions.style.gap = "8px"; host.style.position = "relative"; host.style.display = "inline-flex"; }
+  if (profileActions) { profileActions.style.display = "flex"; profileActions.style.alignItems = "center"; profileActions.style.gap = "8px"; host.style.position = "relative"; host.style.display = "inline-flex"; host.style.minHeight = "44px"; }
   host.innerHTML = `
     <button type="button" class="p2p-notification-trigger" aria-label="Open notifications" title="Notifications">
       <svg aria-hidden="true" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg><span class="p2p-notification-count" aria-live="polite"></span>
@@ -190,6 +190,7 @@
     </section>`;
   if (profileActions) profileActions.appendChild(host); else { const security = header.querySelector(".security"); if (security) security.style.marginRight = "52px"; header.appendChild(host); }
   const trigger = host.querySelector(".p2p-notification-trigger");
+  if (profileActions) { trigger.style.position = "relative"; trigger.style.top = "auto"; trigger.style.right = "auto"; }
   const panel = host.querySelector(".p2p-notification-panel");
   const list = host.querySelector(".p2p-notification-list");
   const count = host.querySelector(".p2p-notification-count");

@@ -146,13 +146,13 @@
   nav.className = "p2p-bottom-nav";
   nav.setAttribute("aria-label", "Main navigation");
   nav.innerHTML = `
-    <a href="./index.html" class="${page === "home" ? "p2p-nav-active" : ""}" ${page === "home" ? 'aria-current="page"' : ""}><span class="p2p-nav-icon" aria-hidden="true">⌂</span><span>Home</span></a>
+    <a href="./index.html" class="${page === "home" ? "p2p-nav-active" : ""}" ${page === "home" ? 'aria-current="page"' : ""}><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1Z"/></svg><span>Home</span></a>
     <div class="p2p-market-switch" role="group" aria-label="Buy and Sell markets">
-      <a class="p2p-buy ${page === "buy" ? "p2p-market-active" : ""}" href="./🟢.html" ${page === "buy" ? 'aria-current="page"' : ""}><span class="p2p-market-arrow" aria-hidden="true">↑</span><span>Buy</span></a>
-      <a class="p2p-sell ${page === "sell" ? "p2p-market-active" : ""}" href="./🔴.html" ${page === "sell" ? 'aria-current="page"' : ""}><span class="p2p-market-arrow" aria-hidden="true">↓</span><span>Sell</span></a>
+      <a class="p2p-buy ${page === "buy" ? "p2p-market-active" : ""}" href="./🟢.html" ${page === "buy" ? 'aria-current="page"' : ""}><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6"/></svg><span>Buy</span></a>
+      <a class="p2p-sell ${page === "sell" ? "p2p-market-active" : ""}" href="./🔴.html" ${page === "sell" ? 'aria-current="page"' : ""}><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14m6-6-6 6-6-6"/></svg><span>Sell</span></a>
     </div>
-    <a href="./message.html" class="p2p-messages-link ${page === "messages" ? "p2p-nav-active" : ""}" ${page === "messages" ? 'aria-current="page"' : ""}><span class="p2p-nav-icon" aria-hidden="true">▤</span><span>Messages</span><span id="messagesNavBadge" class="p2p-nav-badge" aria-live="polite"></span></a>
-    <a href="./profile.html" class="${page === "profile" ? "p2p-nav-active" : ""}" ${page === "profile" ? 'aria-current="page"' : ""}><span class="p2p-nav-icon" aria-hidden="true">♙</span><span>Profile</span></a>
+    <a href="./message.html" class="p2p-messages-link ${page === "messages" ? "p2p-nav-active" : ""}" ${page === "messages" ? 'aria-current="page"' : ""}><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H5l-2 2v-6A7.5 7.5 0 1 1 20 11.5Z"/></svg><span>Messages</span><span id="messagesNavBadge" class="p2p-nav-badge" aria-live="polite"></span></a>
+    <a href="./profile.html" class="${page === "profile" ? "p2p-nav-active" : ""}" ${page === "profile" ? 'aria-current="page"' : ""}><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Profile</span></a>
   `;
 
   // Home and Messages already have a live notification center. Keep their existing

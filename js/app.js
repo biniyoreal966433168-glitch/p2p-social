@@ -183,9 +183,9 @@ function navigateTo(page) {
     "index.html",
     "login.html",
     "register.html",
-    "🟢.html",
+    "buy.html",
     "profile.html",
-    "🔴.html",
+    "sell.html",
     "messages.html"
   ];
 
@@ -821,7 +821,7 @@ function escapeHTML(
 function openP2P() {
 
   window.location.href =
-    "🔴.html";
+    "sell.html";
 
 }
 
@@ -833,7 +833,7 @@ function openP2P() {
 function openLive() {
 
   window.location.href =
-    "🟢.html";
+    "buy.html";
 
 }
 

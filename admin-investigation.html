@@ -11,7 +11,26 @@
 .edge-live-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:12px}.edge-live-card{background:#f8fafb;border:1px solid var(--line);border-radius:10px;padding:11px}.edge-live-card span{display:block;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.5px}.edge-live-card b{display:block;font-size:14px;margin-top:6px;overflow-wrap:anywhere}.edge-live-lists{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}.edge-live-list{padding:12px;background:#f8fafb;border:1px solid var(--line);border-radius:10px}.edge-live-list h3{font-size:11px;margin:0 0 8px}.edge-live-list li{font-size:10px;color:#526171;line-height:1.55;margin:5px 0}.edge-live-list ul{padding-left:17px;margin:0}.edge-live-error{color:var(--red);font-size:11px;margin-top:9px}@media(max-width:760px){.edge-live-grid{grid-template-columns:repeat(2,1fr)}.edge-live-lists{grid-template-columns:1fr}}
 @media(max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}.safety{grid-template-columns:1fr}.wrap{padding:20px 13px}.top{padding:13px}.details{gap:8px}}
 @media print{body{background:white}.top a,.actions{display:none}.wrap{padding:0}.card,.stat{break-inside:avoid}}
-</style>
+
+.admin-feature-console{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+.admin-feature-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.admin-feature-tools{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.admin-feature-tools input,.admin-feature-tools select{min-width:180px;flex:1;border:1px solid var(--line);border-radius:9px;padding:10px;background:#fff;color:var(--ink);font-size:12px}
+.admin-feature-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.feature-card{border:1px solid var(--line);border-radius:10px;background:#fff;padding:11px;text-align:left;cursor:pointer;min-width:0}
+.feature-card:hover,.feature-card:focus{border-color:var(--brand);outline:2px solid #087f7320}
+.feature-card strong{display:block;font-size:11px;line-height:1.35}
+.feature-card small{display:flex;justify-content:space-between;gap:6px;margin-top:8px;color:var(--muted);font-size:9px}
+.feature-state{font-weight:800;white-space:nowrap}
+.feature-state.live{color:var(--green)}.feature-state.partial{color:var(--amber)}.feature-state.off{color:#718096}
+.feature-detail{margin-top:12px;padding:13px;border:1px solid var(--line);border-radius:10px;background:#f8fafb}
+.feature-detail b{font-size:12px}.feature-detail p{font-size:11px;color:#526171;line-height:1.55;margin:6px 0 0}
+.feature-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--muted);margin:9px 0}
+.feature-legend span{display:flex;align-items:center;gap:5px}
+.feature-dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:#8793a1}.feature-dot.live{background:#147d52}.feature-dot.partial{background:#9a6700}
+@media(max-width:760px){.admin-feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:390px){.admin-feature-grid{grid-template-columns:1fr}}
+\n</style>
 </head>
 <body>
 <header class="top"><div class="brand"><img src="./p2p-logo.svg" alt="">P2P Social <span style="font-weight:500;opacity:.8">/ Admin</span></div><a href="profile.html">Back to Profile</a></header>
@@ -19,7 +38,14 @@
 <div class="eyebrow">Bicycle mainnet · forensic workspace</div><h1>Recovery investigation</h1><p class="sub">Read-only review of the original PostgreSQL database, isolated recovery copy, available WAL evidence, and backup search.</p>
 <div class="alert"><strong>Historical user deposit wallets have not been recovered.</strong><p>The inspected wallet tables contain only the existing TON and USDT hot-wallet rows. This does not prove historical user wallets never existed; it means no user rows were found in the files examined so far.</p></div>
 <section class="card" id="livePanel" style="margin:16px 0"><h2>Live recovery-copy connection <span class="pill amber" id="liveBadge">Not connected</span></h2><p class="sub" style="font-size:11px">Connect the read-only API running beside the Termux recovery copy. The API URL is saved only in this browser; your Supabase session token is sent only with the live request.</p><div class="live-config"><input id="recoveryApiUrl" type="url" inputmode="url" placeholder="https://your-cloudflare-tunnel.trycloudflare.com" autocomplete="off"><button class="btn primary" id="saveRecoveryApi">Save & connect</button><button class="btn" id="refreshRecoveryApi">Refresh</button></div><div class="live-status" id="liveStatus" role="status">Enter the HTTPS URL from the Cloudflare Tunnel that points to 127.0.0.1:8787.</div><div id="liveData" class="live-hidden"><div class="live-metrics"><div class="live-metric"><span>Database</span><b id="liveDatabase">—</b></div><div class="live-metric"><span>Port</span><b id="livePort">—</b></div><div class="live-metric"><span>Transaction mode</span><b id="liveReadonly">—</b></div><div class="live-metric"><span>Last checked (UTC)</span><b id="liveChecked">—</b></div><div class="live-metric"><span>TON wallet rows</span><b id="liveTonCount">—</b></div><div class="live-metric"><span>USDT wallet rows</span><b id="liveUsdtCount">—</b></div><div class="live-metric"><span>Database role</span><b id="liveDbUser">—</b></div><div class="live-metric"><span>PostgreSQL started</span><b id="liveStarted">—</b></div></div><div class="live-subtitle">TON wallet rows</div><div class="live-table-wrap"><table><thead><tr><th>Type</th><th>Subwallet ID</th></tr></thead><tbody id="liveTonRows"></tbody></table></div><div class="live-subtitle">USDT wallet rows</div><div class="live-table-wrap"><table><thead><tr><th>Type</th><th>Currency</th><th>Subwallet ID</th></tr></thead><tbody id="liveUsdtRows"></tbody></table></div><div class="live-subtitle">Blockchain checkpoint</div><div class="live-table-wrap"><table><thead><tr><th>Slug</th><th>Seqno</th><th>Root hash</th></tr></thead><tbody id="liveCheckpoints"></tbody></table></div></div></section>
-<section class="card" id="edgeLivePanel" style="margin:16px 0"><h2>Live status <span class="pill amber" id="edgeLiveBadge">Checking</span></h2><p class="sub" style="font-size:11px">Live, admin-authenticated diagnostics from Supabase. This panel reads operational status and row counts only; it does not sign, broadcast, withdraw, or transfer funds.</p><div class="actions"><button class="btn primary" id="refreshEdgeLive">Refresh live diagnostics</button></div><div class="edge-live-grid"><div class="edge-live-card"><span>Admin diagnostics function</span><b id="edgeFnState">—</b></div><div class="edge-live-card"><span>Bicycle API</span><b id="edgeApiState">—</b></div><div class="edge-live-card"><span>Node synchronization</span><b id="edgeSyncState">—</b></div><div class="edge-live-card"><span>Last checked</span><b id="edgeCheckedAt">—</b></div></div><div class="edge-live-lists"><div class="edge-live-list"><h3>Database table counts</h3><ul id="edgeTableCounts"><li>Waiting for live check…</li></ul></div><div class="edge-live-list"><h3>Recommended operational checks</h3><ul id="edgeRecommendations"><li>Waiting for live check…</li></ul></div></div><div id="edgeLiveError" class="edge-live-error" role="status"></div></section>
+<section class="card" id="edgeLivePanel" style="margin:16px 0"><h2>Live status <span class="pill amber" id="edgeLiveBadge">Checking</span></h2><p class="sub" style="font-size:11px">Live, admin-authenticated diagnostics from Supabase. This panel reads operational status and row counts only; it does not sign, broadcast, withdraw, or transfer funds.</p><div class="actions"><button class="btn primary" id="refreshEdgeLive">Refresh live diagnostics</button></div><div class="edge-live-grid"><div class="edge-live-card"><span>Admin diagnostics function</span><b id="edgeFnState">—</b></div><div class="edge-live-card"><span>Bicycle API</span><b id="edgeApiState">—</b></div><div class="edge-live-card"><span>Node synchronization</span><b id="edgeSyncState">—</b></div><div class="edge-live-card"><span>Last checked</span><b id="edgeCheckedAt">—</b></div></div><div class="edge-live-lists"><div class="edge-live-list"><h3>Database table counts</h3><ul id="edgeTableCounts"><li>Waiting for live check…</li></ul></div><div class="edge-live-list"><h3>Recommended operational checks</h3><ul id="edgeRecommendations"><li>Waiting for live check…</li></ul></div></div><div id="edgeLiveError" class="edge-live-error" role="status"></div>
+<section class="admin-feature-console" aria-labelledby="adminFeatureTitle">
+  <div class="admin-feature-head"><div><h2 id="adminFeatureTitle">Admin feature console · 50 features</h2><p class="sub" style="font-size:11px">Select a feature to see its live connection state and what is currently supported. Only verified capabilities are marked live.</p></div><span class="pill gray" id="featureCount">50 features</span></div>
+  <div class="feature-legend"><span><i class="feature-dot live"></i> Live data / enforcement</span><span><i class="feature-dot partial"></i> Partial coverage</span><span><i class="feature-dot"></i> Not connected</span></div>
+  <div class="admin-feature-tools"><input id="featureSearch" type="search" placeholder="Search the 50 admin features…" aria-label="Search admin features"><select id="featureCategory" aria-label="Filter by category"><option value="">All categories</option><option>Security</option><option>Users</option><option>Trading</option><option>Wallet</option><option>Blockchain</option><option>Operations</option><option>Governance</option></select></div>
+  <div class="admin-feature-grid" id="adminFeatureGrid"></div>
+  <div class="feature-detail" id="adminFeatureDetail" aria-live="polite"><b>Select a feature</b><p>Its current status and available evidence will appear here.</p></div>
+</section></section>
 <section class="stats">
 <div class="stat"><label>TON wallet rows</label><strong>1</strong><small>Existing ton_hot row</small></div>
 <div class="stat"><label>USDT wallet rows</label><strong>1</strong><small>Existing jetton_hot row</small></div>
@@ -53,12 +79,126 @@ const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
   if(profileError)throw profileError;
   const username=String(profile?.username||"").replace(/^@/,"").toLowerCase();
   const allowed=username==="p2p_social_admin"||profile?.is_admin===true||String(profile?.role||"").toLowerCase()==="admin";
-  document.getElementById(allowed?"app":"denied").hidden=false;if(allowed){setupLiveRecoveryConnection();setupEdgeLiveDiagnostics();}
+  document.getElementById(allowed?"app":"denied").hidden=false;if(allowed){setupLiveRecoveryConnection();setupAdminFeatureConsole();setupEdgeLiveDiagnostics();}
  }catch(e){document.getElementById("denied").hidden=false;console.error("Admin authorization check failed",e)}
 })();
 
 
-function setupEdgeLiveDiagnostics(){
+
+const ADMIN_FEATURES = [
+ ["Login Detection","Security","off","No authenticated login-event audit source is connected yet."],
+ ["Session Monitor","Security","off","No session inventory or session-revocation monitor is connected."],
+ ["Device Detection","Security","off","Device fingerprints are not collected or audited."],
+ ["IP Monitor","Security","off","No IP audit stream is available; IP addresses are not exposed in this dashboard."],
+ ["MFA Security","Security","off","MFA enrollment and enforcement are not yet wired into the admin console."],
+ ["Role Control","Security","live","The dashboard verifies the signed-in account against the protected admin profile before showing admin data. Role editing is not enabled here."],
+ ["Admin Logs","Security","off","No append-only admin action log is connected."],
+ ["Fraud Detection","Security","off","No verified fraud rules or risk-scoring engine is connected."],
+ ["Account Security","Security","partial","Admin authentication is enforced; account-level security event monitoring is not connected."],
+ ["Rate Limits","Security","off","No rate-limit telemetry or policy controls are connected."],
+ ["User Control","Users","off","User suspension and account actions are intentionally not enabled."],
+ ["User Verification","Users","partial","Read-only verified and unverified profile counts are available; review/approval actions are not enabled.","verified_users"],
+ ["Profile Monitor","Users","partial","Aggregate profile count is available; individual profile surveillance is not enabled.","profiles"],
+ ["Report Review","Users","partial","Read-only report totals are available; moderation decisions are not enabled.","open_user_reports"],
+ ["Trade Monitor","Trading","live","Live aggregate P2P trade counts are available.","trades"],
+ ["Order Monitor","Trading","live","Live aggregate P2P order counts are available.","orders"],
+ ["Dispute Control","Trading","partial","Disputed trade count is monitored; dispute resolution actions are not enabled.","disputed_trades"],
+ ["Payment Check","Trading","partial","Trades awaiting payment confirmation are counted; payment evidence is not independently verified.","payment_unconfirmed_trades"],
+ ["Wallet Monitor","Wallet","partial","Balance snapshot and wallet ledger row counts are available; this is not a balance proof.","wallet_ledger"],
+ ["Deposit Monitor","Wallet","live","Deposit-address record count is available; on-chain deposit finality is not verified here.","deposit_addresses"],
+ ["Withdrawal Monitor","Wallet","live","Withdrawal record and pending count are available; this console cannot sign or broadcast withdrawals.","withdrawals"],
+ ["Balance Check","Wallet","partial","Balance snapshot records are counted; reconciliation against chain state is not yet implemented.","balance_snapshots"],
+ ["Transaction Audit","Wallet","partial","Transfer and ledger record counts are available; per-transaction forensic review is not enabled.","ton_transfers"],
+ ["Blockchain Monitor","Blockchain","partial","Bicycle API connectivity is checked; full chain event monitoring is not connected."],
+ ["Node Health","Blockchain","partial","Bicycle sync endpoint is queried; node health and sync state depend on its returned payload."],
+ ["Consensus Check","Blockchain","off","Consensus and validator/quorum telemetry are not exposed by the current Bicycle endpoint."],
+ ["Bicycle API","Blockchain","partial","Protected server-side Bicycle API reachability is checked on each refresh."],
+ ["Edge Functions","Operations","partial","This admin diagnostics function reports its own successful response; fleet-wide function health is not connected."],
+ ["Database Health","Operations","partial","Selected table availability and row counts are checked; latency, locks and replication health are not included."],
+ ["System Audit","Operations","off","No scheduled, immutable system-audit pipeline is connected."],
+ ["Backup","Operations","off","No automated backup inventory or restore verification is connected."],
+ ["Recovery","Operations","off","No automated recovery readiness or restore test is connected to this console."],
+ ["Live Alerts","Operations","partial","Current diagnostics failures appear in the live status panel; push/email alert delivery is not configured here."],
+ ["Notifications","Operations","partial","Notification record count is available; delivery and failure telemetry are not included.","notifications"],
+ ["Analytics","Operations","partial","Basic aggregate counts are available; historical trends and event analytics are not connected."],
+ ["Performance","Operations","off","No latency or resource-performance telemetry is connected."],
+ ["Uptime","Operations","off","No independent uptime probe or historical uptime monitor is connected."],
+ ["Error Logs","Operations","off","Application and Edge Function error-log aggregation is not connected."],
+ ["Permissions","Governance","partial","The current admin gate is checked; granular permission scopes and audit are not implemented."],
+ ["Compliance","Governance","off","No compliance workflow or evidence register is connected."],
+ ["Blacklist","Governance","off","No enforced blacklist service is connected."],
+ ["Whitelist","Governance","off","No enforced whitelist service is connected."],
+ ["API Security","Governance","partial","The diagnostics endpoint requires a valid session and admin authorization; broader API security scanning is not connected."],
+ ["Traffic Monitor","Operations","off","No request-volume or traffic telemetry is connected."],
+ ["Audit Trail","Governance","off","No tamper-resistant audit trail is connected."],
+ ["Maintenance","Operations","off","No maintenance-mode control is connected."],
+ ["Updates","Operations","off","No release/update monitor is connected."],
+ ["Cache Monitor","Operations","off","No cache health or invalidation telemetry is connected."],
+ ["Storage Monitor","Operations","off","No storage usage or object-health telemetry is connected."],
+ ["Health Check","Operations","live","The authenticated admin diagnostics endpoint confirms its own response and reports Bicycle/API connectivity."]
+];
+let latestAdminPayload = null;
+function featureMetric(key){
+ const item = latestAdminPayload?.metrics?.[key];
+ if(!item) return null;
+ return item.available ? item.rows : "Unavailable";
+}
+function featureState(feature){
+ const name=feature[0], base=feature[2];
+ if(name==="Bicycle API"){
+  const b=latestAdminPayload?.bicycle;
+  if(!b) return {label:"Waiting",cls:"partial"};
+  if(b.reachable) return {label:"Live",cls:"live"};
+  return {label:b.status==="not_configured"?"Not configured":"Issue",cls:"off"};
+ }
+ if(name==="Node Health"){
+  const b=latestAdminPayload?.bicycle, sync=b?.sync||{};
+  const flag=sync.is_synced??sync.synced??sync.data?.is_synced;
+  if(flag===true) return {label:"Synced",cls:"live"};
+  if(flag===false) return {label:"Not synced",cls:"partial"};
+  return {label:b?.reachable?"Partial":"No data",cls:"partial"};
+ }
+ if(name==="Health Check"||name==="Edge Functions"){
+  return latestAdminPayload?.success ? {label:"Live",cls:"live"} : {label:"Waiting",cls:"partial"};
+ }
+ if(feature[4]){
+  const value=featureMetric(feature[4]);
+  if(value===null) return {label:"Waiting",cls:"partial"};
+  return {label:value==="Unavailable"?"Unavailable":"Live data",cls:value==="Unavailable"?"off":(base==="live"?"live":"partial")};
+ }
+ return {label:base==="live"?"Live":base==="partial"?"Partial":"Not connected",cls:base};
+}
+function featureDetail(feature){
+ const state=featureState(feature), metric=feature[4]?featureMetric(feature[4]):null;
+ const metricLine=feature[4] ? (metric===null?"Live metric is waiting for the next successful refresh.": "Current aggregate: "+metric+" records.") : "";
+ const p=document.getElementById("adminFeatureDetail");
+ p.replaceChildren();
+ const title=document.createElement("b");title.textContent=feature[0]+" · "+state.label;p.appendChild(title);
+ const desc=document.createElement("p");desc.textContent=feature[3]+(metricLine?" "+metricLine:"");p.appendChild(desc);
+}
+function renderAdminFeatures(){
+ const query=(document.getElementById("featureSearch").value||"").trim().toLowerCase();
+ const category=document.getElementById("featureCategory").value;
+ const grid=document.getElementById("adminFeatureGrid");grid.replaceChildren();
+ const matches=ADMIN_FEATURES.filter(f=>(!category||f[1]===category)&&(!query||(f[0]+" "+f[1]+" "+f[3]).toLowerCase().includes(query)));
+ document.getElementById("featureCount").textContent=matches.length+" of 50";
+ matches.forEach(feature=>{
+  const state=featureState(feature),button=document.createElement("button");
+  button.type="button";button.className="feature-card";
+  const title=document.createElement("strong");title.textContent=feature[0];button.appendChild(title);
+  const meta=document.createElement("small"),group=document.createElement("span"),status=document.createElement("span");
+  group.textContent=feature[1];status.textContent=state.label;status.className="feature-state "+state.cls;
+  meta.append(group,status);button.appendChild(meta);
+  button.addEventListener("click",()=>featureDetail(feature));grid.appendChild(button);
+ });
+ if(!matches.length){const empty=document.createElement("div");empty.className="empty";empty.textContent="No matching features.";grid.appendChild(empty);}
+}
+function setupAdminFeatureConsole(){
+ document.getElementById("featureSearch").addEventListener("input",renderAdminFeatures);
+ document.getElementById("featureCategory").addEventListener("change",renderAdminFeatures);
+ renderAdminFeatures();
+}
+\nfunction setupEdgeLiveDiagnostics(){
  const button=document.getElementById("refreshEdgeLive");
  button.addEventListener("click",refreshEdgeLiveDiagnostics);
  refreshEdgeLiveDiagnostics();
@@ -79,7 +219,7 @@ async function refreshEdgeLiveDiagnostics(){
   const payload=await response.json().catch(()=>({}));
   if(!response.ok)throw new Error(payload.error||("Diagnostics request failed (HTTP "+response.status+")."));
   if(!payload.success||!payload.edge_function?.responding)throw new Error("Diagnostics function did not confirm a healthy response.");
-  const api=payload.bicycle||{};
+  latestAdminPayload=payload;renderAdminFeatures();\n  const api=payload.bicycle||{};
   edgeText("edgeFnState","ACTIVE · responding");
   edgeText("edgeApiState",api.reachable?"Reachable · HTTP "+(api.http_status||200):(api.status==="not_configured"?"Not configured":"Unreachable"));
   const sync=api.sync||{};

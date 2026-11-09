@@ -85,8 +85,14 @@
  <div class="controller-message" id="controllerMessage" role="status">Loading controller data…</div>
  <div class="controller-grid">
   <section class="controller-card">
-   <h3>User verification controller</h3>
-   <div class="controller-table-wrap"><table class="controller-table"><thead><tr><th>Account</th><th>Verification</th><th>Action</th></tr></thead><tbody id="controllerUsers"><tr><td colspan="3">Waiting for data…</td></tr></tbody></table></div>
+   <h3>Active users & account search</h3>
+   <div class="admin-feature-tools" style="margin:8px 0">
+    <input id="controllerUserSearch" type="search" placeholder="Search username…" aria-label="Search users" autocomplete="off">
+    <select id="controllerUserPresence" aria-label="Filter users"><option value="all">All users</option><option value="active">Active now</option></select>
+   </div>
+   <p class="controller-note" id="controllerUserSummary">Active means a visible heartbeat within the last 2 minutes.</p>
+   <div class="controller-table-wrap"><table class="controller-table"><thead><tr><th>Account</th><th>Presence</th><th>Verification</th><th>Action</th></tr></thead><tbody id="controllerUsers"><tr><td colspan="4">Waiting for data…</td></tr></tbody></table></div>
+   <div class="controller-actions"><button class="controller-action" id="controllerUsersPrev" type="button" disabled>Previous</button><span class="controller-state" id="controllerUsersPage">Page 1</span><button class="controller-action" id="controllerUsersNext" type="button" disabled>Next</button></div>
   </section>
   <section class="controller-card">
    <h3>Login, device and IP monitor</h3>
@@ -268,10 +274,13 @@ function renderAdminFeatures(){
 function controllerTime(value){return value?new Date(value).toLocaleString():"—";}
 function controllerCell(row,value){const td=document.createElement("td");td.textContent=value==null?"—":String(value);row.appendChild(td);return td;}
 function controllerEmpty(tbody,cols,message){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=cols;td.textContent=message;tr.appendChild(td);tbody.replaceChildren(tr);}
-async function controllerRequest(action,body){
+async function controllerRequest(action,body,query={}){
  const {data:{session},error}=await sb.auth.getSession();
  if(error||!session?.access_token)throw new Error("Admin session expired. Sign in again.");
- const response=await fetch(SUPABASE_URL+"/functions/v1/admin-controller",{
+ const params=new URLSearchParams();
+ Object.entries(query).forEach(([key,value])=>{if(value!==undefined&&value!==null&&String(value)!=="")params.set(key,String(value));});
+ const endpoint=SUPABASE_URL+"/functions/v1/admin-controller"+(!action&&params.size?"?"+params.toString():"");
+ const response=await fetch(endpoint,{
   method:action?"POST":"GET",
   headers:{Authorization:"Bearer "+session.access_token,apikey:SUPABASE_KEY,"Content-Type":"application/json",Accept:"application/json"},
   body:action?JSON.stringify(body):undefined,cache:"no-store"
@@ -287,6 +296,9 @@ function renderController(){
  const userBody=document.getElementById("controllerUsers");userBody.replaceChildren();
  users.forEach(user=>{
   const tr=document.createElement("tr");controllerCell(tr,user.username||"User");
+  const last=user.last_seen_at?Date.parse(user.last_seen_at):NaN;
+  const active=user.show_online_status!==false&&Number.isFinite(last)&&Date.now()-last<120000;
+  controllerCell(tr,active?"Active now":user.show_online_status===false?"Hidden":"Offline");
   controllerCell(tr,user.verification_status||"unverified");
   const td=document.createElement("td"),button=document.createElement("button");
   const next=user.verification_status==="verified"?"unverified":"verified";
@@ -294,7 +306,14 @@ function renderController(){
   button.addEventListener("click",()=>changeUserVerification(user.id,next,user.username||"user"));
   td.appendChild(button);tr.appendChild(td);userBody.appendChild(tr);
  });
- if(!users.length)controllerEmpty(userBody,3,"No profiles returned.");
+ if(!users.length)controllerEmpty(userBody,4,"No users match this search.");
+ const summary=document.getElementById("controllerUserSummary");
+ if(summary)summary.textContent=(payload.user_count??users.length)+" matching users · "+(payload.active_count??"—")+" active now · Active = visible heartbeat within 2 minutes.";
+ const pageLabel=document.getElementById("controllerUsersPage");
+ if(pageLabel)pageLabel.textContent="Page "+(payload.user_page||1)+" of "+Math.max(1,Math.ceil((payload.user_count||0)/(payload.user_page_size||50)));
+ const prev=document.getElementById("controllerUsersPrev"),nextPage=document.getElementById("controllerUsersNext");
+ if(prev)prev.disabled=(payload.user_page||1)<=1;
+ if(nextPage)nextPage.disabled=(payload.user_page||1)>=Math.max(1,Math.ceil((payload.user_count||0)/(payload.user_page_size||50)));
  const events=document.getElementById("controllerEvents");events.replaceChildren();
  (payload.security_events||[]).forEach(item=>{
   const tr=document.createElement("tr");
@@ -318,11 +337,14 @@ function renderController(){
  badge.className="pill "+(payload.current_aal==="aal2"?"green":"amber");
  renderAdminFeatures();
 }
+let controllerUserPage=1;
 async function loadAdminController(){
  const badge=document.getElementById("controllerBadge"),message=document.getElementById("controllerMessage");
  badge.textContent="Refreshing…";badge.className="pill amber";
  try{
-  latestAdminController=await controllerRequest(null);
+  const search=document.getElementById("controllerUserSearch")?.value.trim()||"";
+  const presence=document.getElementById("controllerUserPresence")?.value||"all";
+  latestAdminController=await controllerRequest(null,null,{q:search,presence,page:controllerUserPage});
   renderController();
   message.textContent="Controller data refreshed · "+controllerTime(latestAdminController.checked_at);
  }catch(error){
@@ -355,6 +377,15 @@ async function setFeatureMonitoring(featureKey,enabled){
 }
 function setupAdminController(){
  document.getElementById("refreshController").addEventListener("click",loadAdminController);
+ const search=document.getElementById("controllerUserSearch");
+ let searchTimer=null;
+ search.addEventListener("input",()=>{
+  clearTimeout(searchTimer);controllerUserPage=1;
+  searchTimer=setTimeout(loadAdminController,300);
+ });
+ document.getElementById("controllerUserPresence").addEventListener("change",()=>{controllerUserPage=1;loadAdminController();});
+ document.getElementById("controllerUsersPrev").addEventListener("click",()=>{if(controllerUserPage>1){controllerUserPage--;loadAdminController();}});
+ document.getElementById("controllerUsersNext").addEventListener("click",()=>{controllerUserPage++;loadAdminController();});
  loadAdminController();
 }
 

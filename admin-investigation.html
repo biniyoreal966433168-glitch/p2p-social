@@ -91,7 +91,7 @@
     <select id="controllerUserPresence" aria-label="Filter users"><option value="all">All users</option><option value="active">Active now</option></select>
    </div>
    <p class="controller-note" id="controllerUserSummary">Active means a visible heartbeat within the last 2 minutes.</p>
-   <div class="controller-table-wrap"><table class="controller-table"><thead><tr><th>Account</th><th>Presence</th><th>Verification</th><th>Action</th></tr></thead><tbody id="controllerUsers"><tr><td colspan="4">Waiting for data…</td></tr></tbody></table></div>
+   <div class="controller-table-wrap"><table class="controller-table"><thead><tr><th>Account</th><th>Registered</th><th>Presence</th><th>Verification</th><th>Action</th></tr></thead><tbody id="controllerUsers"><tr><td colspan="5">Waiting for data…</td></tr></tbody></table></div>
    <div class="controller-actions"><button class="controller-action" id="controllerUsersPrev" type="button" disabled>Previous</button><span class="controller-state" id="controllerUsersPage">Page 1</span><button class="controller-action" id="controllerUsersNext" type="button" disabled>Next</button></div>
   </section>
   <section class="controller-card">
@@ -297,6 +297,8 @@ function renderController(){
  const userBody=document.getElementById("controllerUsers");userBody.replaceChildren();
  users.forEach(user=>{
   const tr=document.createElement("tr");controllerCell(tr,user.username||"User");
+  const registered=user.created_at?new Date(user.created_at):null;
+  controllerCell(tr,registered&&!Number.isNaN(registered.getTime())?registered.toLocaleString(undefined,{year:"numeric",month:"short",day:"2-digit",hour:"2-digit",minute:"2-digit"}):"Unavailable");
   const last=user.last_seen_at?Date.parse(user.last_seen_at):NaN;
   const active=user.show_online_status!==false&&Number.isFinite(last)&&Date.now()-last<120000;
   controllerCell(tr,active?"Active now":user.show_online_status===false?"Hidden":"Offline");
@@ -307,7 +309,7 @@ function renderController(){
   button.addEventListener("click",()=>changeUserVerification(user.id,next,user.username||"user"));
   td.appendChild(button);tr.appendChild(td);userBody.appendChild(tr);
  });
- if(!users.length)controllerEmpty(userBody,4,"No users match this search.");
+ if(!users.length)controllerEmpty(userBody,5,"No users match this search.");
  const summary=document.getElementById("controllerUserSummary");
  if(summary)summary.textContent=(payload.user_count??users.length)+" matching users · "+(payload.active_count??"—")+" active now · Active = visible heartbeat within 2 minutes.";
  const pageLabel=document.getElementById("controllerUsersPage");

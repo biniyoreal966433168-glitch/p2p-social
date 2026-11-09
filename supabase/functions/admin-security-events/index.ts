@@ -80,9 +80,7 @@ Deno.serve(async (req: Request) => {
 
     const ua = req.headers.get("user-agent") || "";
     const device = classifyDevice(ua);
-    const rawIp = req.headers.get("cf-connecting-ip") ||
-      req.headers.get("x-real-ip") ||
-      (req.headers.get("x-forwarded-for") || "").split(",")[0].trim();
+    const rawIp = req.headers.get("cf-connecting-ip");
     const ipPrefix = coarseIpPrefix(rawIp);
 
     const admin = createClient(URL, SERVICE, { auth: { persistSession: false, autoRefreshToken: false } });

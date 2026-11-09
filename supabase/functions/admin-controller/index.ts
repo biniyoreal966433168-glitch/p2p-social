@@ -64,7 +64,7 @@ Deno.serve(async (req: Request) => {
       const pageSize = 50;
       const activeSince = new Date(Date.now() - 120000).toISOString();
       let userQuery = admin.from("profiles")
-        .select("id,username,verification_status,last_seen_at,show_online_status", { count: "exact" })
+        .select("id,username,verification_status,last_seen_at,show_online_status,created_at", { count: "exact" })
         .order("last_seen_at", { ascending: false, nullsFirst: false })
         .range((page - 1) * pageSize, page * pageSize - 1);
       if (search) {

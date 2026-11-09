@@ -21,7 +21,7 @@ function json(body: unknown, status = 200) {
 }
 
 async function countRows(admin: ReturnType<typeof createClient>, table: string, filter?: { column: string; value: string | boolean }) {
-  let query = admin.from(table).select("id", { count: "exact", head: true });
+  let query = admin.from(table).select("*", { count: "exact", head: true });
   if (filter) query = query.eq(filter.column, filter.value);
   const { count, error } = await query;
   return error ? { available: false, rows: null } : { available: true, rows: count ?? 0 };
@@ -64,7 +64,7 @@ Deno.serve(async (req: Request) => {
     const [profiles, verifiedUsers, unverifiedUsers, trades, disputedTrades, paymentUnconfirmed,
       orders, activeOrders, userReports, openUserReports, postReports, pendingPostReports,
       deposits, withdrawals, pendingWithdrawals, balanceSnapshots, walletLedger,
-      tonTransfers, usdtTransfers, notifications] = await Promise.all([
+      tonTransfers, usdtTransfers, notifications, securityEvents, auditLogs, featureRegistry] = await Promise.all([
       countRows(admin, "profiles"),
       countRows(admin, "profiles", { column: "verification_status", value: "verified" }),
       countRows(admin, "profiles", { column: "verification_status", value: "unverified" }),
@@ -85,6 +85,9 @@ Deno.serve(async (req: Request) => {
       countRows(admin, "ton_transfers"),
       countRows(admin, "usdt_transfers"),
       countRows(admin, "notifications"),
+      countRows(admin, "admin_security_events"),
+      countRows(admin, "admin_audit_logs"),
+      countRows(admin, "admin_feature_registry"),
     ]);
 
     const metrics = {
@@ -95,6 +98,7 @@ Deno.serve(async (req: Request) => {
       deposit_addresses: deposits, withdrawals, pending_withdrawals: pendingWithdrawals,
       balance_snapshots: balanceSnapshots, wallet_ledger: walletLedger,
       ton_transfers: tonTransfers, usdt_transfers: usdtTransfers, notifications,
+      security_events: securityEvents, admin_audit_logs: auditLogs, admin_feature_registry: featureRegistry,
     };
 
     let bicycle: Record<string, unknown> = {
@@ -128,6 +132,7 @@ Deno.serve(async (req: Request) => {
       "profiles", "p2p_orders", "p2p_trades", "user_reports", "post_reports",
       "bicycle_deposit_addresses", "bicycle_withdrawals", "bicycle_balance_snapshots",
       "wallet_balance_ledger", "ton_transfers", "usdt_transfers", "notifications",
+      "admin_feature_registry", "admin_security_events", "admin_audit_logs",
     ];
     const counts = await Promise.all(tables.map(async table => [table, await countRows(admin, table)] as const));
 

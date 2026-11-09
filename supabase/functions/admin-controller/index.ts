@@ -62,33 +62,13 @@ Deno.serve(async (req: Request) => {
       const requestedPage = Number.parseInt(params.get("page") || "1", 10);
       const page = Number.isFinite(requestedPage) ? Math.max(1, Math.min(requestedPage, 100000)) : 1;
       const pageSize = 50;
-      const now = Date.now();
-      const activeSince = new Date(now - 120000).toISOString();
+      const activeSince = new Date(Date.now() - 120000).toISOString();
       let userQuery = admin.from("profiles")
         .select("id,username,verification_status,last_seen_at,show_online_status", { count: "exact" })
         .order("last_seen_at", { ascending: false, nullsFirst: false })
         .range((page - 1) * pageSize, page * pageSize - 1);
       if (search) {
-        const safeSearch = search.replace(/[\\%_]/g, "\\    if (req.method === "GET") {
-      const [features, users, events, logs] = await Promise.all([
-        admin.from("admin_feature_registry").select("feature_key,name,category,priority,readiness,monitoring_enabled,updated_at").order("priority"),
-        admin.from("profiles").select("id,username,verification_status,last_seen_at").order("created_at", { ascending: false }).limit(100),
-        admin.from("admin_security_events").select("user_id,event_type,device_type,browser,operating_system,ip_prefix,created_at").order("created_at", { ascending: false }).limit(50),
-        admin.from("admin_audit_logs").select("id,actor_id,action,target_type,target_id,details,created_at").order("created_at", { ascending: false }).limit(50),
-      ]);
-      const failure = [features, users, events, logs].find(x => x.error);
-      if (failure) return reply({ error: "Could not load controller data" }, 500);
-      return reply({
-        success: true,
-        checked_at: new Date().toISOString(),
-        current_aal: aal,
-        actions_require_mfa: true,
-        features: features.data || [],
-        users: users.data || [],
-        security_events: events.data || [],
-        audit_logs: logs.data || [],
-      });
-    }");
+        const safeSearch = search.replace(/[\\%_]/g, "");
         userQuery = userQuery.ilike("username", "%" + safeSearch + "%");
       }
       if (presence === "active") {

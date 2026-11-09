@@ -568,6 +568,24 @@ function showMessage(
 }
 
 
+
+/* =========================================
+   SECURITY EVENT TELEMETRY
+========================================= */
+async function recordSuccessfulLogin(){
+  try{
+    const {data:{session},error}=await supabaseClient.auth.getSession();
+    if(error||!session?.access_token)return;
+    const {error:recordError}=await supabaseClient.functions.invoke(
+      "admin-security-events",
+      {body:{event_type:"login_success"}}
+    );
+    if(recordError)console.warn("Security event was not recorded:",recordError.message);
+  }catch(error){
+    console.warn("Security event telemetry unavailable:",error);
+  }
+}
+
 /* =========================================
    LOGIN UI
 ========================================= */
@@ -1108,6 +1126,8 @@ mfaForm.addEventListener(
       }
 
 
+      await recordSuccessfulLogin();
+
       showMessage(
         "MFA verified. Redirecting...",
         "success"
@@ -1244,6 +1264,8 @@ async function checkExistingSession(){
 
     }
 
+
+    await recordSuccessfulLogin();
 
     showMessage(
       "You are already logged in. Redirecting...",

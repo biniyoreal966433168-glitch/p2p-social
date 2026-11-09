@@ -19,7 +19,9 @@ function reply(data: unknown, status = 200) {
 function claimsFrom(token: string) {
   try {
     const part = token.split(".")[1];
-    return JSON.parse(atob(part.replace(/-/g, "+").replace(/_/g, "/")));
+    let encoded = part.replace(/-/g, "+").replace(/_/g, "/");
+    encoded += "=".repeat((4 - encoded.length % 4) % 4);
+    return JSON.parse(atob(encoded));
   } catch { return {}; }
 }
 async function logAction(admin: ReturnType<typeof createClient>, actorId: string, action: string, targetType: string | null, targetId: string | null, details: Record<string, unknown> = {}) {

@@ -21,7 +21,9 @@ function reply(data: unknown, status = 200) {
 function decodeClaims(token: string) {
   try {
     const part = token.split(".")[1];
-    return JSON.parse(atob(part.replace(/-/g, "+").replace(/_/g, "/")));
+    let encoded = part.replace(/-/g, "+").replace(/_/g, "/");
+    encoded += "=".repeat((4 - encoded.length % 4) % 4);
+    return JSON.parse(atob(encoded));
   } catch { return {}; }
 }
 

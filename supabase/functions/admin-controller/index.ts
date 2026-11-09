@@ -56,6 +56,20 @@ Deno.serve(async (req: Request) => {
     const aal = String(claims.aal || "aal1");
 
     if (req.method === "GET") {
+      const params = new URL(req.url).searchParams;
+      const search = String(params.get("q") || "").trim().slice(0, 80);
+      const presence = params.get("presence") === "active" ? "active" : "all";
+      const requestedPage = Number.parseInt(params.get("page") || "1", 10);
+      const page = Number.isFinite(requestedPage) ? Math.max(1, Math.min(requestedPage, 100000)) : 1;
+      const pageSize = 50;
+      const now = Date.now();
+      const activeSince = new Date(now - 120000).toISOString();
+      let userQuery = admin.from("profiles")
+        .select("id,username,verification_status,last_seen_at,show_online_status", { count: "exact" })
+        .order("last_seen_at", { ascending: false, nullsFirst: false })
+        .range((page - 1) * pageSize, page * pageSize - 1);
+      if (search) {
+        const safeSearch = search.replace(/[\\%_]/g, "\\    if (req.method === "GET") {
       const [features, users, events, logs] = await Promise.all([
         admin.from("admin_feature_registry").select("feature_key,name,category,priority,readiness,monitoring_enabled,updated_at").order("priority"),
         admin.from("profiles").select("id,username,verification_status,last_seen_at").order("created_at", { ascending: false }).limit(100),
@@ -71,6 +85,40 @@ Deno.serve(async (req: Request) => {
         actions_require_mfa: true,
         features: features.data || [],
         users: users.data || [],
+        security_events: events.data || [],
+        audit_logs: logs.data || [],
+      });
+    }");
+        userQuery = userQuery.ilike("username", "%" + safeSearch + "%");
+      }
+      if (presence === "active") {
+        userQuery = userQuery.gte("last_seen_at", activeSince)
+          .or("show_online_status.is.null,show_online_status.eq.true");
+      }
+      const activeQuery = admin.from("profiles")
+        .select("id", { count: "exact", head: true })
+        .gte("last_seen_at", activeSince)
+        .or("show_online_status.is.null,show_online_status.eq.true");
+      const [features, users, events, logs, activeUsers] = await Promise.all([
+        admin.from("admin_feature_registry").select("feature_key,name,category,priority,readiness,monitoring_enabled,updated_at").order("priority"),
+        userQuery,
+        admin.from("admin_security_events").select("user_id,event_type,device_type,browser,operating_system,ip_prefix,created_at").order("created_at", { ascending: false }).limit(50),
+        admin.from("admin_audit_logs").select("id,actor_id,action,target_type,target_id,details,created_at").order("created_at", { ascending: false }).limit(50),
+        activeQuery,
+      ]);
+      const failure = [features, users, events, logs, activeUsers].find(x => x.error);
+      if (failure) return reply({ error: "Could not load controller data" }, 500);
+      return reply({
+        success: true,
+        checked_at: new Date().toISOString(),
+        current_aal: aal,
+        actions_require_mfa: true,
+        features: features.data || [],
+        users: users.data || [],
+        user_count: users.count || 0,
+        active_count: activeUsers.count || 0,
+        user_page: page,
+        user_page_size: pageSize,
         security_events: events.data || [],
         audit_logs: logs.data || [],
       });

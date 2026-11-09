@@ -75,10 +75,14 @@ Deno.serve(async (req: Request) => {
         userQuery = userQuery.gte("last_seen_at", activeSince)
           .or("show_online_status.is.null,show_online_status.eq.true");
       }
-      const activeQuery = admin.from("profiles")
+      let activeQuery = admin.from("profiles")
         .select("id", { count: "exact", head: true })
         .gte("last_seen_at", activeSince)
         .or("show_online_status.is.null,show_online_status.eq.true");
+      if (search) {
+        const safeSearch = search.replace(/[\\%_]/g, "");
+        activeQuery = activeQuery.ilike("username", "%" + safeSearch + "%");
+      }
       const [features, users, events, logs, activeUsers] = await Promise.all([
         admin.from("admin_feature_registry").select("feature_key,name,category,priority,readiness,monitoring_enabled,updated_at").order("priority"),
         userQuery,

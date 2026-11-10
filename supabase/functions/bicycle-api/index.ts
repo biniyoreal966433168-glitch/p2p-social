@@ -545,6 +545,62 @@ await supabase.from("bicycle_withdrawals").update({status:"failed",updated_at:ne
 return json({error:errorMessage,status:"failed",query_id:queryId,currency,amount:numericAmount,destination},502);
 }
 }
+if(action==="sweep_status"){
+ const queryId=String(body.query_id||"").trim();
+ if(!queryId)return json({error:"Missing query_id"},400);
+ const{data:row,error}=await supabase.from("bicycle_sweep_requests").select("id,currency,amount,source_address,destination_address,query_id,status,error,created_at,updated_at").eq("user_id",userId).eq("query_id",queryId).maybeSingle();
+ if(error)throw error;
+ if(!row)return json({error:"Sweep request not found"},404);
+ return json(row);
+}
+if(action==="sweep_to_main"){
+ const currency=String(body.currency||"").toUpperCase();
+ const amount=Number(body.amount);
+ const queryId=String(body.query_id||crypto.randomUUID());
+ if(!["TON","USDT"].includes(currency))return json({error:"Currency must be TON or USDT"},400);
+ if(!Number.isFinite(amount)||amount<=0)return json({error:"Sweep amount must be greater than zero"},400);
+ const{data:existing,error:existingError}=await supabase.from("bicycle_sweep_requests").select("*").eq("query_id",queryId).maybeSingle();
+ if(existingError)throw existingError;
+ if(existing)return json(existing);
+ const{data:wallet,error:walletError}=await supabase.from("bicycle_deposit_addresses").select("address").eq("user_id",userId).eq("currency",currency).maybeSingle();
+ if(walletError)throw walletError;
+ const sourceAddress=String(wallet?.address||"").trim();
+ if(!sourceAddress)return json({error:"No registered "+currency+" deposit address found"},404);
+ const live=currency==="TON"?await getTonBalance(sourceAddress):await getUsdtBalance(sourceAddress);
+ const{data:lockedData,error:lockedError}=await supabase.rpc("get_p2p_locked_balance",{p_user_id:userId,p_currency:currency});
+ if(lockedError)throw lockedError;
+ const locked=Math.max(0,Number(lockedData||0));
+ const feeReserve=currency==="TON"?0.05:0;
+ const available=Math.max(0,Number(live.balance||0)-locked-feeReserve);
+ if(amount>available)return json({error:"Insufficient available "+currency+" balance for main-wallet sweep",blockchain_balance:live.balance,locked_balance:locked,fee_reserve:feeReserve,available_balance:available,requested_amount:amount},400);
+ const{data:created,error:insertError}=await supabase.from("bicycle_sweep_requests").insert({
+  user_id:userId,requested_by:userId,currency,amount,source_address:sourceAddress,
+  destination_address:"BICYCLE_MAIN_WALLET",query_id:queryId,status:"processing"
+ }).select().single();
+ if(insertError){
+  if(insertError.code==="23505"){
+   const{data:duplicate}=await supabase.from("bicycle_sweep_requests").select("*").eq("query_id",queryId).maybeSingle();
+   if(duplicate)return json(duplicate);
+  }
+  throw insertError;
+ }
+ try{
+  const rawAmount=currency==="TON"?Math.round(amount*1_000_000_000):Math.round(amount*1_000_000);
+  const bicycle=await bicycleFetch("/v1/admin/sweep-to-main","POST",{
+   user_id:userId,source_address:sourceAddress,currency,amount:rawAmount,query_id:queryId
+  });
+  const destination=String(bicycle?.destination||"BICYCLE_MAIN_WALLET");
+  const{data:updated,error:updateError}=await supabase.from("bicycle_sweep_requests").update({
+   destination_address:destination,status:"submitted",bicycle_response:bicycle,error:null,updated_at:new Date().toISOString()
+  }).eq("id",created.id).select().single();
+  if(updateError)throw updateError;
+  return json(updated,202);
+ }catch(error){
+  const message=error instanceof Error?error.message:String(error);
+  await supabase.from("bicycle_sweep_requests").update({status:"unknown",error:message,updated_at:new Date().toISOString()}).eq("id",created.id);
+  return json({error:message,status:"unknown",query_id:queryId},502);
+ }
+}
 if(action==="withdrawal"){
 const currency=String(
 body.currency||""

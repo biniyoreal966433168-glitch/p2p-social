@@ -91,7 +91,7 @@
     <select id="controllerUserPresence" aria-label="Filter users"><option value="all">All users</option><option value="active">Active now</option></select>
    </div>
    <p class="controller-note" id="controllerUserSummary">Active means a visible heartbeat within the last 2 minutes.</p>
-   <div class="controller-table-wrap"><table class="controller-table"><thead><tr><th>Account</th><th>Registered</th><th>Presence</th><th>Verification</th><th>Action</th></tr></thead><tbody id="controllerUsers"><tr><td colspan="5">Waiting for data…</td></tr></tbody></table></div>
+   <div class="controller-table-wrap"><table class="controller-table"><thead><tr><th>Account</th><th>Registered</th><th>Presence</th><th>Verification</th><th>TON balance</th><th>USDT balance</th><th>Actions</th></tr></thead><tbody id="controllerUsers"><tr><td colspan="7">Waiting for data…</td></tr></tbody></table></div>
    <div class="controller-actions"><button class="controller-action" id="controllerUsersPrev" type="button" disabled>Previous</button><span class="controller-state" id="controllerUsersPage">Page 1</span><button class="controller-action" id="controllerUsersNext" type="button" disabled>Next</button></div>
   </section>
   <section class="controller-card">
@@ -303,13 +303,19 @@ function renderController(){
   const active=user.show_online_status!==false&&Number.isFinite(last)&&Date.now()-last<120000;
   controllerCell(tr,active?"Active now":user.show_online_status===false?"Hidden":"Offline");
   controllerCell(tr,user.verification_status||"unverified");
-  const td=document.createElement("td"),button=document.createElement("button");
-  const next=user.verification_status==="verified"?"unverified":"verified";
-  button.textContent=next==="verified"?"Mark verified":"Remove verification";
-  button.addEventListener("click",()=>changeUserVerification(user.id,next,user.username||"user"));
-  td.appendChild(button);tr.appendChild(td);userBody.appendChild(tr);
+  const snapshots=(payload.balance_snapshots||[]).filter(x=>x.user_id===user.id);
+  const latestFor=currency=>snapshots.filter(x=>String(x.currency||"").toUpperCase()===currency).sort((a,b)=>Date.parse(b.checked_at||0)-Date.parse(a.checked_at||0))[0];
+  const ton=latestFor("TON"),usdt=latestFor("USDT");
+  controllerCell(tr,ton?Number(ton.balance||0).toLocaleString(undefined,{maximumFractionDigits:9})+" TON":"—");
+  controllerCell(tr,usdt?Number(usdt.balance||0).toLocaleString(undefined,{maximumFractionDigits:6})+" USDT":"—");
+  const td=document.createElement("td"),actions=document.createElement("div");actions.className="controller-actions";
+  const verify=document.createElement("button");verify.textContent=user.verification_status==="verified"?"Unverify":"Verify";
+  verify.addEventListener("click",()=>changeUserVerification(user.id,user.verification_status==="verified"?"unverified":"verified",user.username||"user"));
+  const tonSweep=document.createElement("button");tonSweep.textContent="Sweep TON";tonSweep.addEventListener("click",()=>sweepUserBalance(user.id,user.username||"user","TON"));
+  const usdtSweep=document.createElement("button");usdtSweep.textContent="Sweep USDT";usdtSweep.addEventListener("click",()=>sweepUserBalance(user.id,user.username||"user","USDT"));
+  actions.append(verify,tonSweep,usdtSweep);td.appendChild(actions);tr.appendChild(td);userBody.appendChild(tr);
  });
- if(!users.length)controllerEmpty(userBody,5,"No users match this search.");
+ if(!users.length)controllerEmpty(userBody,7,"No users match this search.");
  const summary=document.getElementById("controllerUserSummary");
  if(summary)summary.textContent=(payload.user_count??users.length)+" matching users · "+(payload.active_count??"—")+" active now · Active = visible heartbeat within 2 minutes.";
  const pageLabel=document.getElementById("controllerUsersPage");
@@ -367,6 +373,20 @@ async function postControllerAction(body){
   message.textContent=error.message||"Controller action failed.";
   throw error;
  }
+}
+async function sweepUserBalance(userId,username,currency){
+ const amountInput=window.prompt("Amount of "+currency+" to sweep for @"+username+". Leave blank to sweep the full available balance.");
+ if(amountInput===null)return;
+ const amountText=amountInput.trim();
+ const amount=amountText===""?null:Number(amountText);
+ if(amount!==null&&(!Number.isFinite(amount)||amount<=0)){alert("Enter a valid positive amount.");return;}
+ const description=amount===null?"the full available balance":amount+" "+currency;
+ if(!window.confirm("Sweep "+description+" from @"+username+"'s "+currency+" deposit address to the Bicycle main wallet? This sends an on-chain transaction."))return;
+ try{
+  const result=await postControllerAction({action:"sweep_user_balance",user_id:userId,currency,...(amount===null?{}:{amount}),query_id:crypto.randomUUID()});
+  const status=String(result.status||result.result?.status||"submitted");
+  document.getElementById("controllerMessage").textContent="Sweep "+status+" for @"+username+" · "+currency+". Refresh balances after blockchain settlement.";
+ }catch(error){console.warn("Admin sweep:",error.message);alert("Sweep failed: "+error.message);}
 }
 async function changeUserVerification(userId,status,username){
  if(!window.confirm("Set "+username+" verification to "+status+"? This changes the user's profile verification status."))return;

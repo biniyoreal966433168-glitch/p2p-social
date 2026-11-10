@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#087f73">
+<title>Admin Control Center | P2P Social</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--brand:#087f73;--dark:#075e54;--ink:#17212b;--muted:#718096;--line:#e5ebef;--bg:#f4f7f8;--red:#b42318;--redbg:#fff0ef;--green:#147d52;--greenbg:#eaf7f0}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,system-ui,sans-serif}.top{background:linear-gradient(135deg,var(--dark),var(--brand));color:#fff;padding:15px max(16px,calc((100% - 1220px)/2));display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{display:flex;align-items:center;gap:10px;font-weight:800}.brand img{width:38px;height:38px;object-fit:contain}.top-actions{display:flex;gap:8px}.top button{background:#ffffff20;border:1px solid #ffffff66;color:white;border-radius:9px;padding:9px 12px;font-weight:700;cursor:pointer}.wrap{max-width:1220px;margin:auto;padding:25px 18px 45px}.eyebrow{font-size:10px;letter-spacing:1.3px;color:var(--brand);font-weight:800;text-transform:uppercase}h1{font-size:25px;letter-spacing:-.5px;margin:7px 0}.sub{font-size:13px;color:var(--muted);line-height:1.55}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}.stat,.panel{background:#fff;border:1px solid var(--line);border-radius:13px}.stat{padding:15px}.stat label{display:block;color:var(--muted);font-size:11px;font-weight:700}.stat strong{display:block;font-size:27px;margin:8px 0 3px}.stat small{font-size:10px;color:var(--muted)}.panel{padding:17px}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}.toolbar h2{font-size:15px;margin:0}.controls{display:flex;gap:8px;flex:1;justify-content:flex-end;flex-wrap:wrap}.search{width:min(340px,100%);height:39px;border:1px solid var(--line);border-radius:9px;padding:0 12px;font-size:12px;outline-color:var(--brand)}select{height:39px;border:1px solid var(--line);border-radius:9px;padding:0 10px;background:#fff;color:var(--ink);font-size:12px}.btn{border:0;border-radius:9px;padding:10px 13px;font-size:11px;font-weight:800;cursor:pointer}.btn:disabled{opacity:.55;cursor:wait}.btn.refresh{background:#e9f5f3;color:var(--brand)}.btn.ban{background:var(--redbg);color:var(--red)}.btn.unban{background:var(--greenbg);color:var(--green)}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:900px}th{text-align:left;color:var(--muted);font-size:9px;letter-spacing:.65px;text-transform:uppercase;padding:11px 8px;border-bottom:1px solid var(--line);white-space:nowrap}td{padding:12px 8px;border-bottom:1px solid #eff2f4;font-size:11px;vertical-align:middle}tr:last-child td{border:0}.user{display:flex;align-items:center;gap:9px;min-width:170px}.avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;background:#e4f3f0;display:grid;place-items:center;color:var(--brand);font-weight:800;flex-shrink:0}.user-link{border:0;background:none;color:var(--ink);font-size:11px;font-weight:800;text-align:left;padding:0;cursor:pointer}.user-link:hover{color:var(--brand);text-decoration:underline}.username{font-size:10px;color:var(--muted);margin-top:3px}.money{font-variant-numeric:tabular-nums;white-space:nowrap}.pill{display:inline-block;padding:5px 8px;border-radius:30px;font-size:9px;font-weight:800;white-space:nowrap}.pill.active{color:var(--green);background:var(--greenbg)}.pill.banned{color:var(--red);background:var(--redbg)}.pill.admin{color:#7253a6;background:#f3edfb}.date{white-space:nowrap;color:#536273;font-size:10px;line-height:1.5}.empty{padding:28px 10px;text-align:center;color:var(--muted);font-size:12px}.notice{display:none;margin:14px 0;padding:11px 13px;border-radius:9px;font-size:11px;line-height:1.5}.notice.error{display:block;background:var(--redbg);color:var(--red)}.notice.ok{display:block;background:var(--greenbg);color:var(--green)}.footer{font-size:10px;color:var(--muted);padding:16px 2px}.mobile-list{display:none}.mobile-user{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px;margin:9px 0}.mobile-head{display:flex;justify-content:space-between;gap:10px;align-items:center}.mobile-balances{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:13px 0}.mobile-balances div{background:#f5f8f9;border-radius:8px;padding:8px}.mobile-balances small{display:block;color:var(--muted);font-size:9px}.mobile-balances b{font-size:11px}.mobile-meta{font-size:10px;color:var(--muted);line-height:1.7}.mobile-actions{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+@media(max-width:760px){.stats{grid-template-columns:repeat(2,1fr);gap:8px}.stat{padding:12px}.stat strong{font-size:23px}.wrap{padding:20px 12px 35px}.toolbar{align-items:stretch}.controls{justify-content:stretch}.search{width:100%;flex:1}.table-wrap{display:none}.mobile-list{display:block}.panel{padding:13px}.top{padding:13px 14px}.brand img{width:32px;height:32px}.brand{font-size:13px}.top button{padding:8px;font-size:10px}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><img src="./p2p-logo.svg" alt="P2P Social"><span>P2P SOCIAL · ADMIN</span></div>
+  <div class="top-actions"><button id="refreshTop" type="button">Refresh</button><button id="logout" type="button">Sign out</button></div>
+</header>
+<main class="wrap">
+  <div class="eyebrow">Administration · User management</div>
+  <h1>Admin Control Center</h1>
+  <p class="sub">Manage P2P Social accounts, review registration and activity, inspect balances, and control account access.</p>
+  <div id="notice" class="notice" role="status"></div>
+  <section class="stats">
+    <div class="stat"><label>Total registered users</label><strong id="totalUsers">—</strong><small>Accounts in Supabase Auth</small></div>
+    <div class="stat"><label>Active accounts</label><strong id="activeUsers">—</strong><small>Not currently banned</small></div>
+    <div class="stat"><label>Banned accounts</label><strong id="bannedUsers">—</strong><small>Access restriction active</small></div>
+    <div class="stat"><label>Administrators</label><strong id="adminUsers">—</strong><small>Protected admin roles</small></div>
+  </section>
+  <section class="panel">
+    <div class="toolbar">
+      <h2>Registered users</h2>
+      <div class="controls">
+        <input id="search" class="search" type="search" placeholder="Search username, name or user ID">
+        <select id="statusFilter" aria-label="Filter users"><option value="all">All accounts</option><option value="active">Active</option><option value="banned">Banned</option><option value="admin">Administrators</option></select>
+        <button id="refresh" class="btn refresh" type="button">Refresh list</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table><thead><tr><th>User</th><th>Registered</th><th>Last seen</th><th>ETB balance</th><th>TON balance</th><th>USDT balance</th><th>Status</th><th>Access</th></tr></thead><tbody id="userRows"><tr><td colspan="8" class="empty">Checking administrator access…</td></tr></tbody></table>
+    </div>
+    <div id="mobileUsers" class="mobile-list"></div>
+    <div id="emptyState" class="empty" hidden>No matching users.</div>
+  </section>
+  <div class="footer">P2P Social · Admin actions are authenticated and recorded in the admin audit log.</div>
+</main>
+<script>
+const SUPABASE_URL="https://mbsvuwrgigqfporxwpfr.supabase.co";
+const SUPABASE_KEY="sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const API=SUPABASE_URL+"/functions/v1/admin-user-control";
+const $=id=>document.getElementById(id);
+let session=null,users=[],busy=false;
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function money(v,max=6){return Number(v||0).toLocaleString("en-US",{maximumFractionDigits:max})}
+function date(v){if(!v)return "Not available";const d=new Date(v);return Number.isNaN(d.getTime())?"Not available":d.toLocaleString(undefined,{year:"numeric",month:"short",day:"2-digit",hour:"2-digit",minute:"2-digit"})}
+function showNotice(message,type="ok"){const n=$("notice");n.textContent=message;n.className="notice "+type}
+async function callApi(payload){const {data,error}=await supabaseClient.auth.getSession();if(error)throw error;const token=data.session?.access_token;if(!token)throw Error("Your session expired. Sign in again.");const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token,"apikey":SUPABASE_KEY},body:JSON.stringify(payload)});const raw=await r.text();let result={};try{result=raw?JSON.parse(raw):{}}catch{}if(!r.ok)throw Error(result.error||result.message||raw||"Admin request failed.");return result}
+function userName(u){return u.display_name||u.username||("User "+(u.user_number??""))}
+function userMarkup(u,mobile=false){
+ const name=esc(userName(u)),username=u.username?"@"+esc(u.username):"No username",profile="user_profile.html?user_id="+encodeURIComponent(u.id),avatar=u.avatar_url?'<img class="avatar" src="'+esc(u.avatar_url)+'" alt="">':'<div class="avatar">'+esc((userName(u).trim()[0]||"U").toUpperCase())+'</div>';
+ const status=u.is_banned?'<span class="pill banned">Banned</span>':u.is_admin?'<span class="pill admin">Admin</span>':'<span class="pill active">Active</span>';
+ const access=u.is_admin?'<span class="pill admin">Protected</span>':'<button class="btn '+(u.is_banned?"unban":"ban")+'" data-action="'+(u.is_banned?"unban":"ban")+'" data-id="'+esc(u.id)+'">'+(u.is_banned?"Unban":"Ban")+'</button>';
+ if(mobile)return '<article class="mobile-user"><div class="mobile-head"><div class="user">'+avatar+'<div><button class="user-link" data-profile="'+esc(u.id)+'">'+name+'</button><div class="username">'+username+'</div></div></div>'+status+'</div><div class="mobile-balances"><div><small>ETB</small><b>'+money(u.etb_balance,2)+'</b></div><div><small>TON</small><b>'+money(u.ton_balance,9)+'</b></div><div><small>USDT</small><b>'+money(u.usdt_balance,6)+'</b></div></div><div class="mobile-meta">Registered: '+esc(date(u.created_at))+'<br>Last seen: '+esc(date(u.last_seen_at))+'</div><div class="mobile-actions"><span class="username">'+(u.is_admin?"Admin account":"User account")+'</span>'+access+'</div></article>';
+ return '<tr><td><div class="user">'+avatar+'<div><button class="user-link" data-profile="'+esc(u.id)+'">'+name+'</button><div class="username">'+username+'</div></div></div></td><td class="date">'+esc(date(u.created_at))+'</td><td class="date">'+esc(date(u.last_seen_at))+'</td><td class="money">'+money(u.etb_balance,2)+' ETB</td><td class="money">'+money(u.ton_balance,9)+' TON</td><td class="money">'+money(u.usdt_balance,6)+' USDT</td><td>'+status+'</td><td>'+access+'</td></tr>';
+}
+function filteredUsers(){const q=$("search").value.trim().toLowerCase(),f=$("statusFilter").value;return users.filter(u=>{const match=!q||[u.id,u.username,u.display_name,u.user_number].some(x=>String(x??"").toLowerCase().includes(q));const state=f==="all"||(f==="banned"&&u.is_banned)||(f==="active"&&!u.is_banned&&!u.is_admin)||(f==="admin"&&u.is_admin);return match&&state})}
+function render(){
+ $("totalUsers").textContent=users.length;$("activeUsers").textContent=users.filter(u=>!u.is_banned).length;$("bannedUsers").textContent=users.filter(u=>u.is_banned).length;$("adminUsers").textContent=users.filter(u=>u.is_admin).length;
+ const rows=filteredUsers();$("userRows").innerHTML=rows.map(u=>userMarkup(u)).join("")||'<tr><td colspan="8" class="empty">No matching users.</td></tr>';$("mobileUsers").innerHTML=rows.map(u=>userMarkup(u,true)).join("");$("emptyState").hidden=rows.length>0;
+ document.querySelectorAll("[data-profile]").forEach(el=>el.addEventListener("click",()=>location.href="user_profile.html?user_id="+encodeURIComponent(el.dataset.profile)));
+ document.querySelectorAll("[data-action]").forEach(el=>el.addEventListener("click",()=>changeAccess(el.dataset.id,el.dataset.action,el)));
+}
+async function loadUsers(){if(busy)return;busy=true;$("refresh").disabled=true;$("refreshTop").disabled=true;try{const data=await callApi({action:"list"});users=data.users||[];render();showNotice("Loaded "+users.length+" user accounts.","ok")}catch(e){showNotice(e.message||"Could not load users.","error");$("userRows").innerHTML='<tr><td colspan="8" class="empty">Unable to load user accounts.</td></tr>';$("mobileUsers").innerHTML=""}finally{busy=false;$("refresh").disabled=false;$("refreshTop").disabled=false}}
+async function changeAccess(id,action,button){const u=users.find(x=>x.id===id);if(!u)return;const label=action==="ban"?"Ban":"Unban";if(!confirm(label+" "+(u.username?"@"+u.username:"this account")+"?"))return;button.disabled=true;try{await callApi({action,user_id:id});showNotice((action==="ban"?"Account banned.":"Account unbanned."),"ok");await loadUsers()}catch(e){button.disabled=false;showNotice(e.message||"Could not update account access.","error")}}
+async function start(){try{const {data,error}=await supabaseClient.auth.getSession();if(error)throw error;session=data.session;if(!session){location.replace("index.html");return}await loadUsers()}catch(e){showNotice(e.message||"Could not verify administrator access.","error");$("userRows").innerHTML='<tr><td colspan="8" class="empty">Administrator verification failed.</td></tr>'}}
+$("search").addEventListener("input",render);$("statusFilter").addEventListener("change",render);$("refresh").addEventListener("click",loadUsers);$("refreshTop").addEventListener("click",loadUsers);$("logout").addEventListener("click",async()=>{await supabaseClient.auth.signOut();location.replace("index.html")});
+start();
+</script>
+</body>
+</html>

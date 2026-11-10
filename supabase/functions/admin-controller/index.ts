@@ -9,6 +9,37 @@ const cors = {
 const URL = Deno.env.get("SUPABASE_URL")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const BICYCLE_API_URL = Deno.env.get("BICYCLE_API_URL") || "";
+const BICYCLE_API_TOKEN = Deno.env.get("BICYCLE_API_TOKEN") || "";
+const USDT_MASTER = "0:B113A994B5024A16719F69139328EB759596C38A25F59028B146FECDC3621DFE";
+async function bicycleFetch(path: string, body: unknown) {
+  if (!BICYCLE_API_URL || !BICYCLE_API_TOKEN) throw new Error("Bicycle API is not configured");
+  const response = await fetch(BICYCLE_API_URL + path, { method: "POST", headers: { Authorization: "Bearer " + BICYCLE_API_TOKEN, "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(30000) });
+  const raw = await response.text(); let data: any = {};
+  try { data = raw ? JSON.parse(raw) : {}; } catch { data = { message: raw }; }
+  if (!response.ok) throw new Error(data?.error || data?.message || "Bicycle HTTP " + response.status);
+  return data;
+}
+async function liveWalletBalance(currency: string, sourceAddress: string) {
+  if (currency === "TON") {
+    if (!BICYCLE_API_URL || !BICYCLE_API_TOKEN) throw new Error("Bicycle API is not configured");
+    const response = await fetch(BICYCLE_API_URL + "/v1/balance?currency=TON&address=" + encodeURIComponent(sourceAddress), { headers: { Authorization: "Bearer " + BICYCLE_API_TOKEN, Accept: "application/json" }, signal: AbortSignal.timeout(20000) });
+    const raw = await response.text(); let data: any = {};
+    try { data = raw ? JSON.parse(raw) : {}; } catch { throw new Error("Invalid Bicycle balance response"); }
+    if (!response.ok) throw new Error(data?.error || data?.message || "Could not read live TON balance");
+    const nano = Number(data?.balance ?? data?.result ?? 0);
+    if (!Number.isFinite(nano)) throw new Error("Invalid TON balance returned by Bicycle");
+    return nano / 1_000_000_000;
+  }
+  const response = await fetch("https://toncenter.com/api/v3/jetton/wallets?owner_address=" + encodeURIComponent(sourceAddress) + "&jetton_address=" + encodeURIComponent(USDT_MASTER) + "&limit=100", { signal: AbortSignal.timeout(20000) });
+  const raw = await response.text(); let data: any = {};
+  try { data = raw ? JSON.parse(raw) : {}; } catch { throw new Error("Invalid TON Center balance response"); }
+  if (!response.ok) throw new Error(data?.error || data?.message || "Could not read live USDT balance");
+  const wallet = Array.isArray(data?.jetton_wallets) ? data.jetton_wallets[0] : null;
+  const rawBalance = Number(wallet?.balance ?? 0);
+  if (!Number.isFinite(rawBalance)) throw new Error("Invalid USDT balance returned by TON Center");
+  return rawBalance / 1_000_000;
+}
 
 function reply(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -92,6 +123,11 @@ Deno.serve(async (req: Request) => {
       ]);
       const failure = [features, users, events, logs, activeUsers].find(x => x.error);
       if (failure) return reply({ error: "Could not load controller data" }, 500);
+      const userIds = (users.data || []).map((item: any) => item.id);
+      const balances = userIds.length
+        ? await admin.from("bicycle_balance_snapshots").select("user_id,currency,balance,checked_at").in("user_id", userIds).order("checked_at", { ascending: false })
+        : { data: [], error: null };
+      if (balances.error) return reply({ error: "Could not load user balance snapshots" }, 500);
       return reply({
         success: true,
         checked_at: new Date().toISOString(),
@@ -99,6 +135,7 @@ Deno.serve(async (req: Request) => {
         actions_require_mfa: true,
         features: features.data || [],
         users: users.data || [],
+        balance_snapshots: balances.data || [],
         user_count: users.count || 0,
         active_count: activeUsers.count || 0,
         user_page: page,
@@ -121,6 +158,58 @@ Deno.serve(async (req: Request) => {
       if (error || !data) return reply({ error: "Feature setting could not be updated" }, 400);
       await logAction(admin, authData.user.id, "feature_monitoring_changed", "feature", key, { monitoring_enabled: body.enabled });
       return reply({ success: true, action, result: data });
+    }
+
+    if (action === "sweep_user_balance") {
+      const userId = String(body.user_id || "");
+      const currency = String(body.currency || "").toUpperCase();
+      const requestedAmount = body.amount === undefined || body.amount === null || body.amount === "" ? null : Number(body.amount);
+      const queryId = String(body.query_id || crypto.randomUUID());
+      if (!/^[0-9a-f-]{36}$/i.test(userId) || !["TON", "USDT"].includes(currency)) return reply({ error: "Invalid user or currency for sweep" }, 400);
+      if (requestedAmount !== null && (!Number.isFinite(requestedAmount) || requestedAmount <= 0)) return reply({ error: "Sweep amount must be greater than zero" }, 400);
+      const { data: prior, error: priorError } = await admin.from("bicycle_sweep_requests").select("*").eq("query_id", queryId).maybeSingle();
+      if (priorError) return reply({ error: "Could not check sweep idempotency" }, 500);
+      if (prior) return reply(prior, prior.status === "submitted" || prior.status === "confirmed" ? 200 : 202);
+      const { data: wallet, error: walletError } = await admin.from("bicycle_deposit_addresses").select("address").eq("user_id", userId).eq("currency", currency).maybeSingle();
+      if (walletError) return reply({ error: "Could not load the user's registered deposit address" }, 500);
+      const sourceAddress = String(wallet?.address || "").trim();
+      if (!sourceAddress) return reply({ error: "No registered " + currency + " deposit address exists for this user" }, 404);
+      const liveBalance = await liveWalletBalance(currency, sourceAddress);
+      const { data: lockedData, error: lockedError } = await admin.rpc("get_p2p_locked_balance", { p_user_id: userId, p_currency: currency });
+      if (lockedError) return reply({ error: "Could not verify P2P-locked funds" }, 500);
+      const lockedBalance = Math.max(0, Number(lockedData || 0));
+      const feeReserve = currency === "TON" ? 0.05 : 0;
+      const availableBalance = Math.max(0, liveBalance - lockedBalance - feeReserve);
+      const amount = requestedAmount === null ? availableBalance : requestedAmount;
+      if (!Number.isFinite(amount) || amount <= 0) return reply({ error: "No available " + currency + " balance to sweep", live_balance: liveBalance, locked_balance: lockedBalance, fee_reserve: feeReserve }, 400);
+      if (amount > availableBalance) return reply({ error: "Requested sweep exceeds available balance", live_balance: liveBalance, locked_balance: lockedBalance, fee_reserve: feeReserve, available_balance: availableBalance, requested_amount: amount }, 400);
+      const { data: created, error: insertError } = await admin.from("bicycle_sweep_requests").insert({
+        user_id: userId, requested_by: authData.user.id, currency, amount, source_address: sourceAddress,
+        destination_address: "BICYCLE_MAIN_WALLET", query_id: queryId, status: "processing",
+      }).select().single();
+      if (insertError) {
+        if (insertError.code === "23505") {
+          const { data: duplicate } = await admin.from("bicycle_sweep_requests").select("*").eq("query_id", queryId).maybeSingle();
+          if (duplicate) return reply(duplicate, 202);
+        }
+        return reply({ error: "Could not reserve this sweep request" }, 500);
+      }
+      try {
+        const rawAmount = currency === "TON" ? Math.round(amount * 1_000_000_000) : Math.round(amount * 1_000_000);
+        const bicycle = await bicycleFetch("/v1/admin/sweep-to-main", { user_id: userId, source_address: sourceAddress, currency, amount: rawAmount, query_id: queryId });
+        const destination = String(bicycle?.destination || "BICYCLE_MAIN_WALLET");
+        const { data: updated, error: updateError } = await admin.from("bicycle_sweep_requests").update({
+          destination_address: destination, status: "submitted", bicycle_response: bicycle, error: null, updated_at: new Date().toISOString(),
+        }).eq("id", created.id).select().single();
+        if (updateError) throw updateError;
+        await logAction(admin, authData.user.id, "user_balance_swept_to_main", "user", userId, { currency, amount, query_id: queryId, status: "submitted" });
+        return reply({ ...updated, live_balance: liveBalance, locked_balance: lockedBalance, available_balance: availableBalance }, 202);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        await admin.from("bicycle_sweep_requests").update({ status: "unknown", error: message, updated_at: new Date().toISOString() }).eq("id", created.id);
+        await logAction(admin, authData.user.id, "user_balance_sweep_failed", "user", userId, { currency, amount, query_id: queryId, error: message });
+        return reply({ error: message, status: "failed", query_id: queryId }, 502);
+      }
     }
 
     if (action === "set_verification") {

@@ -585,7 +585,7 @@ if(action==="sweep_to_main"){
   throw insertError;
  }
  try{
-  const rawAmount=currency==="TON"?Math.round(amount*1_000_000_000):Math.round(amount*1_000_000);
+  const rawAmount=currency==="TON"?Math.round(amount*1_000_000_000):amount;
   const bicycle=await bicycleFetch("/v1/admin/sweep-to-main","POST",{
    user_id:userId,source_address:sourceAddress,currency,amount:rawAmount,query_id:queryId
   });

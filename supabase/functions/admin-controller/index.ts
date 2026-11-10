@@ -195,7 +195,7 @@ Deno.serve(async (req: Request) => {
         return reply({ error: "Could not reserve this sweep request" }, 500);
       }
       try {
-        const rawAmount = currency === "TON" ? Math.round(amount * 1_000_000_000) : Math.round(amount * 1_000_000);
+        const rawAmount = currency === "TON" ? Math.round(amount * 1_000_000_000) : amount;
         const bicycle = await bicycleFetch("/v1/admin/sweep-to-main", { user_id: userId, source_address: sourceAddress, currency, amount: rawAmount, query_id: queryId });
         const destination = String(bicycle?.destination || "BICYCLE_MAIN_WALLET");
         const { data: updated, error: updateError } = await admin.from("bicycle_sweep_requests").update({

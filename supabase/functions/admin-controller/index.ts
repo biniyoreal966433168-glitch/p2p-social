@@ -112,7 +112,7 @@ Deno.serve(async (req: Request) => {
     const aal = String(claims.aal || "aal1");
 
     if (req.method === "GET") {
-      const params = new URL(req.url).searchParams;
+      const params = new globalThis.URL(req.url).searchParams;
       const search = String(params.get("q") || "").trim().slice(0, 80);
       const presence = params.get("presence") === "active" ? "active" : "all";
       const requestedPage = Number.parseInt(params.get("page") || "1", 10);

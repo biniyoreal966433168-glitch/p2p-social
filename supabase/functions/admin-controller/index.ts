@@ -161,19 +161,31 @@ Deno.serve(async (req: Request) => {
     }
 
     if (action === "sweep_user_balance") {
-      const userId = String(body.user_id || "");
+      const userAddress = String(body.address || "").trim();
       const currency = String(body.currency || "").toUpperCase();
       const requestedAmount = body.amount === undefined || body.amount === null || body.amount === "" ? null : Number(body.amount);
       const queryId = String(body.query_id || crypto.randomUUID());
-      if (!/^[0-9a-f-]{36}$/i.test(userId) || !["TON", "USDT"].includes(currency)) return reply({ error: "Invalid user or currency for sweep" }, 400);
-      if (requestedAmount !== null && (!Number.isFinite(requestedAmount) || requestedAmount <= 0)) return reply({ error: "Sweep amount must be greater than zero" }, 400);
+      const validTonAddress = /^(?:-1|0):[0-9a-fA-F]{64}$/.test(userAddress) || /^[A-Za-z0-9_-]{48}$/.test(userAddress);
+      if (!validTonAddress || !["TON", "USDT"].includes(currency)) return reply({ error: "Enter a valid registered TON deposit address and currency" }, 400);
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(queryId)) return reply({ error: "Invalid sweep request ID" }, 400);
+      if (requestedAmount !== null && (!Number.isFinite(requestedAmount) || requestedAmount <= 0 || (currency === "TON" && Math.abs(requestedAmount * 1_000_000_000 - Math.round(requestedAmount * 1_000_000_000)) > 0.0001))) return reply({ error: "Sweep amount must be positive and use valid precision" }, 400);
+
+      const { data: wallets, error: walletError } = await admin.from("bicycle_deposit_addresses")
+        .select("user_id,address,currency").eq("address", userAddress).eq("currency", currency).limit(2);
+      if (walletError) return reply({ error: "Could not verify the registered deposit address" }, 500);
+      if (!wallets || wallets.length === 0) return reply({ error: "This address is not registered as a user's " + currency + " deposit address" }, 404);
+      if (wallets.length !== 1) return reply({ error: "This deposit address is linked to multiple accounts; sweep blocked" }, 409);
+      const wallet = wallets[0];
+      const userId = String(wallet.user_id || "");
+      const sourceAddress = String(wallet.address || "").trim();
+      if (!userId || !sourceAddress) return reply({ error: "Registered address ownership could not be verified" }, 409);
+
       const { data: prior, error: priorError } = await admin.from("bicycle_sweep_requests").select("*").eq("query_id", queryId).maybeSingle();
       if (priorError) return reply({ error: "Could not check sweep idempotency" }, 500);
-      if (prior) return reply(prior, prior.status === "submitted" || prior.status === "confirmed" ? 200 : 202);
-      const { data: wallet, error: walletError } = await admin.from("bicycle_deposit_addresses").select("address").eq("user_id", userId).eq("currency", currency).maybeSingle();
-      if (walletError) return reply({ error: "Could not load the user's registered deposit address" }, 500);
-      const sourceAddress = String(wallet?.address || "").trim();
-      if (!sourceAddress) return reply({ error: "No registered " + currency + " deposit address exists for this user" }, 404);
+      if (prior) {
+        if (prior.user_id !== userId || prior.currency !== currency || prior.source_address !== sourceAddress) return reply({ error: "Sweep request ID already belongs to a different address" }, 409);
+        return reply(prior, prior.status === "submitted" || prior.status === "confirmed" ? 200 : 202);
+      }
       const liveBalance = await liveWalletBalance(currency, sourceAddress);
       const { data: lockedData, error: lockedError } = await admin.rpc("get_p2p_locked_balance", { p_user_id: userId, p_currency: currency });
       if (lockedError) return reply({ error: "Could not verify P2P-locked funds" }, 500);

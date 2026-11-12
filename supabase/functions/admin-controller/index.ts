@@ -20,6 +20,31 @@ async function bicycleFetch(path: string, body: unknown) {
   if (!response.ok) throw new Error(data?.error || data?.message || "Bicycle HTTP " + response.status);
   return data;
 }
+function normalizeTonAddress(input: string): string | null {
+  const value = input.trim();
+  const raw = value.match(/^(-1|0):([0-9a-fA-F]{64})$/);
+  if (raw) return raw[1] + ":" + raw[2].toLowerCase();
+  if (!/^[A-Za-z0-9_-]{48}$/.test(value)) return null;
+  try {
+    let encoded = value.replace(/-/g, "+").replace(/_/g, "/");
+    encoded += "=".repeat((4 - encoded.length % 4) % 4);
+    const binary = atob(encoded);
+    if (binary.length !== 36) return null;
+    const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+    const tag = bytes[0] & 0x7f;
+    if (tag !== 0x11 && tag !== 0x51) return null;
+    const workchain = bytes[1] > 127 ? bytes[1] - 256 : bytes[1];
+    if (workchain !== -1 && workchain !== 0) return null;
+    let crc = 0;
+    for (let i = 0; i < 34; i++) {
+      crc ^= bytes[i] << 8;
+      for (let bit = 0; bit < 8; bit++) crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xffff : (crc << 1) & 0xffff;
+    }
+    if (bytes[34] !== ((crc >> 8) & 255) || bytes[35] !== (crc & 255)) return null;
+    const hash = Array.from(bytes.slice(2, 34), b => b.toString(16).padStart(2, "0")).join("");
+    return workchain + ":" + hash;
+  } catch { return null; }
+}
 async function liveWalletBalance(currency: string, sourceAddress: string) {
   if (currency === "TON") {
     if (!BICYCLE_API_URL || !BICYCLE_API_TOKEN) throw new Error("Bicycle API is not configured");
@@ -165,15 +190,16 @@ Deno.serve(async (req: Request) => {
       const currency = String(body.currency || "").toUpperCase();
       const requestedAmount = body.amount === undefined || body.amount === null || body.amount === "" ? null : Number(body.amount);
       const queryId = String(body.query_id || crypto.randomUUID());
-      const validTonAddress = /^(?:-1|0):[0-9a-fA-F]{64}$/.test(userAddress) || /^[A-Za-z0-9_-]{48}$/.test(userAddress);
-      if (!validTonAddress || !["TON", "USDT"].includes(currency)) return reply({ error: "Enter a valid registered TON deposit address and currency" }, 400);
+      const normalizedInputAddress = normalizeTonAddress(userAddress);
+      if (!normalizedInputAddress || !["TON", "USDT"].includes(currency)) return reply({ error: "Enter a valid TON address with a correct friendly-address checksum, and select TON or USDT" }, 400);
       if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(queryId)) return reply({ error: "Invalid sweep request ID" }, 400);
       if (requestedAmount !== null && (!Number.isFinite(requestedAmount) || requestedAmount <= 0 || (currency === "TON" && Math.abs(requestedAmount * 1_000_000_000 - Math.round(requestedAmount * 1_000_000_000)) > 0.0001))) return reply({ error: "Sweep amount must be positive and use valid precision" }, 400);
 
-      const { data: wallets, error: walletError } = await admin.from("bicycle_deposit_addresses")
-        .select("user_id,address,currency").eq("address", userAddress).eq("currency", currency).limit(2);
+      const { data: registeredWallets, error: walletError } = await admin.from("bicycle_deposit_addresses")
+        .select("user_id,address,currency").eq("currency", currency);
       if (walletError) return reply({ error: "Could not verify the registered deposit address" }, 500);
-      if (!wallets || wallets.length === 0) return reply({ error: "This address is not registered as a user's " + currency + " deposit address" }, 404);
+      const wallets = (registeredWallets || []).filter((item: any) => normalizeTonAddress(String(item.address || "")) === normalizedInputAddress);
+      if (wallets.length === 0) return reply({ error: "This address is not registered as a user's " + currency + " deposit address" }, 404);
       if (wallets.length !== 1) return reply({ error: "This deposit address is linked to multiple accounts; sweep blocked" }, 409);
       const wallet = wallets[0];
       const userId = String(wallet.user_id || "");

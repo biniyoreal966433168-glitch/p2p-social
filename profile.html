@@ -338,7 +338,31 @@ async function loadAdminTonWalletBalance(){const card=$("adminTonWalletCard"),va
 async function loadAdminUsdtWalletBalance(){const card=$("adminUsdtWalletCard"),value=$("adminUsdtWalletBalance"),username=String(currentProfile?.username||"").replace(/^@/,"").toLowerCase();if(!card||!value||username!=="p2p_social_admin"){if(card)card.style.display="none";return}card.style.display="block";if(!balanceVisible){value.textContent="••••••";return}value.textContent="Loading...";try{const response=await fetch("/api/ton/admin-usdt-balance?address="+encodeURIComponent(ADMIN_USDT_ADDRESS),{method:"GET",headers:{Accept:"application/json"}});if(!response.ok)throw Error("USDT balance service returned HTTP "+response.status);const data=await response.json();const amount=Number(data?.balance);if(data?.success!==true||!Number.isFinite(amount)||amount<0)throw Error(data?.error||"Invalid USDT balance response");adminUsdtWalletBalance=amount;value.textContent=num(amount)+" USDT"}catch(error){adminUsdtWalletBalance=null;value.textContent="Balance unavailable";console.error("Admin USDT wallet balance lookup failed:",error)}}
 async function loadAdminUsdtWalletBalance2(){const card=$("adminUsdtWalletCard2"),value=$("adminUsdtWalletBalance2"),username=String(currentProfile?.username||"").replace(/^@/,"").toLowerCase(),address="UQCt8Gf5ZHPmoXW_d6x0Ttt551tIg-KJZSx1CsSIIwE8NYUv";if(!card||!value||username!=="p2p_social_admin"){if(card)card.style.display="none";return}card.style.display="block";if(!balanceVisible){value.textContent="••••••";return}value.textContent="Loading...";try{const response=await fetch("/api/ton/admin-usdt-balance?address="+encodeURIComponent(address),{method:"GET",headers:{Accept:"application/json"}});if(!response.ok)throw Error("USDT balance service returned HTTP "+response.status);const data=await response.json();const amount=Number(data?.balance);if(data?.success!==true||!Number.isFinite(amount)||amount<0)throw Error(data?.error||"Invalid USDT balance response");adminUsdtWalletBalance2=amount;value.textContent=num(amount)+" USDT"}catch(error){adminUsdtWalletBalance2=null;value.textContent="Balance unavailable";console.error("Additional admin USDT wallet balance lookup failed:",error)}}
 
-async function loadBlockchainBalances(){const wallet=$("walletCard");let{user,error}=await authUser();if(error||!user){if(wallet)wallet.classList.add("bicycle-not-loaded");return}let[u,t]=await Promise.allSettled([bicycle({action:"balance",currency:"USDT"},user),bicycle({action:"balance",currency:"TON"},user)]);if(u.status==="fulfilled"){currentUSDTBalance=Number(u.value?.usdt_balance??u.value?.balance??u.value?.available_usdt??0)||0;bicycleUSDTBalance=currentUSDTBalance}if(t.status==="fulfilled"){currentTONBalance=Number(t.value?.balance_ton??t.value?.ton_balance??t.value?.balance??0)||0;bicycleTONBalance=currentTONBalance}if(wallet)wallet.classList.toggle("bicycle-not-loaded",u.status!=="fulfilled"||t.status!=="fulfilled");renderBalances();await Promise.all([loadAdminTonWalletBalance(),loadAdminUsdtWalletBalance(),loadAdminUsdtWalletBalance2()])}
+async function loadBlockchainBalances(){
+ const wallet=$("walletCard");
+ const{user,error}=await authUser();
+ if(error||!user){if(wallet)wallet.classList.add("bicycle-not-loaded");return}
+ async function loadAsset(currency){
+  let address="";
+  try{
+   const addressResponse=await bicycle({action:"address",currency},user);
+   address=bicycleAddress(addressResponse);
+   if(address)currentDepositAddresses[currency]=address;
+  }catch(e){console.warn(currency+" deposit address provisioning failed:",e)}
+  const balanceResponse=await bicycle({action:"balance",currency},user);
+  if(!address){
+   address=bicycleAddress(balanceResponse);
+   if(address)currentDepositAddresses[currency]=address;
+  }
+  return balanceResponse;
+ }
+ const[u,t]=await Promise.allSettled([loadAsset("USDT"),loadAsset("TON")]);
+ if(u.status==="fulfilled"){currentUSDTBalance=Number(u.value?.usdt_balance??u.value?.balance??u.value?.available_usdt??0)||0;bicycleUSDTBalance=currentUSDTBalance}
+ if(t.status==="fulfilled"){currentTONBalance=Number(t.value?.balance_ton??t.value?.ton_balance??t.value?.balance??0)||0;bicycleTONBalance=currentTONBalance}
+ if(wallet)wallet.classList.toggle("bicycle-not-loaded",u.status!=="fulfilled"||t.status!=="fulfilled");
+ renderBalances();
+ await Promise.all([loadAdminTonWalletBalance(),loadAdminUsdtWalletBalance(),loadAdminUsdtWalletBalance2()]);
+}
 async function loadBicycleWallet(){return loadBlockchainBalances()}
 async function loadUSDTBalance(){return loadBlockchainBalances()}
 async function loadTONBalance(){return loadBlockchainBalances()}

@@ -357,16 +357,14 @@ async function loadBlockchainBalances(){
   return balanceResponse;
  }
  const[u,t]=await Promise.allSettled([loadAsset("USDT"),loadAsset("TON")]);
- if(u.status==="fulfilled"){
-  try{
-   const accountBalance=await bicycle({action:"available_balance"},user);
-   const total=Number(accountBalance?.total_balance);
-   if(accountBalance?.success!==true||accountBalance?.currency!=="USDT"||!Number.isFinite(total)||total<0)throw Error("Invalid USDT account balance response");
-   currentUSDTBalance=total;bicycleUSDTBalance=total;usdtAccountBalanceLoaded=true;
-  }catch(e){usdtAccountBalanceLoaded=false;console.error("Available USDT account balance could not be loaded:",e)}
- }
+ try{
+  const accountBalance=await bicycle({action:"available_balance"},user);
+  const total=Number(accountBalance?.total_balance);
+  if(accountBalance?.success!==true||accountBalance?.currency!=="USDT"||!Number.isFinite(total)||total<0)throw Error("Invalid USDT account balance response");
+  currentUSDTBalance=total;bicycleUSDTBalance=total;usdtAccountBalanceLoaded=true;
+ }catch(e){usdtAccountBalanceLoaded=false;console.error("Available USDT account balance could not be loaded:",e)}
  if(t.status==="fulfilled"){currentTONBalance=Number(t.value?.balance_ton??t.value?.ton_balance??t.value?.balance??0)||0;bicycleTONBalance=currentTONBalance}
- if(wallet)wallet.classList.toggle("bicycle-not-loaded",u.status!=="fulfilled"||t.status!=="fulfilled"||!usdtAccountBalanceLoaded);
+ if(wallet)wallet.classList.toggle("bicycle-not-loaded",t.status!=="fulfilled"||!usdtAccountBalanceLoaded);
  renderBalances();
  await Promise.all([loadAdminTonWalletBalance(),loadAdminUsdtWalletBalance(),loadAdminUsdtWalletBalance2()]);
 }

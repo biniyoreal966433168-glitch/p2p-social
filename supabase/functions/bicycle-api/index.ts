@@ -585,9 +585,10 @@ if(action==="sweep_to_main"){
   throw insertError;
  }
  try{
-  const rawAmount=currency==="TON"?Math.round(amount*1_000_000_000):amount;
+  const amountDecimals=currency==="TON"?9:6;
+  const bicycleAmount=amount.toFixed(amountDecimals).replace(/\.?0+$/,"");
   const bicycle=await bicycleFetch("/v1/admin/sweep-to-main","POST",{
-   user_id:userId,source_address:sourceAddress,currency,amount:rawAmount,query_id:queryId
+   source_address:sourceAddress,currency,amount:bicycleAmount
   });
   const destination=String(bicycle?.destination||"BICYCLE_MAIN_WALLET");
   const{data:updated,error:updateError}=await supabase.from("bicycle_sweep_requests").update({

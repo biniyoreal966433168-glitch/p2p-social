@@ -153,13 +153,59 @@ Deno.serve(async (req: Request) => {
         ? await admin.from("bicycle_balance_snapshots").select("user_id,currency,balance,checked_at").in("user_id", userIds).order("checked_at", { ascending: false })
         : { data: [], error: null };
       if (balances.error) return reply({ error: "Could not load user balance snapshots" }, 500);
+      const [withdrawals, tonSends, usdtSends] = await Promise.all([
+        admin.from("bicycle_withdrawals").select("*").order("created_at", { ascending: false }).limit(100),
+        admin.from("ton_transfers").select("*").order("created_at", { ascending: false }).limit(100),
+        admin.from("usdt_transfers").select("*").order("created_at", { ascending: false }).limit(100),
+      ]);
+      const transactionFailure = [withdrawals, tonSends, usdtSends].find(x => x.error);
+      if (transactionFailure) return reply({ error: "Could not load transfer and withdrawal history" }, 500);
+      const pick = (row: any, keys: string[]) => {
+        for (const key of keys) if (row?.[key] !== undefined && row[key] !== null && row[key] !== "") return row[key];
+        return null;
+      };
+      const withdrawalRows = (withdrawals.data || []).map((row: any) => ({ ...row, kind: "withdrawal", currency: pick(row, ["currency", "asset", "token"]), user_id: pick(row, ["user_id", "owner_id", "profile_id"]) }));
+      const transferRows = [...(tonSends.data || []).map((row: any) => ({ ...row, kind: "p2p_send", currency: "TON" })), ...(usdtSends.data || []).map((row: any) => ({ ...row, kind: "p2p_send", currency: "USDT" }))];
+      const transactionRows = [...withdrawalRows, ...transferRows].map((row: any) => ({
+        kind: row.kind,
+        currency: pick(row, ["currency", "asset", "token"]),
+        amount: pick(row, ["amount", "send_amount", "transfer_amount", "value"]),
+        status: pick(row, ["status", "state", "transfer_status", "withdrawal_status"]),
+        destination: pick(row, ["destination", "destination_address", "to_address", "recipient_address", "recipient_wallet"]),
+        transaction_id: pick(row, ["transaction_hash", "tx_hash", "boc_hash", "transaction_id", "hash"]),
+        query_id: pick(row, ["query_id", "request_id", "reference"]),
+        created_at: pick(row, ["created_at", "requested_at", "timestamp"]),
+        user_id: pick(row, ["user_id", "sender_id", "from_user_id", "owner_id", "profile_id"]),
+      })).sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()).slice(0, 200);
+      const transactionUserIds = [...new Set(transactionRows.map((x: any) => String(x.user_id || "")).filter(Boolean))].slice(0, 100);
+      const directoryIds = [...new Set([...userIds, ...transactionUserIds])];
+      const [directoryProfiles] = await Promise.all([
+        directoryIds.length ? admin.from("profiles").select("id,first_name,last_name").in("id", directoryIds) : Promise.resolve({ data: [], error: null }),
+      ]);
+      if (directoryProfiles.error) return reply({ error: "Could not load transaction user names" }, 500);
+      const directory = new Map<string, any>((directoryProfiles.data || []).map((p: any) => [String(p.id), { first_name: p.first_name || "", last_name: p.last_name || "", email: "" }]));
+      await Promise.all(directoryIds.map(async (id: string) => {
+        try {
+          const { data, error } = await admin.auth.admin.getUserById(id);
+          if (!error && data?.user) {
+            const entry = directory.get(id) || { first_name: "", last_name: "", email: "" };
+            const meta = data.user.user_metadata || {};
+            entry.first_name ||= String(meta.first_name || meta.firstName || meta.given_name || "");
+            entry.last_name ||= String(meta.last_name || meta.lastName || meta.family_name || "");
+            entry.email = String(data.user.email || "");
+            directory.set(id, entry);
+          }
+        } catch { /* Keep the profile name; never expose the auth UUID in the UI. */ }
+      }));
+      const userDirectory = directoryIds.map((id: string) => ({ id, ...(directory.get(id) || { first_name: "", last_name: "", email: "" }) }));
+      const transactions = transactionRows.map((row: any) => ({ ...row, user: directory.get(String(row.user_id || "")) || { first_name: "", last_name: "", email: "" } }));
       return reply({
         success: true,
         checked_at: new Date().toISOString(),
         current_aal: aal,
         actions_require_mfa: true,
         features: features.data || [],
-        users: users.data || [],
+        users: users.data || [],\n        user_directory: userDirectory,\n        transactions,
         balance_snapshots: balances.data || [],
         user_count: users.count || 0,
         active_count: activeUsers.count || 0,

@@ -561,149 +561,80 @@ if(action==="sweep_to_main"){
   broadcast_confirmed:true
  };
  const{data:updated,error:updateError}=await supabase.from("bicycle_sweep_requests").update({
-  destination_address:destination,status:"confirmed",bicycle_response:confirmedResponse,error:null,updated_at:new Date().toISOString()
+  destination_address:destination,status:"pending",bicycle_response:confirmedResponse,error:null,updated_at:new Date().toISOString()
  }).eq("id",created.id).select().single();
  if(updateError)throw updateError;
- return json({...updated,confirmation_status:"broadcast_confirmed",broadcast_confirmed:true},200);
+ return json({...updated,status:"pending",confirmation_status:"broadcast_submitted",broadcast_confirmed:false},202);
  }catch(error){
  const message=error instanceof Error?error.message:String(error);
- await supabase.from("bicycle_sweep_requests").update({status:"unknown",error:message,updated_at:new Date().toISOString()}).eq("id",created.id);
- return json({error:message,status:"unknown",query_id:queryId},502);
+ await supabase.from("bicycle_sweep_requests").update({status:"pending",error:message,updated_at:new Date().toISOString()}).eq("id",created.id);
+ return json({success:true,error:message,status:"pending",query_id:queryId},202);
  }
 }
 if(action==="withdrawal"){
- const currency=String(
- body.currency||""
- ).toUpperCase();
-
- const destination=String(
- body.destination||""
- ).trim();
-
- const queryId=String(
- body.query_id||
- crypto.randomUUID()
- );
-
- if(!["TON","USDT"].includes(currency))
- return json({
- error:"Currency must be TON or USDT"
- },400);
-
- if(!destination)
- return json({
- error:"Missing destination"
- },400);
-
+ const currency=String(body.currency||"").toUpperCase();
+ const destination=String(body.destination||"").trim();
+ const queryId=String(body.query_id||crypto.randomUUID());
+ if(!["TON","USDT"].includes(currency))return json({error:"Currency must be TON or USDT"},400);
+ if(!destination)return json({error:"Missing destination"},400);
  const numericAmount=Number(body.amount);
- if(!Number.isFinite(numericAmount)||numericAmount<=0)
- return json({error:"Withdrawal amount must be greater than zero",minimum_amount:0,currency},400);
- if(currency==="USDT"&&Math.abs(numericAmount*1_000_000-Math.round(numericAmount*1_000_000))>1e-6)
- return json({error:"USDT amount supports a maximum of 6 decimal places"},400);
- if(currency==="USDT"&&!Number.isSafeInteger(Math.round(numericAmount*1_000_000)))
- return json({error:"USDT amount is too large"},400);
+ if(!Number.isFinite(numericAmount)||numericAmount<=0)return json({error:"Withdrawal amount must be greater than zero",minimum_amount:0,currency},400);
+ if(currency==="USDT"&&Math.abs(numericAmount*1_000_000-Math.round(numericAmount*1_000_000))>1e-6)return json({error:"USDT amount supports a maximum of 6 decimal places"},400);
+ if(currency==="USDT"&&!Number.isSafeInteger(Math.round(numericAmount*1_000_000)))return json({error:"USDT amount is too large"},400);
 
- const{data:existing}=await supabase
- .from("bicycle_withdrawals")
- .select("*")
- .eq("user_id",userId)
- .eq("query_id",queryId)
- .maybeSingle();
+ const{data:existing,error:existingError}=await supabase.from("bicycle_withdrawals").select("*").eq("user_id",userId).eq("query_id",queryId).maybeSingle();
+ if(existingError)throw existingError;
+ if(existing)return json({...existing,status:"pending",already_submitted:true});
 
- if(existing)
- return json(existing);
-const{data:depositAddress,error:depositAddressError}=await supabase
-.from("bicycle_deposit_addresses")
-.select("address")
-.eq("user_id",userId)
-.eq("currency",currency)
-.maybeSingle();
-if(depositAddressError)throw depositAddressError;
-if(!depositAddress?.address)return json({error:`No Bicycle ${currency} address found`},400);
+ const{data:depositAddress,error:depositAddressError}=await supabase.from("bicycle_deposit_addresses").select("address").eq("user_id",userId).eq("currency",currency).maybeSingle();
+ if(depositAddressError)throw depositAddressError;
+ const sourceAddress=String(depositAddress?.address||"").trim();
+ if(!sourceAddress)return json({error:"No saved "+currency+" deposit address is available for this account"},404);
 
-// The personal deposit address is used only to verify the authenticated
-// user's live balance. The withdrawal itself is broadcast by Bicycle's main
-// hot wallet; no username or per-user source wallet is sent to Bicycle.
-const sourceAddress=String(depositAddress.address).trim();
-if(!sourceAddress)return json({error:`No saved personal ${currency} wallet address found`},409);
-const liveBalance=currency==="TON"
-?(await getTonBalance(sourceAddress)).balance
-:(await getUsdtBalance(sourceAddress)).balance;
-const{data:lockedData,error:lockedError}=await supabase.rpc(
-"get_p2p_locked_balance",
-{p_user_id:userId,p_currency:currency}
-);
-if(lockedError)throw lockedError;
-const lockedBalance=Math.max(0,Number(lockedData||0));
-const availableBalance=Math.max(0,liveBalance-lockedBalance);
-if(numericAmount>availableBalance){
-return json({
-error:`Insufficient available ${currency} balance after P2P reservations`,
-currency,
-blockchain_balance:liveBalance,
-locked_balance:lockedBalance,
-available_balance:availableBalance,
-requested_amount:numericAmount
-},400);
-}
+ const liveBalance=currency==="TON"?(await getTonBalance(sourceAddress)).balance:(await getUsdtBalance(sourceAddress)).balance;
+ const{data:lockedData,error:lockedError}=await supabase.rpc("get_p2p_locked_balance",{p_user_id:userId,p_currency:currency});
+ if(lockedError)throw lockedError;
+ const lockedBalance=Math.max(0,Number(lockedData||0));
+ const availableBalance=Math.max(0,liveBalance-lockedBalance-(currency==="TON"?0.05:0));
+ if(numericAmount>availableBalance)return json({error:"Insufficient available "+currency+" balance after P2P reservations and fee reserve",currency,blockchain_balance:liveBalance,locked_balance:lockedBalance,available_balance:availableBalance,requested_amount:numericAmount},400);
 
+ const{data:withdrawal,error:insertError}=await supabase.from("bicycle_withdrawals").insert({user_id:userId,query_id:queryId,currency,amount:numericAmount,destination,status:"pending",flow_type:"withdrawal"}).select().single();
+ if(insertError)throw insertError;
 
- const{
- data:withdrawal,
- error
- }=await supabase
- .from("bicycle_withdrawals")
- .insert({
- user_id:userId,
- query_id:queryId,
- currency,
- amount:numericAmount,
- destination,
- status:"processing",
- flow_type:"withdrawal"
- })
- .select()
- .single();
-
- if(error)throw error;
-
+ const sweepQueryId=queryId+":sweep";
  try{
- const withdrawalPath=
- currency==="USDT"
- ?"/v1/withdrawal/direct-usdt"
- :"/v1/withdrawal/direct-ton";
+  const{data:existingSweep,error:existingSweepError}=await supabase.from("bicycle_sweep_requests").select("*").eq("user_id",userId).eq("query_id",sweepQueryId).maybeSingle();
+  if(existingSweepError)throw existingSweepError;
+  if(existingSweep){
+   await supabase.from("bicycle_withdrawals").update({status:"pending",updated_at:new Date().toISOString()}).eq("id",withdrawal.id);
+   return json({success:true,status:"pending",query_id:queryId,sweep_status:existingSweep.status,message:"An earlier sweep attempt exists. It was not repeated to avoid a duplicate on-chain transfer."},202);
+  }
 
- const bicycle=await bicycleFetch(
- withdrawalPath,
- "POST",
- {
- user_id:userId,
-query_id:queryId,
-currency,
-amount:currency==="TON"
-  ?Math.round(numericAmount*1_000_000_000)
-  :Math.round(numericAmount*1_000_000),
- destination, comment:"", binary_comment:""
- }
- );
+  const{data:sweepRow,error:sweepInsertError}=await supabase.from("bicycle_sweep_requests").insert({user_id:userId,requested_by:userId,currency,amount:numericAmount,source_address:sourceAddress,destination_address:"BICYCLE_MAIN_WALLET",query_id:sweepQueryId,status:"pending"}).select().single();
+  if(sweepInsertError)throw sweepInsertError;
 
- const bicycleId=bicycle?.ID||bicycle?.id||null;
-const status=String(bicycle?.status||"").toLowerCase();
-const safeStatus=["completed","processing","failed","cancelled"].includes(status)?status:(bicycleId?"processing":"failed");
-await supabase.from("bicycle_withdrawals").update({bicycle_id:bicycleId,status:safeStatus,updated_at:new Date().toISOString()}).eq("id",withdrawal.id);
-return json({...withdrawal,bicycle_id:bicycleId,status:safeStatus,bicycle,endpoint:withdrawalPath});
+  const decimals=currency==="TON"?9:6;
+  const sweepAmount=numericAmount.toFixed(decimals).replace(/\.?0+$/,"");
+  const sweepResponse=await bicycleFetch("/v1/admin/sweep-to-main","POST",{source_address:sourceAddress,currency,amount:sweepAmount});
+  if(sweepResponse?.success!==true||sweepResponse?.submitted!==true){
+   await supabase.from("bicycle_sweep_requests").update({status:"pending",error:"Sweep response was not verifiably submitted",bicycle_response:sweepResponse,updated_at:new Date().toISOString()}).eq("id",sweepRow.id);
+   return json({success:true,status:"pending",query_id:queryId,sweep_query_id:sweepQueryId,message:"Sweep outcome is not confirmed. Withdrawal remains pending and will not be marked failed."},202);
+  }
+  await supabase.from("bicycle_sweep_requests").update({status:"pending",bicycle_response:sweepResponse,error:null,updated_at:new Date().toISOString()}).eq("id",sweepRow.id);
+
+  await new Promise(resolve=>setTimeout(resolve,5000));
+
+  const withdrawalPath=currency==="USDT"?"/v1/withdrawal/direct-usdt":"/v1/withdrawal/direct-ton";
+  const bicycle=await bicycleFetch(withdrawalPath,"POST",{user_id:userId,query_id:queryId,currency,amount:currency==="TON"?Math.round(numericAmount*1_000_000_000):Math.round(numericAmount*1_000_000),destination,comment:"",binary_comment:""});
+  const bicycleId=bicycle?.ID||bicycle?.id||null;
+  await supabase.from("bicycle_withdrawals").update({bicycle_id:bicycleId,status:"pending",updated_at:new Date().toISOString()}).eq("id",withdrawal.id);
+  return json({success:true,...withdrawal,bicycle_id:bicycleId,status:"pending",sweep_status:"pending",bicycle,endpoint:withdrawalPath,gap_ms:5000},202);
  }catch(error){
- await supabase
- .from("bicycle_withdrawals")
- .update({
- status:"failed",
- updated_at:new Date().toISOString()
- })
- .eq("id",withdrawal.id);
-
- throw error;
+  const message=error instanceof Error?error.message:String(error);
+  await supabase.from("bicycle_withdrawals").update({status:"pending",updated_at:new Date().toISOString()}).eq("id",withdrawal.id);
+  return json({success:true,status:"pending",query_id:queryId,currency,amount:numericAmount,destination,error:message,message:"The operation did not return a confirmed result. It remains pending; no failed status was saved. Do not retry with a new query ID."},202);
  }
- }
+}
 
  return json({
  error:"Continue in file 2"

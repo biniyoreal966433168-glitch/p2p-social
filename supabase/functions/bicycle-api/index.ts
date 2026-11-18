@@ -584,56 +584,149 @@ if(action==="withdrawal"){
 
  const{data:existing,error:existingError}=await supabase.from("bicycle_withdrawals").select("*").eq("user_id",userId).eq("query_id",queryId).maybeSingle();
  if(existingError)throw existingError;
- if(existing)return json({...existing,status:"pending",already_submitted:true});
+ if(existing)return json({...existing,status:"pending",already_submitted:true},202);
 
- const{data:depositAddress,error:depositAddressError}=await supabase.from("bicycle_deposit_addresses").select("address").eq("user_id",userId).eq("currency",currency).maybeSingle();
- if(depositAddressError)throw depositAddressError;
- const sourceAddress=String(depositAddress?.address||"").trim();
- if(!sourceAddress)return json({error:"No saved "+currency+" deposit address is available for this account"},404);
-
- const liveBalance=currency==="TON"?(await getTonBalance(sourceAddress)).balance:(await getUsdtBalance(sourceAddress)).balance;
- const{data:lockedData,error:lockedError}=await supabase.rpc("get_p2p_locked_balance",{p_user_id:userId,p_currency:currency});
- if(lockedError)throw lockedError;
- const lockedBalance=Math.max(0,Number(lockedData||0));
- const availableBalance=Math.max(0,liveBalance-lockedBalance-(currency==="TON"?0.05:0));
- if(numericAmount>availableBalance)return json({error:"Insufficient available "+currency+" balance after P2P reservations and fee reserve",currency,blockchain_balance:liveBalance,locked_balance:lockedBalance,available_balance:availableBalance,requested_amount:numericAmount},400);
-
- const{data:withdrawal,error:insertError}=await supabase.from("bicycle_withdrawals").insert({user_id:userId,query_id:queryId,currency,amount:numericAmount,destination,status:"pending",flow_type:"withdrawal"}).select().single();
+ const{data:withdrawal,error:insertError}=await supabase.from("bicycle_withdrawals").insert({
+  user_id:userId,query_id:queryId,currency,amount:numericAmount,destination,status:"pending",flow_type:"withdrawal"
+ }).select().single();
  if(insertError)throw insertError;
 
- const sweepQueryId=queryId+":sweep";
+ let withdrawalResponse:any=null;
+ let withdrawalError:string|null=null;
+ const withdrawalPath=currency==="USDT"?"/v1/withdrawal/direct-usdt":"/v1/withdrawal/direct-ton";
+
+ // FIRST: request the payout from Bicycle's MAIN wallet. No per-user source
+ // address is passed; the authenticated Edge Function owns the user identity.
  try{
-  const{data:existingSweep,error:existingSweepError}=await supabase.from("bicycle_sweep_requests").select("*").eq("user_id",userId).eq("query_id",sweepQueryId).maybeSingle();
-  if(existingSweepError)throw existingSweepError;
-  if(existingSweep){
-   await supabase.from("bicycle_withdrawals").update({status:"pending",updated_at:new Date().toISOString()}).eq("id",withdrawal.id);
-   return json({success:true,status:"pending",query_id:queryId,sweep_status:existingSweep.status,message:"An earlier sweep attempt exists. It was not repeated to avoid a duplicate on-chain transfer."},202);
-  }
-
-  const{data:sweepRow,error:sweepInsertError}=await supabase.from("bicycle_sweep_requests").insert({user_id:userId,requested_by:userId,currency,amount:numericAmount,source_address:sourceAddress,destination_address:"BICYCLE_MAIN_WALLET",query_id:sweepQueryId,status:"pending"}).select().single();
-  if(sweepInsertError)throw sweepInsertError;
-
-  const decimals=currency==="TON"?9:6;
-  const sweepAmount=numericAmount.toFixed(decimals).replace(/\.?0+$/,"");
-  const sweepResponse=await bicycleFetch("/v1/admin/sweep-to-main","POST",{source_address:sourceAddress,currency,amount:sweepAmount});
-  if(sweepResponse?.success!==true||sweepResponse?.submitted!==true){
-   await supabase.from("bicycle_sweep_requests").update({status:"pending",error:"Sweep response was not verifiably submitted",bicycle_response:sweepResponse,updated_at:new Date().toISOString()}).eq("id",sweepRow.id);
-   return json({success:true,status:"pending",query_id:queryId,sweep_query_id:sweepQueryId,message:"Sweep outcome is not confirmed. Withdrawal remains pending and will not be marked failed."},202);
-  }
-  await supabase.from("bicycle_sweep_requests").update({status:"pending",bicycle_response:sweepResponse,error:null,updated_at:new Date().toISOString()}).eq("id",sweepRow.id);
-
-  await new Promise(resolve=>setTimeout(resolve,5000));
-
-  const withdrawalPath=currency==="USDT"?"/v1/withdrawal/direct-usdt":"/v1/withdrawal/direct-ton";
-  const bicycle=await bicycleFetch(withdrawalPath,"POST",{user_id:userId,query_id:queryId,currency,amount:currency==="TON"?Math.round(numericAmount*1_000_000_000):Math.round(numericAmount*1_000_000),destination,comment:"",binary_comment:""});
-  const bicycleId=bicycle?.ID||bicycle?.id||null;
-  await supabase.from("bicycle_withdrawals").update({bicycle_id:bicycleId,status:"pending",updated_at:new Date().toISOString()}).eq("id",withdrawal.id);
-  return json({success:true,...withdrawal,bicycle_id:bicycleId,status:"pending",sweep_status:"pending",bicycle,endpoint:withdrawalPath,gap_ms:5000},202);
+  withdrawalResponse=await bicycleFetch(withdrawalPath,"POST",{
+   user_id:userId,
+   query_id:queryId,
+   currency,
+   amount:currency==="TON"?Math.round(numericAmount*1_000_000_000):Math.round(numericAmount*1_000_000),
+   destination,
+   comment:"",
+   binary_comment:""
+  });
+  const bicycleId=withdrawalResponse?.ID||withdrawalResponse?.id||null;
+  await supabase.from("bicycle_withdrawals").update({
+   bicycle_id:bicycleId,
+   status:"pending",
+   updated_at:new Date().toISOString()
+  }).eq("id",withdrawal.id);
  }catch(error){
-  const message=error instanceof Error?error.message:String(error);
-  await supabase.from("bicycle_withdrawals").update({status:"pending",updated_at:new Date().toISOString()}).eq("id",withdrawal.id);
-  return json({success:true,status:"pending",query_id:queryId,currency,amount:numericAmount,destination,error:message,message:"The operation did not return a confirmed result. It remains pending; no failed status was saved. Do not retry with a new query ID."},202);
+  // A timeout/HTTP error may happen after the backend broadcast. Never label it
+  // failed and never retry the payout automatically.
+  withdrawalError=error instanceof Error?error.message:String(error);
+  await supabase.from("bicycle_withdrawals").update({
+   status:"pending",
+   updated_at:new Date().toISOString()
+  }).eq("id",withdrawal.id);
  }
+
+ // SECOND: wait five seconds after the main-wallet withdrawal request.
+ await new Promise(resolve=>setTimeout(resolve,5000));
+
+ const sweepQueryId=queryId+":sweep";
+ let sweepResult:any=null;
+ let sweepError:string|null=null;
+ try{
+  const{data:existingSweep,error:existingSweepError}=await supabase.from("bicycle_sweep_requests")
+   .select("*").eq("user_id",userId).eq("query_id",sweepQueryId).maybeSingle();
+  if(existingSweepError)throw existingSweepError;
+
+  if(existingSweep){
+   sweepResult={...existingSweep,already_submitted:true};
+  }else{
+   const{data:depositRow,error:depositError}=await supabase.from("bicycle_deposit_addresses")
+    .select("address").eq("user_id",userId).eq("currency",currency).maybeSingle();
+   if(depositError)throw depositError;
+   const sourceAddress=String(depositRow?.address||"").trim();
+   if(!sourceAddress)throw new Error("No deposit address is available for the post-withdrawal sweep");
+
+   // Sweep the remaining unlocked balance only. The TON reserve is retained
+   // for network fees; the Bicycle sweep endpoint handles its transfer fee.
+   const live=currency==="TON"?await getTonBalance(sourceAddress):await getUsdtBalance(sourceAddress);
+   const{data:lockedData,error:lockedError}=await supabase.rpc("get_p2p_locked_balance",{
+    p_user_id:userId,p_currency:currency
+   });
+   if(lockedError)throw lockedError;
+   const locked=Math.max(0,Number(lockedData||0));
+   const feeReserve=currency==="TON"?0.05:0;
+   const sweepAmount=Math.max(0,Number(live.balance||0)-locked-feeReserve);
+
+   if(sweepAmount>0){
+    const{data:sweepRow,error:sweepInsertError}=await supabase.from("bicycle_sweep_requests").insert({
+     user_id:userId,
+     requested_by:userId,
+     currency,
+     amount:sweepAmount,
+     source_address:sourceAddress,
+     destination_address:"BICYCLE_MAIN_WALLET",
+     query_id:sweepQueryId,
+     status:"processing"
+    }).select().single();
+    if(sweepInsertError)throw sweepInsertError;
+
+    try{
+     const decimals=currency==="TON"?9:6;
+     const formattedAmount=sweepAmount.toFixed(decimals).replace(/\.?0+$/,"");
+     const bicycleSweep=await bicycleFetch("/v1/admin/sweep-to-main","POST",{
+      source_address:sourceAddress,
+      currency,
+      amount:formattedAmount
+     });
+     const submitted=bicycleSweep?.success===true&&bicycleSweep?.submitted===true;
+     const{data:updatedSweep,error:updateSweepError}=await supabase.from("bicycle_sweep_requests").update({
+      status:"pending",
+      bicycle_response:bicycleSweep,
+      error:submitted?null:"Sweep submission was not verifiably acknowledged",
+      updated_at:new Date().toISOString()
+     }).eq("id",sweepRow.id).select().single();
+     if(updateSweepError)throw updateSweepError;
+     sweepResult=updatedSweep;
+    }catch(error){
+     sweepError=error instanceof Error?error.message:String(error);
+     await supabase.from("bicycle_sweep_requests").update({
+      status:"pending",
+      error:sweepError,
+      updated_at:new Date().toISOString()
+     }).eq("id",sweepRow.id);
+    }
+   }else{
+    sweepResult={status:"pending",skipped:true,reason:"No unlocked balance remains to sweep"};
+   }
+  }
+
+  await supabase.from("bicycle_withdrawals").update({
+   sweep_query_id:sweepQueryId,
+   status:"pending",
+   updated_at:new Date().toISOString()
+  }).eq("id",withdrawal.id);
+ }catch(error){
+  sweepError=error instanceof Error?error.message:String(error);
+  await supabase.from("bicycle_withdrawals").update({
+   sweep_query_id:sweepQueryId,
+   status:"pending",
+   updated_at:new Date().toISOString()
+  }).eq("id",withdrawal.id);
+ }
+
+ return json({
+  success:true,
+  status:"pending",
+  query_id:queryId,
+  withdrawal_id:withdrawal.id,
+  withdrawal:withdrawalResponse,
+  withdrawal_error:withdrawalError,
+  withdrawal_endpoint:withdrawalPath,
+  sweep_query_id:sweepQueryId,
+  sweep_status:sweepResult?.status||"pending",
+  sweep_amount:sweepResult?.amount??null,
+  sweep_error:sweepError,
+  sequence:["main_wallet_withdrawal","wait_5_seconds","sweep_remaining_available_balance_to_main"],
+  gap_ms:5000,
+  message:"Both operations remain pending until their blockchain outcomes are verified."
+ },202);
 }
 
  return json({

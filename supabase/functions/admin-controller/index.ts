@@ -175,9 +175,10 @@ Deno.serve(async (req: Request) => {
         transaction_id: pick(row, ["transaction_hash", "tx_hash", "boc_hash", "transaction_id", "hash"]),
         query_id: pick(row, ["query_id", "request_id", "reference"]),
         created_at: pick(row, ["created_at", "requested_at", "timestamp"]),
-        user_id: pick(row, ["user_id", "sender_id", "from_user_id", "owner_id", "profile_id"]),
+        user_id: pick(row, ["user_id", "sender_id", "from_user_id", "sender_user_id", "owner_id", "profile_id"]),
+        recipient_user_id: pick(row, ["recipient_id", "recipient_user_id", "receiver_id", "to_user_id"]),
       })).sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()).slice(0, 200);
-      const transactionUserIds = [...new Set(transactionRows.map((x: any) => String(x.user_id || "")).filter(Boolean))].slice(0, 100);
+      const transactionUserIds = [...new Set(transactionRows.flatMap((x: any) => [String(x.user_id || ""), String(x.recipient_user_id || "")]).filter(Boolean))].slice(0, 100);
       const directoryIds = [...new Set([...userIds, ...transactionUserIds])];
       const [directoryProfiles] = await Promise.all([
         directoryIds.length ? admin.from("profiles").select("id,first_name,last_name").in("id", directoryIds) : Promise.resolve({ data: [], error: null }),
@@ -198,14 +199,15 @@ Deno.serve(async (req: Request) => {
         } catch { /* Keep the profile name; never expose the auth UUID in the UI. */ }
       }));
       const userDirectory = directoryIds.map((id: string) => ({ id, ...(directory.get(id) || { first_name: "", last_name: "", email: "" }) }));
-      const transactions = transactionRows.map((row: any) => ({ ...row, user: directory.get(String(row.user_id || "")) || { first_name: "", last_name: "", email: "" } }));
+      const transactions = transactionRows.map((row: any) => ({ ...row, user: directory.get(String(row.user_id || "")) || { first_name: "", last_name: "", email: "" }, recipient: directory.get(String(row.recipient_user_id || "")) || { first_name: "", last_name: "", email: "" } }));
       return reply({
         success: true,
         checked_at: new Date().toISOString(),
         current_aal: aal,
         actions_require_mfa: true,
         features: features.data || [],
-        users: users.data || [],\n        user_directory: userDirectory,\n        transactions,
+        users: users.data || [],
+        user_directory: userDirectory,\n        transactions,
         balance_snapshots: balances.data || [],
         user_count: users.count || 0,
         active_count: activeUsers.count || 0,

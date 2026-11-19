@@ -444,13 +444,30 @@ function showWithdrawalTxLinks(result){
 }
 async function submitWithdrawal(){
  if(!currentSession)return showLogin();
- let address=$("withdrawAddress").value.trim(),amount=Number($("withdrawAmount").value),b=$("withdrawSubmitButton");
+ const address=$("withdrawAddress").value.trim();
+ const amountText=String($("withdrawAmount").value||"").trim();
+ const amount=Number(amountText);
+ const currency=String($("withdrawNetwork").value||withdrawCurrency||"").toUpperCase();
+ const button=$("withdrawSubmitButton");
  if(!address)return alert("Please enter withdrawal address.");
+ if(!["TON","USDT"].includes(currency))return alert("Select TON or USDT.");
  if(!Number.isFinite(amount)||amount<=0)return alert("Invalid amount.");
- let{user,error}=await authUser();if(error||!user)return alert("Please login again.");
- updateWithdrawCurrency();let q=crypto.randomUUID();b.disabled=true;b.textContent="Broadcasting…";
+ if(!/^(?:\\d+(?:\\.\\d*)?|\\.\\d+)$/.test(amountText))return alert("Enter a valid decimal amount.");
+ const decimals=currency==="TON"?9:6;
+ const units=Math.round(amount*(10**decimals));
+ if((amountText.split(".")[1]||"").length>decimals||!Number.isSafeInteger(units)||Math.abs(amount*(10**decimals)-units)>1e-6){
+  return alert(currency+" supports a maximum of "+decimals+" decimal places.");
+ }
+ const{user,error}=await authUser();
+ if(error||!user)return alert("Please login again.");
+ withdrawCurrency=currency;
+ $("withdrawNetwork").value=currency;
+ updateWithdrawCurrency(currency);
+ const queryId=crypto.randomUUID();
+ button.disabled=true;
+ button.textContent="Broadcasting…";
  try{
-  let result=await bicycle({action:"withdrawal",currency:withdrawCurrency,amount,destination:address,query_id:q},user);
+  const result=await bicycle({action:"withdrawal",currency,amount:amountText,destination:address,query_id:queryId},user);
   closeWithdraw();
   if(!result)throw new Error("Bicycle returned an empty broadcast response.");
   if(result.status==="broadcast_partial"||result.status==="broadcast_unknown"){
@@ -461,10 +478,14 @@ async function submitWithdrawal(){
   if(result.success===false)throw new Error(result.error||result.withdrawal_error||"Bicycle did not return a successful broadcast response.");
   showWithdrawalTxLinks(result);
   void Promise.allSettled([refreshWallet(),loadUSDTHistory()]);
- }catch(e){
-  closeWithdraw();await loadUSDTHistory();
-  alert("Withdrawal could not be fully broadcast. Check transaction history before retrying. "+(e.message||String(e)));
- }finally{b.disabled=false;b.textContent="Withdraw"}
+ }catch(error){
+  closeWithdraw();
+  await loadUSDTHistory();
+  alert("Withdrawal could not be fully broadcast. Check transaction history before retrying. "+(error.message||String(error)));
+ }finally{
+  button.disabled=false;
+  button.textContent="Withdraw";
+ }
 }
 function profileDisplayName(p){const clean=v=>String(v||"").trim();for(const s of [p,p?.user_metadata,p?.raw_user_meta_data]){if(!s)continue;const a=clean(s.first_name||s.firstName||s.given_name),b=clean(s.last_name||s.lastName||s.family_name);if(a&&b)return a+" "+b;for(const k of ["name","full_name","display_name"]){const v=clean(s[k]);if(v&&v.toLowerCase()!=="user"&&v.toLowerCase()!=="unknown")return v}}return "User"}function profileInitials(v){const p=String(v||"User").trim().split(/\s+/).filter(Boolean);return p.length>1?(p[0][0]+p[p.length-1][0]).toUpperCase():(p[0]?.[0]||"U").toUpperCase()}function setProfilePhoto(a,n){let o=$("profilePhotoBox");if(!o)return;if(a){let i=document.createElement("img");i.id="profilePhotoBox";i.className="profile-photo";i.src=a;i.alt="Profile photo";o.replaceWith(i)}else{o.textContent=profileInitials(n);o.className="profile-photo"}}
 async function changeProfilePhoto(e){if(!currentSession)return;let f=e.target.files[0];if(!f)return;if(!f.type.startsWith("image/"))return alert("Please select an image.");if(f.size>5*1024*1024)return alert("Image must be smaller than 5 MB.");let id=currentSession.user.id,p=id+"/profile."+f.name.split(".").pop().toLowerCase(),r=await supabaseClient.storage.from("avatars").upload(p,f,{upsert:true,contentType:f.type});if(r.error)return alert("Photo upload failed.\n\n"+r.error.message);let{data}=supabaseClient.storage.from("avatars").getPublicUrl(p),url=data.publicUrl+"?t="+Date.now();let u=await supabaseClient.from("profiles").update({avatar_url:url}).eq("id",id);if(u.error)u=await supabaseClient.from("profiles").update({avatar_url:url}).eq("user_id",id);if(u.error)return alert("Could not save profile photo.\n\n"+u.error.message);await loadProfile();await loadPosts();e.target.value=""}

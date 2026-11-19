@@ -541,10 +541,14 @@ if(action==="sweep_to_main"){
  if(walletError)throw walletError;
  const sourceAddress=String(wallet?.address||"").trim();
  if(!sourceAddress)return json({error:"No registered "+currency+" deposit address found"},404);
- const live=currency==="TON"?await getTonBalance(sourceAddress):await getUsdtBalance(sourceAddress);
- const{data:lockedData,error:lockedError}=await supabase.rpc("get_p2p_locked_balance",{p_user_id:userId,p_currency:currency});
- if(lockedError)throw lockedError;
- const locked=Math.max(0,Number(lockedData||0));
+ const balanceCheckStarted=Date.now();
+ const [live,lockedResult]=await Promise.all([
+  currency==="TON"?getTonBalance(sourceAddress):getUsdtBalance(sourceAddress),
+  supabase.rpc("get_p2p_locked_balance",{p_user_id:userId,p_currency:currency})
+ ]);
+ if(lockedResult.error)throw lockedResult.error;
+ const locked=Math.max(0,Number(lockedResult.data||0));
+ console.log("[withdrawal-timing] live-balance+locked-ms",Date.now()-balanceCheckStarted);
  const feeReserve=currency==="TON"?0.05:0;
  const available=Math.max(0,Number(live.balance||0)-locked-feeReserve);
  if(amount>available)return json({error:"Insufficient available "+currency+" balance for main-wallet sweep",blockchain_balance:live.balance,locked_balance:locked,fee_reserve:feeReserve,available_balance:available,requested_amount:amount},400);
@@ -638,7 +642,9 @@ if(action==="withdrawal"){
  try{
   const decimals=currency==="TON"?9:6;
   const formattedSweep=sweepAmount.toFixed(decimals).replace(/\.?0+$/,"");
+  const sweepStarted=Date.now();
   sweepResponse=await bicycleFetch("/v1/admin/sweep-to-main","POST",{source_address:sourceAddress,currency,amount:formattedSweep});
+  console.log("[withdrawal-timing] bicycle-sweep-http-ms",Date.now()-sweepStarted);
   const sweepSubmitted=sweepResponse?.submitted===true||sweepResponse?.broadcast===true||
    String(sweepResponse?.status||"").toLowerCase()==="broadcast"||transactionHash(sweepResponse)!==null;
   if(sweepResponse?.success===false||!sweepSubmitted)throw new Error("Bicycle did not acknowledge the sweep broadcast");
@@ -660,11 +666,13 @@ if(action==="withdrawal"){
  const withdrawalPath=currency==="USDT"?"/v1/withdrawal/direct-usdt":"/v1/withdrawal/direct-ton";
  let payoutResponse:any=null;
  try{
+  const payoutStarted=Date.now();
   payoutResponse=await bicycleFetch(withdrawalPath,"POST",{
    query_id:queryId,currency,
    amount:currency==="TON"?Math.round(numericAmount*1_000_000_000):Math.round(numericAmount*1_000_000),
    destination,comment:"",binary_comment:""
   });
+  console.log("[withdrawal-timing] bicycle-payout-http-ms",Date.now()-payoutStarted);
   const payoutSubmitted=payoutResponse?.submitted===true||payoutResponse?.broadcast===true||
    String(payoutResponse?.status||"").toLowerCase()==="broadcast"||transactionHash(payoutResponse)!==null||payoutResponse?.success===true;
   if(payoutResponse?.success===false||!payoutSubmitted)throw new Error("Bicycle did not acknowledge the main-wallet withdrawal broadcast");

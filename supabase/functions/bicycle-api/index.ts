@@ -569,20 +569,16 @@ if(action==="sweep_to_main"){
   throw new Error("Bicycle did not confirm that the sweep was broadcast");
  }
  const destination=String(bicycle?.destination_address||bicycle?.destination||"BICYCLE_MAIN_WALLET");
- const confirmedResponse={
-  ...bicycle,
-  confirmation_status:"broadcast_confirmed",
-  broadcast_confirmed:true
- };
+ const txHash=transactionHash(bicycle);
  const{data:updated,error:updateError}=await supabase.from("bicycle_sweep_requests").update({
-  destination_address:destination,status:"pending",bicycle_response:confirmedResponse,error:null,updated_at:new Date().toISOString()
+  destination_address:destination,status:"broadcast",bicycle_response:bicycle,error:null,updated_at:new Date().toISOString()
  }).eq("id",created.id).select().single();
  if(updateError)throw updateError;
- return json({...updated,status:"pending",confirmation_status:"broadcast_submitted",broadcast_confirmed:false},202);
+ return json({...updated,status:"broadcast",transaction_hash:txHash,tonviewer_url:tonViewerUrl(bicycle),confirmation:"not_checked"});
  }catch(error){
  const message=error instanceof Error?error.message:String(error);
- await supabase.from("bicycle_sweep_requests").update({status:"pending",error:message,updated_at:new Date().toISOString()}).eq("id",created.id);
- return json({success:true,error:message,status:"pending",query_id:queryId},202);
+ await supabase.from("bicycle_sweep_requests").update({status:"broadcast_unknown",error:message,updated_at:new Date().toISOString()}).eq("id",created.id);
+ return json({success:false,error:message,status:"broadcast_unknown",query_id:queryId},502);
  }
 }
 

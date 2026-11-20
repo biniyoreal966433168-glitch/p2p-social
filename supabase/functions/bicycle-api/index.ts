@@ -466,7 +466,25 @@ if(action==="sync_balance"){
  );
  }
 
- if(action==="withdrawal_status"){const queryId=String(body.query_id||"").trim();if(!queryId)return json({error:"Missing query_id"},400);const{data:row,error}=await supabase.from("bicycle_withdrawals").select("*").eq("user_id",userId).eq("query_id",queryId).maybeSingle();if(error)throw error;if(!row)return json({error:"Withdrawal not found"},404);return json({local:row,status:row.status,query_id:queryId});} 
+ if(action==="withdrawal_status"){
+ const queryId=String(body.query_id||"").trim();
+ if(!queryId)return json({error:"Missing query_id"},400);
+ const{data:row,error}=await supabase.from("bicycle_withdrawals").select("*").eq("user_id",userId).eq("query_id",queryId).maybeSingle();
+ if(error)throw error;
+ if(!row)return json({error:"Withdrawal not found"},404);
+ const{data:sweep}=row.sweep_query_id
+  ?await supabase.from("bicycle_sweep_requests").select("id,query_id,status,error,bicycle_response,updated_at").eq("user_id",userId).eq("query_id",row.sweep_query_id).maybeSingle()
+  :{data:null};
+ return json({
+  local:row,status:row.status,query_id:queryId,
+  sweep:sweep||null,
+  confirmation_unknown:sweep?.status==="unknown"||
+   String(sweep?.bicycle_response?.confirmation_status||"").toLowerCase()==="confirmation_unknown",
+  next_step:sweep?.status==="unknown"
+   ?"Check the existing TON transaction status before any retry. Do not submit another sweep or payout."
+   :null
+ });
+} 
 if(action==="transfer"){
  const currency=String(body.currency||"").toUpperCase();
  const recipientUsername=String(body.recipient_username||"").trim().replace(/^@/,"");

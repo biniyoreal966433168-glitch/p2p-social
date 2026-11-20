@@ -173,9 +173,31 @@ Deno.serve(async (req: Request) => {
         ? await admin.from("bicycle_balance_snapshots").select("user_id,currency,balance,checked_at").in("user_id", userIds).order("checked_at", { ascending: false })
         : { data: [], error: null };
       if (balances.error) return reply({ error: "Could not load user balance snapshots" }, 500);
+      let mainWalletBalance: Record<string, unknown> = {
+        TON: null, USDT: null, checked_at: new Date().toISOString(), status: "unavailable",
+      };
+      const configuredMainWallet = String(Deno.env.get("BICYCLE_MAIN_WALLET_ADDRESS") || "").trim();
+      const expectedMainWallet = "UQCt8Gf5ZHPmoXW_d6x0Ttt551tIg-KJZSx1CsSIIwE8NYUv";
+      const configuredNormalized = normalizeTonAddress(configuredMainWallet);
+      const expectedNormalized = normalizeTonAddress(expectedMainWallet);
+      if (configuredNormalized && configuredNormalized === expectedNormalized) {
+        const [ton, usdt] = await Promise.allSettled([
+          liveWalletBalance("TON", configuredMainWallet),
+          liveWalletBalance("USDT", configuredMainWallet),
+        ]);
+        mainWalletBalance = {
+          TON: ton.status === "fulfilled" ? ton.value : null,
+          USDT: usdt.status === "fulfilled" ? usdt.value : null,
+          checked_at: new Date().toISOString(),
+          status: ton.status === "fulfilled" || usdt.status === "fulfilled" ? "live" : "unavailable",
+        };
+      } else {
+        mainWalletBalance.status = configuredMainWallet ? "signer_mismatch" : "signer_not_configured";
+      }
       return reply({
         success: true,
         checked_at: new Date().toISOString(),
+        main_wallet_balance: mainWalletBalance,
         current_aal: aal,
         actions_require_mfa: true,
         features: features.data || [],

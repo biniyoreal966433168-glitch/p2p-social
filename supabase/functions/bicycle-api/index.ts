@@ -523,7 +523,7 @@ return json({error:errorMessage,status:"failed",query_id:queryId,currency,amount
 if(action==="sweep_status"){
  const queryId=String(body.query_id||"").trim();
  if(!queryId)return json({error:"Missing query_id"},400);
- const{data:row,error}=await supabase.from("bicycle_sweep_requests").select("id,currency,amount,source_address,destination_address,query_id,status,error,created_at,updated_at").eq("user_id",userId).eq("query_id",queryId).maybeSingle();
+ const{data:row,error}=await supabase.from("bicycle_sweep_requests").select("id,currency,amount,source_address,destination_address,query_id,status,error,bicycle_response,created_at,updated_at").eq("user_id",userId).eq("query_id",queryId).maybeSingle();
  if(error)throw error;
  if(!row)return json({error:"Sweep request not found"},404);
  return json(row);
@@ -605,9 +605,14 @@ if(action==="withdrawal"){
  if(existing){
   const sweepHash=String(existing.sweep_tx_hash||"").trim()||null;
   const finalHash=String(existing.final_tx_hash||"").trim()||null;
+  const{data:storedSweep}=existing.sweep_query_id
+   ?await supabase.from("bicycle_sweep_requests").select("id,query_id,status,error,bicycle_response,updated_at").eq("user_id",userId).eq("query_id",existing.sweep_query_id).maybeSingle()
+   :{data:null};
   return json({success:false,status:existing.status,already_submitted:true,query_id:queryId,
-   sweep_query_id:existing.sweep_query_id||null,sweep_tx_hash:sweepHash,final_tx_hash:finalHash,
-   message:"This withdrawal already has a record. It will not be broadcast again automatically.",
+   sweep_query_id:existing.sweep_query_id||null,sweep_status:storedSweep?.status||null,
+   sweep_error:storedSweep?.error||null,sweep_response:storedSweep?.bicycle_response||null,
+   sweep_tx_hash:sweepHash,final_tx_hash:finalHash,
+   message:"This withdrawal already exists. Its transaction must be checked before any retry; no duplicate was submitted.",
    sweep_tonviewer_url:sweepHash?"https://tonviewer.com/transaction/"+sweepHash:null,
    withdrawal_tonviewer_url:finalHash?"https://tonviewer.com/transaction/"+finalHash:null},202);
  }
@@ -663,11 +668,30 @@ if(action==="withdrawal"){
    source_address:sourceAddress,currency,amount:formattedSweep
   });
   console.log("[withdrawal] sweep broadcast response ms",Date.now()-sweepStarted);
-  const sweepSubmitted=sweepResponse?.submitted===true||sweepResponse?.broadcast===true||
-   String(sweepResponse?.status||"").toLowerCase()==="broadcast"||
+  const submittedValue=String(sweepResponse?.submitted??"").toLowerCase();
+  const confirmationValue=String(sweepResponse?.confirmation_status??"").toLowerCase();
+  const bicycleMessage=String(sweepResponse?.error||sweepResponse?.message||"").trim();
+  const confirmationUnknown=submittedValue==="unknown"||
+   confirmationValue==="confirmation_unknown"||
+   /not confirmed in a given deadline|may still be confirmed later/i.test(bicycleMessage);
+  if(confirmationUnknown){
+   const message=bicycleMessage||"Bicycle could not determine whether the sweep was confirmed before its deadline.";
+   await supabase.from("bicycle_sweep_requests").update({
+    status:"unknown",error:message,bicycle_response:sweepResponse,updated_at:new Date().toISOString()
+   }).eq("id",sweepRow.id);
+   await supabase.from("bicycle_withdrawals").update({
+    sweep_query_id:sweepQueryId,status:"broadcast_unknown",updated_at:new Date().toISOString()
+   }).eq("id",withdrawal.id);
+   return json({success:false,status:"confirmation_unknown",query_id:queryId,
+    sweep_query_id:sweepQueryId,sweep_status:"unknown",sweep_error:message,
+    sweep_response:sweepResponse,admin_review_required:true,
+    message:"The sweep may still confirm. Check its transaction status before retrying. No payout or duplicate sweep was submitted."},202);
+  }
+  const sweepSubmitted=sweepResponse?.submitted===true||submittedValue==="true"||
+   sweepResponse?.broadcast===true||String(sweepResponse?.status||"").toLowerCase()==="broadcast"||
    transactionHash(sweepResponse)!==null;
   if(sweepResponse?.success===false||!sweepSubmitted){
-   throw new Error("Bicycle did not acknowledge the source-to-main sweep broadcast");
+   throw new Error(bicycleMessage||"Bicycle did not acknowledge the source-to-main sweep broadcast");
   }
   sweepHash=transactionHash(sweepResponse);
   const{error:updateSweepError}=await supabase.from("bicycle_sweep_requests").update({
@@ -682,18 +706,21 @@ if(action==="withdrawal"){
   }).eq("id",withdrawal.id);
   if(linkError)throw linkError;
  }catch(error){
-  const message=error instanceof Error?error.message:String(error);
+  const message=String(sweepResponse?.error||sweepResponse?.message||
+   (error instanceof Error?error.message:String(error)));
   await supabase.from("bicycle_sweep_requests").update({
-   status:"broadcast_unknown",error:message,bicycle_response:sweepResponse,updated_at:new Date().toISOString()
+   status:"unknown",error:message,bicycle_response:sweepResponse,updated_at:new Date().toISOString()
   }).eq("id",sweepRow.id);
   await supabase.from("bicycle_withdrawals").update({
    sweep_query_id:sweepQueryId,sweep_tx_hash:sweepHash,status:"broadcast_unknown",
    updated_at:new Date().toISOString()
   }).eq("id",withdrawal.id);
-  console.error("[withdrawal] source-to-main sweep failed or is uncertain",message);
+  console.error("[withdrawal] source-to-main sweep failed or is uncertain",message,sweepResponse);
   return json({success:false,status:"broadcast_unknown",query_id:queryId,sweep_query_id:sweepQueryId,
-   sweep_tx_hash:sweepHash,error:message,admin_review_required:true,
-   sweep_tonviewer_url:sweepHash?"https://tonviewer.com/transaction/"+sweepHash:null},502);
+   sweep_status:"unknown",sweep_tx_hash:sweepHash,error:message,sweep_response:sweepResponse,
+   admin_review_required:true,
+   message:"The sweep outcome is not confirmed. Check the transaction before retrying; no payout was submitted.",
+   sweep_tonviewer_url:sweepHash?"https://tonviewer.com/transaction/"+sweepHash:null},202);
  }
 
  // Only start the main-wallet payout after Bicycle acknowledges the source-to-main sweep.

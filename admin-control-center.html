@@ -16,16 +16,16 @@ function statusPill(v){const s=String(v||"unknown").toLowerCase(),cls=/confirm|c
 function formatWithdrawalError(raw){
  let value=String(raw??"").trim();
  if(!value)return "No error recorded in the database.";
- const isHtml=/<(?:!doctype\\s+html|html|head|body|title|h1|p\\b)/i.test(value);
+ const isHtml=/<(?:!doctype\s+html|html|head|body|title|h1|p\b)/i.test(value);
  if(isHtml){
-  const code=(value.match(/Error code\\s*(\\d{3})/i)||value.match(/\\b(502|520|521|522|523|524|1033|1016)\\b/i)||[])[1];
-  const title=(value.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i)||[])[1]||"";
+  const code=(value.match(/Error code\s*(\d{3})/i)||value.match(/\b(502|520|521|522|523|524|1033|1016)\b/i)||[])[1];
+  const title=(value.match(/<title[^>]*>([\s\S]*?)<\/title>/i)||[])[1]||"";
   if(code==="502"||/bad gateway/i.test(title)||/Bad gateway/i.test(value))return "Cloudflare host error — 502 Bad Gateway (the tunnel host returned an error).";
   return "Cloudflare connection error"+(code?" — error "+code:"")+". The returned HTML error page was shortened.";
  }
- value=value.replace(/<[^>]*>/g," ").replace(/&nbsp;/gi," ").replace(/&amp;/gi,"&").replace(/\\s+/g," ").trim();
- if(/cloudflare|cloudflared|cf-ray|error\\s*(?:1033|1016|520|521|522|523|524)|502\\s+bad gateway/i.test(value)){
-  value=value.replace(/^Cloudflare connection error:\\s*/i,"");
+ value=value.replace(/<[^>]*>/g," ").replace(/&nbsp;/gi," ").replace(/&amp;/gi,"&").replace(/\s+/g," ").trim();
+ if(/cloudflare|cloudflared|cf-ray|error\s*(?:1033|1016|520|521|522|523|524)|502\s+bad gateway/i.test(value)){
+  value=value.replace(/^Cloudflare connection error:\s*/i,"");
   return "Cloudflare connection error: "+value.slice(0,240)+(value.length>240?"…":"");
  }
  return value.slice(0,300)+(value.length>300?"…":"");

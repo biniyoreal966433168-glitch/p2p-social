@@ -592,62 +592,83 @@ if(action==="withdrawal"){
  const queryId=String(body.query_id||crypto.randomUUID());
  const numericAmount=Number(body.amount);
  if(!["TON","USDT"].includes(currency))return json({error:"Currency must be TON or USDT"},400);
- if(!destination)return json({error:"Missing destination"},400);
+ if(!/^(?:[A-Za-z0-9_-]{48}|-1:[0-9a-fA-F]{64}|0:[0-9a-fA-F]{64})$/.test(destination))return json({error:"Enter a valid TON destination address"},400);
  if(!Number.isFinite(numericAmount)||numericAmount<=0)return json({error:"Withdrawal amount must be greater than zero",minimum_amount:0,currency},400);
- if(currency==="USDT"&&Math.abs(numericAmount*1_000_000-Math.round(numericAmount*1_000_000))>1e-6)return json({error:"USDT amount supports a maximum of 6 decimal places"},400);
- if(currency==="USDT"&&!Number.isSafeInteger(Math.round(numericAmount*1_000_000)))return json({error:"USDT amount is too large"},400);
+ const decimals=currency==="TON"?9:6;
+ const scale=currency==="TON"?1_000_000_000:1_000_000;
+ if(Math.abs(numericAmount*scale-Math.round(numericAmount*scale))>1e-6)return json({error:currency+" amount supports a maximum of "+decimals+" decimal places"},400);
+ const rawAmount=Math.round(numericAmount*scale);
+ if(!Number.isSafeInteger(rawAmount))return json({error:currency+" amount is too large"},400);
 
  const{data:existing,error:existingError}=await supabase.from("bicycle_withdrawals").select("*").eq("user_id",userId).eq("query_id",queryId).maybeSingle();
  if(existingError)throw existingError;
  if(existing){
   const sweepHash=String(existing.sweep_tx_hash||"").trim()||null;
   const finalHash=String(existing.final_tx_hash||"").trim()||null;
-  return json({success:true,status:existing.status,already_submitted:true,query_id:queryId,
-   sweep_tx_hash:sweepHash,final_tx_hash:finalHash,
+  return json({success:false,status:existing.status,already_submitted:true,query_id:queryId,
+   sweep_query_id:existing.sweep_query_id||null,sweep_tx_hash:sweepHash,final_tx_hash:finalHash,
+   message:"This withdrawal already has a record. It will not be broadcast again automatically.",
    sweep_tonviewer_url:sweepHash?"https://tonviewer.com/transaction/"+sweepHash:null,
-   withdrawal_tonviewer_url:finalHash?"https://tonviewer.com/transaction/"+finalHash:null});
+   withdrawal_tonviewer_url:finalHash?"https://tonviewer.com/transaction/"+finalHash:null},202);
  }
 
- const{data:depositRow,error:depositError}=await supabase.from("bicycle_deposit_addresses").select("address").eq("user_id",userId).eq("currency",currency).maybeSingle();
+ // Read the user's source wallet and protect P2P-locked funds plus TON sweep gas.
+ const{data:depositRow,error:depositError}=await supabase.from("bicycle_deposit_addresses")
+  .select("address").eq("user_id",userId).eq("currency",currency).maybeSingle();
  if(depositError)throw depositError;
  const sourceAddress=String(depositRow?.address||"").trim();
- if(!sourceAddress)return json({error:"No deposit address is available for the sweep"},404);
-
- const live=currency==="TON"?await getTonBalance(sourceAddress):await getUsdtBalance(sourceAddress);
- const{data:lockedData,error:lockedError}=await supabase.rpc("get_p2p_locked_balance",{p_user_id:userId,p_currency:currency});
- if(lockedError)throw lockedError;
- const locked=Math.max(0,Number(lockedData||0));
+ if(!sourceAddress)return json({error:"No registered "+currency+" source address is available for the sweep"},404);
+ const[live,lockedResult]=await Promise.all([
+  currency==="TON"?getTonBalance(sourceAddress):getUsdtBalance(sourceAddress),
+  supabase.rpc("get_p2p_locked_balance",{p_user_id:userId,p_currency:currency})
+ ]);
+ if(lockedResult.error)throw lockedResult.error;
+ const locked=Math.max(0,Number(lockedResult.data||0));
  const feeReserve=currency==="TON"?0.05:0;
- const sweepAmount=Math.max(0,Number(live.balance||0)-locked-feeReserve);
- if(numericAmount>sweepAmount)return json({error:"Insufficient available "+currency+" balance",blockchain_balance:live.balance,locked_balance:locked,fee_reserve:feeReserve,available_balance:sweepAmount,requested_amount:numericAmount},400);
- if(sweepAmount<=0)return json({error:"No available balance to sweep to the main wallet"},400);
+ const available=Math.max(0,Number(live.balance||0)-locked-feeReserve);
+ if(numericAmount>available)return json({
+  error:"Insufficient available "+currency+" balance after P2P reservations and network reserve",
+  currency,blockchain_balance:live.balance,locked_balance:locked,fee_reserve:feeReserve,
+  available_balance:available,requested_amount:numericAmount
+ },400);
 
+ const sweepQueryId=queryId+":sweep";
+ // Link the sweep ID on the withdrawal row immediately, before any external broadcast.
  const{data:withdrawal,error:insertError}=await supabase.from("bicycle_withdrawals").insert({
-  user_id:userId,query_id:queryId,currency,amount:numericAmount,destination,status:"processing",flow_type:"withdrawal"
+  user_id:userId,query_id:queryId,currency,amount:numericAmount,destination,
+  status:"processing",flow_type:"withdrawal",
+  fee_percent:0,fee_amount:0,fixed_fee_ton:0,sweep_amount:numericAmount,
+  sweep_query_id:sweepQueryId
  }).select().single();
  if(insertError)throw insertError;
 
- const sweepQueryId=queryId+":sweep";
  const{data:sweepRow,error:sweepInsertError}=await supabase.from("bicycle_sweep_requests").insert({
-  user_id:userId,requested_by:userId,currency,amount:sweepAmount,source_address:sourceAddress,
-  destination_address:"BICYCLE_MAIN_WALLET",query_id:sweepQueryId,status:"processing"
+  user_id:userId,requested_by:userId,currency,amount:numericAmount,
+  source_address:sourceAddress,destination_address:"BICYCLE_MAIN_WALLET",
+  query_id:sweepQueryId,status:"processing",request_origin:"withdrawal"
  }).select().single();
  if(sweepInsertError){
   await supabase.from("bicycle_withdrawals").update({status:"failed",updated_at:new Date().toISOString()}).eq("id",withdrawal.id);
-  throw sweepInsertError;
+  console.error("[withdrawal] sweep request insert failed",sweepInsertError);
+  return json({success:false,status:"failed",query_id:queryId,sweep_query_id:sweepQueryId,
+   error:"Could not create the source-to-main sweep request: "+sweepInsertError.message},502);
  }
 
  let sweepResponse:any=null;
  let sweepHash:string|null=null;
  try{
-  const decimals=currency==="TON"?9:6;
-  const formattedSweep=sweepAmount.toFixed(decimals).replace(/\.?0+$/,"");
+  const formattedSweep=numericAmount.toFixed(decimals).replace(/\.?0+$/,"");
   const sweepStarted=Date.now();
-  sweepResponse=await bicycleFetch("/v1/admin/sweep-to-main","POST",{source_address:sourceAddress,currency,amount:formattedSweep});
-  console.log("[withdrawal-timing] bicycle-sweep-http-ms",Date.now()-sweepStarted);
+  sweepResponse=await bicycleFetch("/v1/admin/sweep-to-main","POST",{
+   source_address:sourceAddress,currency,amount:formattedSweep
+  });
+  console.log("[withdrawal] sweep broadcast response ms",Date.now()-sweepStarted);
   const sweepSubmitted=sweepResponse?.submitted===true||sweepResponse?.broadcast===true||
-   String(sweepResponse?.status||"").toLowerCase()==="broadcast"||transactionHash(sweepResponse)!==null;
-  if(sweepResponse?.success===false||!sweepSubmitted)throw new Error("Bicycle did not acknowledge the sweep broadcast");
+   String(sweepResponse?.status||"").toLowerCase()==="broadcast"||
+   transactionHash(sweepResponse)!==null;
+  if(sweepResponse?.success===false||!sweepSubmitted){
+   throw new Error("Bicycle did not acknowledge the source-to-main sweep broadcast");
+  }
   sweepHash=transactionHash(sweepResponse);
   const{error:updateSweepError}=await supabase.from("bicycle_sweep_requests").update({
    status:"broadcast",bicycle_response:sweepResponse,error:null,
@@ -655,48 +676,70 @@ if(action==="withdrawal"){
    updated_at:new Date().toISOString()
   }).eq("id",sweepRow.id);
   if(updateSweepError)throw updateSweepError;
+  const{error:linkError}=await supabase.from("bicycle_withdrawals").update({
+   sweep_query_id:sweepQueryId,sweep_tx_hash:sweepHash,status:"processing",
+   updated_at:new Date().toISOString()
+  }).eq("id",withdrawal.id);
+  if(linkError)throw linkError;
  }catch(error){
   const message=error instanceof Error?error.message:String(error);
-  await supabase.from("bicycle_sweep_requests").update({status:"broadcast_unknown",error:message,updated_at:new Date().toISOString()}).eq("id",sweepRow.id);
-  await supabase.from("bicycle_withdrawals").update({sweep_query_id:sweepQueryId,status:"broadcast_unknown",updated_at:new Date().toISOString()}).eq("id",withdrawal.id);
-  return json({success:false,status:"broadcast_unknown",query_id:queryId,error:message,sweep_tonviewer_url:tonViewerUrl(sweepResponse)},502);
+  await supabase.from("bicycle_sweep_requests").update({
+   status:"broadcast_unknown",error:message,bicycle_response:sweepResponse,updated_at:new Date().toISOString()
+  }).eq("id",sweepRow.id);
+  await supabase.from("bicycle_withdrawals").update({
+   sweep_query_id:sweepQueryId,sweep_tx_hash:sweepHash,status:"broadcast_unknown",
+   updated_at:new Date().toISOString()
+  }).eq("id",withdrawal.id);
+  console.error("[withdrawal] source-to-main sweep failed or is uncertain",message);
+  return json({success:false,status:"broadcast_unknown",query_id:queryId,sweep_query_id:sweepQueryId,
+   sweep_tx_hash:sweepHash,error:message,admin_review_required:true,
+   sweep_tonviewer_url:sweepHash?"https://tonviewer.com/transaction/"+sweepHash:null},502);
  }
 
- // Broadcast-only: no confirmation polling and no artificial delay.
+ // Only start the main-wallet payout after Bicycle acknowledges the source-to-main sweep.
  const withdrawalPath=currency==="USDT"?"/v1/withdrawal/direct-usdt":"/v1/withdrawal/direct-ton";
  let payoutResponse:any=null;
  try{
   const payoutStarted=Date.now();
   payoutResponse=await bicycleFetch(withdrawalPath,"POST",{
-   query_id:queryId,currency,
-   amount:currency==="TON"?Math.round(numericAmount*1_000_000_000):Math.round(numericAmount*1_000_000),
-   destination,comment:"",binary_comment:""
+   query_id:queryId,currency,amount:rawAmount,destination,comment:"",binary_comment:""
   });
-  console.log("[withdrawal-timing] bicycle-payout-http-ms",Date.now()-payoutStarted);
+  console.log("[withdrawal] main-wallet payout response ms",Date.now()-payoutStarted);
   const payoutSubmitted=payoutResponse?.submitted===true||payoutResponse?.broadcast===true||
-   String(payoutResponse?.status||"").toLowerCase()==="broadcast"||transactionHash(payoutResponse)!==null||payoutResponse?.success===true;
-  if(payoutResponse?.success===false||!payoutSubmitted)throw new Error("Bicycle did not acknowledge the main-wallet withdrawal broadcast");
+   ["broadcast","processing","completed","confirmed"].includes(String(payoutResponse?.status||"").toLowerCase())||
+   transactionHash(payoutResponse)!==null||payoutResponse?.success===true;
+  if(payoutResponse?.success===false||!payoutSubmitted){
+   throw new Error("Bicycle did not acknowledge the main-wallet payout broadcast");
+  }
  }catch(error){
   const message=error instanceof Error?error.message:String(error);
-  await supabase.from("bicycle_withdrawals").update({sweep_query_id:sweepQueryId,sweep_tx_hash:sweepHash,status:"broadcast_partial",updated_at:new Date().toISOString()}).eq("id",withdrawal.id);
-  return json({success:false,status:"broadcast_partial",query_id:queryId,sweep_tx_hash:sweepHash,
-   sweep_tonviewer_url:sweepHash?"https://tonviewer.com/transaction/"+sweepHash:null,withdrawal_error:message},502);
+  await supabase.from("bicycle_withdrawals").update({
+   sweep_query_id:sweepQueryId,sweep_tx_hash:sweepHash,status:"broadcast_partial",
+   updated_at:new Date().toISOString()
+  }).eq("id",withdrawal.id);
+  console.error("[withdrawal] sweep succeeded but payout is uncertain",message);
+  return json({success:false,status:"broadcast_partial",query_id:queryId,sweep_query_id:sweepQueryId,
+   sweep_tx_hash:sweepHash,sweep_tonviewer_url:sweepHash?"https://tonviewer.com/transaction/"+sweepHash:null,
+   withdrawal_error:message,admin_review_required:true},502);
  }
 
  const finalHash=transactionHash(payoutResponse);
  const bicycleId=payoutResponse?.ID||payoutResponse?.id||null;
+ const providerStatus=String(payoutResponse?.status||"").toLowerCase();
+ const finalStatus=["completed","confirmed"].includes(providerStatus)?"completed":"broadcast";
  const{error:updateWithdrawalError}=await supabase.from("bicycle_withdrawals").update({
-  bicycle_id:bicycleId,sweep_query_id:sweepQueryId,sweep_tx_hash:sweepHash,final_tx_hash:finalHash,
-  status:"broadcast",updated_at:new Date().toISOString()
+  bicycle_id:bicycleId,sweep_query_id:sweepQueryId,sweep_tx_hash:sweepHash,
+  final_tx_hash:finalHash,status:finalStatus,updated_at:new Date().toISOString()
  }).eq("id",withdrawal.id);
  if(updateWithdrawalError)throw updateWithdrawalError;
 
- return json({success:true,status:"broadcast",query_id:queryId,withdrawal_id:withdrawal.id,currency,amount:numericAmount,destination,
-  sweep:{status:"broadcast",transaction_hash:sweepHash,response:sweepResponse},
-  withdrawal:{status:"broadcast",transaction_hash:finalHash,response:payoutResponse},
+ return json({success:true,status:finalStatus,query_id:queryId,withdrawal_id:withdrawal.id,
+  currency,amount:numericAmount,destination,fee_percent:0,fee_amount:0,fixed_fee_ton:0,
+  sweep:{query_id:sweepQueryId,status:"broadcast",transaction_hash:sweepHash,response:sweepResponse},
+  withdrawal:{status:finalStatus,transaction_hash:finalHash,response:payoutResponse},
   sweep_tonviewer_url:sweepHash?"https://tonviewer.com/transaction/"+sweepHash:tonViewerUrl(sweepResponse),
   withdrawal_tonviewer_url:finalHash?"https://tonviewer.com/transaction/"+finalHash:tonViewerUrl(payoutResponse),
-  confirmation:"not_checked"});
+  confirmation:finalStatus==="completed"?"provider_confirmed":"not_checked"});
 }
 
  return json({error:"Unsupported action"},400);

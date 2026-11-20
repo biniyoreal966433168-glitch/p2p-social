@@ -679,6 +679,7 @@ if(action==="withdrawal"){
 
  let sweepResponse:any=null;
  let sweepHash:string|null=null;
+ let sweepConfirmationUnknown=false;
  try{
   const formattedSweep=numericAmount.toFixed(decimals).replace(/\.?0+$/,"");
   const sweepStarted=Date.now();
@@ -693,33 +694,28 @@ if(action==="withdrawal"){
    confirmationValue==="confirmation_unknown"||
    /not confirmed in a given deadline|may still be confirmed later/i.test(bicycleMessage);
   if(confirmationUnknown){
-   const message=bicycleMessage||"Bicycle could not determine whether the sweep was confirmed before its deadline.";
+   sweepConfirmationUnknown=true;
+   const message=bicycleMessage||"Bicycle did not return a confirmation before its deadline.";
    await supabase.from("bicycle_sweep_requests").update({
     status:"unknown",error:message,bicycle_response:sweepResponse,updated_at:new Date().toISOString()
    }).eq("id",sweepRow.id);
-   await supabase.from("bicycle_withdrawals").update({
-    sweep_query_id:sweepQueryId,status:"broadcast_unknown",updated_at:new Date().toISOString()
-   }).eq("id",withdrawal.id);
-   return json({success:false,status:"confirmation_unknown",query_id:queryId,
-    sweep_query_id:sweepQueryId,sweep_status:"unknown",sweep_error:message,
-    sweep_response:sweepResponse,admin_review_required:true,
-    message:"The sweep may still confirm. Check its transaction status before retrying. No payout or duplicate sweep was submitted."},202);
+   console.warn("[withdrawal] sweep confirmation unknown; continuing to submit payout as requested",message);
   }
   const sweepSubmitted=sweepResponse?.submitted===true||submittedValue==="true"||
    sweepResponse?.broadcast===true||String(sweepResponse?.status||"").toLowerCase()==="broadcast"||
    transactionHash(sweepResponse)!==null;
-  if(sweepResponse?.success===false||!sweepSubmitted){
+  if(!sweepConfirmationUnknown&&(sweepResponse?.success===false||!sweepSubmitted)){
    throw new Error(bicycleMessage||"Bicycle did not acknowledge the source-to-main sweep broadcast");
   }
   sweepHash=transactionHash(sweepResponse);
   const{error:updateSweepError}=await supabase.from("bicycle_sweep_requests").update({
-   status:"broadcast",bicycle_response:sweepResponse,error:null,
+   status:sweepConfirmationUnknown?"unknown":"broadcast",bicycle_response:sweepResponse,error:sweepConfirmationUnknown?bicycleMessage:null,
    destination_address:String(sweepResponse?.destination_address||sweepResponse?.destination||"BICYCLE_MAIN_WALLET"),
    updated_at:new Date().toISOString()
   }).eq("id",sweepRow.id);
   if(updateSweepError)throw updateSweepError;
   const{error:linkError}=await supabase.from("bicycle_withdrawals").update({
-   sweep_query_id:sweepQueryId,sweep_tx_hash:sweepHash,status:"processing",
+   sweep_query_id:sweepQueryId,sweep_tx_hash:sweepHash,status:sweepConfirmationUnknown?"broadcast_unknown":"processing",
    updated_at:new Date().toISOString()
   }).eq("id",withdrawal.id);
   if(linkError)throw linkError;
@@ -771,7 +767,8 @@ if(action==="withdrawal"){
  const finalHash=transactionHash(payoutResponse);
  const bicycleId=payoutResponse?.ID||payoutResponse?.id||null;
  const providerStatus=String(payoutResponse?.status||"").toLowerCase();
- const finalStatus=["completed","confirmed"].includes(providerStatus)?"completed":"broadcast";
+ const payoutStatus=["completed","confirmed"].includes(providerStatus)?"completed":"broadcast";
+ const finalStatus=sweepConfirmationUnknown?"broadcast_partial":payoutStatus;
  const{error:updateWithdrawalError}=await supabase.from("bicycle_withdrawals").update({
   bicycle_id:bicycleId,sweep_query_id:sweepQueryId,sweep_tx_hash:sweepHash,
   final_tx_hash:finalHash,status:finalStatus,updated_at:new Date().toISOString()
@@ -780,11 +777,13 @@ if(action==="withdrawal"){
 
  return json({success:true,status:finalStatus,query_id:queryId,withdrawal_id:withdrawal.id,
   currency,amount:numericAmount,destination,fee_percent:0,fee_amount:0,fixed_fee_ton:0,
-  sweep:{query_id:sweepQueryId,status:"broadcast",transaction_hash:sweepHash,response:sweepResponse},
+  sweep:{query_id:sweepQueryId,status:sweepConfirmationUnknown?"unknown":"broadcast",transaction_hash:sweepHash,response:sweepResponse},
   withdrawal:{status:finalStatus,transaction_hash:finalHash,response:payoutResponse},
   sweep_tonviewer_url:sweepHash?"https://tonviewer.com/transaction/"+sweepHash:tonViewerUrl(sweepResponse),
   withdrawal_tonviewer_url:finalHash?"https://tonviewer.com/transaction/"+finalHash:tonViewerUrl(payoutResponse),
-  confirmation:finalStatus==="completed"?"provider_confirmed":"not_checked"});
+  sweep_confirmation_unknown:sweepConfirmationUnknown,
+  confirmation:finalStatus==="completed"&&!sweepConfirmationUnknown?"provider_confirmed":"not_checked",
+  message:sweepConfirmationUnknown?"Payout was submitted without waiting for sweep confirmation. Sweep outcome remains unknown; verify both transactions later.":undefined});
 }
 
  return json({error:"Unsupported action"},400);

@@ -12,12 +12,30 @@ const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const BICYCLE_API_URL = Deno.env.get("BICYCLE_API_URL") || "";
 const BICYCLE_API_TOKEN = Deno.env.get("BICYCLE_API_TOKEN") || "";
 const USDT_MASTER = "0:B113A994B5024A16719F69139328EB759596C38A25F59028B146FECDC3621DFE";
+class BicycleHttpError extends Error {
+  status: number;
+  endpoint: string;
+  constructor(status: number, endpoint: string, message: string) {
+    super(message);
+    this.name = "BicycleHttpError";
+    this.status = status;
+    this.endpoint = endpoint;
+  }
+}
+function bicycleEndpoint(path: string): string {
+  let base = BICYCLE_API_URL.trim();
+  while (base.endsWith("/")) base = base.slice(0, -1);
+  if (base.toLowerCase().endsWith("/v1")) base = base.slice(0, -3);
+  const normalizedPath = path.startsWith("/") ? path : "/" + path;
+  return base + normalizedPath;
+}
 async function bicycleFetch(path: string, body: unknown) {
   if (!BICYCLE_API_URL || !BICYCLE_API_TOKEN) throw new Error("Bicycle API is not configured");
-  const response = await fetch(BICYCLE_API_URL + path, { method: "POST", headers: { Authorization: "Bearer " + BICYCLE_API_TOKEN, "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(30000) });
+  const endpoint = bicycleEndpoint(path);
+  const response = await fetch(endpoint, { method: "POST", headers: { Authorization: "Bearer " + BICYCLE_API_TOKEN, "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(120000) });
   const raw = await response.text(); let data: any = {};
   try { data = raw ? JSON.parse(raw) : {}; } catch { data = { message: raw }; }
-  if (!response.ok) throw new Error(data?.error || data?.message || "Bicycle HTTP " + response.status);
+  if (!response.ok) throw new BicycleHttpError(response.status, endpoint, String(data?.error || data?.message || "Bicycle HTTP " + response.status).trim());
   return data;
 }
 function normalizeTonAddress(input: string): string | null {
@@ -47,22 +65,21 @@ function normalizeTonAddress(input: string): string | null {
 }
 async function liveWalletBalance(currency: string, sourceAddress: string) {
   if (currency === "TON") {
-    if (!BICYCLE_API_URL || !BICYCLE_API_TOKEN) throw new Error("Bicycle API is not configured");
-    const response = await fetch(BICYCLE_API_URL + "/v1/balance?currency=TON&address=" + encodeURIComponent(sourceAddress), { headers: { Authorization: "Bearer " + BICYCLE_API_TOKEN, Accept: "application/json" }, signal: AbortSignal.timeout(20000) });
+    const response = await fetch("https://toncenter.com/api/v2/getAddressBalance?address=" + encodeURIComponent(sourceAddress), { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(20000) });
     const raw = await response.text(); let data: any = {};
-    try { data = raw ? JSON.parse(raw) : {}; } catch { throw new Error("Invalid Bicycle balance response"); }
-    if (!response.ok) throw new Error(data?.error || data?.message || "Could not read live TON balance");
-    const nano = Number(data?.balance ?? data?.result ?? 0);
-    if (!Number.isFinite(nano)) throw new Error("Invalid TON balance returned by Bicycle");
+    try { data = raw ? JSON.parse(raw) : {}; } catch { throw new Error("Invalid TON Center balance response"); }
+    if (!response.ok || data?.ok !== true) throw new Error(data?.error || data?.description || "Could not read live TON balance");
+    const nano = Number(data?.result);
+    if (!Number.isFinite(nano) || nano < 0) throw new Error("Invalid TON balance returned by TON Center");
     return nano / 1_000_000_000;
   }
-  const response = await fetch("https://toncenter.com/api/v3/jetton/wallets?owner_address=" + encodeURIComponent(sourceAddress) + "&jetton_address=" + encodeURIComponent(USDT_MASTER) + "&limit=100", { signal: AbortSignal.timeout(20000) });
+  const response = await fetch("https://toncenter.com/api/v3/jetton/wallets?owner_address=" + encodeURIComponent(sourceAddress) + "&jetton_address=" + encodeURIComponent(USDT_MASTER) + "&limit=100", { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(20000) });
   const raw = await response.text(); let data: any = {};
   try { data = raw ? JSON.parse(raw) : {}; } catch { throw new Error("Invalid TON Center balance response"); }
   if (!response.ok) throw new Error(data?.error || data?.message || "Could not read live USDT balance");
   const wallet = Array.isArray(data?.jetton_wallets) ? data.jetton_wallets[0] : null;
   const rawBalance = Number(wallet?.balance ?? 0);
-  if (!Number.isFinite(rawBalance)) throw new Error("Invalid USDT balance returned by TON Center");
+  if (!Number.isFinite(rawBalance) || rawBalance < 0) throw new Error("Invalid USDT balance returned by TON Center");
   return rawBalance / 1_000_000;
 }
 
@@ -153,53 +170,6 @@ Deno.serve(async (req: Request) => {
         ? await admin.from("bicycle_balance_snapshots").select("user_id,currency,balance,checked_at").in("user_id", userIds).order("checked_at", { ascending: false })
         : { data: [], error: null };
       if (balances.error) return reply({ error: "Could not load user balance snapshots" }, 500);
-      const [withdrawals, tonSends, usdtSends] = await Promise.all([
-        admin.from("bicycle_withdrawals").select("*").order("created_at", { ascending: false }).limit(100),
-        admin.from("ton_transfers").select("*").order("created_at", { ascending: false }).limit(100),
-        admin.from("usdt_transfers").select("*").order("created_at", { ascending: false }).limit(100),
-      ]);
-      const transactionFailure = [withdrawals, tonSends, usdtSends].find(x => x.error);
-      if (transactionFailure) return reply({ error: "Could not load transfer and withdrawal history" }, 500);
-      const pick = (row: any, keys: string[]) => {
-        for (const key of keys) if (row?.[key] !== undefined && row[key] !== null && row[key] !== "") return row[key];
-        return null;
-      };
-      const withdrawalRows = (withdrawals.data || []).map((row: any) => ({ ...row, kind: "withdrawal", currency: pick(row, ["currency", "asset", "token"]), user_id: pick(row, ["user_id", "owner_id", "profile_id"]) }));
-      const transferRows = [...(tonSends.data || []).map((row: any) => ({ ...row, kind: "p2p_send", currency: "TON" })), ...(usdtSends.data || []).map((row: any) => ({ ...row, kind: "p2p_send", currency: "USDT" }))];
-      const transactionRows = [...withdrawalRows, ...transferRows].map((row: any) => ({
-        kind: row.kind,
-        currency: pick(row, ["currency", "asset", "token"]),
-        amount: pick(row, ["amount", "send_amount", "transfer_amount", "value"]),
-        status: pick(row, ["status", "state", "transfer_status", "withdrawal_status"]),
-        destination: pick(row, ["destination", "destination_address", "to_address", "recipient_address", "recipient_wallet"]),
-        transaction_id: pick(row, ["transaction_hash", "tx_hash", "boc_hash", "transaction_id", "hash"]),
-        query_id: pick(row, ["query_id", "request_id", "reference"]),
-        created_at: pick(row, ["created_at", "requested_at", "timestamp"]),
-        user_id: pick(row, ["user_id", "sender_id", "from_user_id", "sender_user_id", "owner_id", "profile_id"]),
-        recipient_user_id: pick(row, ["recipient_id", "recipient_user_id", "receiver_id", "to_user_id"]),
-      })).sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()).slice(0, 200);
-      const transactionUserIds = [...new Set(transactionRows.flatMap((x: any) => [String(x.user_id || ""), String(x.recipient_user_id || "")]).filter(Boolean))].slice(0, 100);
-      const directoryIds = [...new Set([...userIds, ...transactionUserIds])];
-      const [directoryProfiles] = await Promise.all([
-        directoryIds.length ? admin.from("profiles").select("id,first_name,last_name").in("id", directoryIds) : Promise.resolve({ data: [], error: null }),
-      ]);
-      if (directoryProfiles.error) return reply({ error: "Could not load transaction user names" }, 500);
-      const directory = new Map<string, any>((directoryProfiles.data || []).map((p: any) => [String(p.id), { first_name: p.first_name || "", last_name: p.last_name || "", email: "" }]));
-      await Promise.all(directoryIds.map(async (id: string) => {
-        try {
-          const { data, error } = await admin.auth.admin.getUserById(id);
-          if (!error && data?.user) {
-            const entry = directory.get(id) || { first_name: "", last_name: "", email: "" };
-            const meta = data.user.user_metadata || {};
-            entry.first_name ||= String(meta.first_name || meta.firstName || meta.given_name || "");
-            entry.last_name ||= String(meta.last_name || meta.lastName || meta.family_name || "");
-            entry.email = String(data.user.email || "");
-            directory.set(id, entry);
-          }
-        } catch { /* Keep the profile name; never expose the auth UUID in the UI. */ }
-      }));
-      const userDirectory = directoryIds.map((id: string) => ({ id, ...(directory.get(id) || { first_name: "", last_name: "", email: "" }) }));
-      const transactions = transactionRows.map((row: any) => ({ ...row, user: directory.get(String(row.user_id || "")) || { first_name: "", last_name: "", email: "" }, recipient: directory.get(String(row.recipient_user_id || "")) || { first_name: "", last_name: "", email: "" } }));
       return reply({
         success: true,
         checked_at: new Date().toISOString(),
@@ -207,8 +177,6 @@ Deno.serve(async (req: Request) => {
         actions_require_mfa: true,
         features: features.data || [],
         users: users.data || [],
-        user_directory: userDirectory,
-        transactions,
         balance_snapshots: balances.data || [],
         user_count: users.count || 0,
         active_count: activeUsers.count || 0,
@@ -234,6 +202,154 @@ Deno.serve(async (req: Request) => {
       return reply({ success: true, action, result: data });
     }
 
+    if (action === "admin_main_wallet_withdraw") {
+      const currency = String(body.currency || "").toUpperCase();
+      const senderAddress = String(Deno.env.get("BICYCLE_MAIN_WALLET_ADDRESS") || "").trim();
+      const destination = String(body.destination || "").trim();
+      const requestedAmount = body.amount === undefined || body.amount === null || body.amount === "" ? null : Number(body.amount);
+      const queryId = String(body.query_id || "");
+      const expectedMainWallet = "UQCt8Gf5ZHPmoXW_d6x0Ttt551tIg-KJZSx1CsSIIwE8NYUv";
+      const configuredMainWallet = String(Deno.env.get("BICYCLE_MAIN_WALLET_ADDRESS") || "").trim();
+      const normalizedExpected = normalizeTonAddress(expectedMainWallet);
+      const normalizedConfigured = normalizeTonAddress(configuredMainWallet);
+      const normalizedSender = normalizeTonAddress(senderAddress);
+      const normalizedDestination = normalizeTonAddress(destination);
+
+      if (!normalizedConfigured || normalizedConfigured !== normalizedExpected) {
+        return reply({ error: "Withdrawal blocked: configure BICYCLE_MAIN_WALLET_ADDRESS to the verified Bicycle main signer address." }, 503);
+      }
+      if (!normalizedSender || normalizedSender !== normalizedConfigured) {
+        return reply({ error: "Sender address does not match the verified Bicycle main-wallet signer." }, 403);
+      }
+      if (!normalizedDestination || !["TON", "USDT"].includes(currency)) {
+        return reply({ error: "Enter a valid receiver TON address and select TON or USDT." }, 400);
+      }
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(queryId)) {
+        return reply({ error: "Invalid withdrawal request ID." }, 400);
+      }
+      const decimals = currency === "TON" ? 9 : 6;
+      const scale = currency === "TON" ? 1_000_000_000 : 1_000_000;
+      if (requestedAmount === null || !Number.isFinite(requestedAmount) || requestedAmount <= 0 ||
+          Math.abs(requestedAmount * scale - Math.round(requestedAmount * scale)) > 0.0001) {
+        return reply({ error: "Enter a positive amount with up to " + decimals + " decimal places." }, 400);
+      }
+      const rawAmount = Math.round(requestedAmount * scale);
+      if (!Number.isSafeInteger(rawAmount)) return reply({ error: "Withdrawal amount is too large." }, 400);
+
+      const { data: prior, error: priorError } = await admin.from("bicycle_withdrawals")
+        .select("*").eq("user_id", authData.user.id).eq("query_id", queryId).maybeSingle();
+      if (priorError) return reply({ error: "Could not check withdrawal request history." }, 500);
+      if (prior) {
+        if (String(prior.flow_type || "") !== "admin_main_wallet" ||
+            String(prior.currency || "") !== currency ||
+            Number(prior.amount) !== requestedAmount ||
+            normalizeTonAddress(String(prior.destination || "")) !== normalizedDestination) {
+          return reply({ error: "This request ID already belongs to a different withdrawal." }, 409);
+        }
+        return reply({
+          success: prior.status === "completed",
+          status: prior.status,
+          query_id: queryId,
+          final_tx_hash: prior.final_tx_hash || null,
+          already_recorded: true,
+          retry_blocked: true,
+        }, 202);
+      }
+
+      const mainBalance = await liveWalletBalance(currency, senderAddress);
+      const reserve = 0.05;
+      if (requestedAmount > mainBalance || currency === "TON" && requestedAmount + reserve > mainBalance) {
+        return reply({
+          error: "Insufficient Bicycle main-wallet balance. TON network gas reserve is not included in the payout amount.",
+          currency, main_balance: mainBalance, network_reserve_ton: reserve, requested_amount: requestedAmount,
+        }, 400);
+      }
+      if (currency === "USDT") {
+        const tonBalance = await liveWalletBalance("TON", senderAddress);
+        if (tonBalance < reserve) return reply({ error: "Insufficient TON for network gas reserve.", ton_balance: tonBalance, required_reserve: reserve }, 400);
+      }
+
+      const { data: created, error: insertError } = await admin.from("bicycle_withdrawals").insert({
+        user_id: authData.user.id,
+        query_id: queryId,
+        currency,
+        amount: requestedAmount,
+        destination,
+        status: "processing",
+        flow_type: "admin_main_wallet",
+        fee_percent: 0,
+        fee_amount: 0,
+        fixed_fee_ton: 0,
+        sweep_amount: 0,
+      }).select().single();
+      if (insertError) return reply({ error: "Could not reserve this admin withdrawal request." }, 500);
+
+      try {
+        const bicycleAmount = requestedAmount.toFixed(decimals).replace(/\.?0+$/, "");
+        const payout = await bicycleFetch("/v1/admin/withdraw-from-main", {
+          query_id: queryId,
+          sender_address: senderAddress,
+          currency,
+          amount: bicycleAmount,
+          destination,
+          platform_fee: "0",
+          fee_amount: "0",
+          fixed_fee_ton: "0",
+        });
+        if (payout?.success !== true) throw new Error("Bicycle main-wallet payout endpoint did not confirm success.");
+        const hashCandidates = [
+          payout?.transaction_hash, payout?.tx_hash, payout?.hash,
+          payout?.transaction?.hash, payout?.result?.transaction_hash,
+        ];
+        let txHash: string | null = null;
+        for (const candidate of hashCandidates) {
+          const value = String(candidate || "").replace(/^0x/i, "").trim();
+          if (/^[0-9a-f]{64}$/i.test(value)) { txHash = value.toLowerCase(); break; }
+        }
+        const finalStatus = txHash ? "completed" : "broadcast_unknown";
+        const { error: updateError } = await admin.from("bicycle_withdrawals").update({
+          status: finalStatus, final_tx_hash: txHash, updated_at: new Date().toISOString(),
+        }).eq("id", created.id);
+        if (updateError) throw updateError;
+        try {
+          await logAction(admin, authData.user.id, "admin_main_wallet_withdrawal_" + finalStatus,
+            "wallet", senderAddress, {
+              sender_address: senderAddress, receiver_address: destination, currency,
+              amount: requestedAmount, query_id: queryId, platform_fee: 0,
+              fixed_fee_ton: 0, final_tx_hash: txHash,
+            });
+        } catch (auditError) {
+          console.error("Admin payout audit log failed after Bicycle response", auditError);
+        }
+        return reply({
+          success: Boolean(txHash), status: finalStatus, query_id: queryId,
+          sender_address: senderAddress, destination, currency, amount: requestedAmount,
+          platform_fee: 0, fixed_fee_ton: 0, final_tx_hash: txHash,
+          tonviewer_url: txHash ? "https://tonviewer.com/transaction/" + txHash : null,
+          admin_review_required: !txHash,
+        }, txHash ? 200 : 202);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const httpStatus = error instanceof BicycleHttpError ? error.status : null;
+        const finalStatus = httpStatus !== null && httpStatus >= 400 && httpStatus < 500 ? "failed" : "broadcast_unknown";
+        await admin.from("bicycle_withdrawals").update({ status: finalStatus, updated_at: new Date().toISOString() }).eq("id", created.id);
+        try {
+          await logAction(admin, authData.user.id, "admin_main_wallet_withdrawal_" + finalStatus,
+            "wallet", senderAddress, {
+              sender_address: senderAddress, receiver_address: destination, currency,
+              amount: requestedAmount, query_id: queryId, platform_fee: 0,
+              error: message, http_status: httpStatus,
+            });
+        } catch (auditError) {
+          console.error("Admin payout failure audit log failed", auditError);
+        }
+        return reply({
+          success: false, status: finalStatus, query_id: queryId, error: message,
+          retry_blocked: finalStatus === "broadcast_unknown",
+        }, finalStatus === "failed" ? 502 : 202);
+      }
+    }
+
     if (action === "sweep_user_balance") {
       const userAddress = String(body.address || "").trim();
       const currency = String(body.currency || "").toUpperCase();
@@ -242,7 +358,9 @@ Deno.serve(async (req: Request) => {
       const normalizedInputAddress = normalizeTonAddress(userAddress);
       if (!normalizedInputAddress || !["TON", "USDT"].includes(currency)) return reply({ error: "Enter a valid TON address with a correct friendly-address checksum, and select TON or USDT" }, 400);
       if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(queryId)) return reply({ error: "Invalid sweep request ID" }, 400);
-      if (requestedAmount !== null && (!Number.isFinite(requestedAmount) || requestedAmount <= 0 || (currency === "TON" && Math.abs(requestedAmount * 1_000_000_000 - Math.round(requestedAmount * 1_000_000_000)) > 0.0001))) return reply({ error: "Sweep amount must be positive and use valid precision" }, 400);
+      if (requestedAmount === null) return reply({ error: "Enter the exact amount to sweep; automatic full-balance sweep is disabled" }, 400);
+      const amountScale = currency === "TON" ? 1_000_000_000 : 1_000_000;
+      if (!Number.isFinite(requestedAmount) || requestedAmount <= 0 || Math.abs(requestedAmount * amountScale - Math.round(requestedAmount * amountScale)) > 0.0001) return reply({ error: "Sweep amount must be positive and use valid precision" }, 400);
 
       const { data: registeredWallets, error: walletError } = await admin.from("bicycle_deposit_addresses")
         .select("user_id,address,currency").eq("currency", currency);
@@ -265,13 +383,13 @@ Deno.serve(async (req: Request) => {
       const { data: lockedData, error: lockedError } = await admin.rpc("get_p2p_locked_balance", { p_user_id: userId, p_currency: currency });
       if (lockedError) return reply({ error: "Could not verify P2P-locked funds" }, 500);
       const lockedBalance = Math.max(0, Number(lockedData || 0));
-      const feeReserve = currency === "TON" ? 0.05 : 0;
+      const feeReserve = 0;
       const availableBalance = Math.max(0, liveBalance - lockedBalance - feeReserve);
-      const amount = requestedAmount === null ? availableBalance : requestedAmount;
+      const amount = requestedAmount;
       if (!Number.isFinite(amount) || amount <= 0) return reply({ error: "No available " + currency + " balance to sweep", live_balance: liveBalance, locked_balance: lockedBalance, fee_reserve: feeReserve }, 400);
       if (amount > availableBalance) return reply({ error: "Requested sweep exceeds available balance", live_balance: liveBalance, locked_balance: lockedBalance, fee_reserve: feeReserve, available_balance: availableBalance, requested_amount: amount }, 400);
       const { data: created, error: insertError } = await admin.from("bicycle_sweep_requests").insert({
-        user_id: userId, requested_by: authData.user.id, currency, amount, source_address: sourceAddress,
+        user_id: userId, requested_by: authData.user.id, request_origin: "admin", currency, amount, source_address: sourceAddress,
         destination_address: "BICYCLE_MAIN_WALLET", query_id: queryId, status: "processing",
       }).select().single();
       if (insertError) {
@@ -290,13 +408,39 @@ Deno.serve(async (req: Request) => {
           destination_address: destination, status: "submitted", bicycle_response: bicycle, error: null, updated_at: new Date().toISOString(),
         }).eq("id", created.id).select().single();
         if (updateError) throw updateError;
-        await logAction(admin, authData.user.id, "user_balance_swept_to_main", "user", userId, { currency, amount, query_id: queryId, status: "submitted" });
+        try {
+          await logAction(admin, authData.user.id, "user_balance_swept_to_main", "user", userId, { currency, amount, query_id: queryId, status: "submitted" });
+        } catch (auditError) {
+          console.error("Sweep was submitted but audit logging failed", auditError);
+        }
         return reply({ ...updated, live_balance: liveBalance, locked_balance: lockedBalance, available_balance: availableBalance }, 202);
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        await admin.from("bicycle_sweep_requests").update({ status: "unknown", error: message, updated_at: new Date().toISOString() }).eq("id", created.id);
-        await logAction(admin, authData.user.id, "user_balance_sweep_failed", "user", userId, { currency, amount, query_id: queryId, error: message });
-        return reply({ error: message, status: "failed", query_id: queryId }, 502);
+        const rawMessage = error instanceof Error ? error.message : String(error);
+        const httpStatus = error instanceof BicycleHttpError ? error.status : null;
+        const endpoint = error instanceof BicycleHttpError ? error.endpoint : null;
+        // A 404 means the running Bicycle processor has no registered sweep route.
+        // It is a definitive rejection: no sweep transaction was broadcast.
+        const routeMissing = httpStatus === 404;
+        const message = routeMissing
+          ? "Bicycle processor returned 404 for the sweep route. POST /v1/admin/sweep-to-main is not available on the running processor. No sweep was broadcast; deploy the Bicycle processor with this route before retrying."
+          : rawMessage;
+        // Definitive 4xx rejections did not execute a sweep; network/5xx outcomes remain uncertain.
+        const requestStatus = httpStatus !== null && httpStatus >= 400 && httpStatus < 500 ? "failed" : "unknown";
+        await admin.from("bicycle_sweep_requests").update({
+          status: requestStatus, error: message, updated_at: new Date().toISOString(),
+        }).eq("id", created.id);
+        try {
+          await logAction(admin, authData.user.id, "user_balance_sweep_failed", "user", userId, {
+            currency, amount, query_id: queryId, error: message, http_status: httpStatus, endpoint,
+            transaction_broadcast: routeMissing ? false : null,
+          });
+        } catch (auditError) {
+          console.error("Sweep failure audit log could not be saved", auditError);
+        }
+        return reply({
+          error: message, status: requestStatus, query_id: queryId, http_status: httpStatus,
+          endpoint, transaction_broadcast: routeMissing ? false : null,
+        }, routeMissing ? 503 : 502);
       }
     }
 

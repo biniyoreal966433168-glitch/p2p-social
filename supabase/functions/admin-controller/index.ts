@@ -49,8 +49,11 @@ function normalizeTonAddress(input: string): string | null {
     const binary = atob(encoded);
     if (binary.length !== 36) return null;
     const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
-    const tag = bytes[0] & 0x7f;
-    if (tag !== 0x11 && tag !== 0x51) return null;
+    // TON friendly addresses use 0x11 (bounceable) or 0x51 (non-bounceable).
+    // Normalize both to the same account hash while rejecting test-only addresses.
+    if ((bytes[0] & 0x80) !== 0) return null;
+    const tag = bytes[0] & 0x3f;
+    if (tag !== 0x11) return null;
     const workchain = bytes[1] > 127 ? bytes[1] - 256 : bytes[1];
     if (workchain !== -1 && workchain !== 0) return null;
     let crc = 0;
@@ -286,17 +289,18 @@ Deno.serve(async (req: Request) => {
 
       try {
         const bicycleAmount = requestedAmount.toFixed(decimals).replace(/\.?0+$/, "");
-        const payout = await bicycleFetch("/v1/admin/withdraw-from-main", {
+        const directEndpoint = currency === "TON"
+          ? "/v1/withdrawal/direct-ton"
+          : "/v1/withdrawal/direct-usdt";
+        const payout = await bicycleFetch(directEndpoint, {
           query_id: queryId,
-          sender_address: senderAddress,
           currency,
           amount: bicycleAmount,
           destination,
-          platform_fee: "0",
-          fee_amount: "0",
-          fixed_fee_ton: "0",
         });
-        if (payout?.success !== true) throw new Error("Bicycle main-wallet payout endpoint did not confirm success.");
+        if (payout?.submitted !== true) {
+          throw new Error("Bicycle direct-withdrawal endpoint did not confirm that the broadcast was submitted.");
+        }
         const hashCandidates = [
           payout?.transaction_hash, payout?.tx_hash, payout?.hash,
           payout?.transaction?.hash, payout?.result?.transaction_hash,
@@ -322,7 +326,9 @@ Deno.serve(async (req: Request) => {
           console.error("Admin payout audit log failed after Bicycle response", auditError);
         }
         return reply({
-          success: Boolean(txHash), status: finalStatus, query_id: queryId,
+          success: payout?.submitted === true, submitted: payout?.submitted === true,
+          confirmation_status: String(payout?.confirmation_status || (txHash ? "confirmed" : "pending")),
+          status: finalStatus, query_id: queryId,
           sender_address: senderAddress, destination, currency, amount: requestedAmount,
           platform_fee: 0, fixed_fee_ton: 0, final_tx_hash: txHash,
           tonviewer_url: txHash ? "https://tonviewer.com/transaction/" + txHash : null,

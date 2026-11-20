@@ -641,19 +641,7 @@ if(action==="withdrawal"){
  if(depositError)throw depositError;
  const sourceAddress=String(depositRow?.address||"").trim();
  if(!sourceAddress)return json({error:"No registered "+currency+" source address is available for the sweep"},404);
- const[live,lockedResult]=await Promise.all([
-  currency==="TON"?getTonBalance(sourceAddress):getUsdtBalance(sourceAddress),
-  supabase.rpc("get_p2p_locked_balance",{p_user_id:userId,p_currency:currency})
- ]);
- if(lockedResult.error)throw lockedResult.error;
- const locked=Math.max(0,Number(lockedResult.data||0));
- const feeReserve=currency==="TON"?0.05:0;
- const available=Math.max(0,Number(live.balance||0)-locked-feeReserve);
- if(numericAmount>available)return json({
-  error:"Insufficient available "+currency+" balance after P2P reservations and network reserve",
-  currency,blockchain_balance:live.balance,locked_balance:locked,fee_reserve:feeReserve,
-  available_balance:available,requested_amount:numericAmount
- },400);
+
 
  const sweepQueryId=queryId+":sweep";
  // Link the sweep ID on the withdrawal row immediately, before any external broadcast.
@@ -677,7 +665,33 @@ if(action==="withdrawal"){
    error:"Could not create the source-to-main sweep request: "+sweepInsertError.message},502);
  }
 
- let sweepResponse:any=null;
+
+ const runtime=(globalThis as any).EdgeRuntime;
+ if(!runtime||typeof runtime.waitUntil!=="function"){
+  await supabase.from("bicycle_withdrawals").update({status:"failed",error:"Background task runtime unavailable; no sweep submitted",updated_at:new Date().toISOString()}).eq("id",withdrawal.id);
+  await supabase.from("bicycle_sweep_requests").update({status:"failed",error:"Background task runtime unavailable; no sweep submitted",updated_at:new Date().toISOString()}).eq("id",sweepRow.id);
+  return json({success:false,status:"failed",query_id:queryId,error:"Background processing is unavailable. No sweep was submitted."},503);
+ }
+ const task=(async()=>{
+  let sweepAttempted=false;
+  try{
+   const[live,lockedResult]=await Promise.all([
+  currency==="TON"?getTonBalance(sourceAddress):getUsdtBalance(sourceAddress),
+  supabase.rpc("get_p2p_locked_balance",{p_user_id:userId,p_currency:currency})
+ ]);
+ if(lockedResult.error)throw lockedResult.error;
+ const locked=Math.max(0,Number(lockedResult.data||0));
+ const feeReserve=currency==="TON"?0.05:0;
+ const available=Math.max(0,Number(live.balance||0)-locked-feeReserve);
+ if(numericAmount>available){
+ const reason="Insufficient available "+currency+" balance after P2P reservations and network reserve";
+ await supabase.from("bicycle_withdrawals").update({status:"failed",error:reason,updated_at:new Date().toISOString()}).eq("id",withdrawal.id);
+ await supabase.from("bicycle_sweep_requests").update({status:"failed",error:reason,updated_at:new Date().toISOString()}).eq("id",sweepRow.id);
+ console.warn("[withdrawal] rejected before sweep",reason,{available,requested:numericAmount});
+ return;
+}
+   sweepAttempted=true;
+   let sweepResponse:any=null;
  let sweepHash:string|null=null;
  let sweepConfirmationUnknown=false;
  try{
@@ -784,8 +798,20 @@ if(action==="withdrawal"){
   sweep_confirmation_unknown:sweepConfirmationUnknown,
   confirmation:finalStatus==="completed"&&!sweepConfirmationUnknown?"provider_confirmed":"not_checked",
   message:sweepConfirmationUnknown?"Payout was submitted without waiting for sweep confirmation. Sweep outcome remains unknown; verify both transactions later.":undefined});
-}
+  }catch(error){
+   const message=error instanceof Error?error.message:String(error);
+   const status=sweepAttempted?"broadcast_unknown":"failed";
+   await supabase.from("bicycle_withdrawals").update({status,error:message,updated_at:new Date().toISOString()}).eq("id",withdrawal.id);
+   await supabase.from("bicycle_sweep_requests").update({status:sweepAttempted?"unknown":"failed",error:message,updated_at:new Date().toISOString()}).eq("id",sweepRow.id);
+   console.error("[withdrawal] background task error",status,message);
+  }
+ })();
+ runtime.waitUntil(task);
+ return json({success:true,accepted:true,status:"processing",query_id:queryId,withdrawal_id:withdrawal.id,
+  sweep_query_id:sweepQueryId,currency,amount:numericAmount,destination,
+  message:"Withdrawal accepted. Source-to-main sweep and main-wallet payout are processing in the background."},202);
 
+}
  return json({error:"Unsupported action"},400);
 
  }catch(error){

@@ -436,11 +436,28 @@ function showWithdrawalTxLinks(result){
  const hashUrl=result?.withdrawal_tonviewer_url||(result?.final_tx_hash?"https://tonviewer.com/transaction/"+result.final_tx_hash:null);
  const overlay=document.createElement("div");overlay.style.cssText="position:fixed;inset:0;z-index:10000;background:#0009;display:flex;align-items:center;justify-content:center;padding:20px";
  const panel=document.createElement("div");panel.style.cssText="width:100%;max-width:380px;background:#fff;border-radius:16px;padding:20px;box-shadow:0 12px 36px #0004;color:#172033";
- const title=document.createElement("h3");title.textContent=result?.status==="broadcast_unknown"?"Admin verification required":"Withdrawal submitted";title.style.cssText="margin:0 0 8px;font-size:17px";
- const note=document.createElement("p");note.textContent=result?.status==="broadcast_unknown"?"The main-wallet payout could not be fully verified. Do not submit it again. Ask P2P Social Admin to check the query ID and TONViewer before any retry.":"One direct payout transaction was sent from the Bicycle main wallet. Open TONViewer to inspect its on-chain status.";note.style.cssText="font-size:12px;line-height:1.5;color:#596579;margin-bottom:14px";panel.append(title,note);
+ const processing=result?.status==="processing";const title=document.createElement("h3");title.textContent=processing?"Withdrawal processing":result?.status==="broadcast_unknown"?"Admin verification required":"Withdrawal submitted";title.style.cssText="margin:0 0 8px;font-size:17px";
+ const note=document.createElement("p");note.textContent=processing?"Your request was accepted. Bicycle is processing the source-wallet to main-wallet sweep first, then the main-wallet payout. You can close this message; transaction history will update as processing continues.":result?.status==="broadcast_unknown"?"The sweep or payout outcome could not be verified. Do not submit it again. Ask P2P Social Admin to check the query ID and transaction status before any retry.":"Your withdrawal has been submitted. Open TONViewer to inspect its on-chain status.";note.style.cssText="font-size:12px;line-height:1.5;color:#596579;margin-bottom:14px";panel.append(title,note);
  if(hashUrl){const a=document.createElement("a");a.href=hashUrl;a.target="_blank";a.rel="noopener noreferrer";a.textContent="View main-wallet payout on TON Viewer";a.style.cssText="display:block;margin:10px 0;padding:12px;border-radius:10px;background:#edf7f5;color:#087f73;font-weight:700;font-size:13px;text-decoration:none";panel.append(a)}
- else{const missing=document.createElement("p");missing.textContent="No transaction hash was returned. Admin reconciliation is required before retrying.";missing.style.cssText="font-size:12px;color:#b42318";panel.append(missing)}
+ else{const missing=document.createElement("p");missing.textContent=result?.status==="processing"?"Transaction links will appear after Bicycle returns the sweep and payout hashes.":"No transaction hash was returned. Check the existing request before retrying.";missing.style.cssText="font-size:12px;color:"+(processing?"#596579":"#b42318");panel.append(missing)}
  const close=document.createElement("button");close.type="button";close.textContent="Close";close.style.cssText="width:100%;margin-top:12px;border:0;border-radius:10px;padding:12px;background:#087f73;color:#fff;font-weight:700";close.onclick=()=>overlay.remove();panel.append(close);overlay.append(panel);overlay.addEventListener("click",e=>{if(e.target===overlay)overlay.remove()});document.body.append(overlay);
+}
+async function watchWithdrawalStatus(queryId,user){
+ let attempts=0;
+ const check=async()=>{
+  attempts++;
+  try{
+   const state=await bicycle({action:"withdrawal_status",query_id:queryId},user);
+   const status=String(state?.local?.status||state?.status||"").toLowerCase();
+   if(status&&status!=="processing"&&status!=="pending"){
+    void Promise.allSettled([refreshWallet(),loadUSDTHistory()]);
+    return;
+   }
+  }catch(error){console.warn("Withdrawal status check failed:",error?.message||error)}
+  if(attempts<12)setTimeout(check,5000);
+  else void loadUSDTHistory();
+ };
+ setTimeout(check,2500);
 }
 async function submitWithdrawal(){
  if(!currentSession)return showLogin();
@@ -470,6 +487,12 @@ async function submitWithdrawal(){
   const result=await bicycle({action:"withdrawal",currency,amount:amountText,destination:address,query_id:queryId},user);
   closeWithdraw();
   if(!result)throw new Error("Bicycle returned an empty broadcast response.");
+  if(result.status==="processing"){
+   showWithdrawalTxLinks(result);
+   void Promise.allSettled([refreshWallet(),loadUSDTHistory()]);
+   void watchWithdrawalStatus(queryId,user);
+   return;
+  }
   if(result.status==="broadcast_partial"||result.status==="broadcast_unknown"){
    showWithdrawalTxLinks(result);
    void Promise.allSettled([refreshWallet(),loadUSDTHistory()]);

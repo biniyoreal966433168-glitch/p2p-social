@@ -136,12 +136,24 @@ Deno.serve(async (req: Request) => {
     ];
     const counts = await Promise.all(tables.map(async table => [table, await countRows(admin, table)] as const));
 
+    const recentTables = ["ton_transfers", "usdt_transfers", "p2p_trades", "bicycle_withdrawals"];
+    const recentResults = await Promise.all(recentTables.map(async (table) => {
+      const { data, error } = await admin.from(table).select("*").order("created_at", { ascending: false }).limit(100);
+      if (error) {
+        console.error("Admin recent records query failed:", table, error.message);
+        return [table, []] as const;
+      }
+      return [table, data || []] as const;
+    }));
+    const recent = Object.fromEntries(recentResults);
+
     return json({
       success: true,
       checked_at: checkedAt,
       edge_function: { name: "admin-bicycle-status", responding: true, authenticated: true },
       bicycle,
       metrics,
+      recent,
       database_tables: Object.fromEntries(counts),
       recommendations: [
         "Keep Bicycle API URL and token in Edge Function secrets; never expose them in browser code.",

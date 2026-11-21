@@ -472,6 +472,50 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    if (action === "set_wallet_policy") {
+      const fields = ["withdrawal_fee_percent","withdrawal_fixed_ton","withdrawal_fixed_usdt","transfer_fee_percent","transfer_fixed_ton","transfer_fixed_usdt","p2p_release_fee_percent","p2p_release_fixed_ton","p2p_release_fixed_usdt"];
+      const update: Record<string, unknown> = { updated_by: authData.user.id, updated_at: new Date().toISOString() };
+      for (const field of fields) { const value = Number(body[field] ?? 0); if (!Number.isFinite(value) || value < 0 || field.endsWith("_percent") && value > 100) return reply({ error: "Invalid fee value: " + field }, 400); update[field] = value; }
+      if (typeof body.withdrawal_suspended === "boolean") update.withdrawal_suspended = body.withdrawal_suspended;
+      const { data, error } = await admin.from("admin_wallet_policy").upsert({ id: true, ...update }).select().single();
+      if (error) return reply({ error: "Could not save global wallet policy" }, 400);
+      await logAction(admin, authData.user.id, "global_wallet_policy_updated", "wallet_policy", "all_users", update);
+      return reply({ success: true, action, result: data });
+    }
+    if (action === "set_user_wallet_policy") {
+      const userId = String(body.user_id || "");
+      if (!/^[0-9a-f-]{36}$/i.test(userId)) return reply({ error: "Invalid user ID" }, 400);
+      const fields = ["withdrawal_fee_percent","withdrawal_fixed_ton","withdrawal_fixed_usdt","transfer_fee_percent","transfer_fixed_ton","transfer_fixed_usdt","p2p_release_fee_percent","p2p_release_fixed_ton","p2p_release_fixed_usdt"];
+      const update: Record<string, unknown> = { user_id: userId, updated_by: authData.user.id, updated_at: new Date().toISOString() };
+      for (const field of fields) { if (body[field] === null || body[field] === "") { update[field] = null; continue; } const value = Number(body[field]); if (!Number.isFinite(value) || value < 0 || field.endsWith("_percent") && value > 100) return reply({ error: "Invalid fee value: " + field }, 400); update[field] = value; }
+      if (body.withdrawal_suspended === null || typeof body.withdrawal_suspended === "boolean") update.withdrawal_suspended = body.withdrawal_suspended;
+      const { data, error } = await admin.from("admin_user_wallet_policy").upsert(update).select().single();
+      if (error) return reply({ error: "Could not save user wallet policy" }, 400);
+      await logAction(admin, authData.user.id, "user_wallet_policy_updated", "user", userId, update);
+      return reply({ success: true, action, result: data });
+    }
+    if (action === "lock_withdrawal_amount") {
+      const userId = String(body.user_id || ""), currency = String(body.currency || "").toUpperCase(), amount = Number(body.amount);
+      if (!/^[0-9a-f-]{36}$/i.test(userId) || !["TON","USDT"].includes(currency) || !Number.isFinite(amount) || amount <= 0) return reply({ error: "Invalid user, asset or amount" }, 400);
+      const { data, error } = await admin.from("admin_wallet_amount_locks").insert({ user_id: userId, currency, amount, remaining_amount: amount, reason: String(body.reason || "Admin withdrawal hold").slice(0,300), status: "locked", created_by: authData.user.id }).select().single();
+      if (error) return reply({ error: "Could not create amount lock" }, 400);
+      await logAction(admin, authData.user.id, "withdrawal_amount_locked", "user", userId, { lock_id: data.id, currency, amount });
+      return reply({ success: true, action, result: data });
+    }
+    if (action === "unlock_withdrawal_amount") {
+      const userId = String(body.user_id || ""), currency = String(body.currency || "").toUpperCase();
+      if (!/^[0-9a-f-]{36}$/i.test(userId) || !["TON","USDT"].includes(currency)) return reply({ error: "Invalid user or asset" }, 400);
+      const { data: locks, error } = await admin.from("admin_wallet_amount_locks").select("*").eq("user_id", userId).eq("currency", currency).in("status", ["locked","partially_unlocked"]).order("created_at", { ascending: true });
+      if (error) return reply({ error: "Could not load active locks" }, 500);
+      let amount = body.amount === undefined || body.amount === null || body.amount === "" ? (locks || []).reduce((n: number, x: any) => n + Number(x.remaining_amount || 0), 0) : Number(body.amount);
+      if (!Number.isFinite(amount) || amount <= 0) return reply({ error: "No locked amount to unlock" }, 400);
+      const requested = amount, changed: string[] = [];
+      for (const lock of locks || []) { if (amount <= 0) break; const current = Number(lock.remaining_amount || 0), release = Math.min(current, amount), next = current - release; const { error: updateError } = await admin.from("admin_wallet_amount_locks").update({ remaining_amount: next, status: next === 0 ? "unlocked" : "partially_unlocked", unlocked_by: authData.user.id, updated_at: new Date().toISOString() }).eq("id", lock.id); if (updateError) return reply({ error: "Partial unlock occurred; refresh before retrying" }, 500); amount -= release; changed.push(String(lock.id)); }
+      const unlocked = requested - amount;
+      await logAction(admin, authData.user.id, "withdrawal_amount_unlocked", "user", userId, { currency, unlocked_amount: unlocked, lock_ids: changed });
+      return reply({ success: true, action, currency, unlocked_amount: unlocked, remaining_to_unlock: amount });
+    }
+
     if (action === "set_verification") {
       const userId = String(body.user_id || "");
       const status = String(body.status || "");

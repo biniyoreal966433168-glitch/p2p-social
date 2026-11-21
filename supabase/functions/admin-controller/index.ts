@@ -194,9 +194,19 @@ Deno.serve(async (req: Request) => {
       } else {
         mainWalletBalance.status = configuredMainWallet ? "signer_mismatch" : "signer_not_configured";
       }
+      const [walletPolicyResult, userWalletPoliciesResult, amountLocksResult] = await Promise.all([
+        admin.from("admin_wallet_policy").select("*").eq("id", true).maybeSingle(),
+        admin.from("admin_user_wallet_policy").select("*").order("updated_at", { ascending: false }).limit(1000),
+        admin.from("admin_wallet_amount_locks").select("*").order("created_at", { ascending: false }).limit(1000),
+      ]);
+      const policyFailure = [walletPolicyResult, userWalletPoliciesResult, amountLocksResult].find(x => x.error);
+      if (policyFailure) return reply({ error: "Could not load wallet fee and lock controls" }, 500);
       return reply({
         success: true,
         checked_at: new Date().toISOString(),
+        wallet_policy: walletPolicyResult.data || {},
+        user_wallet_policies: userWalletPoliciesResult.data || [],
+        wallet_amount_locks: amountLocksResult.data || [],
         main_wallet_balance: mainWalletBalance,
         current_aal: aal,
         actions_require_mfa: true,

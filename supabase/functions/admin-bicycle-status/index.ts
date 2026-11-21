@@ -136,7 +136,7 @@ Deno.serve(async (req: Request) => {
     ];
     const counts = await Promise.all(tables.map(async table => [table, await countRows(admin, table)] as const));
 
-    const recentTables = ["ton_transfers", "usdt_transfers", "p2p_trades", "p2p_orders", "bicycle_withdrawals", "wallet_balance_ledger"];
+    const recentTables = ["ton_transfers", "usdt_transfers", "p2p_trades", "p2p_orders", "bicycle_withdrawals", "bicycle_sweep_requests", "bicycle_balance_snapshots", "bicycle_deposit_addresses", "wallet_balance_ledger"];
     const recentResults = await Promise.all(recentTables.map(async (table) => {
       const { data, error } = await admin.from(table).select("*").order("created_at", { ascending: false }).limit(100);
       if (error) {

@@ -138,7 +138,9 @@ Deno.serve(async (req: Request) => {
 
     const recentTables = ["ton_transfers", "usdt_transfers", "p2p_trades", "p2p_orders", "bicycle_withdrawals", "bicycle_sweep_requests", "bicycle_balance_snapshots", "bicycle_deposit_addresses", "wallet_balance_ledger"];
     const recentResults = await Promise.all(recentTables.map(async (table) => {
-      const { data, error } = await admin.from(table).select("*").order("created_at", { ascending: false }).limit(100);
+      const orderColumn = table === "bicycle_balance_snapshots" ? "checked_at" : "created_at";
+      const rowLimit = table === "bicycle_balance_snapshots" || table === "bicycle_deposit_addresses" ? 1000 : 100;
+      const { data, error } = await admin.from(table).select("*").order(orderColumn, { ascending: false }).limit(rowLimit);
       if (error) {
         console.error("Admin recent records query failed:", table, error.message);
         return [table, []] as const;

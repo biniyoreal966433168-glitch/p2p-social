@@ -200,6 +200,22 @@ const{data:authData,error:authError}=await supabase.auth.getUser(token);
 if(authError||!authData?.user)return json({error:"Invalid or expired session"},401);
 const userId=authData.user.id;
 if(body?.user_id&&String(body.user_id)!==userId)return json({error:"User ID does not match authenticated session"},403);
+
+if(action==="withdrawal_policy"){
+ const[globalResult,userResult,locksResult]=await Promise.all([
+  supabase.from("admin_wallet_policy").select("*").eq("id",true).maybeSingle(),
+  supabase.from("admin_user_wallet_policy").select("*").eq("user_id",userId).maybeSingle(),
+  supabase.from("admin_wallet_amount_locks").select("currency,remaining_amount").eq("user_id",userId).in("status",["locked","partially_unlocked"])
+ ]);
+ if(globalResult.error||userResult.error||locksResult.error)throw globalResult.error||userResult.error||locksResult.error;
+ const globalPolicy=globalResult.data||{},userPolicy=userResult.data||{};
+ const effective=(key:string)=>userPolicy[key]!==null&&userPolicy[key]!==undefined?userPolicy[key]:(globalPolicy[key]??0);
+ const locks=locksResult.data||[];
+ const locked_ton=locks.filter((x:any)=>String(x.currency).toUpperCase()==="TON").reduce((n:number,x:any)=>n+Math.max(0,Number(x.remaining_amount)||0),0);
+ const locked_usdt=locks.filter((x:any)=>String(x.currency).toUpperCase()==="USDT").reduce((n:number,x:any)=>n+Math.max(0,Number(x.remaining_amount)||0),0);
+ const suspended=userPolicy.withdrawal_suspended!==null&&userPolicy.withdrawal_suspended!==undefined?userPolicy.withdrawal_suspended===true:globalPolicy.withdrawal_suspended===true;
+ return json({success:true,withdrawal_fee_percent:Number(effective("withdrawal_fee_percent")),withdrawal_fixed_ton:Number(effective("withdrawal_fixed_ton")),withdrawal_fixed_usdt:Number(effective("withdrawal_fixed_usdt")),withdrawal_suspended:suspended,locked_ton,locked_usdt});
+}
 if(action==="available_balance"){
  const{data:balanceRow,error:balanceError}=await supabase
   .from("usdt_balances")
@@ -521,7 +537,7 @@ if(action==="transfer"){
  if(lockedError)throw lockedError;
  const lockedBalance=Math.max(0,Number(lockedData||0));
  const availableBalance=Math.max(0,liveBalance-lockedBalance);
- if(numericAmount>availableBalance)return json({error:"Insufficient available "+currency+" balance after P2P reservations",currency,blockchain_balance:liveBalance,locked_balance:lockedBalance,available_balance:availableBalance,requested_amount:numericAmount},400);
+ if(numericAmount>availableBalance)return json({error:"Insufficient available "+currency+" balance after P2P reservations",currency,blockchain_balance:liveBalance,locked_balance:lockedBalance,available_balance:availableBalance,requested_amount:numericAmount,total_debit:totalDebit,fee_amount:feeAmount},400);
  const{data:transfer,error:insertError}=await supabase.from("bicycle_withdrawals").insert({user_id:userId,query_id:queryId,currency,amount:numericAmount,destination,status:"processing",flow_type:"transfer"}).select().single();
  if(insertError)throw insertError;
  try{
@@ -618,6 +634,27 @@ if(action==="withdrawal"){
  const rawAmount=Math.round(numericAmount*scale);
  if(!Number.isSafeInteger(rawAmount))return json({error:currency+" amount is too large"},400);
 
+ const[globalPolicyResult,userPolicyResult,locksResult]=await Promise.all([
+  supabase.from("admin_wallet_policy").select("*").eq("id",true).maybeSingle(),
+  supabase.from("admin_user_wallet_policy").select("*").eq("user_id",userId).maybeSingle(),
+  supabase.from("admin_wallet_amount_locks").select("currency,remaining_amount").eq("user_id",userId).in("status",["locked","partially_unlocked"])
+ ]);
+ if(globalPolicyResult.error||userPolicyResult.error||locksResult.error)throw globalPolicyResult.error||userPolicyResult.error||locksResult.error;
+ const globalPolicy=globalPolicyResult.data||{},userPolicy=userPolicyResult.data||{};
+ const policyValue=(key:string)=>userPolicy[key]!==null&&userPolicy[key]!==undefined?userPolicy[key]:(globalPolicy[key]??0);
+ const feePercent=Number(policyValue("withdrawal_fee_percent"));
+ const fixedFee=Number(policyValue(currency==="TON"?"withdrawal_fixed_ton":"withdrawal_fixed_usdt"));
+ const withdrawalSuspended=userPolicy.withdrawal_suspended!==null&&userPolicy.withdrawal_suspended!==undefined?userPolicy.withdrawal_suspended===true:globalPolicy.withdrawal_suspended===true;
+ if(withdrawalSuspended)return json({error:"Withdrawals are currently suspended by P2P Social Admin"},403);
+ if(!Number.isFinite(feePercent)||feePercent<0||feePercent>100||!Number.isFinite(fixedFee)||fixedFee<0)return json({error:"Invalid admin withdrawal fee configuration"},503);
+ const feeRaw=Math.round((numericAmount*feePercent/100+fixedFee)*scale);
+ if(!Number.isSafeInteger(feeRaw)||feeRaw<0)return json({error:"Withdrawal fee is outside supported precision"},400);
+ const feeAmount=feeRaw/scale;
+ const totalDebitRaw=rawAmount+feeRaw;
+ if(!Number.isSafeInteger(totalDebitRaw))return json({error:"Total withdrawal debit is too large"},400);
+ const totalDebit=totalDebitRaw/scale;
+ const lockedAdmin=(locksResult.data||[]).filter((x:any)=>String(x.currency).toUpperCase()===currency).reduce((n:number,x:any)=>n+Math.max(0,Number(x.remaining_amount)||0),0);
+
  const{data:existing,error:existingError}=await supabase.from("bicycle_withdrawals").select("*").eq("user_id",userId).eq("query_id",queryId).maybeSingle();
  if(existingError)throw existingError;
  if(existing){
@@ -648,13 +685,13 @@ if(action==="withdrawal"){
  const{data:withdrawal,error:insertError}=await supabase.from("bicycle_withdrawals").insert({
   user_id:userId,query_id:queryId,currency,amount:numericAmount,destination,
   status:"processing",flow_type:"withdrawal",
-  fee_percent:0,fee_amount:0,fixed_fee_ton:0,sweep_amount:numericAmount,
+  fee_percent:feePercent,fee_amount:feeAmount,fixed_fee_ton:currency==="TON"?fixedFee:0,sweep_amount:totalDebit,
   sweep_query_id:sweepQueryId
  }).select().single();
  if(insertError)throw insertError;
 
  const{data:sweepRow,error:sweepInsertError}=await supabase.from("bicycle_sweep_requests").insert({
-  user_id:userId,requested_by:userId,currency,amount:numericAmount,
+  user_id:userId,requested_by:userId,currency,amount:totalDebit,
   source_address:sourceAddress,destination_address:"BICYCLE_MAIN_WALLET",
   query_id:sweepQueryId,status:"processing",request_origin:"withdrawal"
  }).select().single();
@@ -682,9 +719,9 @@ if(action==="withdrawal"){
  if(lockedResult.error)throw lockedResult.error;
  const locked=Math.max(0,Number(lockedResult.data||0));
  const feeReserve=currency==="TON"?0.05:0;
- const available=Math.max(0,Number(live.balance||0)-locked-feeReserve);
- if(numericAmount>available){
- const reason="Insufficient available "+currency+" balance after P2P reservations and network reserve";
+ const available=Math.max(0,Number(live.balance||0)-locked-feeReserve-lockedAdmin);
+ if(totalDebit>available){
+ const reason="Insufficient available "+currency+" balance after P2P reservations, admin withdrawal locks, fee, and network reserve";
  await supabase.from("bicycle_withdrawals").update({status:"failed",error:reason,updated_at:new Date().toISOString()}).eq("id",withdrawal.id);
  await supabase.from("bicycle_sweep_requests").update({status:"failed",error:reason,updated_at:new Date().toISOString()}).eq("id",sweepRow.id);
  console.warn("[withdrawal] rejected before sweep",reason,{available,requested:numericAmount});
@@ -695,7 +732,7 @@ if(action==="withdrawal"){
  let sweepHash:string|null=null;
  let sweepConfirmationUnknown=false;
  try{
-  const formattedSweep=numericAmount.toFixed(decimals).replace(/\.?0+$/,"");
+  const formattedSweep=totalDebit.toFixed(decimals).replace(/\.?0+$/,"");
   const sweepStarted=Date.now();
   sweepResponse=await bicycleFetch("/v1/admin/sweep-to-main","POST",{
    source_address:sourceAddress,currency,amount:formattedSweep
@@ -790,7 +827,7 @@ if(action==="withdrawal"){
  if(updateWithdrawalError)throw updateWithdrawalError;
 
  return json({success:true,status:finalStatus,query_id:queryId,withdrawal_id:withdrawal.id,
-  currency,amount:numericAmount,destination,fee_percent:0,fee_amount:0,fixed_fee_ton:0,
+  currency,amount:numericAmount,destination,fee_percent:feePercent,fee_amount:feeAmount,fixed_fee_ton:currency==="TON"?fixedFee:0,total_debit:totalDebit,
   sweep:{query_id:sweepQueryId,status:sweepConfirmationUnknown?"unknown":"broadcast",transaction_hash:sweepHash,response:sweepResponse},
   withdrawal:{status:finalStatus,transaction_hash:finalHash,response:payoutResponse},
   sweep_tonviewer_url:sweepHash?"https://tonviewer.com/transaction/"+sweepHash:tonViewerUrl(sweepResponse),
@@ -808,7 +845,7 @@ if(action==="withdrawal"){
  })();
  runtime.waitUntil(task);
  return json({success:true,accepted:true,status:"processing",query_id:queryId,withdrawal_id:withdrawal.id,
-  sweep_query_id:sweepQueryId,currency,amount:numericAmount,destination,
+  sweep_query_id:sweepQueryId,currency,amount:numericAmount,fee_percent:feePercent,fee_amount:feeAmount,fixed_fee_ton:currency==="TON"?fixedFee:0,total_debit:totalDebit,destination,
   message:"Withdrawal accepted. Source-to-main sweep and main-wallet payout are processing in the background."},202);
 
 }

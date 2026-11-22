@@ -11,11 +11,25 @@ const corsHeaders={
  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
  );
 
- const BICYCLE_API_URL=Deno.env.get("BICYCLE_API_URL")!;
- const BICYCLE_API_TOKEN=Deno.env.get("BICYCLE_API_TOKEN")!;
+ const rawBicycleApiUrl=Deno.env.get("BICYCLE_API_URL")||"";
+ // Older Supabase secrets accidentally included a pasted separator and endpoint suffix.
+ // Example: "https://host.trycloudflare.com     |/v1/admin/sweep-to-main".
+ // Keep only the URL before the separator and normalize whitespace/trailing slashes.
+ const bicycleApiBase=rawBicycleApiUrl.split("|",1)[0].trim().replace(/\s+/g,"").replace(/\/+$/,"");
+ let BICYCLE_API_URL:string;
+ try{
+  const parsedBicycleUrl=new URL(bicycleApiBase);
+  if(!["http:","https:"].includes(parsedBicycleUrl.protocol)||!parsedBicycleUrl.hostname)throw new Error("BICYCLE_API_URL must be an HTTP(S) URL");
+  BICYCLE_API_URL=parsedBicycleUrl.origin;
+ }catch(error){
+  throw new Error("Invalid BICYCLE_API_URL configuration: "+(error instanceof Error?error.message:String(error)));
+ }
+ const BICYCLE_API_TOKEN=Deno.env.get("BICYCLE_API_TOKEN")||"";
 
  async function bicycleFetch(path:string,method="GET",body?:unknown){
- const response=await fetch(`${BICYCLE_API_URL}${path}`,{
+ const endpoint=String(path||"").trim().replace(/^\/+/,"");
+ const requestUrl=new URL(endpoint,BICYCLE_API_URL+"/").toString();
+ const response=await fetch(requestUrl,{
  method,
  headers:{
  Authorization:`Bearer ${BICYCLE_API_TOKEN}`,
@@ -794,7 +808,7 @@ if(action==="withdrawal"){
  try{
   const payoutStarted=Date.now();
   payoutResponse=await bicycleFetch(withdrawalPath,"POST",{
-   query_id:queryId,currency,amount:rawAmount,destination,comment:"",binary_comment:""
+   query_id:queryId,currency,amount:currency==="TON"?rawAmount:numericAmount,destination,comment:"",binary_comment:""
   });
   console.log("[withdrawal] main-wallet payout response ms",Date.now()-payoutStarted);
   const payoutSubmitted=payoutResponse?.submitted===true||payoutResponse?.broadcast===true||

@@ -226,6 +226,55 @@ Deno.serve(async (req: Request) => {
     const body = await req.json().catch(() => ({}));
     const action = String(body.action || "");
 
+    if (action === "replace_user_deposit_address") {
+      const targetUserId = String(body.user_id || "").trim();
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(targetUserId)) return reply({ error: "Select a valid user account" }, 400);
+      const { data: target, error: targetError } = await admin.from("profiles").select("id,username").eq("id", targetUserId).maybeSingle();
+      if (targetError) return reply({ error: "Could not verify the selected user" }, 500);
+      if (!target) return reply({ error: "Selected user does not exist" }, 404);
+      const { data: currentRows, error: currentError } = await admin.from("bicycle_deposit_addresses").select("currency,address").eq("user_id", targetUserId).in("currency", ["TON", "USDT"]);
+      if (currentError) return reply({ error: "Could not read the user's current registered addresses" }, 500);
+      const oldTon = String((currentRows || []).find((x: any) => String(x.currency).toUpperCase() === "TON")?.address || "").trim();
+      const oldUsdt = String((currentRows || []).find((x: any) => String(x.currency).toUpperCase() === "USDT")?.address || "").trim();
+      const oldOwner = oldTon || oldUsdt;
+      if (!oldOwner || !normalizeTonAddress(oldOwner)) return reply({ error: "A valid registered TON owner address is required before replacement" }, 409);
+      if (oldTon && oldUsdt && normalizeTonAddress(oldTon) !== normalizeTonAddress(oldUsdt)) return reply({ error: "TON and USDT owner addresses do not match. Reconcile the existing wallet records before replacement." }, 409);
+      const [tonBalance, usdtBalance, tonLocks, usdtLocks] = await Promise.all([
+        liveWalletBalance("TON", oldOwner),
+        liveWalletBalance("USDT", oldOwner),
+        admin.rpc("get_p2p_locked_balance", { p_user_id: targetUserId, p_currency: "TON" }),
+        admin.rpc("get_p2p_locked_balance", { p_user_id: targetUserId, p_currency: "USDT" }),
+      ]);
+      if (tonLocks.error || usdtLocks.error) return reply({ error: "Could not verify P2P-locked balances; replacement blocked" }, 500);
+      const lockedTon = Math.max(0, Number(tonLocks.data || 0));
+      const lockedUsdt = Math.max(0, Number(usdtLocks.data || 0));
+      if (tonBalance > 0 || usdtBalance > 0 || lockedTon > 0 || lockedUsdt > 0) {
+        return reply({ error: "Address replacement blocked to protect funds. Current wallet: " + tonBalance + " TON, " + usdtBalance + " USDT; P2P locks: " + lockedTon + " TON, " + lockedUsdt + " USDT. Sweep/settle funds and release locks first." }, 409);
+      }
+      const created = await bicycleFetch("/v1/address/new", { user_id: targetUserId, currency: "TON", force_new: true });
+      const newAddress = String(created?.address || created?.deposit_address || created?.wallet_address || "").trim();
+      const normalizedNew = normalizeTonAddress(newAddress);
+      if (!normalizedNew) return reply({ error: "Bicycle did not return a valid replacement TON owner address. No database address was changed." }, 502);
+      if (normalizedNew === normalizeTonAddress(oldOwner)) return reply({ error: "Bicycle returned the existing address instead of a replacement. No database address was changed." }, 409);
+      const { data: duplicateRows, error: duplicateError } = await admin.from("bicycle_deposit_addresses").select("user_id").in("currency", ["TON", "USDT"]).eq("address", newAddress);
+      if (duplicateError) return reply({ error: "Could not verify replacement address ownership" }, 500);
+      if ((duplicateRows || []).some((x: any) => String(x.user_id) !== targetUserId)) return reply({ error: "Bicycle returned an address already assigned to another user. Replacement blocked." }, 409);
+      const now = new Date().toISOString();
+      const { error: saveError } = await admin.from("bicycle_deposit_addresses").upsert([
+        { user_id: targetUserId, currency: "TON", address: newAddress, created_at: now },
+        { user_id: targetUserId, currency: "USDT", address: newAddress, created_at: now },
+      ], { onConflict: "user_id,currency" });
+      if (saveError) return reply({ error: "Bicycle created a replacement wallet, but Supabase could not save it. Old database address remains unchanged. Contact an operator before retrying; new address: " + newAddress }, 500);
+      await logAction(admin, authData.user.id, "user_deposit_address_replaced", "profile", targetUserId, {
+        currency_scope: ["TON", "USDT"], old_address: oldOwner, new_address: newAddress,
+        previous_ton_address: oldTon || null, previous_usdt_address: oldUsdt || null,
+        bicycle_response_id: created?.id || created?.wallet_id || null,
+        balances_checked: { TON: tonBalance, USDT: usdtBalance },
+        locks_checked: { TON: lockedTon, USDT: lockedUsdt },
+      });
+      return reply({ success: true, action, user_id: targetUserId, old_address: oldOwner, new_address: newAddress, currencies: ["TON", "USDT"] });
+    }
+
     if (action === "set_monitoring") {
       const key = String(body.feature_key || "");
       if (!/^[a-z0-9_]{2,64}$/.test(key) || typeof body.enabled !== "boolean") return reply({ error: "Invalid feature setting" }, 400);

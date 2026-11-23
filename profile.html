@@ -327,7 +327,7 @@ body.night-mode #settingsModal .settings-item.logout .settings-item-icon{backgro
 <nav class="bottom-nav"><div class="nav-item" onclick="goHome()"><span>🏠</span>Home</div><div class="nav-item" onclick="openBuy()"><span>Buy</span></div><div class="nav-item" onclick="openSell()"><span>Sell</span></div><div class="nav-item" onclick="openMessages()"><span>Messages</div><div class="nav-item active" onclick="openProfile()"><span>👤</span>Profile</div></nav>
 <script>
 const S="https://mbsvuwrgigqfporxwpfr.supabase.co",K="sb_publishable_iclqtQHDwK5IEve0cNjrgQ_CdUDCuBa",supabaseClient=supabase.createClient(S,K),B=S+"/functions/v1/bicycle-api",P2P=S+"/functions/v1/p2p-orders",F=.01;
-let currentSession=null,currentProfile=null,currentUSDTBalance=0,currentLockedUSDT=0,usdtAccountBalanceLoaded=false,currentTONBalance=0,currentLockedTON=0,orderType="buy",orderCurrency="USDT",transferCurrency="USDT",withdrawCurrency="USDT",withdrawalPolicy=null,withdrawalPolicyLoaded=false,balanceVisible=true,permanentUsername="",balanceChannel=null,currentHistoryType="all",showAllHistory=false,showAllOrders=false,activeP2POnly=false,myOrdersFilter="all",currentBankTransferDetails=null,currentPaymentCountry=null,backendCurrencies=[],currentDepositAddress="",currentDepositCurrency="TON",currentDepositAddresses={},bicycleUSDTBalance=0,bicycleTONBalance=0,adminTonWalletBalance=null,adminUsdtWalletBalance=null,adminUsdtWalletBalance2=null;const ADMIN_USDT_ADDRESS="UQAShr7BUomDblYvGCTXYqZaxwXt0IA7c8fFJy2Fc31v6NfO",ADMIN_USDT_MASTER="EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs";
+let currentSession=null,currentProfile=null,currentUSDTBalance=0,currentLockedUSDT=0,usdtAccountBalanceLoaded=false,currentTONBalance=0,tonAccountBalanceLoaded=false,currentLockedTON=0,orderType="buy",orderCurrency="USDT",transferCurrency="USDT",withdrawCurrency="USDT",withdrawalPolicy=null,withdrawalPolicyLoaded=false,balanceVisible=true,permanentUsername="",balanceChannel=null,currentHistoryType="all",showAllHistory=false,showAllOrders=false,activeP2POnly=false,myOrdersFilter="all",currentBankTransferDetails=null,currentPaymentCountry=null,backendCurrencies=[],currentDepositAddress="",currentDepositCurrency="TON",currentDepositAddresses={},bicycleUSDTBalance=0,bicycleTONBalance=0,adminTonWalletBalance=null,adminUsdtWalletBalance=null,adminUsdtWalletBalance2=null;const ADMIN_USDT_ADDRESS="UQAShr7BUomDblYvGCTXYqZaxwXt0IA7c8fFJy2Fc31v6NfO",ADMIN_USDT_MASTER="EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs";
 const $=id=>document.getElementById(id),goHome=()=>location.href="index.html",openBuy=()=>location.href="buy.html",openSell=()=>location.href="sell.html",openMessages=()=>location.href="message.html",openProfile=()=>location.href="profile.html",num=n=>Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:9}),esc=v=>{let d=document.createElement("div");d.textContent=String(v??"");return d.innerHTML};
 async function p2pOrders(body){let{data,error}=await supabaseClient.auth.getSession();let token=data?.session?.access_token||currentSession?.access_token;if(error||!token)throw Error("Authentication required.");let r=await fetch(P2P,{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token,apikey:K},body:JSON.stringify({...body,user_id:currentSession?.user?.id})}),raw=await r.text(),x={};try{x=raw?JSON.parse(raw):{}}catch{}if(!r.ok||x?.error)throw Error(x?.error||x?.message||raw||"P2P request failed.");return x}
 function showLogin(){alert("Please login first.");location.href="login.html"}
@@ -344,31 +344,47 @@ async function loadAdminUsdtWalletBalance2(){const card=$("adminUsdtWalletCard2"
 async function loadBlockchainBalances(){
  const wallet=$("walletCard");
  const{user,error}=await authUser();
- if(error||!user){if(wallet)wallet.classList.add("bicycle-not-loaded");return}
- let registrationError=null;
- try{
-  const registration=await bicycle({action:"address",currency:"USDT"},user);
-  const sharedAddress=bicycleAddress(registration);
-  if(!sharedAddress||String(registration?.owner_address||"").trim()!==sharedAddress||registration?.usdt_registered!==true)throw new Error("Bicycle did not confirm the shared TON/USDT owner address and USDT Jetton registration.");
-  currentDepositAddresses.TON=sharedAddress;
-  currentDepositAddresses.USDT=sharedAddress;
- }catch(e){registrationError=e;console.error("Bicycle shared TON/USDT registration failed:",e)}
- const[u,t]=await Promise.allSettled(registrationError
-  ?[Promise.reject(registrationError),Promise.reject(registrationError)]
-  :[bicycle({action:"balance",currency:"USDT"},user),bicycle({action:"balance",currency:"TON"},user)]);
- if(u.status==="fulfilled"){
-  const responseAddress=bicycleAddress(u.value);
-  const total=Number(u.value?.balance_usdt??u.value?.usdt_balance??u.value?.balance??0);
-  if(responseAddress===currentDepositAddresses.USDT&&Number.isFinite(total)&&total>=0){currentUSDTBalance=total;bicycleUSDTBalance=total;usdtAccountBalanceLoaded=true}
-  else{usdtAccountBalanceLoaded=false;console.error("USDT balance/address verification failed:",u.value)}
- }else{usdtAccountBalanceLoaded=false;console.error("USDT address balance could not be loaded:",u.reason)}
+ if(error||!user){tonAccountBalanceLoaded=false;usdtAccountBalanceLoaded=false;if(wallet)wallet.classList.add("bicycle-not-loaded");renderBalances();return}
+ const[t,u]=await Promise.allSettled([
+  bicycle({action:"balance",currency:"TON"},user),
+  bicycle({action:"balance",currency:"USDT"},user)
+ ]);
  if(t.status==="fulfilled"){
   const responseAddress=bicycleAddress(t.value);
   const amount=Number(t.value?.balance_ton??t.value?.ton_balance??t.value?.balance??0);
-  if(responseAddress===currentDepositAddresses.TON&&Number.isFinite(amount)&&amount>=0){currentTONBalance=amount;bicycleTONBalance=amount}
-  else console.error("TON balance/address verification failed:",t.value);
- }else console.error("TON address balance could not be loaded:",t.reason);
- if(wallet)wallet.classList.toggle("bicycle-not-loaded",t.status!=="fulfilled"||!usdtAccountBalanceLoaded);
+  if(responseAddress&&Number.isFinite(amount)&&amount>=0){
+   currentDepositAddresses.TON=responseAddress;
+   currentTONBalance=amount;
+   bicycleTONBalance=amount;
+   tonAccountBalanceLoaded=true;
+  }else{
+   tonAccountBalanceLoaded=false;
+   console.error("TON balance/address verification failed:",t.value);
+  }
+ }else{
+  tonAccountBalanceLoaded=false;
+  console.error("TON balance could not be loaded:",t.reason);
+ }
+ if(u.status==="fulfilled"){
+  const responseAddress=bicycleAddress(u.value);
+  const ownerAddress=String(u.value?.owner_address||"").trim();
+  const amount=Number(u.value?.usdt_balance??u.value?.balance_usdt??u.value?.balance??0);
+  if(responseAddress&&ownerAddress===responseAddress&&u.value?.usdt_registered===true&&
+     (!currentDepositAddresses.TON||responseAddress===currentDepositAddresses.TON)&&
+     Number.isFinite(amount)&&amount>=0){
+   currentDepositAddresses.USDT=responseAddress;
+   currentUSDTBalance=amount;
+   bicycleUSDTBalance=amount;
+   usdtAccountBalanceLoaded=true;
+  }else{
+   usdtAccountBalanceLoaded=false;
+   console.error("USDT balance/owner registration verification failed:",u.value);
+  }
+ }else{
+  usdtAccountBalanceLoaded=false;
+  console.error("USDT balance could not be loaded:",u.reason);
+ }
+ if(wallet)wallet.classList.toggle("bicycle-not-loaded",!tonAccountBalanceLoaded||!usdtAccountBalanceLoaded);
  renderBalances();
  await Promise.all([loadAdminTonWalletBalance(),loadAdminUsdtWalletBalance(),loadAdminUsdtWalletBalance2()]);
 }
@@ -393,9 +409,9 @@ async function loadLockedBalances(){
  currentLockedUSDT=Math.max(0,Number(usdtLock.data||0));
  renderBalances();
 }
-function getAvailableBalance(currency){const c=String(currency||"").toUpperCase();if(c==="USDT"){if(!usdtAccountBalanceLoaded)return 0;return Math.max(0,Number(bicycleUSDTBalance||0)-Number(currentLockedUSDT||0))}return Math.max(0,Number(bicycleTONBalance||0)-Number(currentLockedTON||0))}
+function getAvailableBalance(currency){const c=String(currency||"").toUpperCase();if(c==="USDT"){if(!usdtAccountBalanceLoaded)return 0;return Math.max(0,Number(bicycleUSDTBalance||0)-Number(currentLockedUSDT||0))}return tonAccountBalanceLoaded?Math.max(0,Number(bicycleTONBalance||0)-Number(currentLockedTON||0)):0}
 async function refreshWallet(){await loadBlockchainBalances();await loadLockedBalances();await loadMyOrders()}
-function renderBalances(){let[a,l,t,lt]=["usdtBalance","lockedUSDTBalance","tonBalance","lockedTONBalance"].map($);if(!a)return;let availableUSDT=getAvailableBalance("USDT"),availableTON=getAvailableBalance("TON");if(!balanceVisible)a.textContent=l.textContent=t.textContent=lt.textContent="••••••";else{a.textContent=(usdtAccountBalanceLoaded?num(availableUSDT)+" USDT":"Unavailable");l.textContent=num(currentLockedUSDT)+" USDT";t.textContent=num(availableTON)+" TON";lt.textContent=num(currentLockedTON)+" TON"}if($("withdrawBalance"))$("withdrawBalance").textContent=(withdrawCurrency==="TON"?num(availableTON)+" TON":num(availableUSDT)+" USDT")}
+function renderBalances(){let[a,l,t,lt]=["usdtBalance","lockedUSDTBalance","tonBalance","lockedTONBalance"].map($);if(!a)return;let availableUSDT=getAvailableBalance("USDT"),availableTON=getAvailableBalance("TON");if(!balanceVisible)a.textContent=l.textContent=t.textContent=lt.textContent="••••••";else{a.textContent=(usdtAccountBalanceLoaded?num(availableUSDT)+" USDT":"Unavailable");l.textContent=num(currentLockedUSDT)+" USDT";t.textContent=(tonAccountBalanceLoaded?num(availableTON)+" TON":"Unavailable");lt.textContent=num(currentLockedTON)+" TON"}if($("withdrawBalance"))$("withdrawBalance").textContent=(withdrawCurrency==="TON"?num(availableTON)+" TON":num(availableUSDT)+" USDT")}
 function toggleBalanceVisibility(){balanceVisible=!balanceVisible;$("balanceToggleButton").textContent=balanceVisible?"🐵":"🙈";renderBalances();loadAdminTonWalletBalance();loadAdminUsdtWalletBalance();loadAdminUsdtWalletBalance2();updateSellOrderAvailableBalance()}
 async function findSavedDepositAddress(id,currency="TON"){const{data,error}=await supabaseClient.from("bicycle_deposit_addresses").select("address").eq("user_id",id).eq("currency",currency).maybeSingle();if(error)throw new Error("Saved deposit address lookup failed: "+error.message);return data?.address?String(data.address).trim():""}
 async function saveDepositAddress(id,address,currency="TON"){const{error}=await supabaseClient.from("bicycle_deposit_addresses").upsert({user_id:id,currency,address},{onConflict:"user_id,currency"});if(error)throw new Error("Could not save deposit address: "+error.message);currentDepositAddresses[currency]=address;return 1}

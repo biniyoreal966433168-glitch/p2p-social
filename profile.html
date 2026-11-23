@@ -345,27 +345,29 @@ async function loadBlockchainBalances(){
  const wallet=$("walletCard");
  const{user,error}=await authUser();
  if(error||!user){if(wallet)wallet.classList.add("bicycle-not-loaded");return}
- async function loadAsset(currency){
-  let address="";
-  try{
-   const addressResponse=await bicycle({action:"address",currency},user);
-   address=bicycleAddress(addressResponse);
-   if(address)currentDepositAddresses[currency]=address;
-  }catch(e){console.warn(currency+" deposit address provisioning failed:",e)}
-  const balanceResponse=await bicycle({action:"balance",currency},user);
-  if(!address){
-   address=bicycleAddress(balanceResponse);
-   if(address)currentDepositAddresses[currency]=address;
-  }
-  return balanceResponse;
- }
- const[u,t]=await Promise.allSettled([loadAsset("USDT"),loadAsset("TON")]);
+ let registrationError=null;
+ try{
+  const registration=await bicycle({action:"address",currency:"USDT"},user);
+  const sharedAddress=bicycleAddress(registration);
+  if(!sharedAddress||String(registration?.owner_address||"").trim()!==sharedAddress||registration?.usdt_registered!==true)throw new Error("Bicycle did not confirm the shared TON/USDT owner address and USDT Jetton registration.");
+  currentDepositAddresses.TON=sharedAddress;
+  currentDepositAddresses.USDT=sharedAddress;
+ }catch(e){registrationError=e;console.error("Bicycle shared TON/USDT registration failed:",e)}
+ const[u,t]=await Promise.allSettled(registrationError
+  ?[Promise.reject(registrationError),Promise.reject(registrationError)]
+  :[bicycle({action:"balance",currency:"USDT"},user),bicycle({action:"balance",currency:"TON"},user)]);
  if(u.status==="fulfilled"){
+  const responseAddress=bicycleAddress(u.value);
   const total=Number(u.value?.balance_usdt??u.value?.usdt_balance??u.value?.balance??0);
-  if(Number.isFinite(total)&&total>=0){currentUSDTBalance=total;bicycleUSDTBalance=total;usdtAccountBalanceLoaded=true}
-  else{usdtAccountBalanceLoaded=false;console.error("Invalid USDT address balance response:",u.value)}
+  if(responseAddress===currentDepositAddresses.USDT&&Number.isFinite(total)&&total>=0){currentUSDTBalance=total;bicycleUSDTBalance=total;usdtAccountBalanceLoaded=true}
+  else{usdtAccountBalanceLoaded=false;console.error("USDT balance/address verification failed:",u.value)}
  }else{usdtAccountBalanceLoaded=false;console.error("USDT address balance could not be loaded:",u.reason)}
- if(t.status==="fulfilled"){currentTONBalance=Number(t.value?.balance_ton??t.value?.ton_balance??t.value?.balance??0)||0;bicycleTONBalance=currentTONBalance}
+ if(t.status==="fulfilled"){
+  const responseAddress=bicycleAddress(t.value);
+  const amount=Number(t.value?.balance_ton??t.value?.ton_balance??t.value?.balance??0);
+  if(responseAddress===currentDepositAddresses.TON&&Number.isFinite(amount)&&amount>=0){currentTONBalance=amount;bicycleTONBalance=amount}
+  else console.error("TON balance/address verification failed:",t.value);
+ }else console.error("TON address balance could not be loaded:",t.reason);
  if(wallet)wallet.classList.toggle("bicycle-not-loaded",t.status!=="fulfilled"||!usdtAccountBalanceLoaded);
  renderBalances();
  await Promise.all([loadAdminTonWalletBalance(),loadAdminUsdtWalletBalance(),loadAdminUsdtWalletBalance2()]);
@@ -399,7 +401,7 @@ async function findSavedDepositAddress(id,currency="TON"){const{data,error}=awai
 async function saveDepositAddress(id,address,currency="TON"){const{error}=await supabaseClient.from("bicycle_deposit_addresses").upsert({user_id:id,currency,address},{onConflict:"user_id,currency"});if(error)throw new Error("Could not save deposit address: "+error.message);currentDepositAddresses[currency]=address;return 1}
 function bicycleAddress(r){return String(r?.address||r?.deposit_address||r?.receive_address||r?.wallet_address||r?.data?.address||r?.data?.deposit_address||r?.data?.receive_address||"").trim()}
 function renderQR(a){let q=$("depositQR");q.innerHTML="";if(a&&typeof QRCode!="undefined")QRCode.toCanvas(a,{width:180,margin:1},(e,c)=>{if(!e)q.appendChild(c);else console.error("Deposit QR generation failed:",e)})}
-async function updateDepositAddress(currency=currentDepositCurrency){currentDepositCurrency=currency==="USDT"?"USDT":"TON";const addressCurrency=currentDepositCurrency,box=$("depositAddress"),qr=$("depositQR"),copy=$("copyDepositAddressButton"),{user,error}=await authUser();if(error||!user){currentDepositAddress="";box.textContent="Please login first.";return}box.textContent="Loading "+currentDepositCurrency+" deposit address on TON...";qr.innerHTML="";copy.disabled=true;currentDepositAddress="";try{let address="";if(addressCurrency==="USDT"){const response=await bicycle({action:"address",currency:"USDT"},user);address=bicycleAddress(response);if(!address)throw new Error(response?.error||"Wallet service returned no shared TON/USDT owner address.");const tonAddress=await findSavedDepositAddress(user.id,"TON");if(tonAddress&&tonAddress!==address)console.warn("Saved TON address differs from canonical Bicycle owner address; refreshed from Bicycle.");}else{try{address=await findSavedDepositAddress(user.id,"TON")}catch(e){console.warn("Saved TON address lookup failed; requesting Bicycle address.",e)}if(!address){const response=await bicycle({action:"address",currency:"TON"},user);address=bicycleAddress(response);if(!address)throw new Error(response?.error||"Wallet service returned no TON deposit address.")}}if(!address)throw new Error("No "+addressCurrency+" deposit address is registered for this account.");currentDepositAddresses.TON=address;currentDepositAddresses.USDT=address;currentDepositAddress=address;box.textContent=address;renderQR(address);copy.disabled=false}catch(e){currentDepositAddress="";box.textContent="Address unavailable: "+(e?.message||String(e));console.error(currentDepositCurrency+" deposit address load failed:",e)}}
+async function updateDepositAddress(currency=currentDepositCurrency){currentDepositCurrency=currency==="USDT"?"USDT":"TON";const addressCurrency=currentDepositCurrency,box=$("depositAddress"),qr=$("depositQR"),copy=$("copyDepositAddressButton"),{user,error}=await authUser();if(error||!user){currentDepositAddress="";box.textContent="Please login first.";return}box.textContent="Registering "+currentDepositCurrency+" on TON...";qr.innerHTML="";copy.disabled=true;currentDepositAddress="";try{const response=await bicycle({action:"address",currency:addressCurrency},user);const address=bicycleAddress(response),ownerAddress=String(response?.owner_address||"").trim();if(!address||!ownerAddress||address!==ownerAddress)throw new Error("Bicycle did not confirm one shared TON owner address.");if(response?.usdt_registered!==true)throw new Error("Bicycle has not confirmed the USDT Jetton wallet registration for this owner address.");const[savedTon,savedUsdt]=await Promise.all([findSavedDepositAddress(user.id,"TON"),findSavedDepositAddress(user.id,"USDT")]);if((savedTon&&savedTon!==address)||(savedUsdt&&savedUsdt!==address))throw new Error("Saved TON and USDT addresses do not match the verified Bicycle owner address.");currentDepositAddresses.TON=address;currentDepositAddresses.USDT=address;currentDepositAddress=address;box.textContent=address;renderQR(address);copy.disabled=false}catch(e){currentDepositAddress="";box.textContent="Address unavailable: "+(e?.message||String(e));console.error(currentDepositCurrency+" deposit address registration failed:",e)}}
 function updateDepositCurrency(currency){currentDepositCurrency=currency==="USDT"?"USDT":"TON";$("depositTONOption").classList.toggle("active",currentDepositCurrency==="TON");$("depositUSDTOption").classList.toggle("active",currentDepositCurrency==="USDT");$("depositTONOption").setAttribute("aria-pressed",String(currentDepositCurrency==="TON"));$("depositUSDTOption").setAttribute("aria-pressed",String(currentDepositCurrency==="USDT"));$("depositAssetMark").textContent=currentDepositCurrency;$("depositNetworkLabel").textContent="TON Network";$("depositDescription").textContent=currentDepositCurrency==="USDT"?"Send USDT (TON Jetton) to your personal TON deposit address":"Send TON to your personal TON deposit address";$("depositAddress").textContent="Loading TON wallet address...";$("depositQR").innerHTML="";$("copyDepositAddressButton").disabled=true;return updateDepositAddress(currentDepositCurrency)}
 async function openDeposit(currency="TON"){$("depositModal").classList.add("show");await updateDepositCurrency(currency)}
 function closeDeposit(){$("depositModal").classList.remove("show")}

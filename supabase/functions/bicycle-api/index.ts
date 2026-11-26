@@ -365,8 +365,8 @@ if(action==="balance"){
  const jettonAddress=String(addresses.USDT_JETTON||"").trim();
  if(!addresses.usdt_registered||!jettonAddress)throw new Error("No registered USDT Jetton wallet address is available.");
  if(usdt.jetton_wallet&&usdt.jetton_wallet!==jettonAddress)throw new Error("Bicycle USDT Jetton wallet does not match the on-chain Jetton wallet. Address display blocked.");
- await saveBalanceSnapshot(userId,"USDT",jettonAddress,usdt.balance,usdt.balance_raw);
- return json({currency:"USDT",network:"TON",address:ownerAddress,owner_address:ownerAddress,jetton_wallet_address:jettonAddress,usdt_registered:true,jetton_wallet:jettonAddress,jetton_master:usdt.jetton_master,balance:usdt.balance_raw,usdt_balance:usdt.balance,decimals:6});
+ await saveBalanceSnapshot(userId,"USDT",ownerAddress,usdt.balance,usdt.balance_raw);
+ return json({currency:"USDT",network:"TON",address:ownerAddress,owner_address:ownerAddress,jetton_wallet_address:jettonAddress||null,usdt_registered:!!jettonAddress,jetton_status:jettonAddress?"available":"pending",jetton_wallet:jettonAddress||null,jetton_master:usdt.jetton_master,balance:usdt.balance_raw,usdt_balance:usdt.balance,decimals:6});
 }
 
 if(action==="sync_balance"){
@@ -392,10 +392,9 @@ if(action==="sync_balance"){
  }else{
  const usdt=await getUsdtBalance(String(addresses.owner_address||depositAddress));
  const jettonAddress=String(addresses.USDT_JETTON||"").trim();
- if(!addresses.usdt_registered||!jettonAddress)throw new Error("No registered USDT Jetton wallet address is available");
- if(usdt.jetton_wallet&&usdt.jetton_wallet!==jettonAddress)throw new Error("Bicycle USDT Jetton wallet does not match the on-chain Jetton wallet");
- const snapshot=await saveBalanceSnapshot(userId,"USDT",jettonAddress,usdt.balance,usdt.balance_raw);
- results.push({...snapshot,jetton_wallet:jettonAddress,jetton_master:usdt.jetton_master});
+ if(usdt.jetton_wallet&&jettonAddress&&usdt.jetton_wallet!==jettonAddress)throw new Error("Bicycle USDT Jetton wallet does not match the on-chain Jetton wallet");
+ const snapshot=await saveBalanceSnapshot(userId,"USDT",String(addresses.owner_address||depositAddress),usdt.balance,usdt.balance_raw);
+ results.push({...snapshot,jetton_wallet:jettonAddress||null,jetton_status:jettonAddress?"available":"pending",jetton_master:usdt.jetton_master});
  }
  }
 

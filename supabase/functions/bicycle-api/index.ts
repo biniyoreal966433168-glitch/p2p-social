@@ -253,17 +253,23 @@ async function ensureBicycleDepositAddresses(userId:string,includeUSDT=true){
  }
  // Resolve the USDT Jetton wallet from the TON owner. Bicycle's USDT row
  // identifies registration; the chain-derived Jetton address is authoritative.
- const chainUsdt=await getUsdtBalance(tonAddress);
- const usdtJettonAddress=String(chainUsdt.jetton_wallet||"").trim();
- if(!usdtJettonAddress||usdtJettonAddress===tonAddress){
-  throw new Error("The on-chain USDT Jetton wallet is not available for this TON owner. The TON owner address is preserved.");
+ // The TON owner address is the public deposit address for both assets.
+ // The USDT Jetton wallet may not appear in TON Center until it is deployed/used.
+ // Keep the owner address registered and retry Jetton discovery on later requests.
+ let usdtJettonAddress="";
+ try{
+  const chainUsdt=await getUsdtBalance(tonAddress);
+  usdtJettonAddress=String(chainUsdt.jetton_wallet||"").trim();
+ }catch(error){
+  console.warn("[address] USDT Jetton discovery deferred; TON owner address remains usable",error instanceof Error?error.message:String(error));
  }
+ if(usdtJettonAddress===tonAddress)usdtJettonAddress="";
  const{error}=await supabase.from("bicycle_deposit_addresses").upsert([
   {user_id:userId,currency:"TON",address:tonAddress,jetton_wallet_address:null},
-  {user_id:userId,currency:"USDT",address:tonAddress,jetton_wallet_address:usdtJettonAddress}
+  {user_id:userId,currency:"USDT",address:tonAddress,jetton_wallet_address:usdtJettonAddress||null}
  ],{onConflict:"user_id,currency"});
  if(error)throw error;
- return {TON:tonAddress,USDT:tonAddress,USDT_JETTON:usdtJettonAddress,owner_address:tonAddress,usdt_registered:true};
+ return {TON:tonAddress,USDT:tonAddress,USDT_JETTON:usdtJettonAddress,owner_address:tonAddress,usdt_registered:!!usdtJettonAddress};
 }
  Deno.serve(async req=>{
  if(req.method==="OPTIONS")
@@ -334,11 +340,12 @@ if(action==="available_balance"){
  if(!address)throw new Error(`No ${currency} deposit address available after provisioning`);
  if(currency==="USDT"){
   const jettonAddress=String(addresses.USDT_JETTON||"").trim();
-  const chainUsdt=await getUsdtBalance(String(addresses.owner_address||address));
-  if(!jettonAddress||!addresses.usdt_registered)throw new Error("No registered USDT Jetton wallet address is available.");
-  if(chainUsdt.jetton_wallet&&chainUsdt.jetton_wallet!==jettonAddress)throw new Error("Registered USDT Jetton wallet does not match the on-chain wallet. Address display blocked.");
+  if(jettonAddress){
+   const chainUsdt=await getUsdtBalance(String(addresses.owner_address||address));
+   if(chainUsdt.jetton_wallet&&chainUsdt.jetton_wallet!==jettonAddress)throw new Error("Registered USDT Jetton wallet does not match the on-chain wallet.");
+  }
  }
- return json({address,currency,user_id:userId,saved:true,network:"TON",provisioned:true,owner_address:addresses.owner_address,jetton_wallet_address:currency==="USDT"?addresses.USDT_JETTON:null,usdt_registered:currency==="USDT"?addresses.usdt_registered:false});
+ return json({address,currency,user_id:userId,saved:true,network:"TON",provisioned:true,owner_address:addresses.owner_address,jetton_wallet_address:currency==="USDT"?(addresses.USDT_JETTON||null):null,usdt_registered:currency==="USDT"?addresses.usdt_registered:false,jetton_status:currency==="USDT"?(addresses.USDT_JETTON?"available":"pending"):"not_applicable"});
 }
 
 if(action==="balance"){

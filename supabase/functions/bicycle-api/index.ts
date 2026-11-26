@@ -223,13 +223,17 @@ async function createAndReloadBicycleAddress(userId:string,currency:string,curre
 
 async function ensureBicycleDepositAddresses(userId:string,includeUSDT=true){
  let current=await listBicycleDepositAddresses(userId);
- let tonEntry=current.find((item:any)=>item.currency==="TON"&&item.address);
+ const{data:savedRows,error:savedError}=await supabase.from("bicycle_deposit_addresses").select("currency,address,jetton_wallet_address").eq("user_id",userId);
+ if(savedError)throw savedError;
+ const savedEntry=(currency:string)=>((savedRows||[]).find((item:any)=>String(item.currency||"").toUpperCase()===currency&&String(item.address||"").trim())||null);
+ let tonEntry=current.find((item:any)=>item.currency==="TON"&&item.address)||savedEntry("TON");
  if(!tonEntry){
   const provisioned=await createAndReloadBicycleAddress(userId,"TON",current);
   tonEntry=provisioned.entry;
   current=await listBicycleDepositAddresses(userId);
   const listedTon=current.find((item:any)=>item.currency==="TON"&&item.address);
   if(listedTon)tonEntry=listedTon;
+  else if(!tonEntry)tonEntry=savedEntry("TON");
  }
  const tonAddress=String(tonEntry?.address||"").trim();
  if(!tonAddress)throw new Error("Bicycle TON deposit address is not registered after provisioning");
@@ -238,13 +242,14 @@ async function ensureBicycleDepositAddresses(userId:string,includeUSDT=true){
   if(error)throw error;
   return {TON:tonAddress,owner_address:tonAddress,usdt_registered:false,USDT_JETTON:""};
  }
- let usdtEntry=current.find((item:any)=>item.currency==="USDT"&&item.address);
+ let usdtEntry=current.find((item:any)=>item.currency==="USDT"&&item.address)||savedEntry("USDT");
  if(!usdtEntry){
   const provisioned=await createAndReloadBicycleAddress(userId,"USDT",current);
   usdtEntry=provisioned.entry;
   current=await listBicycleDepositAddresses(userId);
   const listedUsdt=current.find((item:any)=>item.currency==="USDT"&&item.address);
   if(listedUsdt)usdtEntry=listedUsdt;
+  else if(!usdtEntry)usdtEntry=savedEntry("USDT");
  }
  // Resolve the USDT Jetton wallet from the TON owner. Bicycle's USDT row
  // identifies registration; the chain-derived Jetton address is authoritative.

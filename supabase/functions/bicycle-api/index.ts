@@ -109,28 +109,49 @@ function tonViewerUrl(data:any):string|null{
  return{balance:nanoTon/1_000_000_000,balance_raw:rawBalance};
 }
 
+const usdtBalanceCache=new Map<string,{expiresAt:number;value:any}>();
+const usdtBalanceInflight=new Map<string,Promise<any>>();
 async function getUsdtBalance(address:string){
- const jettonMaster="0:B113A994B5024A16719F69139328EB759596C38A25F59028B146FECDC3621DFE";
- const response=await fetch(
- `https://toncenter.com/api/v3/jetton/wallets?owner_address=${encodeURIComponent(address)}&jetton_address=${encodeURIComponent(jettonMaster)}&limit=100`,
- {headers:{Accept:"application/json"},signal:AbortSignal.timeout(20000)}
- );
- const text=await response.text();
- let data:any;
- try{data=JSON.parse(text)}catch{throw new Error("Invalid TON Center USDT balance response")}
- if(!response.ok){
- throw new Error(data?.error||data?.message||`TON Center HTTP ${response.status}`);
- }
- const wallet=Array.isArray(data?.jetton_wallets)?data.jetton_wallets[0]:null;
- const rawBalance=String(wallet?.balance??"0");
- const raw=Number(rawBalance);
- if(!Number.isFinite(raw)||raw<0)throw new Error("Invalid USDT balance returned by TON Center");
- return{
- balance:raw/1_000_000,
- balance_raw:rawBalance,
- jetton_wallet:wallet?.address??null,
- jetton_master:jettonMaster
- };
+ const cached=usdtBalanceCache.get(address);
+ if(cached&&cached.expiresAt>Date.now())return cached.value;
+ const pending=usdtBalanceInflight.get(address);
+ if(pending)return await pending;
+ const request=(async()=>{
+  const jettonMaster="0:B113A994B5024A16719F69139328EB759596C38A25F59028B146FECDC3621DFE";
+  const apiKey=Deno.env.get("TONCENTER_API_KEY")||Deno.env.get("TONCENTER_API_TOKEN")||"";
+  const headers:Record<string,string>={Accept:"application/json"};
+  if(apiKey)headers["X-API-Key"]=apiKey;
+  let response:Response|null=null,data:any=null,lastError:Error|null=null;
+  for(let attempt=0;attempt<3;attempt++){
+   try{
+    response=await fetch(`https://toncenter.com/api/v3/jetton/wallets?owner_address=${encodeURIComponent(address)}&jetton_address=${encodeURIComponent(jettonMaster)}&limit=100`,{headers,signal:AbortSignal.timeout(20000)});
+    const body=await response.text();
+    try{data=JSON.parse(body)}catch{throw new Error("Invalid TON Center USDT balance response")}
+    if(response.ok)break;
+    lastError=new Error(String(data?.error||data?.message||`TON Center HTTP ${response.status}`));
+    if(response.status!==429&&response.status<500)throw lastError;
+    if(attempt<2){
+     const retryAfter=Number(response.headers.get("retry-after")||0);
+     await new Promise(resolve=>setTimeout(resolve,retryAfter>0?Math.min(2500,retryAfter*1000):500*(attempt+1)));
+    }
+   }catch(error){
+    lastError=error instanceof Error?error:new Error(String(error));
+    if(attempt===2)throw lastError;
+    await new Promise(resolve=>setTimeout(resolve,400*(attempt+1)));
+   }
+  }
+  if(!response?.ok)throw lastError||new Error("TON Center USDT balance request failed");
+  const wallet=Array.isArray(data?.jetton_wallets)?data.jetton_wallets[0]:null;
+  const rawBalance=String(wallet?.balance??"0"),raw=Number(rawBalance);
+  if(!Number.isFinite(raw)||raw<0)throw new Error("Invalid USDT balance returned by TON Center");
+  return{balance:raw/1_000_000,balance_raw:rawBalance,jetton_wallet:wallet?.address??null,jetton_master:jettonMaster};
+ })();
+ usdtBalanceInflight.set(address,request);
+ try{
+  const value=await request;
+  usdtBalanceCache.set(address,{expiresAt:Date.now()+3000,value});
+  return value;
+ }finally{usdtBalanceInflight.delete(address)}
 }
 
 async function saveBalanceSnapshot(
@@ -221,7 +242,7 @@ async function createAndReloadBicycleAddress(userId:string,currency:string,curre
  return {entry,created:true};
 }
 
-async function ensureBicycleDepositAddresses(userId:string,includeUSDT=true){
+async function ensureBicycleDepositAddresses(userId:string,includeUSDT=true,discoverUSDT=true){
  let current=await listBicycleDepositAddresses(userId);
  const{data:savedRows,error:savedError}=await supabase.from("bicycle_deposit_addresses").select("currency,address,jetton_wallet_address").eq("user_id",userId);
  if(savedError)throw savedError;
@@ -256,12 +277,14 @@ async function ensureBicycleDepositAddresses(userId:string,includeUSDT=true){
  // The TON owner address is the public deposit address for both assets.
  // The USDT Jetton wallet may not appear in TON Center until it is deployed/used.
  // Keep the owner address registered and retry Jetton discovery on later requests.
- let usdtJettonAddress="";
- try{
-  const chainUsdt=await getUsdtBalance(tonAddress);
-  usdtJettonAddress=String(chainUsdt.jetton_wallet||"").trim();
- }catch(error){
-  console.warn("[address] USDT Jetton discovery deferred; TON owner address remains usable",error instanceof Error?error.message:String(error));
+ let usdtJettonAddress=String(usdtEntry?.jetton_wallet_address||savedEntry("USDT")?.jetton_wallet_address||"").trim();
+ if(discoverUSDT){
+  try{
+   const chainUsdt=await getUsdtBalance(tonAddress);
+   usdtJettonAddress=String(chainUsdt.jetton_wallet||usdtJettonAddress||"").trim();
+  }catch(error){
+   console.warn("[address] USDT Jetton discovery deferred; TON owner address remains usable",error instanceof Error?error.message:String(error));
+  }
  }
  if(usdtJettonAddress===tonAddress)usdtJettonAddress="";
  const{error}=await supabase.from("bicycle_deposit_addresses").upsert([
@@ -338,39 +361,64 @@ if(action==="available_balance"){
  const addresses=await ensureBicycleDepositAddresses(userId,currency==="USDT");
  const address=String(addresses[currency as "TON"|"USDT"]||"").trim();
  if(!address)throw new Error(`No ${currency} deposit address available after provisioning`);
- if(currency==="USDT"){
-  const jettonAddress=String(addresses.USDT_JETTON||"").trim();
-  if(jettonAddress){
-   const chainUsdt=await getUsdtBalance(String(addresses.owner_address||address));
-   if(chainUsdt.jetton_wallet&&chainUsdt.jetton_wallet!==jettonAddress)throw new Error("Registered USDT Jetton wallet does not match the on-chain wallet.");
-  }
- }
  return json({address,currency,user_id:userId,saved:true,network:"TON",provisioned:true,owner_address:addresses.owner_address,jetton_wallet_address:currency==="USDT"?(addresses.USDT_JETTON||null):null,usdt_registered:currency==="USDT"?addresses.usdt_registered:false,jetton_status:currency==="USDT"?(addresses.USDT_JETTON?"available":"pending"):"not_applicable"});
 }
 
 if(action==="balance"){
  const currency=String(body.currency||"USDT").toUpperCase();
  if(!["TON","USDT"].includes(currency))return json({error:"Currency must be TON or USDT"},400);
-
- const addresses=await ensureBicycleDepositAddresses(userId,currency==="USDT");
+ const addresses=await ensureBicycleDepositAddresses(userId,currency==="USDT",false);
  const address=String(addresses[currency as "TON"|"USDT"]||"").trim();
  if(!address)return json({error:"No registered "+currency+" deposit address is available."},404);
  if(currency==="TON"){
- const ton=await getTonBalance(address);
- await saveBalanceSnapshot(userId,"TON",address,ton.balance,ton.balance_raw);
- return json({currency:"TON",network:"TON",address,balance:ton.balance_raw,balance_ton:ton.balance});
+  const ton=await getTonBalance(address);
+  await saveBalanceSnapshot(userId,"TON",address,ton.balance,ton.balance_raw);
+  return json({currency:"TON",network:"TON",address,balance:ton.balance_raw,balance_ton:ton.balance});
  }
  const ownerAddress=String(addresses.owner_address||address).trim();
- const usdt=await getUsdtBalance(ownerAddress);
- const jettonAddress=String(addresses.USDT_JETTON||"").trim();
- if(usdt.jetton_wallet&&usdt.jetton_wallet!==jettonAddress)throw new Error("Bicycle USDT Jetton wallet does not match the on-chain Jetton wallet. Address display blocked.");
+ let usdt:any;
+ try{usdt=await getUsdtBalance(ownerAddress)}
+ catch(error){
+  const message=error instanceof Error?error.message:String(error);
+  if(message.includes("429")||message.toLowerCase().includes("rate")){
+   const{data:snapshot,error:snapshotError}=await supabase.from("bicycle_balance_snapshots")
+    .select("balance,balance_raw,checked_at").eq("user_id",userId).eq("currency","USDT")
+    .order("checked_at",{ascending:false}).limit(1).maybeSingle();
+   if(snapshotError)throw snapshotError;
+   if(snapshot){
+    const previous=Number(snapshot.balance);
+    if(Number.isFinite(previous)&&previous>=0)return json({
+     currency:"USDT",network:"TON",address:ownerAddress,owner_address:ownerAddress,
+     jetton_wallet_address:addresses.USDT_JETTON||null,usdt_registered:!!addresses.USDT_JETTON,
+     jetton_status:addresses.USDT_JETTON?"available":"pending",
+     balance:String(snapshot.balance_raw??0),usdt_balance:previous,decimals:6,
+     stale:true,balance_checked_at:snapshot.checked_at
+    });
+   }
+  }
+  throw error;
+ }
+ const discoveredJetton=String(usdt.jetton_wallet||"").trim();
+ const savedJetton=String(addresses.USDT_JETTON||"").trim();
+ if(discoveredJetton&&savedJetton&&discoveredJetton!==savedJetton)throw new Error("Bicycle USDT Jetton wallet does not match the on-chain Jetton wallet.");
+ const jettonAddress=discoveredJetton||savedJetton;
+ if(discoveredJetton){
+  const{error:saveJettonError}=await supabase.from("bicycle_deposit_addresses")
+   .upsert({user_id:userId,currency:"USDT",address:ownerAddress,jetton_wallet_address:discoveredJetton},{onConflict:"user_id,currency"});
+  if(saveJettonError)throw saveJettonError;
+ }
  await saveBalanceSnapshot(userId,"USDT",ownerAddress,usdt.balance,usdt.balance_raw);
- return json({currency:"USDT",network:"TON",address:ownerAddress,owner_address:ownerAddress,jetton_wallet_address:jettonAddress||null,usdt_registered:!!jettonAddress,jetton_status:jettonAddress?"available":"pending",jetton_wallet:jettonAddress||null,jetton_master:usdt.jetton_master,balance:usdt.balance_raw,usdt_balance:usdt.balance,decimals:6});
+ return json({
+  currency:"USDT",network:"TON",address:ownerAddress,owner_address:ownerAddress,
+  jetton_wallet_address:jettonAddress||null,usdt_registered:!!jettonAddress,
+  jetton_status:jettonAddress?"available":"pending",jetton_wallet:jettonAddress||null,
+  jetton_master:usdt.jetton_master,balance:usdt.balance_raw,usdt_balance:usdt.balance,decimals:6,stale:false
+ });
 }
 
 if(action==="sync_balance"){
  const results:any[]=[];
- const addresses=await ensureBicycleDepositAddresses(userId);
+ const addresses=await ensureBicycleDepositAddresses(userId,true,false);
 
  for(const currency of["TON","USDT"] as const){
  const depositAddress=String(addresses[currency]||"").trim();

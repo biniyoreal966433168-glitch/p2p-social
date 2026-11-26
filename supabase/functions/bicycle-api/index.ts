@@ -160,16 +160,77 @@ async function saveBalanceSnapshot(
  return data;
  }
 
+function addressCurrency(value:any):string{
+ const raw=String(value??"").trim().toUpperCase();
+ if(raw==="TON"||raw==="NATIVE"||raw==="NATIVE TON")return "TON";
+ if(raw==="USDT"||raw.includes("TETHER")||raw.includes("JETTON"))return "USDT";
+ return "";
+}
+
+function addressValue(item:any):string{
+ if(typeof item==="string")return item.trim();
+ const candidates=[item?.address,item?.deposit_address,item?.wallet_address,item?.owner_address,item?.account_address,item?.user_address];
+ for(const value of candidates){const address=String(value??"").trim();if(address)return address;}
+ return "";
+}
+
+function normalizeBicycleAddressList(payload:any):any[]{
+ const rows:any[]=[];
+ const visit=(value:any,keyCurrency="")=>{
+  if(value==null)return;
+  if(Array.isArray(value)){for(const item of value)visit(item,keyCurrency);return;}
+  if(typeof value!=="object")return;
+  const currency=addressCurrency(value.currency??value.asset??value.token??value.symbol??value.type??keyCurrency);
+  const address=addressValue(value);
+  if(currency&&address){rows.push({...value,currency,address});return;}
+  for(const key of ["addresses","data","result","items","wallets","deposit_addresses"])if(value[key]!=null)visit(value[key],keyCurrency);
+  for(const key of ["TON","USDT","ton","usdt"])if(value[key]!=null)visit(value[key],key);
+ };
+ visit(payload);
+ return rows;
+}
+
 async function listBicycleDepositAddresses(userId:string){
  const listed=await bicycleFetch(`/v1/address/all?user_id=${encodeURIComponent(userId)}`);
- return Array.isArray(listed?.addresses)?listed.addresses:[];
+ return normalizeBicycleAddressList(listed);
+}
+
+function addressFromNewResponse(payload:any,currency:string):any|null{
+ const rows=normalizeBicycleAddressList(payload);
+ const found=rows.find((item:any)=>item.currency===currency);
+ if(found)return found;
+ const candidates=[payload,payload?.data,payload?.result,payload?.address_data];
+ for(const item of candidates){
+  const address=addressValue(item);
+  if(address)return {currency,address,...(item&&typeof item==="object"?item:{})};
+ }
+ return null;
+}
+
+async function createAndReloadBicycleAddress(userId:string,currency:string,current:any[]){
+ const existing=current.find((item:any)=>item.currency===currency&&item.address);
+ if(existing)return {entry:existing,created:false};
+ const created=await bicycleFetch("/v1/address/new","POST",{user_id:userId,currency});
+ const fromCreate=addressFromNewResponse(created,currency);
+ const reloaded=await listBicycleDepositAddresses(userId);
+ const fromList=reloaded.find((item:any)=>item.currency===currency&&item.address);
+ const entry=fromList||fromCreate;
+ if(!entry?.address){
+  throw new Error(`Bicycle /v1/address/new did not return a ${currency} address and /v1/address/all did not list one. Check Bicycle address persistence and response format.`);
+ }
+ return {entry,created:true};
 }
 
 async function ensureBicycleDepositAddresses(userId:string,includeUSDT=true){
  let current=await listBicycleDepositAddresses(userId);
- const findEntry=(currency:string)=>current.find((item:any)=>String(item?.currency||"").trim().toUpperCase()===currency&&String(item?.address||"").trim());
- let tonEntry=findEntry("TON");
- if(!tonEntry){await bicycleFetch("/v1/address/new","POST",{user_id:userId,currency:"TON"});current=await listBicycleDepositAddresses(userId);tonEntry=findEntry("TON");}
+ let tonEntry=current.find((item:any)=>item.currency==="TON"&&item.address);
+ if(!tonEntry){
+  const provisioned=await createAndReloadBicycleAddress(userId,"TON",current);
+  tonEntry=provisioned.entry;
+  current=await listBicycleDepositAddresses(userId);
+  const listedTon=current.find((item:any)=>item.currency==="TON"&&item.address);
+  if(listedTon)tonEntry=listedTon;
+ }
  const tonAddress=String(tonEntry?.address||"").trim();
  if(!tonAddress)throw new Error("Bicycle TON deposit address is not registered after provisioning");
  if(!includeUSDT){
@@ -177,18 +238,20 @@ async function ensureBicycleDepositAddresses(userId:string,includeUSDT=true){
   if(error)throw error;
   return {TON:tonAddress,owner_address:tonAddress,usdt_registered:false,USDT_JETTON:""};
  }
- let usdtEntry=findEntry("USDT");
+ let usdtEntry=current.find((item:any)=>item.currency==="USDT"&&item.address);
  if(!usdtEntry){
-  await bicycleFetch("/v1/address/new","POST",{user_id:userId,currency:"USDT"});
+  const provisioned=await createAndReloadBicycleAddress(userId,"USDT",current);
+  usdtEntry=provisioned.entry;
   current=await listBicycleDepositAddresses(userId);
-  usdtEntry=findEntry("USDT");
+  const listedUsdt=current.find((item:any)=>item.currency==="USDT"&&item.address);
+  if(listedUsdt)usdtEntry=listedUsdt;
  }
- // Bicycle's stored USDT address may be stale or use a different address encoding.
- // Use the authoritative Jetton wallet returned on-chain for this TON owner.
+ // Resolve the USDT Jetton wallet from the TON owner. Bicycle's USDT row
+ // identifies registration; the chain-derived Jetton address is authoritative.
  const chainUsdt=await getUsdtBalance(tonAddress);
  const usdtJettonAddress=String(chainUsdt.jetton_wallet||"").trim();
  if(!usdtJettonAddress||usdtJettonAddress===tonAddress){
-  throw new Error("The on-chain USDT Jetton wallet is not available for this TON owner. No USDT address will be displayed.");
+  throw new Error("The on-chain USDT Jetton wallet is not available for this TON owner. The TON owner address is preserved.");
  }
  const{error}=await supabase.from("bicycle_deposit_addresses").upsert([
   {user_id:userId,currency:"TON",address:tonAddress,jetton_wallet_address:null},

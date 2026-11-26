@@ -363,7 +363,6 @@ if(action==="balance"){
  const ownerAddress=String(addresses.owner_address||address).trim();
  const usdt=await getUsdtBalance(ownerAddress);
  const jettonAddress=String(addresses.USDT_JETTON||"").trim();
- if(!addresses.usdt_registered||!jettonAddress)throw new Error("No registered USDT Jetton wallet address is available.");
  if(usdt.jetton_wallet&&usdt.jetton_wallet!==jettonAddress)throw new Error("Bicycle USDT Jetton wallet does not match the on-chain Jetton wallet. Address display blocked.");
  await saveBalanceSnapshot(userId,"USDT",ownerAddress,usdt.balance,usdt.balance_raw);
  return json({currency:"USDT",network:"TON",address:ownerAddress,owner_address:ownerAddress,jetton_wallet_address:jettonAddress||null,usdt_registered:!!jettonAddress,jetton_status:jettonAddress?"available":"pending",jetton_wallet:jettonAddress||null,jetton_master:usdt.jetton_master,balance:usdt.balance_raw,usdt_balance:usdt.balance,decimals:6});

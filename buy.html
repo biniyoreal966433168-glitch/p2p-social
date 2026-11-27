@@ -92,7 +92,8 @@ document.addEventListener("click",e=>{if(e.target.classList.contains("modal"))e.
  const ISO={"Argentina":"ARG","Australia":"AUS","Bangladesh":"BGD","Brazil":"BRA","Canada":"CAN","Russia":"RUS","Colombia":"COL","Denmark":"DNK","Egypt":"EGY","Ethiopia":"ETH","Ghana":"GHA","India":"IND","Indonesia":"IDN","Japan":"JPN","Kenya":"KEN","Malaysia":"MYS","Mexico":"MEX","Morocco":"MAR","New Zealand":"NZL","Nigeria":"NGA","Norway":"NOR","Pakistan":"PAK","Philippines":"PHL","Poland":"POL","Saudi Arabia":"SAU","Singapore":"SGP","South Africa":"ZAF","South Korea":"KOR","Sweden":"SWE","Switzerland":"CHE","Tanzania":"TZA","Thailand":"THA","Türkiye":"TUR","Turkey":"TUR","Uganda":"UGA","United Arab Emirates":"ARE","United Kingdom":"GBR","United States of America":"USA","United States":"USA","Vietnam":"VNM"};
  const norm=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z]/g,"");
  const byName=new Map(MARKETS.map(m=>[norm(m.name),m]));
- const byIso=new Map(MARKETS.map(m=>[ISO[m.name],m]));
+ byName.set(norm("Turkey"),byName.get(norm("Türkiye")));
+ byName.set(norm("United States of America"),byName.get(norm("United States")));
  const results=document.getElementById("countryResults"),search=document.getElementById("countrySearch"),count=document.getElementById("countryResultCount");
  function renderCountries(q=""){
   const query=norm(q),shown=MARKETS.filter(m=>!query||norm(m.name).includes(query)||norm(m.currency).includes(query));
@@ -113,7 +114,7 @@ document.addEventListener("click",e=>{if(e.target.classList.contains("modal"))e.
    .globeImageUrl("https://unpkg.com/three-globe/example/img/earth-night.jpg")
    .showAtmosphere(true).atmosphereColor("#42c9b0").atmosphereAltitude(.16)
    .polygonsData(features)
-   .polygonAltitude(f=>byName.get(norm(f.properties.name))?.active?.075:(byName.has(norm(f.properties.name))?.018:.006))
+   .polygonAltitude(f=>byName.has(norm(f.properties.name)) ? .075 : .006)
    .polygonCapColor(f=>byName.has(norm(f.properties.name))?"rgba(21,184,145,0.72)":"rgba(120,153,164,0.16)")
    .polygonSideColor(()=>"rgba(10,35,45,0.28)")
    .polygonStrokeColor(f=>byName.has(norm(f.properties.name))?"#8fffe0":"rgba(190,215,220,0.22)")

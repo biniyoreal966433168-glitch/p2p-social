@@ -50,12 +50,13 @@ header{position:sticky;top:0;z-index:100;background:rgba(5,14,27,.72);color:#f3f
 .modal{z-index:500}
 .solar-system{position:fixed;right:20px;bottom:100px;width:270px;height:270px;z-index:2;pointer-events:none;opacity:.76;filter:drop-shadow(0 0 22px #3c8bc633)}
 .solar-sun{position:absolute;left:50%;top:50%;width:23px;height:23px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff8b0,#ffb52e 48%,#f05a18 78%);box-shadow:0 0 18px 7px #ffb22c88,0 0 48px 18px #ff7b2440}
-.solar-orbit{position:absolute;left:50%;top:50%;border:1px solid rgba(177,214,238,.2);border-radius:50%;transform:translate(-50%,-50%);animation:orbit-spin var(--orbit-speed) linear infinite}
+.solar-orbit{position:absolute;left:50%;top:50%;border:1px solid rgba(177,214,238,.2);border-radius:50%;transform:translate3d(-50%,-50%,0);animation:orbit-spin var(--orbit-speed) linear infinite;will-change:transform;backface-visibility:hidden}
 .solar-orbit i{position:absolute;left:50%;top:0;display:block;transform:translate(-50%,-50%);border-radius:50%;box-shadow:0 0 8px #ffffff35}
 .orbit-mercury{width:42px;height:42px;--orbit-speed:5s}.orbit-venus{width:64px;height:64px;--orbit-speed:8s}.orbit-earth{width:88px;height:88px;--orbit-speed:11s}.orbit-mars{width:112px;height:112px;--orbit-speed:15s}.orbit-jupiter{width:145px;height:145px;--orbit-speed:21s}.orbit-saturn{width:178px;height:178px;--orbit-speed:27s}.orbit-uranus{width:211px;height:211px;--orbit-speed:33s}.orbit-neptune{width:242px;height:242px;--orbit-speed:39s}.orbit-pluto{width:266px;height:266px;--orbit-speed:47s}
 .mercury{width:4px;height:4px;background:linear-gradient(135deg,#d7d0c4,#756c63)}.venus{width:6px;height:6px;background:linear-gradient(135deg,#fff0b0,#c17c37)}.earth{width:7px;height:7px;background:radial-gradient(circle at 35% 30%,#a6f2ff,#1675c8 58%,#174d35)}.mars{width:5px;height:5px;background:linear-gradient(135deg,#ffb18a,#a43b20)}.jupiter{width:12px;height:12px;background:repeating-linear-gradient(0deg,#d9b18a 0 2px,#8f5e43 2px 3px)}.saturn{width:10px;height:10px;background:linear-gradient(135deg,#f7dfa0,#9c7950)}.saturn:after{content:"";position:absolute;left:-5px;top:3px;width:20px;height:5px;border:1px solid #e4d3a0;border-radius:50%;transform:rotate(-18deg)}.uranus{width:8px;height:8px;background:linear-gradient(135deg,#d4ffff,#65aeb8)}.neptune{width:8px;height:8px;background:linear-gradient(135deg,#8bbaff,#234dba)}.pluto{width:4px;height:4px;background:linear-gradient(135deg,#f0d5bd,#9b7760)}
 .solar-caption{position:absolute;right:0;bottom:-13px;color:#c8d9e8;font-size:8px;letter-spacing:1.4px;white-space:nowrap}
-@keyframes orbit-spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes orbit-spin{to{transform:translate3d(-50%,-50%,0) rotate(360deg)}}
+.space-paused .solar-orbit{animation-play-state:paused}
 body.theme-day{background:linear-gradient(145deg,#b7d8eb,#e6f2f8 52%,#c8e1ed);color:#183044}
 .theme-day header{background:rgba(245,251,255,.78);color:#183044;border-bottom-color:#9ebbc9}
 .theme-day .brand-name,.theme-day .section-title h2{color:#183044}
@@ -68,7 +69,7 @@ body.theme-day{background:linear-gradient(145deg,#b7d8eb,#e6f2f8 52%,#c8e1ed);co
 .theme-day .solar-orbit{border-color:rgba(36,79,105,.28)}
 .theme-day .solar-caption{color:#274e64}
 @media(max-width:600px){.container{padding-left:12px;padding-right:12px}.globe-controls{right:10px;top:82px}.solar-system{right:-18px;bottom:88px;transform:scale(.72);transform-origin:bottom right;opacity:.58}.offer-list{grid-template-columns:repeat(2,minmax(0,1fr))}.search-box{margin-top:calc(100vh - 12px)}}
-@media(prefers-reduced-motion:reduce){.solar-orbit{animation:none}}
+@media(prefers-reduced-motion:reduce){.solar-orbit{animation:none}body{transition:none}}
 
 </style><script src="https://unpkg.com/globe.gl"></script><script src="https://unpkg.com/topojson-client@3"></script>
 </head><body>
@@ -165,7 +166,7 @@ window.addEventListener("beforeunload",()=>{if(realtimeChannel)sb.removeChannel(
    .backgroundColor("rgba(0,0,0,0)")
    .globeImageUrl("https://unpkg.com/three-globe/example/img/earth-night.jpg")
    .showAtmosphere(true).atmosphereColor("#42c9b0").atmosphereAltitude(.16)
-   .polygonsData(features)
+   .polygonsData(features.filter(f=>byName.has(norm(f.properties.name))))
    .polygonAltitude(f=>byName.has(norm(f.properties.name)) ? .075 : .006)
    .polygonCapColor(f=>byName.has(norm(f.properties.name))?"rgba(21,184,145,0.72)":"rgba(120,153,164,0.16)")
    .polygonSideColor(()=>"rgba(10,35,45,0.28)")
@@ -181,12 +182,27 @@ window.addEventListener("beforeunload",()=>{if(realtimeChannel)sb.removeChannel(
   };
   themeToggle.addEventListener("click",()=>applySceneTheme(!document.body.classList.contains("theme-day")));
   applySceneTheme(false);
-  globe.controls().autoRotate=true;globe.controls().autoRotateSpeed=.42;globe.controls().enableDamping=true;globe.controls().dampingFactor=.08;
+  const controls=globe.controls();
+  controls.autoRotate=true;
+  controls.autoRotateSpeed=.28;
+  controls.enableDamping=true;
+  controls.dampingFactor=.065;
+  controls.enablePan=false;
+  globe.renderer().setPixelRatio(Math.min(window.devicePixelRatio||1,1.25));
+  globe.renderer().setClearColor(0x000000,0);
   globe.pointOfView({lat:15,lng:12,altitude:3.15});
   document.getElementById("globeZoomIn").addEventListener("click",()=>{const p=globe.pointOfView();globe.pointOfView({altitude:Math.max(.72,p.altitude*.78)},350)});
   document.getElementById("globeZoomOut").addEventListener("click",()=>{const p=globe.pointOfView();globe.pointOfView({altitude:Math.min(6,p.altitude/ .78)},350)});
-  const resize=()=>globe.width(window.innerWidth).height(window.innerHeight);
-  if("ResizeObserver"in window)new ResizeObserver(resize).observe(host);else window.addEventListener("resize",resize);
+  let resizeFrame=0;
+  const resize=()=>{
+   cancelAnimationFrame(resizeFrame);
+   resizeFrame=requestAnimationFrame(()=>globe.width(window.innerWidth).height(window.innerHeight));
+  };
+  window.addEventListener("resize",resize,{passive:true});
+  document.addEventListener("visibilitychange",()=>{
+   controls.autoRotate=!document.hidden;
+   document.body.classList.toggle("space-paused",document.hidden);
+  });
   loading.classList.add("hidden");setTimeout(()=>loading.remove(),350);
  }).catch(err=>{console.error("Country globe:",err);loading.textContent="Earth globe could not load.";});
 })();
